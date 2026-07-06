@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture - Mixture of Experts</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="content-wrapper">
+    <h1>Mixture of Experts (MoE)</h1>
+
+    <h2>Concept</h2>
+    <p class="detail-description">
+        The core philosophy of MoE is <strong>Divide and Conquer</strong>. Instead of asking one giant neural network to learn everything, we break the problem down into manageable sub-tasks.
+    </p>
+
+    <ul>
+        <li><strong>Specialized Experts:</strong> Rather than one "jack-of-all-trades" model, we use multiple smaller "expert" models, each fine-tuned for a specific niche of the data.</li>
+        <li><strong>Gating Network:</strong> This acts as the <em>Traffic Director</em>. It analyzes the incoming input and decides which expert is the best fit for the job.</li>
+    </ul>
+
+    
+
+    <h2>How it Works</h2>
+    <div style="background-color: #fff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        <ol>
+            <li><strong>Input:</strong> Data enters the MoE system.</li>
+            <li><strong>Gating Logic:</strong> The Gating Network produces probabilities (weights). If Expert A is 90% likely to know the answer, it gets a high weight.</li>
+            <li><strong>Parallel Processing:</strong> The selected experts process the input simultaneously.</li>
+            <li><strong>Weighted Combination:</strong> The outputs are merged. Experts with higher weights have the most influence on the final prediction.</li>
+        </ol>
+    </div>
+
+    <h2>Benefits of MoE</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Benefit</th>
+                    <th>Why it Matters</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Increased Capacity</strong></td>
+                    <td>Can handle massive datasets by distributing knowledge across 100s of experts.</td>
+                </tr>
+                <tr>
+                    <td><strong>Efficiency</strong></td>
+                    <td>Only a fraction of the total model is "active" at any time, saving energy and compute.</td>
+                </tr>
+                <tr>
+                    <td><strong>Specialization</strong></td>
+                    <td>Experts can master specific nuances (e.g., one expert for math, another for creative writing).</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Use Cases in Modern AI</h2>
+    <p class="detail-description">
+        <strong>Natural Language Processing:</strong> Modern LLMs use MoE to maintain high-quality responses across diverse languages and technical topics.
+    </p>
+    <p class="detail-description">
+        <strong>Recommendation Systems:</strong> Routing users to experts that specialize in their specific niche preferences (e.g., "Horror Movies" expert vs. "Documentary" expert).
+    </p>
+    <p class="detail-description">
+        <strong>Image Recognition:</strong> Different experts specialize in identifying different visual features like textures, shapes, or specific object categories.
+    </p>
+
+    <p style="margin-top: 40px; font-style: italic; color: #666; border-top: 1px solid #eee; padding-top: 10px;">
+        Next Topic: Learn about <strong>Sparse Activation</strong> and how it powers MoE efficiency.
+    </p>
+</div>
+
+</body>
+</html>

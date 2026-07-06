@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shallow Neural Networks</title>
+    <link rel="stylesheet" href="Style.css">
+
+    <script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        options: {
+            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<h2>Neural Networks</h2>
+
+<div class="description-box">
+    <h3>The Architecture of Intelligence</h3>
+    <p>
+        A Neural Network is a powerful Machine Learning model designed to identify complex patterns in data. 
+        It is the foundational technology behind modern AI, widely used for <strong>Pattern Recognition</strong> (such as identifying objects in photos), 
+        <strong>Image Generation</strong>, and <strong>Natural Language Processing</strong> (like predicting the next word in a sentence).
+    </p>
+    <p>
+        A Neural Network is one of the few Machine Learning models capable of handling massive amounts of high-dimensional data, 
+        such as millions of pixels in an image or billions of tokens in text. Modern Neural Networks are significantly larger than early AI models, both in terms of 
+        <strong>learnable parameters</strong> (the weights) and the <strong>depth of internal processing</strong> (the number of hidden layers).
+    </p>
+    <p> 
+        Modern Neural Networks require massive computational infrastructure. Training these models on a standard CPU (Central Processing Unit) would take years because CPUs are designed for general-purpose tasks. Instead, modern AI relies on GPUs (Graphics Processing Units) and specialized chips like TPUs (Tensor Processing Units). These processors are built for massive parallelism, allowing them to perform thousands of mathematical calculations simultaneously.
+    </p>
+</div>
+
+<div class="description-box">
+    <h3>From Linear Regression to Stacks of Logistic Units</h3>
+    <p>
+        Linear and Logistic Regression, as seen in earlier chapters, take inputs, multiply them by weights, and produce an output. 
+        A Neural Network is a "multi-layer" stack of linear and logistic regression units. This multi-layer structure allows the model to process data in stages, where each layer leads to the creation of new <strong>features</strong>.
+    </p>
+
+    <div class="formula-box" style="text-align: center; margin: 20px 0; background: #f8fafc; padding: 15px; border-radius: 8px;">
+        $$n_1^{(2)} = \sigma\left(W_{11}^{(1)}n_1^{(1)} + b_1^{(2)}\right), \qquad n_1^{(3)} = \sigma\left(W_{11}^{(2)}n_1^{(2)} + b_1^{(3)}\right)$$
+    </div>
+
+    <div class="plot-container">
+        <svg width="850" height="650" viewBox="0 0 850 650" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+            <defs>
+                <marker id="arrow" markerWidth="5" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                    <polygon points="0 0, 5 2.5, 0 5" fill="#cbd5e0" />
+                </marker>
+            </defs>
+
+            <text x="120" y="30" text-anchor="middle" font-weight="bold" font-size="16" fill="#0056b3">L=0 (Input)</text>
+            <text x="340" y="30" text-anchor="middle" font-weight="bold" font-size="16" fill="#0056b3">L=1 (Hidden)</text>
+            <text x="560" y="30" text-anchor="middle" font-weight="bold" font-size="16" fill="#0056b3">L=2 (Hidden)</text>
+            <text x="760" y="30" text-anchor="middle" font-weight="bold" font-size="16" fill="#0056b3">L=3 (Output)</text>
+
+            <g stroke="#f0f4f8" stroke-width="1" marker-end="url(#arrow)">
+                <line x1="120" y1="80" x2="310" y2="150" stroke="#ecc94b" stroke-opacity="0.7" />
+                <line x1="340" y1="80" x2="530" y2="150" stroke="#ecc94b" stroke-opacity="0.7" />
+                <line x1="560" y1="80" x2="720" y2="250" stroke="#ecc94b" stroke-opacity="0.7" />
+                <line x1="120" y1="200" x2="310" y2="150" /> <line x1="120" y1="200" x2="310" y2="250" />
+                <line x1="120" y1="300" x2="310" y2="350" /> <line x1="120" y1="400" x2="310" y2="450" />
+                <line x1="340" y1="150" x2="530" y2="150" /> <line x1="340" y1="450" x2="530" y2="450" />
+                <line x1="560" y1="150" x2="710" y2="250" /> <line x1="560" y1="450" x2="710" y2="400" />
+            </g>
+
+            <g stroke="#0056b3" stroke-width="2">
+                <circle cx="120" cy="80" r="22" fill="#fffdf5" stroke="#d4af37" stroke-dasharray="4" />
+                <text x="120" y="84" text-anchor="middle" font-size="11" fill="#d4af37" font-weight="bold">+1</text>
+                <text x="120" y="50" text-anchor="middle" font-size="10" fill="#d4af37">b<tspan baseline-shift="super">(1)</tspan></text>
+                <circle cx="120" cy="200" r="28" fill="#f0f7ff" />
+                <circle cx="120" cy="300" r="28" fill="#f0f7ff" />
+                <circle cx="120" cy="400" r="28" fill="#f0f7ff" />
+            </g>
+            <g font-size="12" text-anchor="middle" fill="#0056b3" font-weight="bold">
+                <text x="120" y="204">a<tspan baseline-shift="super">(0)</tspan><tspan baseline-shift="sub">1</tspan></text>
+                <text x="120" y="304">a<tspan baseline-shift="super">(0)</tspan><tspan baseline-shift="sub">2</tspan></text>
+                <text x="120" y="404">a<tspan baseline-shift="super">(0)</tspan><tspan baseline-shift="sub">3</tspan></text>
+            </g>
+
+            <g fill="#fff" stroke="#0056b3" stroke-width="1.5">
+                <circle cx="340" cy="80" r="22" fill="#fffdf5" stroke="#d4af37" stroke-dasharray="4" />
+                <circle cx="340" cy="150" r="38" /> <circle cx="340" cy="250" r="32" />
+                <circle cx="340" cy="350" r="32" /> <circle cx="340" cy="450" r="32" />
+            </g>
+            <text x="340" y="84" text-anchor="middle" font-size="11" fill="#d4af37" font-weight="bold">+1</text>
+            <g font-size="8" text-anchor="middle" fill="#333">
+                <text x="340" y="145">z<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">1</tspan>=Σw·a+b</text>
+                <text x="340" y="158" font-weight="bold" fill="#0056b3">a<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">1</tspan>=σ(z)</text>
+                <text x="340" y="253">a<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">2</tspan></text>
+                <text x="340" y="353">a<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">3</tspan></text>
+                <text x="340" y="453">a<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">4</tspan></text>
+            </g>
+
+            <g fill="#fff" stroke="#0056b3" stroke-width="1.5">
+                <circle cx="560" cy="80" r="22" fill="#fffdf5" stroke="#d4af37" stroke-dasharray="4" />
+                <circle cx="560" cy="150" r="32" /> <circle cx="560" cy="250" r="32" />
+                <circle cx="560" cy="350" r="32" /> <circle cx="560" cy="450" r="32" />
+            </g>
+            <text x="560" y="84" text-anchor="middle" font-size="11" fill="#d4af37" font-weight="bold">+1</text>
+            <g font-size="9" text-anchor="middle" fill="#0056b3">
+                <text x="560" y="153">a<tspan baseline-shift="super">(2)</tspan><tspan baseline-shift="sub">1</tspan></text>
+                <text x="560" y="253">a<tspan baseline-shift="super">(2)</tspan><tspan baseline-shift="sub">2</tspan></text>
+                <text x="560" y="353">a<tspan baseline-shift="super">(2)</tspan><tspan baseline-shift="sub">3</tspan></text>
+                <text x="560" y="453">a<tspan baseline-shift="super">(2)</tspan><tspan baseline-shift="sub">4</tspan></text>
+            </g>
+
+            <g font-size="10" fill="#718096">
+                <text x="210" y="145">w<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">11</tspan></text>
+                <text x="180" y="110" fill="#b8860b">w<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">10</tspan></text>
+                <text x="440" y="145">w<tspan baseline-shift="super">(2)</tspan><tspan baseline-shift="sub">11</tspan></text>
+            </g>
+
+            <g fill="#fffafa" stroke="#e53e3e" stroke-width="2">
+                <circle cx="760" cy="250" r="50" />
+                <circle cx="760" cy="400" r="50" />
+            </g>
+            <g text-anchor="middle" font-size="10" fill="#e53e3e">
+                <text x="760" y="240">e<tspan baseline-shift="super">z<tspan baseline-shift="super">(3)</tspan><tspan baseline-shift="sub">1</tspan></tspan></text>
+                <line x1="735" y1="245" x2="785" y2="245" stroke="#e53e3e" stroke-width="1"/>
+                <text x="760" y="260">Σe<tspan baseline-shift="super">z<tspan baseline-shift="super">(3)</tspan><tspan baseline-shift="sub">k</tspan></tspan></text>
+                <text x="830" y="255" font-weight="bold" font-size="13">→ ŷ<tspan baseline-shift="sub">1</tspan></text>
+                <text x="760" y="390">e<tspan baseline-shift="super">z<tspan baseline-shift="super">(3)</tspan><tspan baseline-shift="sub">2</tspan></tspan></text>
+                <line x1="735" y1="395" x2="785" y2="395" stroke="#e53e3e" stroke-width="1"/>
+                <text x="760" y="410">Σe<tspan baseline-shift="super">z<tspan baseline-shift="super">(3)</tspan><tspan baseline-shift="sub">k</tspan></tspan></text>
+                <text x="830" y="405" font-weight="bold" font-size="13">→ ŷ<tspan baseline-shift="sub">2</tspan></text>
+            </g>
+        </svg>
+        </div>
+</div>
+
+<div class="description-box" style="border-left: 5px solid #3182ce;">
+    <h3>The Learning Cycle</h3>
+    <p>Training a Neural Network broadly involves four distinct phases. We will explore the mechanics of each phase in the following sections:</p>
+    <ol class="process-list">
+        <li><strong>Forward Pass:</strong> Data is fed through the network to generate predictions (detailed in Sections 1-4).</li>
+        <li><strong>Loss Calculation:</strong> A function measures how far off the predictions were from the true labels (Section 5).</li>
+        <li><strong>Backpropagation:</strong> The error is propagated backward to compute gradients.</li>
+        <li><strong>Weight Update:</strong> An optimizer (like Adam) uses gradients to update weights.</li>
+    </ol>
+</div>
+
+<div class="tutorial-content">
+    <ul>
+        <li class="section-item">
+            <span class="section-title">1. The Inputs (Layer L=0): The Feature Vector</span>
+            <p>The first layer is where your "raw features" live. Each neuron ($n_1, n_2, n_3$) represents a measurable attribute, like "Tail Length" or "Whiskers" in a cat classifier. These are the only values grounded in direct reality before the abstraction begins.</p>
+        </li>
+
+        <li class="section-item">
+            <span class="section-title">2. The Weights ($W_{jk}^{(l)}$): Trust and Influence</span>
+            <p>Weights represent the "influence" one neuron has on the next. A positive weight is a vote of confidence, while a negative weight acts as a "veto."</p>
+        </li>
+
+        <li class="section-item">
+            <span class="section-title">3. The Weighted Sum: The Linear Core</span>
+            <p>Before the activation happens, each neuron performs a linear regression step, accumulating incoming signals plus a <strong>Bias ($b$)</strong> which acts as the intercept:</p>
+            <div class="math-display">
+                $$z_j^{(l)} = \sum_{k} (w_{jk}^{(l-1)} \cdot n_k^{(l-1)}) + b_j^{(l)}$$
+            </div>
+        </li>
+
+        <li class="section-item">
+            <span class="section-title">4. The Activation Function: The Non-Linear Step</span>
+            <p>By using functions like <strong>ReLU</strong> or <strong>Sigmoid</strong>, we allow the network to "bend" the rules, enabling it to learn relationships that aren't just straight lines. These hidden layers automatically combine raw inputs into high-level features.</p>
+        </li>
+
+        <li class="section-item">
+            <span class="section-title">5. The Verdict: Softmax and Loss</span>
+            <p>The final layer scores are squashed by a <strong>Softmax Layer</strong> to produce probabilities. If the network predicts "90% Cat" when the truth is "Dog," the <strong>Loss Function</strong> (like Cross-Entropy) generates a penalty that guides the next update.</p>
+        </li>
+    </ul>
+</div>
+
+<div class="description-box">
+    <h3>Mathematical Deep Dives</h3>
+    
+    <div class="section-item">
+        <span class="section-title">The Calculus of ReLU: Why the Gradient is 1</span>
+        <p>For all values where $z > 0$, ReLU acts as the identity function ($f(z) = z$), meaning its derivative is exactly 1. This allows the "error signal" to pass through the neuron unchanged during training, though if $z < 0$, the gradient becomes 0—a state known as the "Dying ReLU" problem.</p>
+    </div>
+
+    <div style="border-left: 5px solid #2ecc71; background: #f0fff4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h4 style="margin-top: 0; color: #27ae60;">Architectural Math: Parameter Counting</h4>
+        <p>To calculate the complexity of a Dense Layer, we multiply the input dimension by the output dimension.</p>
+        <div style="background: white; padding: 10px; border: 1px dashed #27ae60; font-family: monospace;">
+            Input Size ($L_1$): n <br>
+            Output Size ($L_2$): n - 4 <br>
+            -------------------------- <br>
+            <strong>Connection Count:</strong> n * (n - 4) = n² - 4n
+        </div>
+        <p style="font-size: 0.85rem; margin-top: 15px;">
+            <em>Note:</em> In Large Language Models, $n$ is often 4096 or higher, leading to millions of connections per layer.
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

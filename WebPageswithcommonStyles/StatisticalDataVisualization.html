@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial</title>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']]
+            }
+        };
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Data Visualization Catalog</h1>
+        <p>A comprehensive guide to statistical diagrams for data interpretation.</p>
+    </header>
+	
+	<div class="plot-card" id="bar">
+        <div class="plot-image-container">
+            <img src="BarDiagram.png" alt="Clustered Bar Diagram">
+        </div>
+        <div class="plot-content">
+            <span class="stat-tag">Comparative Analysis</span>
+            <h2 class="plot-title">Clustered Bar Diagram</h2>
+            <p class="plot-description">This diagram places bars for different entities side-by-side, making it easy to compare specific values, such as the growth of Company A versus the decline of Company B.</p>
+        </div>
+    </div>
+<div class="plot-image-container">
+            <img src="subdividedbarDiagram.png" alt="Subdivided Bar Diagram">
+        </div>
+        <div class="plot-content">
+            <span class="stat-tag">Component Analysis</span>
+            <h2 class="plot-title">Subdivided Bar Diagram</h2>
+            <p class="plot-description">
+                A <strong>Subdivided Bar Diagram</strong> (also called a Stacked Bar Chart) represents the total magnitude of a category while breaking it down into its constituent parts. It is perfect for showing how different segments contribute to a whole over time.
+            </p>
+            <p><strong>Insight:</strong> In the 1972-1974 cost data, we can see that while "Wages" and "Polishing" remained relatively stable, "Other Costs" surged in 1974, driving the total expenditure up significantly.</p>
+        </div>
+	<div class="plot-card" id="deviation">
+        <div class="plot-image-container">
+            <img src="deviationbar.png" alt="Deviation Bar Diagram">
+        </div>
+        <div class="plot-content">
+            <span class="stat-tag">Net Variance</span>
+            <h2 class="plot-title">Deviation Bar Diagram</h2>
+            <p class="plot-description">
+                A <strong>Deviation Bar Diagram</strong> is specifically used to visualize the net difference between two related variables. By using a central baseline at zero, it clearly distinguishes between positive outcomes (surpluses) and negative outcomes (deficits).
+            </p>
+            <p><strong>Statistical Insight:</strong> In this trade dataset, the diagram reveals a volatile trend. While 1970-71 and 1972-73 enjoyed identical surpluses of +20, the year 1973-74 saw a massive trade deficit of -75, where imports were double the value of exports.</p>
+        </div>
+    </div>	
+    <div class="plot-card">
+        <div class="plot-image-container">
+            <img src="PieImage.png" alt="Pie Diagram">
+        </div>
+        <div class="plot-content">
+            <span class="stat-tag">Categorical</span>
+            <h2 class="plot-title">Pie Diagram</h2>
+            <p class="plot-description">
+                The Pie Diagram is a circular graphic that represents data as slices of a whole. It is most effective when showing <strong>composition</strong> or <strong>proportions</strong> among a small number of categories. Mathematically, the arc length of each slice is proportional to the quantity it represents.
+            </p>
+        </div>
+    </div>
+
+    <div class="plot-card">
+        <div class="plot-image-container">
+            <img src="BoxPlot.png" alt="Box Plot">
+        </div>
+        <div class="plot-content">
+            <span class="stat-tag">Distribution</span>
+            <h2 class="plot-title">Box Plot (Whisker Plot)</h2>
+            <p class="plot-description">
+                A Box Plot provides a visual summary of the <strong>central tendency</strong> and <strong>dispersion</strong> of a dataset. It displays the median, quartiles ($Q1$ and $Q3$), and whiskers that extend to show the range. Points outside the whiskers are identified as statistical outliers.
+            </p>
+        </div>
+    </div>
+
+    <div class="plot-card">
+        <div class="plot-image-container">
+            <img src="Contourplot.png" alt="Contour Plot">
+        </div>
+        <div class="plot-content">
+            <span class="stat-tag">Multivariate</span>
+            <h2 class="plot-title">Contour Plot</h2>
+            <p class="plot-description">
+                Contour Plots are used to visualize a <strong>three-dimensional surface</strong> on a two-dimensional plane. By connecting points of equal value with lines (contours), it reveals the topology of the data, such as peaks, valleys, and gradients in a continuous field.
+            </p>
+        </div>
+    </div>
+
+    <div class="plot-card">
+        <div class="plot-image-container">
+            <img src="HistogramPlot.png" alt="Histogram with KDE">
+        </div>
+        <div class="plot-content">
+            <span class="stat-tag">Density</span>
+            <h2 class="plot-title">Histogram with KDE</h2>
+            <p class="plot-description">
+                This dual-layer plot combines a <strong>Histogram</strong> (binned frequency counts) with a <strong>Kernel Density Estimate (KDE)</strong> curve. While the bars show exact counts, the KDE provides a smoothed estimate of the probability density function, making it easier to identify the distribution's skewness and modality.
+            </p>
+        </div>
+    </div>
+	<div class="plot-card" id="ogive">
+        <div class="plot-image-container">
+            <img src="ogive.png" alt="Ogive Curve">
+        </div>
+        <div class="plot-content">
+            <span class="stat-tag">Cumulative Frequency</span>
+            <h2 class="plot-title">Ogive Curve</h2>
+            <p class="plot-description">
+                An <strong>Ogive</strong> (or Cumulative Frequency Polygon) is used to determine the number of data points below or above a specific value. It is constructed by plotting cumulative frequency on the y-axis against class boundaries on the x-axis. 
+            </p>
+            <p><strong>Key Use:</strong> Finding the <strong>Median</strong> and <strong>Quartiles</strong> graphically by identifying the x-values corresponding to 50% and 25%/75% of the total frequency.</p>
+        </div>
+    </div>
+
+    <div class="plot-card" id="lorenz">
+        <div class="plot-image-container">
+            <img src="lorenz.png" alt="Lorenz Curve">
+        </div>
+        <div class="plot-content">
+            <span class="stat-tag">Inequality & Distribution</span>
+            <h2 class="plot-title">Lorenz Curve</h2>
+            <p class="plot-description">
+                The <strong>Lorenz Curve</strong> is a graphical representation of the distribution of income or wealth. It plots the cumulative percentage of total income against the cumulative percentage of the population.
+            </p>
+            <p><strong>Interpretation:</strong> The "Line of Equality" (a 45° diagonal) represents perfect distribution. The area between this line and the Lorenz curve is used to calculate the <strong>Gini Coefficient</strong>.</p>
+        </div>
+    </div>
+
+    <div class="plot-card">
+        <div class="plot-card">
+        <div class="plot-image-container">
+            <img src="violin_plot.png" alt="Violin Plot">
+        </div>
+        <div class="plot-content">
+            <span class="stat-tag">Comparative</span>
+            <h2 class="plot-title">Violin Plot</h2>
+            <p class="plot-description">
+                Violin Plots are an advanced alternative to box plots. They feature a <strong>rotated kernel density plot</strong> on each side, representing the data's density at different values. This allows you to see the "shape" of the distribution, which is particularly useful when data is bimodal (has two peaks).
+            </p>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

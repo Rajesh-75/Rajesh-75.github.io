@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Full Encoder–Decoder Transformer</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:        #0f172a;
+    --ink-mid:    #334155;
+    --ink-soft:   #64748b;
+    --page:       #f8fafc;
+    --card:       #ffffff;
+    --border:     #e2e8f0;
+    --accent:     #2563eb;
+
+    --teal-bg:    #e1f5ee; --teal-bdr: #1d9e75; --teal-txt: #085041;
+    --coral-bg:   #faece7; --coral-bdr:#993c1d; --coral-txt:#4a1b0c;
+    --purple-bg:  #eeedfe; --purple-bdr:#534ab7;--purple-txt:#26215c;
+    --amber-bg:   #faeeda; --amber-bdr:#ba7517; --amber-txt:#412402;
+    --blue-bg:    #e6f1fb; --blue-bdr: #185fa5; --blue-txt: #042c53;
+    --red-bg:     #fef2f2; --red-bdr:  #ef4444; --red-txt:  #7f1d1d;
+    --gray-bg:    #f1efe8; --gray-bdr: #b4b2a9; --gray-txt: #2c2c2a;
+    --green-bg:   #eaf3de; --green-bdr:#3b6d11; --green-txt:#173404;
+    --pink-bg:    #fbeaf0; --pink-bdr: #993556; --pink-txt: #4b1528;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--ink-mid);
+    background: var(--page);
+  }
+
+  .page-wrap { max-width: 980px; margin: 0 auto; padding: 0 36px 80px; }
+
+  /* ── Header ── */
+  .page-header {
+    padding: 52px 0 32px;
+    border-bottom: 3px solid var(--accent);
+    margin-bottom: 56px;
+  }
+  .eyebrow {
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 10px;
+  }
+  .page-header h1 {
+    font-size: 2rem; font-weight: 800;
+    color: var(--ink); line-height: 1.15;
+  }
+  .page-header .subtitle {
+    margin-top: 12px; color: var(--ink-soft);
+    font-size: 0.97rem; max-width: 700px;
+  }
+
+  /* ── Sections ── */
+  .section { margin-bottom: 68px; }
+  h2 {
+    font-size: 1.28rem; font-weight: 700;
+    color: var(--ink); margin-bottom: 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .sec-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    background: var(--accent); color: #fff;
+    border-radius: 7px; font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
+  }
+  h3 { font-size: 1.02rem; font-weight: 700; color: #1e3a8a; margin: 26px 0 10px; }
+  h4 { font-size: 0.95rem; font-weight: 700; color: var(--ink); margin: 18px 0 8px; }
+  p  { margin-bottom: 14px; color: var(--ink-mid); }
+  ul, ol { padding-left: 22px; margin-bottom: 14px; color: var(--ink-mid); }
+  li { margin-bottom: 6px; }
+  strong { color: var(--ink); }
+  code {
+    background: #e2e8f0; border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'Fira Code','Courier New',monospace;
+    font-size: 0.86em; color: #1e3a8a;
+  }
+
+  /* ── Callouts ── */
+  .callout {
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px; margin: 18px 0;
+    border-left: 4px solid;
+  }
+  .callout-title { font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; }
+  .cl-blue   { background:var(--blue-bg);   border-color:var(--blue-bdr);   color:var(--blue-txt); }
+  .cl-teal   { background:var(--teal-bg);   border-color:var(--teal-bdr);   color:var(--teal-txt); }
+  .cl-amber  { background:var(--amber-bg);  border-color:var(--amber-bdr);  color:var(--amber-txt); }
+  .cl-red    { background:var(--red-bg);    border-color:var(--red-bdr);    color:var(--red-txt); }
+  .cl-purple { background:var(--purple-bg); border-color:var(--purple-bdr); color:var(--purple-txt); }
+  .cl-coral  { background:var(--coral-bg);  border-color:var(--coral-bdr);  color:var(--coral-txt); }
+  .cl-green  { background:var(--green-bg);  border-color:var(--green-bdr);  color:var(--green-txt); }
+  .cl-pink   { background:var(--pink-bg);   border-color:var(--pink-bdr);   color:var(--pink-txt); }
+
+  /* ── Figure ── */
+  .fig-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 20px 16px;
+    margin: 24px 0;
+  }
+  .fig-wrap svg { width: 100%; height: auto; display: block; }
+  .fig-caption {
+    font-style: italic; color: var(--ink-soft);
+    font-size: 0.82rem; margin-top: 12px;
+    text-align: center; line-height: 1.5;
+  }
+
+  /* ── Math ── */
+  .math-block {
+    background: #f1f5f9; border-radius: 8px;
+    padding: 14px 20px; margin: 16px 0;
+    overflow-x: auto; text-align: center;
+  }
+
+  /* ── Table ── */
+  .cmp-table { width:100%; border-collapse:collapse; margin:20px 0; font-size:0.88rem; }
+  .cmp-table thead tr { background:#1e3a8a; color:#fff; }
+  .cmp-table thead th { padding:11px 14px; text-align:left; }
+  .cmp-table tbody tr:nth-child(even) { background:#f1f5f9; }
+  .cmp-table tbody tr:nth-child(odd)  { background:#fff; }
+  .cmp-table tbody td { padding:10px 14px; border-bottom:1px solid var(--border); vertical-align:top; }
+
+  /* ── Divider ── */
+  hr.divider { border:none; border-top:2px solid var(--border); margin:60px 0; }
+
+  /* ── Bridge ── */
+  .bridge {
+    background: linear-gradient(135deg, var(--blue-bg) 0%, var(--purple-bg) 100%);
+    border: 1px solid #c7d2fe; border-radius: 10px;
+    padding: 20px 24px; margin: 28px 0;
+    color: #312e81; font-size: 0.93rem;
+  }
+
+  /* ── highlight label strip ── */
+  .label-strip {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 4px;
+    font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .ls-green  { background: var(--teal-bg);   color: var(--teal-txt); }
+  .ls-purple { background: var(--purple-bg); color: var(--purple-txt); }
+  .ls-amber  { background: var(--amber-bg);  color: var(--amber-txt); }
+
+  @media (max-width: 640px) {
+    .page-wrap { padding: 0 16px 48px; }
+    .page-header h1 { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- ══ HEADER ══ -->
+  <div class="page-header">
+    <div class="eyebrow">Deep Learning Series · Transformers</div>
+    <h1>The Full Encoder–Decoder Transformer</h1>
+    <p class="subtitle">
+      The original 2017 architecture from "Attention Is All You Need" — combining a
+      bidirectional Encoder stack with an autoregressive Decoder stack, bridged by
+      cross-attention. The architecture that replaced RNN Seq2Seq for machine translation
+      and every Seq2Seq task since.
+    </p>
+  </div>
+
+
+  <!-- ══ SECTION 1: WHY ══ -->
+  <div class="section">
+    <h2><span class="sec-num">1</span> Why a Full Encoder–Decoder?</h2>
+
+    <p>
+      In earlier sessions we studied the RNN Encoder–Decoder architecture for machine
+      translation. The Encoder read the source sentence and compressed it into a single
+      context vector. The Decoder received that vector and generated the translation
+      word by word. The fatal weakness was the <strong>context vector bottleneck</strong>
+      — all source information had to fit into one fixed-size vector, which degraded badly
+      for long sentences.
+    </p>
+    <p>
+      Bahdanau Attention (2015) partially fixed this by letting the Decoder attend to all
+      Encoder hidden states at each decoding step. But the Encoder was still a sequential
+      LSTM, processing one token at a time.
+    </p>
+    <p>
+      The full Encoder–Decoder Transformer (Vaswani et al., 2017) solved both problems at once:
+    </p>
+
+    <div class="callout cl-teal">
+      <div class="callout-title">The two problems solved simultaneously</div>
+      <ul style="margin-top:6px;">
+        <li>
+          <strong>Sequential bottleneck removed:</strong> the Encoder now processes all
+          source tokens in parallel using Self-Attention — no more one-word-at-a-time RNN.
+        </li>
+        <li>
+          <strong>Context vector bottleneck removed:</strong> the Decoder attends directly
+          to all Encoder output vectors at every generation step via
+          <strong>Cross-Attention</strong> — no more single fixed-size summary vector.
+        </li>
+      </ul>
+    </div>
+
+    <table class="cmp-table">
+      <thead>
+        <tr><th>Architecture</th><th>Encoder</th><th>Context passed to Decoder</th><th>Bottleneck?</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>RNN Seq2Seq (2014)</td>
+          <td>Sequential LSTM</td>
+          <td>Single fixed vector h_T</td>
+          <td style="color:#991b1b;font-weight:700;">Yes — severe</td>
+        </tr>
+        <tr>
+          <td>Bahdanau Attention (2015)</td>
+          <td>Sequential LSTM</td>
+          <td>Dynamic weighted sum of all h states</td>
+          <td style="color:#92400e;font-weight:700;">Partial — encoder still sequential</td>
+        </tr>
+        <tr>
+          <td>Transformer (2017)</td>
+          <td>Parallel Self-Attention</td>
+          <td>All Encoder output vectors via Cross-Attention</td>
+          <td style="color:#166534;font-weight:700;">None</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 2: ENCODER STACK ══ -->
+  <div class="section">
+    <h2><span class="sec-num">2</span> The Encoder Stack</h2>
+
+    <p>
+      The Encoder in the full Transformer is identical to the Encoder-only architecture
+      (BERT-style) you studied in the previous tutorial. It reads the full source sentence
+      in <strong>parallel</strong>, using bidirectional Self-Attention so every token can
+      attend to every other token simultaneously.
+    </p>
+    <p>
+      After passing through N identical Encoder layers, the output is a set of
+      <strong>contextual vectors</strong> — one per source token — that carry rich,
+      bidirectional understanding of the source sentence. These vectors are passed
+      to every Decoder layer via Cross-Attention.
+    </p>
+
+    <div class="fig-wrap">
+      <svg viewBox="0 0 680 400" role="img">
+        <title>Encoder stack of the full Transformer</title>
+        <desc>Source tokens flow through embedding plus positional encoding into a stack of N encoder layers each containing bidirectional multi-head self-attention and a feed-forward network with residual connections, producing contextual encoder output vectors that feed into every decoder layer via cross-attention.</desc>
+        <defs>
+          <marker id="ae" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- Source input -->
+        <rect x="30" y="336" width="220" height="38" rx="6" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#2c2c2a" x="140" y="355" text-anchor="middle" dominant-baseline="central">Source: "The cat sat on the mat"</text>
+        <line x1="140" y1="336" x2="140" y2="308" stroke="#64748b" stroke-width="1.2" marker-end="url(#ae)"/>
+
+        <!-- Embedding -->
+        <rect x="30" y="262" width="220" height="46" rx="8" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#444441" x="140" y="279" text-anchor="middle" dominant-baseline="central">Embedding + positional encoding</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#5f5e5a" x="140" y="297" text-anchor="middle" dominant-baseline="central">all 6 tokens converted in parallel</text>
+        <line x1="140" y1="262" x2="140" y2="232" stroke="#64748b" stroke-width="1.2" marker-end="url(#ae)"/>
+
+        <!-- Encoder stack -->
+        <rect x="20" y="32" width="240" height="200" rx="14" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#042c53" x="140" y="56" text-anchor="middle" dominant-baseline="central">Encoder stack  ×N layers</text>
+
+        <!-- Self-attention sublayer -->
+        <rect x="38" y="72" width="204" height="56" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#085041" x="140" y="92" text-anchor="middle" dominant-baseline="central">Bidirectional self-attention</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="140" y="110" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+        <line x1="140" y1="128" x2="140" y2="146" stroke="#1d9e75" stroke-width="1" marker-end="url(#ae)"/>
+
+        <!-- FFN sublayer -->
+        <rect x="38" y="148" width="204" height="56" rx="8" fill="#faece7" stroke="#993c1d" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#4a1b0c" x="140" y="168" text-anchor="middle" dominant-baseline="central">Feed-forward network</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#712b13" x="140" y="186" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+
+        <line x1="140" y1="204" x2="140" y2="226" stroke="#64748b" stroke-width="1" marker-end="url(#ae)"/>
+        <rect x="38" y="206" width="204" height="24" rx="5" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#042c53" x="140" y="218" text-anchor="middle" dominant-baseline="central">encoder output vectors (one per token)</text>
+
+        <!-- Arrow to decoder with label -->
+        <line x1="262" y1="130" x2="360" y2="130" stroke="#185fa5" stroke-width="2" marker-end="url(#ae)" stroke-dasharray="0"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#185fa5" x="310" y="120" text-anchor="middle">to every</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#185fa5" x="310" y="134" text-anchor="middle">decoder layer</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#185fa5" x="310" y="148" text-anchor="middle">via cross-attention</text>
+
+        <!-- Right panel: key points -->
+        <rect x="368" y="32" width="280" height="340" rx="12" fill="#eeedfe" stroke="#534ab7" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#26215c" x="508" y="60" text-anchor="middle" dominant-baseline="central">What the Encoder produces</text>
+
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="388" y="92" dominant-baseline="central">✓  one vector per source token</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="388" y="116" dominant-baseline="central">✓  bidirectional — full sentence visible</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="388" y="140" dominant-baseline="central">✓  parallel — no sequential loop</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="388" y="164" dominant-baseline="central">✓  rich contextual representation</text>
+
+        <line x1="388" y1="184" x2="628" y2="184" stroke="#534ab7" stroke-width="0.5" opacity="0.4"/>
+
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#26215c" x="508" y="208" text-anchor="middle" dominant-baseline="central">For "The cat sat on the mat"</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="388" y="234" dominant-baseline="central">6 tokens → 6 output vectors</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="388" y="256" dominant-baseline="central">"cat" vector knows it sat, knows mat</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="388" y="278" dominant-baseline="central">"mat" vector knows cat sat on it</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="388" y="300" dominant-baseline="central">every vector has seen all others</text>
+
+        <line x1="388" y1="318" x2="628" y2="318" stroke="#534ab7" stroke-width="0.5" opacity="0.4"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#534ab7" x="508" y="346" text-anchor="middle" dominant-baseline="central">these 6 vectors become K and V</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#534ab7" x="508" y="362" text-anchor="middle" dominant-baseline="central">in every Decoder cross-attention layer</text>
+      </svg>
+      <p class="fig-caption">
+        <strong>Figure 1:</strong> Encoder stack of the full Transformer.
+        All 6 source tokens are processed in parallel. The 6 output vectors
+        feed into every Decoder layer as the Keys and Values in cross-attention.
+      </p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 3: CROSS-ATTENTION ══ -->
+  <div class="section">
+    <h2><span class="sec-num">3</span> Cross-Attention — The Bridge</h2>
+
+    <p>
+      Cross-Attention is the most important new concept in the full Encoder–Decoder
+      Transformer. It is the mechanism that connects the two stacks — allowing the
+      Decoder to look directly at the Encoder's output at every generation step.
+      This is what eliminates the context vector bottleneck entirely.
+    </p>
+
+    <h3>How cross-attention differs from self-attention</h3>
+
+    <div class="callout cl-amber">
+      <div class="callout-title">The Q, K, V sources are different</div>
+      In <strong>self-attention</strong>, Q, K, and V all come from the same sequence
+      (the Decoder's own tokens attend to each other).<br><br>
+      In <strong>cross-attention</strong>, the split is:
+      <ul style="margin-top:8px;">
+        <li><strong>Q (Query)</strong> — comes from the <strong>Decoder</strong>'s current hidden state: "what am I looking for from the source?"</li>
+        <li><strong>K (Key)</strong> — comes from the <strong>Encoder</strong>'s output vectors: "what does each source token contain?"</li>
+        <li><strong>V (Value)</strong> — comes from the <strong>Encoder</strong>'s output vectors: "what information does each source token provide?"</li>
+      </ul>
+    </div>
+
+    <div class="math-block">
+      $$\text{CrossAttention}(Q_\text{dec},\; K_\text{enc},\; V_\text{enc}) =
+        \text{softmax}\!\left(\frac{Q_\text{dec} \cdot K_\text{enc}^\top}{\sqrt{d_k}}\right) \cdot V_\text{enc}$$
+    </div>
+
+    <!-- Cross-attention diagram -->
+    <div class="fig-wrap">
+      <svg viewBox="0 0 680 440" role="img">
+        <title>Cross-attention mechanism in the Transformer Decoder</title>
+        <desc>Diagram showing cross-attention where Queries come from the Decoder current token, while Keys and Values come from the Encoder output vectors. The Decoder query attends to all 6 encoder positions and computes a weighted sum. For generating the French word chat, the attention weights are highest on the English word cat.</desc>
+        <defs>
+          <marker id="aca" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- Title -->
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#1e3a8a" x="340" y="24" text-anchor="middle">Cross-attention: generating "chat" (step 2)</text>
+
+        <!-- Encoder output vectors (top row — K and V source) -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#085041" x="340" y="56" text-anchor="middle">Encoder output vectors → become K and V</text>
+
+        <!-- 6 source token boxes -->
+        <rect x="30"  y="66" width="72" height="44" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.7"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#085041" x="66"  y="84" text-anchor="middle" dominant-baseline="central">"The"</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0f6e56" x="66"  y="100" text-anchor="middle" dominant-baseline="central">α = 0.05</text>
+
+        <rect x="116" y="66" width="72" height="44" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#085041" x="152" y="84" text-anchor="middle" dominant-baseline="central">"cat"</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#085041" x="152" y="100" text-anchor="middle" dominant-baseline="central">α = 0.72 ✓</text>
+
+        <rect x="202" y="66" width="72" height="44" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.7"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#085041" x="238" y="84" text-anchor="middle" dominant-baseline="central">"sat"</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0f6e56" x="238" y="100" text-anchor="middle" dominant-baseline="central">α = 0.10</text>
+
+        <rect x="288" y="66" width="72" height="44" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.7"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#085041" x="324" y="84" text-anchor="middle" dominant-baseline="central">"on"</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0f6e56" x="324" y="100" text-anchor="middle" dominant-baseline="central">α = 0.04</text>
+
+        <rect x="374" y="66" width="72" height="44" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.7"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#085041" x="410" y="84" text-anchor="middle" dominant-baseline="central">"the"</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0f6e56" x="410" y="100" text-anchor="middle" dominant-baseline="central">α = 0.04</text>
+
+        <rect x="460" y="66" width="72" height="44" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.7"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#085041" x="496" y="84" text-anchor="middle" dominant-baseline="central">"mat"</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0f6e56" x="496" y="100" text-anchor="middle" dominant-baseline="central">α = 0.05</text>
+
+        <!-- Attention lines from decoder query up to encoder tokens -->
+        <!-- The "cat" line is thickest -->
+        <line x1="340" y1="280" x2="66"  y2="112" stroke="#b4b2a9" stroke-width="0.8" opacity="0.5"/>
+        <line x1="340" y1="280" x2="152" y2="112" stroke="#1d9e75" stroke-width="4"   opacity="0.85"/>
+        <line x1="340" y1="280" x2="238" y2="112" stroke="#b4b2a9" stroke-width="1.4" opacity="0.6"/>
+        <line x1="340" y1="280" x2="324" y2="112" stroke="#b4b2a9" stroke-width="0.6" opacity="0.4"/>
+        <line x1="340" y1="280" x2="410" y2="112" stroke="#b4b2a9" stroke-width="0.6" opacity="0.4"/>
+        <line x1="340" y1="280" x2="496" y2="112" stroke="#b4b2a9" stroke-width="0.8" opacity="0.5"/>
+
+        <!-- Decoder query box -->
+        <rect x="262" y="248" width="156" height="56" rx="9" fill="#eeedfe" stroke="#534ab7" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#26215c" x="340" y="268" text-anchor="middle" dominant-baseline="central">Decoder Query</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="340" y="288" text-anchor="middle" dominant-baseline="central">current state: "Le" generated</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="340" y="305" text-anchor="middle" dominant-baseline="central">asking: "what comes next?"</text>
+
+        <!-- Weighted sum -->
+        <rect x="246" y="338" width="188" height="40" rx="8" fill="#faece7" stroke="#993c1d" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#4a1b0c" x="340" y="358" text-anchor="middle" dominant-baseline="central">weighted sum of Encoder V's</text>
+        <line x1="340" y1="304" x2="340" y2="336" stroke="#534ab7" stroke-width="1.2" marker-end="url(#aca)"/>
+
+        <!-- Output prediction -->
+        <rect x="270" y="396" width="140" height="36" rx="8" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#2c2c2a" x="340" y="414" text-anchor="middle" dominant-baseline="central">predict: "chat"</text>
+        <line x1="340" y1="378" x2="340" y2="394" stroke="#993c1d" stroke-width="1.5" marker-end="url(#aca)"/>
+
+        <!-- Annotation on right -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#185fa5" x="560" y="88" text-anchor="middle" dominant-baseline="central">line thickness =</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#185fa5" x="560" y="104" text-anchor="middle" dominant-baseline="central">attention weight α</text>
+        <line x1="545" y1="115" x2="534" y2="130" stroke="#185fa5" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#aca)"/>
+
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#085041" x="560" y="168" text-anchor="middle" dominant-baseline="central">"cat" gets highest</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#085041" x="560" y="184" text-anchor="middle" dominant-baseline="central">weight — it is the</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#085041" x="560" y="200" text-anchor="middle" dominant-baseline="central">direct translation</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#085041" x="560" y="216" text-anchor="middle" dominant-baseline="central">target for "chat"</text>
+      </svg>
+      <p class="fig-caption">
+        <strong>Figure 2:</strong> Cross-attention when generating "chat" (step 2).
+        The Decoder Query asks "what source token is most relevant now?"
+        The attention weight α = 0.72 on "cat" correctly identifies the alignment.
+        Line thickness encodes attention weight.
+      </p>
+    </div>
+
+    <h3>Cross-attention vs Bahdanau Attention</h3>
+    <p>
+      This is conceptually the same idea as Bahdanau Attention — the Decoder looks at
+      all Encoder hidden states and computes alignment scores. The key differences are:
+    </p>
+
+    <table class="cmp-table">
+      <thead>
+        <tr><th>Feature</th><th>Bahdanau Attention (2015)</th><th>Transformer Cross-Attention (2017)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Score function</strong></td>
+          <td>Additive MLP: <code>v · tanh(W₁s + W₂h)</code></td>
+          <td>Scaled dot-product: <code>QKᵀ / √dₖ</code></td>
+        </tr>
+        <tr>
+          <td><strong>Encoder backbone</strong></td>
+          <td>Sequential LSTM</td>
+          <td>Parallel Self-Attention</td>
+        </tr>
+        <tr>
+          <td><strong>Multi-head</strong></td>
+          <td>No — single attention</td>
+          <td>Yes — H heads in parallel</td>
+        </tr>
+        <tr>
+          <td><strong>Parallelisable</strong></td>
+          <td>No — RNN is sequential</td>
+          <td>Yes — fully parallel</td>
+        </tr>
+        <tr>
+          <td><strong>Q, K, V explicit?</strong></td>
+          <td>No — implicit in the MLP</td>
+          <td>Yes — three explicit linear projections</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 4: DECODER STACK ══ -->
+  <div class="section">
+    <h2><span class="sec-num">4</span> The Decoder Stack</h2>
+
+    <p>
+      The Decoder stack is the most complex component — each layer contains
+      <strong>three sublayers</strong> instead of two. The extra sublayer is the
+      Cross-Attention that connects to the Encoder.
+    </p>
+
+    <div class="callout cl-purple">
+      <div class="callout-title">Three sublayers per Decoder layer</div>
+      <ol style="margin-top:6px;">
+        <li>
+          <strong>Masked Multi-Head Self-Attention</strong> — the Decoder tokens
+          attend to each other, but only to past positions (causal mask). Prevents
+          peeking at future target tokens during training.
+        </li>
+        <li>
+          <strong>Multi-Head Cross-Attention</strong> — the new sublayer. Decoder
+          Queries attend to all Encoder output vectors (Keys and Values). This is
+          the direct link to the source sentence.
+        </li>
+        <li>
+          <strong>Feed-Forward Network</strong> — same as in the Encoder. Applied
+          independently to each position. Followed by residual connection and layer norm.
+        </li>
+      </ol>
+      <p style="margin-top:10px;">
+        Every sublayer is followed by a <strong>residual connection</strong> and
+        <strong>layer normalisation</strong>.
+      </p>
+    </div>
+
+    <div class="fig-wrap">
+      <svg viewBox="0 0 680 520" role="img">
+        <title>Decoder stack of the full Transformer</title>
+        <desc>Target tokens flow through embedding and positional encoding into a stack of N decoder layers. Each decoder layer contains three sublayers: masked self-attention on target tokens, cross-attention where decoder queries attend to encoder output keys and values, and a feed-forward network. Each sublayer has a residual connection and layer norm. The output goes through a linear projection and softmax to predict the next token.</desc>
+        <defs>
+          <marker id="ad" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- Target input (shifted right — teacher forcing) -->
+        <rect x="50" y="454" width="220" height="38" rx="6" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#2c2c2a" x="160" y="473" text-anchor="middle" dominant-baseline="central">Target (shifted): &lt;s&gt; "Le" "chat" "était"</text>
+        <line x1="160" y1="454" x2="160" y2="424" stroke="#64748b" stroke-width="1.2" marker-end="url(#ad)"/>
+
+        <!-- Embedding -->
+        <rect x="50" y="380" width="220" height="44" rx="8" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#444441" x="160" y="396" text-anchor="middle" dominant-baseline="central">Embedding + positional encoding</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#5f5e5a" x="160" y="414" text-anchor="middle" dominant-baseline="central">target tokens in parallel (training)</text>
+        <line x1="160" y1="380" x2="160" y2="350" stroke="#64748b" stroke-width="1.2" marker-end="url(#ad)"/>
+
+        <!-- Decoder stack outer -->
+        <rect x="38" y="30" width="244" height="320" rx="14" fill="#eeedfe" stroke="#534ab7" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#26215c" x="160" y="54" text-anchor="middle" dominant-baseline="central">Decoder stack  ×N layers</text>
+
+        <!-- Sublayer 1: Masked self-attention -->
+        <rect x="54" y="68" width="212" height="60" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#085041" x="160" y="88" text-anchor="middle" dominant-baseline="central">Masked self-attention</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0f6e56" x="160" y="106" text-anchor="middle" dominant-baseline="central">target tokens attend to past targets only</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0f6e56" x="160" y="120" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+
+        <line x1="160" y1="128" x2="160" y2="146" stroke="#1d9e75" stroke-width="1" marker-end="url(#ad)"/>
+
+        <!-- Sublayer 2: Cross-attention (highlighted) -->
+        <rect x="54" y="148" width="212" height="72" rx="8" fill="#faeeda" stroke="#ba7517" stroke-width="1.2"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#412402" x="160" y="168" text-anchor="middle" dominant-baseline="central">Cross-attention  ★</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#633806" x="160" y="186" text-anchor="middle" dominant-baseline="central">Q from Decoder · K, V from Encoder</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#633806" x="160" y="202" text-anchor="middle" dominant-baseline="central">attends to all source tokens</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#633806" x="160" y="216" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+
+        <!-- Encoder → cross-attention arrow -->
+        <line x1="38" y1="184" x2="20" y2="184" stroke="#ba7517" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#ad)"/>
+
+        <line x1="160" y1="220" x2="160" y2="238" stroke="#ba7517" stroke-width="1" marker-end="url(#ad)"/>
+
+        <!-- Sublayer 3: FFN -->
+        <rect x="54" y="240" width="212" height="58" rx="8" fill="#faece7" stroke="#993c1d" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#4a1b0c" x="160" y="260" text-anchor="middle" dominant-baseline="central">Feed-forward network</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#712b13" x="160" y="278" text-anchor="middle" dominant-baseline="central">per-position MLP</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#712b13" x="160" y="292" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+
+        <line x1="160" y1="298" x2="160" y2="320" stroke="#64748b" stroke-width="1" marker-end="url(#ad)"/>
+        <rect x="54" y="322" width="212" height="24" rx="5" fill="#eeedfe" stroke="#534ab7" stroke-width="0.4"/>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#26215c" x="160" y="334" text-anchor="middle" dominant-baseline="central">× N   (each layer has own weights)</text>
+
+        <!-- Output projection -->
+        <line x1="160" y1="350" x2="160" y2="372" stroke="#64748b" stroke-width="1.2" marker-end="url(#ad)"/>
+
+        <!-- Encoder arrow label at left -->
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#ba7517" x="10" y="172" text-anchor="middle">Encoder</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#ba7517" x="10" y="184" text-anchor="middle">output</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#ba7517" x="10" y="196" text-anchor="middle">K, V →</text>
+
+        <!-- RIGHT: output + key insight -->
+        <rect x="310" y="30" width="340" height="160" rx="12" fill="#faece7" stroke="#993c1d" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#4a1b0c" x="480" y="56" text-anchor="middle" dominant-baseline="central">Output: next token prediction</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#712b13" x="480" y="80" text-anchor="middle" dominant-baseline="central">Linear projection → vocab size</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#712b13" x="480" y="100" text-anchor="middle" dominant-baseline="central">Softmax → probability over all words</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#712b13" x="480" y="120" text-anchor="middle" dominant-baseline="central">argmax → predicted French word</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#712b13" x="480" y="144" text-anchor="middle" dominant-baseline="central">e.g.  "Le" → "chat" → "était" → &lt;/s&gt;</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#993c1d" x="480" y="164" text-anchor="middle" dominant-baseline="central">(teacher forcing during training; autoregressive at inference)</text>
+
+        <rect x="310" y="210" width="340" height="140" rx="12" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#085041" x="480" y="234" text-anchor="middle" dominant-baseline="central">Why three sublayers instead of two?</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="330" y="258" dominant-baseline="central">①  Masked self-attention — Decoder reads</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="346" y="276" dominant-baseline="central">its own partial translation so far</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="330" y="298" dominant-baseline="central">②  Cross-attention — Decoder reads the</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="346" y="316" dominant-baseline="central">full source sentence via Encoder vectors</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="330" y="338" dominant-baseline="central">③  FFN — transforms the attended context</text>
+
+        <rect x="310" y="370" width="340" height="100" rx="12" fill="#fef2f2" stroke="#ef4444" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#7f1d1d" x="480" y="394" text-anchor="middle" dominant-baseline="central">Teacher forcing during training</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#991b1b" x="480" y="416" text-anchor="middle" dominant-baseline="central">the correct target tokens are fed in</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#991b1b" x="480" y="436" text-anchor="middle" dominant-baseline="central">at every position simultaneously</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#991b1b" x="480" y="456" text-anchor="middle" dominant-baseline="central">(not waiting for the previous prediction)</text>
+      </svg>
+      <p class="fig-caption">
+        <strong>Figure 3:</strong> Decoder stack of the full Transformer.
+        Each layer has three sublayers: masked self-attention, cross-attention (marked ★),
+        and feed-forward. The cross-attention bridge (amber, dashed arrow from left)
+        receives K and V from the Encoder at every layer.
+      </p>
+    </div>
+
+    <h3>Teacher forcing during training</h3>
+    <p>
+      During training, the Decoder does not wait for its own previous prediction before
+      generating the next token. Instead, the correct target tokens are fed in at every
+      position simultaneously — this is called <strong>teacher forcing</strong>.
+      The causal mask ensures the Decoder at position t still cannot see positions t+1
+      onwards. At inference time, the model switches to truly autoregressive generation —
+      each predicted token is fed back as the next input.
+    </p>
+  </div>
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 5: FULL PIPELINE ══ -->
+  <div class="section">
+    <h2><span class="sec-num">5</span> The Full Architecture — Both Stacks Together</h2>
+
+    <p>
+      This is the complete picture: Encoder on the left processing the source in parallel,
+      Decoder on the right generating the translation step by step, connected by the
+      Cross-Attention bridge at every Decoder layer.
+    </p>
+
+    <div class="fig-wrap">
+      <svg viewBox="0 0 680 560" role="img">
+        <title>Full Encoder-Decoder Transformer architecture</title>
+        <desc>Complete architecture diagram. Left side shows the encoder: source tokens embed through positional encoding into N encoder layers each with self-attention and feed-forward, producing encoder output vectors. Right side shows the decoder: target tokens embed through positional encoding into N decoder layers each with masked self-attention, cross-attention receiving keys and values from the encoder, and feed-forward. The decoder output projects through linear and softmax to produce predicted tokens. Horizontal arrows show the cross-attention bridge between stacks.</desc>
+        <defs>
+          <marker id="af" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- ════ ENCODER (LEFT) ════ -->
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#085041" x="150" y="22" text-anchor="middle">ENCODER</text>
+        <line x1="30" y1="28" x2="270" y2="28" stroke="#1d9e75" stroke-width="0.7" stroke-dasharray="3 2"/>
+
+        <!-- Source input -->
+        <rect x="44" y="490" width="212" height="34" rx="5" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#2c2c2a" x="150" y="507" text-anchor="middle" dominant-baseline="central">Source: "The cat sat on the mat"</text>
+        <line x1="150" y1="490" x2="150" y2="464" stroke="#64748b" stroke-width="1" marker-end="url(#af)"/>
+
+        <!-- Embed enc -->
+        <rect x="44" y="426" width="212" height="38" rx="7" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#444441" x="150" y="440" text-anchor="middle" dominant-baseline="central">Embedding + positional encoding</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#5f5e5a" x="150" y="456" text-anchor="middle" dominant-baseline="central">all 6 source tokens in parallel</text>
+        <line x1="150" y1="426" x2="150" y2="396" stroke="#64748b" stroke-width="1" marker-end="url(#af)"/>
+
+        <!-- Encoder stack box -->
+        <rect x="34" y="46" width="232" height="350" rx="12" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#042c53" x="150" y="68" text-anchor="middle" dominant-baseline="central">Encoder stack  ×N</text>
+
+        <!-- Enc layer 1 detail -->
+        <rect x="50" y="82" width="200" height="50" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#085041" x="150" y="100" text-anchor="middle" dominant-baseline="central">Bidirectional self-attention</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0f6e56" x="150" y="118" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+
+        <line x1="150" y1="132" x2="150" y2="148" stroke="#1d9e75" stroke-width="1" marker-end="url(#af)"/>
+
+        <rect x="50" y="150" width="200" height="50" rx="7" fill="#faece7" stroke="#993c1d" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#4a1b0c" x="150" y="168" text-anchor="middle" dominant-baseline="central">Feed-forward network</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#712b13" x="150" y="186" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+
+        <line x1="150" y1="200" x2="150" y2="218" stroke="#64748b" stroke-width="0.8" marker-end="url(#af)"/>
+
+        <!-- Enc dots -->
+        <rect x="50" y="220" width="200" height="34" rx="7" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.4" stroke-dasharray="3 3"/>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#5f5e5a" x="150" y="237" text-anchor="middle" dominant-baseline="central">⋮  repeated × (N−1) more layers</text>
+
+        <line x1="150" y1="254" x2="150" y2="274" stroke="#64748b" stroke-width="0.8" marker-end="url(#af)"/>
+
+        <!-- Enc output -->
+        <rect x="50" y="276" width="200" height="44" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#085041" x="150" y="294" text-anchor="middle" dominant-baseline="central">Encoder output vectors</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0f6e56" x="150" y="312" text-anchor="middle" dominant-baseline="central">6 rich vectors — become K, V</text>
+
+        <!-- Enc output label in stack -->
+        <rect x="50" y="334" width="200" height="52" rx="7" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.4"/>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0c447c" x="150" y="352" text-anchor="middle" dominant-baseline="central">these vectors are passed to</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0c447c" x="150" y="368" text-anchor="middle" dominant-baseline="central">EVERY Decoder layer</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0c447c" x="150" y="382" text-anchor="middle" dominant-baseline="central">as Keys and Values in cross-attention</text>
+
+        <!-- Cross-attention bridge arrows -->
+        <line x1="266" y1="298" x2="400" y2="230" stroke="#ba7517" stroke-width="2" marker-end="url(#af)" stroke-dasharray="5 3"/>
+        <line x1="266" y1="298" x2="400" y2="310" stroke="#ba7517" stroke-width="1.5" marker-end="url(#af)" stroke-dasharray="5 3"/>
+
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#ba7517" x="335" y="258" text-anchor="middle">K, V to</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#ba7517" x="335" y="270" text-anchor="middle">all decoder</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#ba7517" x="335" y="282" text-anchor="middle">layers</text>
+
+
+        <!-- ════ DECODER (RIGHT) ════ -->
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#3c3489" x="540" y="22" text-anchor="middle">DECODER</text>
+        <line x1="400" y1="28" x2="660" y2="28" stroke="#534ab7" stroke-width="0.7" stroke-dasharray="3 2"/>
+
+        <!-- Target input -->
+        <rect x="416" y="490" width="228" height="34" rx="5" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#2c2c2a" x="530" y="507" text-anchor="middle" dominant-baseline="central">Target (shifted): &lt;s&gt; "Le" "chat"…</text>
+        <line x1="530" y1="490" x2="530" y2="464" stroke="#64748b" stroke-width="1" marker-end="url(#af)"/>
+
+        <!-- Embed dec -->
+        <rect x="416" y="426" width="228" height="38" rx="7" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#444441" x="530" y="440" text-anchor="middle" dominant-baseline="central">Embedding + positional encoding</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#5f5e5a" x="530" y="456" text-anchor="middle" dominant-baseline="central">target tokens (parallel in training)</text>
+        <line x1="530" y1="426" x2="530" y2="396" stroke="#64748b" stroke-width="1" marker-end="url(#af)"/>
+
+        <!-- Decoder stack box -->
+        <rect x="406" y="46" width="248" height="350" rx="12" fill="#eeedfe" stroke="#534ab7" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#26215c" x="530" y="68" text-anchor="middle" dominant-baseline="central">Decoder stack  ×N</text>
+
+        <!-- Dec masked self-attn -->
+        <rect x="422" y="82" width="216" height="50" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#085041" x="530" y="100" text-anchor="middle" dominant-baseline="central">Masked self-attention</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#0f6e56" x="530" y="118" text-anchor="middle" dominant-baseline="central">past targets only + residual + norm</text>
+        <line x1="530" y1="132" x2="530" y2="148" stroke="#1d9e75" stroke-width="1" marker-end="url(#af)"/>
+
+        <!-- Dec cross-attention -->
+        <rect x="422" y="150" width="216" height="62" rx="7" fill="#faeeda" stroke="#ba7517" stroke-width="1.2"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#412402" x="530" y="170" text-anchor="middle" dominant-baseline="central">Cross-attention  ★</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#633806" x="530" y="188" text-anchor="middle" dominant-baseline="central">Q=Decoder · K,V=Encoder</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#633806" x="530" y="204" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+        <line x1="530" y1="212" x2="530" y2="228" stroke="#ba7517" stroke-width="1" marker-end="url(#af)"/>
+
+        <!-- Dec FFN -->
+        <rect x="422" y="230" width="216" height="50" rx="7" fill="#faece7" stroke="#993c1d" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#4a1b0c" x="530" y="248" text-anchor="middle" dominant-baseline="central">Feed-forward network</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#712b13" x="530" y="266" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+
+        <line x1="530" y1="280" x2="530" y2="298" stroke="#64748b" stroke-width="0.8" marker-end="url(#af)"/>
+
+        <!-- Dec dots -->
+        <rect x="422" y="300" width="216" height="30" rx="7" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.4" stroke-dasharray="3 3"/>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#5f5e5a" x="530" y="315" text-anchor="middle" dominant-baseline="central">⋮  repeated × (N−1) more</text>
+
+        <line x1="530" y1="330" x2="530" y2="348" stroke="#64748b" stroke-width="0.8" marker-end="url(#af)"/>
+
+        <!-- Dec output proj -->
+        <rect x="422" y="350" width="216" height="40" rx="7" fill="#eeedfe" stroke="#534ab7" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="500" fill="#26215c" x="530" y="366" text-anchor="middle" dominant-baseline="central">Linear + softmax</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#3c3489" x="530" y="382" text-anchor="middle" dominant-baseline="central">predict next target token</text>
+
+        <!-- Feedback arrow -->
+        <path d="M530 396 Q530 412 648 412 Q660 412 660 490 Q660 530 644 530" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#af)"/>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#94a3b8" x="655" y="472" text-anchor="middle">feed</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#94a3b8" x="655" y="484" text-anchor="middle">back</text>
+
+      </svg>
+      <p class="fig-caption">
+        <strong>Figure 4:</strong> Complete Encoder–Decoder Transformer.
+        The amber dashed arrows show the cross-attention bridge — Encoder output
+        vectors (K, V) feeding into every Decoder layer's cross-attention sublayer.
+        The feedback loop (gray dashed) shows autoregressive generation at inference.
+      </p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 6: STEP-BY-STEP TRANSLATION ══ -->
+  <div class="section">
+    <h2><span class="sec-num">6</span> Full Translation Walk-Through</h2>
+
+    <p>Tracing exactly how "The cat sat on the mat" becomes "Le chat était sur le tapis":</p>
+
+    <h3><span class="label-strip ls-green">Encoding phase — runs once</span></h3>
+    <ol>
+      <li>Tokenise source: <code>["The", "cat", "sat", "on", "the", "mat"]</code></li>
+      <li>Embed all 6 tokens and add positional encodings simultaneously.</li>
+      <li>Pass all 6 token vectors through all N Encoder layers in parallel.</li>
+      <li>Output: 6 contextual vectors <code>E₁ … E₆</code> — one per source token. These are held fixed and reused at every decoding step.</li>
+    </ol>
+
+    <h3><span class="label-strip ls-purple">Decoding phase — runs token by token</span></h3>
+
+    <div class="callout cl-purple">
+      <div class="callout-title">Step 1 — predicting "Le"</div>
+      <ul>
+        <li>Input to Decoder: <code>&lt;s&gt;</code> (start token)</li>
+        <li>Masked self-attention: only one token, so attends to itself</li>
+        <li>Cross-attention: <code>&lt;s&gt;</code> query attends to E₁…E₆ — highest weight on "The" (sentence start)</li>
+        <li>Output: predict "Le"</li>
+      </ul>
+    </div>
+
+    <div class="callout cl-amber">
+      <div class="callout-title">Step 2 — predicting "chat"</div>
+      <ul>
+        <li>Input to Decoder: <code>&lt;s&gt;, "Le"</code></li>
+        <li>Masked self-attention: "Le" attends to <code>&lt;s&gt;</code> and itself</li>
+        <li>Cross-attention: "Le" query attends to E₁…E₆ — highest weight on "cat" (α = 0.72)</li>
+        <li>Output: predict "chat"</li>
+      </ul>
+    </div>
+
+    <div class="callout cl-teal">
+      <div class="callout-title">Step 3 — predicting "était"</div>
+      <ul>
+        <li>Input to Decoder: <code>&lt;s&gt;, "Le", "chat"</code></li>
+        <li>Masked self-attention: "chat" attends to all prior Decoder tokens</li>
+        <li>Cross-attention: "chat" query attends to E₁…E₆ — highest weight on "sat" (α ≈ 0.65)</li>
+        <li>Output: predict "était"</li>
+      </ul>
+    </div>
+
+    <p>
+      This continues until the Decoder predicts <code>&lt;/s&gt;</code>. Notice that at
+      every step the Decoder has <strong>direct access</strong> to all 6 Encoder vectors —
+      there is no dilution over decoding steps. This is the decisive advantage over the
+      RNN Encoder–Decoder you studied earlier.
+    </p>
+
+    <div class="callout cl-red">
+      <div class="callout-title">Compare directly to RNN Encoder–Decoder</div>
+      In the RNN version, generating "était" at step 3 meant relying on the context
+      vector c that was 2 hidden state transitions away from its original source — the
+      signal from "sat" had been diluted through s₁ and s₂. In the Transformer,
+      "était" attends directly to E₃ (the "sat" Encoder vector) with no dilution at all.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 7: FULL EQUATIONS ══ -->
+  <div class="section">
+    <h2><span class="sec-num">7</span> The Equations in One Place</h2>
+
+    <h3>Encoder (per layer)</h3>
+    <div class="math-block">
+      $$\text{EncAttnOut} = \text{LayerNorm}\!\left(x + \text{MultiHeadSelfAttn}(x, x, x)\right)$$
+      $$\text{EncOut} = \text{LayerNorm}\!\left(\text{EncAttnOut} + \text{FFN}(\text{EncAttnOut})\right)$$
+    </div>
+
+    <h3>Decoder (per layer — three sublayers)</h3>
+    <div class="math-block">
+      $$\text{MaskAttnOut} = \text{LayerNorm}\!\left(y + \text{MaskedMultiHeadAttn}(y, y, y)\right)$$
+      $$\text{CrossAttnOut} = \text{LayerNorm}\!\left(\text{MaskAttnOut} + \text{MultiHeadAttn}(\underbrace{Q=\text{MaskAttnOut}}_{\text{from Decoder}},\; \underbrace{K=\text{EncOut},\; V=\text{EncOut}}_{\text{from Encoder}})\right)$$
+      $$\text{DecOut} = \text{LayerNorm}\!\left(\text{CrossAttnOut} + \text{FFN}(\text{CrossAttnOut})\right)$$
+    </div>
+
+    <h3>Output prediction</h3>
+    <div class="math-block">
+      $$\hat{y}_t = \arg\max\;\text{softmax}\!\left(W_o \cdot \text{DecOut}_t + b_o\right)$$
+    </div>
+
+    <p>
+      where <code>y</code> is the target sequence (shifted right), <code>x</code> is the
+      source sequence, and <code>EncOut</code> is fixed across all decoding steps.
+    </p>
+  </div>
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 8: SUMMARY ══ -->
+  <div class="section">
+    <h2><span class="sec-num">8</span> Summary — The Three Architectures Compared</h2>
+
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Encoder-only (BERT)</th>
+          <th>Decoder-only (GPT)</th>
+          <th>Encoder–Decoder (T5)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Sublayers per layer</strong></td>
+          <td>2 (self-attn + FFN)</td>
+          <td>2 (masked self-attn + FFN)</td>
+          <td>3 (masked self-attn + cross-attn + FFN)</td>
+        </tr>
+        <tr>
+          <td><strong>Attention direction</strong></td>
+          <td>Bidirectional</td>
+          <td>Causal (left-to-right)</td>
+          <td>Enc: bidirectional · Dec: causal</td>
+        </tr>
+        <tr>
+          <td><strong>Cross-attention</strong></td>
+          <td style="color:#991b1b;font-weight:700;">No</td>
+          <td style="color:#991b1b;font-weight:700;">No</td>
+          <td style="color:#166534;font-weight:700;">Yes — Decoder attends to Encoder</td>
+        </tr>
+        <tr>
+          <td><strong>Can generate?</strong></td>
+          <td style="color:#991b1b;font-weight:700;">No</td>
+          <td style="color:#166534;font-weight:700;">Yes</td>
+          <td style="color:#166534;font-weight:700;">Yes</td>
+        </tr>
+        <tr>
+          <td><strong>Input → Output</strong></td>
+          <td>Sequence → vectors</td>
+          <td>Sequence → next token</td>
+          <td>Source sequence → target sequence</td>
+        </tr>
+        <tr>
+          <td><strong>Best for</strong></td>
+          <td>Classification, search</td>
+          <td>Generation, chat, code</td>
+          <td>Translation, summarisation, Seq2Seq</td>
+        </tr>
+        <tr>
+          <td><strong>Context bottleneck?</strong></td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td style="color:#166534;font-weight:700;">None — cross-attention is direct</td>
+        </tr>
+        <tr>
+          <td><strong>Example models</strong></td>
+          <td>BERT, RoBERTa</td>
+          <td>GPT-3, Claude, LLaMA</td>
+          <td>T5, BART, original Transformer</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="bridge">
+      <strong>The complete progression from RNN to Transformer — in one view:</strong>
+      <br><br>
+      RNN Seq2Seq (2014) → single fixed context vector bottleneck<br>
+      + Bahdanau Attention (2015) → Decoder attends all Encoder states, but Encoder still sequential<br>
+      + Transformer Encoder (2017) → parallel bidirectional Encoder, no sequential bottleneck<br>
+      + Transformer Cross-Attention (2017) → Decoder attends all Encoder vectors directly, no dilution<br>
+      = <strong>Full Encoder–Decoder Transformer</strong> — both bottlenecks eliminated, fully parallelisable
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

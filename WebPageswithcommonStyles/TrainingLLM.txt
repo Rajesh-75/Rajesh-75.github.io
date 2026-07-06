@@ -1,0 +1,51 @@
+A Pretrained Model represents a monumental shift in AI, moving the field away from training every system from scratch on specialized, small-scale datasets. At its core, it is a model that has already undergone massive training on a colossal corpus of data, such as the entire internet, to learn general patterns, grammar, and world knowledge. This initial phase, known as pre-training, typically utilizes self-supervised learning where the model generates its own labels by predicting missing or future tokens. Because this process requires thousands of GPUs and months of compute time, most developers prefer to start with these "off-the-shelf" foundations rather than building their own. These models serve as a highly sophisticated starting point, having already optimized their billions of weights to recognize complex features. Once pre-trained, the model acts as a "Base Model," possessing a broad but unrefined understanding of diverse subjects. Architects can then take this base and perform Fine-Tuning, which specializes the model for specific tasks like medical diagnosis or legal analysis with relatively little data. This approach, known as Transfer Learning, allows a model to apply the logic it learned in one domain to another related field. By using a pretrained model, researchers significantly reduce the carbon footprint and financial cost associated with AI development. Ultimately, pretraining is what enables "Few-Shot Learning," where a model can solve a new problem after seeing only a handful of examples.
+
+
+
+
+
+
+
+
+
+typical pipeline for training transformer models with the Datasets, Tokenizers, and Transformers
+libraries
+
+Although Datasets provides a lot of low-level functionality to slice and dice our data, it is
+often convenient to convert a Dataset object to a Pandas DataFrame so we can access
+high-level APIs for data visualization
+
+Whenever you are working on text classification problems, it is a good idea to examine the
+distribution of examples across the classes. A dataset with a skewed class distribution might
+require a different treatment in terms of the training loss and evaluation metrics than a balanced
+one.There are several ways to deal with imbalanced data, including:
+Randomly oversample the minority class.
+Randomly undersample the majority class.
+Gather more labeled data from the underrepresented classes.
+
+Tokenization is the step of
+breaking down a string into the atomic units used in the model. character Tokenization,word Tokenization
+After tokenizing, padding of the sentences with [EOS] is required and 
+Padding/Truncation (adding numeric zeros or EOS IDs to match lengths).
+
+The architecture used for sequence classification with an encoder-based transformer; it consists of the model’s
+pretrained body combined with a custom classification head
+
+We have two options to train such a model on our Twitter dataset: Feature extraction We use the hidden states as features and just train a classifier on them, without modifying the pretrained model. Fine-tuning We train the whole model end-to-end, which also updates the parameters of the pretrained model.
+
+
+Creating a custom model using HF
+
+ROGUE and BLUE
+Fine tuning using PEAGUS
+
+https://oreil.ly/bNayo
+When using pretrained models, it is really important to make sure that you use the same tokenizer that the model was trained with. From the model’s perspective, switching the tokenizer is like shuffling the vocabulary. If everyone around you started swapping random words like “house” for “cat,” you’d have a hard time understanding what was going on too!
+
+First, the text is tokenized and represented as one-hot vectors called token encodings. The size of the tokenizer vocabulary determines the dimension of the token encodings, and it usually consists of 20k–200k unique tokens. Next, these token encodings are converted to token embeddings, which are vectors living in a lower-dimensional space. The token embeddings are then passed through the encoder block layers to yield a hidden state for each input token. For the pretraining objective of language modeling,  each hidden state is fed to a layer that predicts the masked input tokens. For the classification task, we replace the language modeling layer with a classification layer.
+
+Stage,Form,Dimension,Characteristic
+Tokenization,Raw String,N/A,"""Hello"" → ['Hello']"
+Encoding,One-Hot Vector,"20,000+",Sparse; No semantic meaning.
+Embedding,Dense Vector,≈768,Static; Captures general meaning.
+Hidden State,Contextual Vector,≈768,Dynamic; Captures meaning in context.

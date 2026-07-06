@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial</title>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']]
+            }
+        };
+    </script>
+</head>
+<body>
+
+    <h1 class="publisher-heading">Yamuna Publications</h1>
+    
+    <div class="publisher-address">
+        <p class="address-line">Sreekandeswaram</p>
+        <p class="address-line">Thiruvananthapuram</p>
+        <p class="address-line">kerala - 695023</p>
+        <p class="address-line">Contact Details - 9446185404</p>
+    </div>
+    
+    <div class="nav-bar">
+        <a id="navBooks" class="nav-link">Books</a>
+        <a id="navTutorials" class="nav-link">Tutorials</a>
+        <a id="navBlogs" class="nav-link">Blogs</a>
+        <a id="navGalleries" class="nav-link">Galleries</a>
+    </div>
+
+    <div class="carousel-wrapper" id="carouselWrapper" style="display: block;"> 
+        
+        <button id="prevBtn" class="carousel-arrow prev" aria-label="Previous Book">❮</button> 
+        
+        <div class="carousel-container">
+            <div id="bookTrack" class="book-track">
+                </div>
+        </div>
+        
+        <button id="nextBtn" class="carousel-arrow next" aria-label="Next Book">❯</button>
+
+    </div>
+
+    <div id="mainContentArea" class="main-content-area">
+        <div style="padding: 20px; width: 100%;"> 
+            <h2 class="detail-title">Book Details</h2>
+            <p id="descriptionText" class="detail-description">Click on any book in the carousel above to see its detailed description here.</p>
+            <h4 id="authorInfoHeading" class="detail-author-title" style="display: none;">About the Author: </h4>
+            <p id="authorInfoText" class="detail-description"></p>
+        </div>
+    </div>
+    <script>
+        const authorBio = "L.R.Potti is a renowned academic with over two decades of experience in the field of Statistics and Business Studies. His passion lies in making complex mathematical concepts accessible to students across various disciplines.";
+        
+        const books = [
+            { id: 1, title: "Statistics for Commerece", author: "L.R.Potti", description: "This a text book of Statistics for students of business studies. It explains statistical concepts in a lucid manner by sacrificing mathematical rigours", authorBio: authorBio},
+            { id: 2, title: "Statistics for Economics", author: "L.R.Potti", description: "This a text book of Statistics for students for Economics. It explains statistical and mathematical concepts by using day to day Economical events.", authorBio: authorBio},
+            { id: 3, title: "MS", author: "L.R.Potti", description: "Mathematical Statistical.", authorBio: authorBio },
+            { id: 4, title: "OR", author: "L.R.Potti", description: "Operations Research.", authorBio: authorBio },
+            { id: 5, title: "QT", author: "L.R.Potti", description: "Quantitative Techniques.", authorBio: authorBio },
+            { id: 6, title: "BLs", author: "L.R.Potti", description: "Business Laws.", authorBio: authorBio },
+            { id: 7, title: "FCS (Vol 1)", author: "L.R.Potti", description: "Full course in Statistics, Volume 1.", authorBio: authorBio },
+            { id: 8, title: "FCS (Vol 2)", author: "L.R.Potti", description: "Second volume for the Full Course in Statistics.", authorBio: authorBio },
+            { id: 9, title: "FCS (Vol 3)", author: "L.R.Potti", description: "Third volume for the Full Course in Statistics.", authorBio: authorBio },
+            { id: 10, title: "ADD", author: "L.R.Potti", description: "Advanced Data Decisions.", authorBio: authorBio },
+            { id: 11, title: "FCS (Vol 4)", author: "L.R.Potti", description: "Fourth volume for the Full Course in Statistics.", authorBio: authorBio },
+            { id: 12, title: "FCS (Vol 5)", author: "L.R.Potti", description: "Fifth volume for the Full Course in Statistics.", authorBio: authorBio }
+        ];
+        
+        // 1. UPDATED: Tutorial data structure - ADDED "Introduction"
+        const tutorials = [
+            { 
+                title: "Machine Learning", 
+                subtopics: [
+                    // NEW SUBTOPIC: Introduction with image content
+                    { 
+                        title: "Introduction", 
+                        content: `
+                            <h1 class="detail-title">Introduction to Machine Learning</h1>
+                            <p class="detail-description">Machine Learning (ML) is an application of artificial intelligence (AI) that provides systems the ability to automatically learn and improve from experience without being explicitly programmed. The process generally follows a structured pipeline:</p>
+                            <img src="image_fdb59d.png" alt="Machine Learning Pipeline: Data Ingestion, Preprocessing, Feature Engineering, Model Training, Evaluation, Deployment" class="pipeline-image">
+                            <h2 style="margin-top: 30px;">The ML Pipeline</h2>
+                            <ul>
+                                <li>**Data Ingestion:** Gathering and loading data from various sources (databases, APIs, files).</li>
+                                <li>**Preprocessing:** Cleaning the data, handling missing values, and dealing with inconsistencies.</li>
+                                <li>**Feature Engineering:** Transforming raw data into features that better represent the underlying problem to the predictive models.</li>
+                                <li>**Model Training:** Feeding the prepared data to the chosen algorithm (like Decision Trees or SVM) to learn patterns.</li>
+                                <li>**Evaluation:** Testing the model's performance on unseen data to ensure accuracy and robustness.</li>
+                                <li>**Deployment:** Integrating the model into a live environment where it can make real-time predictions.</li>
+                            </ul>
+                        `
+                    },
+                    // Existing content follows
+                    { title: "K-Means Clustering", filePath: "k-means.html" }, 
+                    { title: "Decision Trees", filePath: "decision-trees.html" }, 
+                    { title: "Random Forests", filePath: "random-forests.html" },
+                    { title: "Support Vector Machines (SVM)", filePath: "svm.html" }, 
+                    
+                    // Content kept local for demonstration purposes
+                    { title: "Kernel Density Estimation (KDE)", content: "Explore **KDE** as a non-parametric way to estimate the probability density function of a random variable." }
+                ]
+            },
+            { 
+                title: "Deep Learning", 
+                subtopics: [
+                    { title: "Convolutional Neural Networks (CNN)", content: "Tutorial on CNNs, the backbone of modern image recognition systems. Learn about layers: convolution, pooling, and fully connected." },
+                    { title: "Recurrent Neural Networks (RNN)", content: "Focus on RNNs for sequential data, such as time series and natural language processing. Includes an overview of LSTMs and GRUs." }
+                ]
+            },
+            { 
+                title: "Statistics", 
+                subtopics: [
+                    { title: "Hypothesis Testing", content: "Detailed steps on how to formulate and test hypotheses, covering Z-tests, T-tests, and Chi-squared tests." },
+                    { title: "Regression Analysis", content: "Simple and multiple linear regression, including interpretation of R-squared and p-values." }
+                ]
+            },
+            { 
+                title: "Python", 
+                content: "Master Python libraries crucial for data science, including Pandas for data manipulation, NumPy for numerical operations, and Matplotlib for visualization. This is a standalone topic without sub-topics."
+            }
+        ];
+
+        const bookTrack = document.getElementById('bookTrack');
+        const carouselWrapper = document.getElementById('carouselWrapper');
+        const mainContentArea = document.getElementById('mainContentArea'); 
+        
+        const initialContent = `<div style="padding: 20px; width: 100%;"><h2 class="detail-title">Book Details</h2><p id="descriptionText" class="detail-description">Click on any book in the carousel above to see its detailed description here.</p><h4 id="authorInfoHeading" class="detail-author-title" style="display: none;">About the Author: </h4><p id="authorInfoText" class="detail-description"></p></div>`;
+
+        const navBooks = document.getElementById('navBooks'); 
+        const navTutorials = document.getElementById('navTutorials');
+        const navBlogs = document.getElementById('navBlogs');
+        const navGalleries = document.getElementById('navGalleries');
+
+        let currentIndex = 0; 
+        const booksToShow = 5; 
+        const totalBooks = books.length; 
+        const bookWidth = 200; 
+        const bookMargin = 20; 
+        const moveDistance = bookWidth + bookMargin; 
+        
+        function getRandomColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 70%, 60%)`; 
+        }
+
+        function handleCarouselBookClick(book) {
+            loadHomeView(); 
+            const dText = document.querySelector('#mainContentArea #descriptionText');
+            const aHeading = document.querySelector('#mainContentArea #authorInfoHeading');
+            const aText = document.querySelector('#mainContentArea #authorInfoText');
+
+            if(dText && aHeading && aText){
+                dText.textContent = book.description;
+                aHeading.textContent = `About the Author: ${book.author}`;
+                aHeading.style.display = 'block';
+                aText.textContent = book.authorBio;
+            }
+        }
+
+        function loadHomeView() {
+            carouselWrapper.style.display = 'block'; 
+            mainContentArea.innerHTML = initialContent; 
+            document.querySelector('#mainContentArea #descriptionText').textContent = "Click on any book in the carousel above to see its detailed description here.";
+            document.querySelector('#mainContentArea #authorInfoHeading').style.display = 'none';
+            document.querySelector('#mainContentArea #authorInfoText').textContent = "";
+        }
+
+        // --- Two-Column Book List View Logic (Updated to use new column classes) ---
+        function displayBookDetails(book, listElement) {
+            const detailsArea = document.getElementById('detailPane');
+            detailsArea.innerHTML = `<h2 class="detail-title">${book.title}</h2><p class="detail-description">${book.description}</p><h4 class="detail-author-title">About the Author: ${book.author}</h4><p class="detail-author-bio">${book.authorBio}</p>`;
+            document.querySelectorAll('.list-item').forEach(item => { item.classList.remove('selected'); });
+            listElement.classList.add('selected');
+        }
+
+        function loadBookListView() {
+            carouselWrapper.style.display = 'none'; 
+            // Use the generic two-column structure with the new class names
+            mainContentArea.innerHTML = `<div class="two-column-container"><div class="left-panel-nav"><h3 class="detail-title">All Titles</h3><ul id="bookList" style="padding: 0;"></ul></div><div id="detailPane" class="right-panel-content"><p class="detail-description">Select a title from the left to view details and author information.</p></div></div>`;
+            
+            const bookList = document.getElementById('bookList');
+            books.forEach(book => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-item';
+                listItem.textContent = book.title;
+                listItem.addEventListener('click', (e) => { displayBookDetails(book, e.currentTarget); });
+                bookList.appendChild(listItem);
+            });
+            
+            if (books.length > 0) {
+                const firstListItem = bookList.querySelector('.list-item');
+                displayBookDetails(books[0], firstListItem);
+            }
+        }
+        
+        // -----------------------------------------------------------------
+        // 2. UPDATED: Two-Column Tutorial View Logic (Now uses fetch)
+        // -----------------------------------------------------------------
+        
+        // IMPORTANT: Function is now 'async' to allow for 'await fetch'
+        async function displayTutorialContent(tutorial, listElement) {
+            const contentArea = document.getElementById('tutorialContentPane');
+            
+            // 1. Selection highlighting logic (happens instantly)
+            document.querySelectorAll('.left-panel-nav .list-item').forEach(item => { item.classList.remove('selected'); });
+            document.querySelectorAll('.left-panel-nav .topic-header').forEach(item => { item.classList.remove('selected'); });
+            listElement.classList.add('selected');
+            
+            const parentHeader = listElement.closest('.sub-topics')?.previousSibling;
+            if (parentHeader && parentHeader.classList.contains('topic-header')) {
+                parentHeader.classList.add('selected');
+            }
+
+            // 2. Logic to load content
+            if (tutorial.filePath) {
+                // Show loading state while content is fetched
+                contentArea.innerHTML = `<h1 class="detail-title">Loading...</h1><p class="detail-description">Fetching content for ${tutorial.title} from **${tutorial.filePath}**...</p>`;
+                
+                // Fetch content from the external HTML file
+                try {
+                    const response = await fetch(tutorial.filePath); // CRITICAL: This is the network request
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status} for ${tutorial.filePath}`);
+                    }
+                    const htmlContent = await response.text();
+                    
+                    // Inject the fetched HTML content into the right pane
+                    contentArea.innerHTML = htmlContent;
+
+                } catch (error) {
+                    console.error('Error fetching tutorial content:', error);
+                    contentArea.innerHTML = `
+                        <h1 class="detail-title" style="color: red;">Error Loading Content</h1>
+                        <p class="detail-description">Could not load tutorial from **${tutorial.filePath}**. Please ensure the file is in the correct directory and the server is running.</p>
+                        <p class="detail-description">**Error Details**: ${error.message}</p>
+                    `;
+                }
+
+            } else if (tutorial.content) {
+                // Fallback for tutorials that still have local content (like KDE or CNN, or the new Introduction)
+                contentArea.innerHTML = `<h1 class="detail-title">${tutorial.title}</h1><div class="detail-description">${tutorial.content}</div>`;
+                
+                // Special handling to allow the image content to render correctly
+                contentArea.querySelector('.detail-description').innerHTML = tutorial.content;
+
+            } else {
+                contentArea.innerHTML = `<h1 class="detail-title">No Content Found</h1><p class="detail-description">The content for ${tutorial.title} is either missing a 'content' or 'filePath' property.</p>`;
+            }
+        }
+
+
+        function loadTutorialsView() {
+            carouselWrapper.style.display = 'none'; 
+            
+            // Use the new two-column structure
+            mainContentArea.innerHTML = `
+                <div class="two-column-container">
+                    <div id="tutorialNav" class="left-panel-nav">
+                        <h3 class="topic-header" style="margin-top: 0; padding-top: 10px; font-weight: bold; color: #000;">Tutorial Topics</h3>
+                        <ul id="tutorialList" style="padding: 0;">
+                        </ul>
+                    </div>
+                    <div id="tutorialContentPane" class="right-panel-content">
+                        <h1 class="detail-title">Welcome to Tutorials</h1>
+                        <p class="detail-description">Click a main topic (e.g., Machine Learning) to expand and select a sub-topic to view its detailed content here.</p>
+                        <p class="detail-description">**Note:** Topics using a file path are now loaded from separate files using the **fetch** API.</p>
+                    </div>
+                </div>
+            `;
+            
+            const tutorialList = document.getElementById('tutorialList');
+            
+            tutorials.forEach(topic => {
+                if (topic.subtopics) {
+                    const header = document.createElement('li');
+                    header.className = 'topic-header';
+                    header.innerHTML = `▶ ${topic.title}`;
+                    
+                    const subList = document.createElement('ul');
+                    subList.className = 'sub-topics';
+
+                    header.addEventListener('click', (e) => {
+                        const isVisible = subList.style.display === 'block';
+                        // Toggle icon
+                        e.currentTarget.innerHTML = isVisible ? `▶ ${topic.title}` : `▼ ${topic.title}`;
+                        // Toggle visibility
+                        subList.style.display = isVisible ? 'none' : 'block';
+                        
+                        // Clear selection from all other topics/headers
+                        document.querySelectorAll('.left-panel-nav .topic-header').forEach(item => item.classList.remove('selected'));
+                        document.querySelectorAll('.left-panel-nav .list-item').forEach(item => item.classList.remove('selected'));
+
+                        // Highlight the main topic header upon click/expansion
+                        e.currentTarget.classList.add('selected');
+                    });
+                    
+                    topic.subtopics.forEach(subtopic => {
+                        const subItem = document.createElement('li');
+                        subItem.className = 'list-item';
+                        subItem.textContent = subtopic.title;
+                        
+                        subItem.addEventListener('click', (e) => {
+                            displayTutorialContent(subtopic, e.currentTarget);
+                        });
+                        
+                        subList.appendChild(subItem);
+                    });
+                    
+                    tutorialList.appendChild(header);
+                    tutorialList.appendChild(subList);
+                    
+                } else {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-item';
+                    listItem.textContent = topic.title;
+                    
+                    listItem.addEventListener('click', (e) => {
+                        displayTutorialContent(topic, e.currentTarget);
+                    });
+                    
+                    tutorialList.appendChild(listItem);
+                }
+            });
+        }
+
+        // --- Setup Functions & Event Listeners (Unchanged) ---
+        books.forEach(book => { bookTrack.appendChild(createBookElement(book)); });
+        function createBookElement(book) {
+            const item = document.createElement('div');
+            item.className = 'book-item';
+            item.style.backgroundColor = getRandomColor();
+            item.innerHTML = `<span class="book-author">${book.title}<br>(${book.author})</span>`; 
+            item.addEventListener('click', () => { handleCarouselBookClick(book); });
+            return item;
+        }
+        function updateTrackPosition() {
+            const offset = -currentIndex * moveDistance;
+            bookTrack.style.transform = `translateX(${offset}px)`;
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            prevBtn.disabled = currentIndex === 0;
+            const nextIndexMax = totalBooks - booksToShow;
+            if (nextIndexMax < 0) nextBtn.disabled = true;
+            else nextBtn.disabled = currentIndex >= nextIndexMax;
+        }
+
+        // 1. Navigation Link Listener for "Books" (calls old two-column view)
+        navBooks.addEventListener('click', loadBookListView);
+        
+        // 2. Navigation Link Listener for "Tutorials" (calls new two-column view)
+        navTutorials.addEventListener('click', loadTutorialsView);
+        
+        // 3. Navigation Listeners for "Return Home"
+        navBlogs.addEventListener('click', loadHomeView);
+        navGalleries.addEventListener('click', loadHomeView);
+        
+        // 4. Carousel Arrow Listeners
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (carouselWrapper.style.display !== 'none' && currentIndex > 0) {
+                currentIndex -= 1;
+                updateTrackPosition();
+            }
+        });
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (carouselWrapper.style.display !== 'none' && currentIndex < totalBooks - booksToShow) {
+                currentIndex += 1;
+                updateTrackPosition();
+            }
+        });
+
+        updateTrackPosition();
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial</title>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']]
+            }
+        };
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <h1>Maximum Likelihood Estimation (MLE)</h1>
+    
+    <p>From a purely statistical perspective, <strong>Maximum Likelihood Estimation (MLE)</strong> is a method used to estimate the unknown parameters of a probability distribution based on observed data.</p>
+    
+    <p>In frequentist statistics, we assume that the observed data ($X$) comes from a specific type of distribution (like a Normal, Poisson, or Binomial distribution), but we don't know the exact "settings" or <strong>parameters</strong> ($\theta$) of that distribution. MLE provides a systematic way to find the "best" values for these parameters.</p>
+
+    <h2>1. The Likelihood Function</h2>
+    <p>The core of MLE is the <strong>Likelihood Function</strong>, denoted as $L(\theta | X)$. While it looks mathematically similar to a probability density function, the perspective is reversed:</p>
+
+    <div class="example-box">
+        <strong>Probability $P(X | \theta)$:</strong> "Given these fixed parameters, what is the probability of seeing this data?"<br><br>
+        <strong>Likelihood $L(\theta | X)$:</strong> "Given this fixed data, how plausible are these specific parameter values?". In othewords, MLE chooses the parameters that make the data we actually see as the most likely outcome to have occurred.
+    </div>
+
+    
+
+    <p>Mathematically, if we have a set of independent and identically distributed (iid) observations $x_1, x_2, \dots, x_n$, the joint likelihood is the product of their individual probabilities:</p>
+
+    <div class="formula-display">
+        $$L(\theta) = \prod_{i=1}^{n} f(x_i; \theta)$$
+    </div>
+
+    <h2>2. The Goal of Maximization</h2>
+    <p>The "Maximum" in MLE refers to the goal: we want to find the specific value of $\theta$ (denoted as $\hat{\theta}$) that maximizes the likelihood function. In plain English, we are looking for the parameter value that makes the data we actually saw the <strong>most likely outcome</strong> to have occurred.</p>
+
+    <h2>3. The Use of Log-Likelihood</h2>
+    <p>In practice, statisticians almost always work with the <strong>Log-Likelihood</strong>, $\ell(\theta) = \log L(\theta)$. This is done for two main reasons:</p>
+
+    <ul>
+        <li><strong>Mathematical Simplification:</strong> It turns products (which are hard to differentiate) into sums (which are easy to differentiate).</li>
+        <li><strong>Numerical Stability:</strong> Multiplying many small probabilities can lead to "arithmetic underflow" in computers; adding logs prevents this.</li>
+    </ul>
+
+    <div class="formula-display">
+        $$\log L(\theta) = \sum_{i=1}^{n} \log f(x_i; \theta)$$
+    </div>
+
+    <div class="grid-note">
+        <strong>Note:</strong> Since the logarithm is a "monotonically increasing" function, the value of $\theta$ that maximizes the log-likelihood is exactly the same as the one that maximizes the original likelihood.
+    </div>
+
+    <h2>4. The Statistical Process</h2>
+    <p>To find the MLE, the process typically involves:</p>
+    <ol>
+        <li>Writing down the likelihood function for the chosen distribution.</li>
+        <li>Taking the natural log to obtain the log-likelihood.</li>
+        <li>Calculating the derivative with respect to the parameter(s) $\theta$.</li>
+        <li>Setting the derivative to zero and solving for $\theta$ to find the peak.</li>
+    </ol>
+
+    
+
+    <h2>5. Why Statisticians Trust MLE</h2>
+    <p>MLE is favored because it possesses powerful "asymptotic" properties as the sample size increases:</p>
+    <ul>
+        <li><strong>Consistency:</strong> The estimate $\hat{\theta}$ converges to the true value of the parameter.</li>
+        <li><strong>Efficiency:</strong> It achieves the lowest possible variance among all unbiased estimators.</li>
+        <li><strong>Asymptotic Normality:</strong> As you collect more data, the distribution of the estimate starts to look like a Normal Distribution.</li>
+    </ul>
+</div>
+
+</body>
+</html>

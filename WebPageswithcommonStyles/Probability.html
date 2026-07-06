@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial</title>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']]
+            }
+        };
+    </script>
+</head>
+<body>
+
+    <div class="header-section">
+        <h1>Probablitiy theory and applications </h1>
+    </div>
+
+    <div class="description-box">
+        <p>The theory of probability originated in games of chance related to gambling, such as throwing dice, tossing a coin, or picking cards from a deck. Today, probability is a foundational tool in domains such as <strong>AI, Machine Learning (ML), and Deep Learning (DL)</strong>.</p>
+
+<p>The probability of a given event expresses the likelihood of that event occurring. It is a value ranging from 0 to 1. A probability of 0 represents an impossible event, while 1 represents a certain event. While absolute certainty (0 or 1) is rarely assigned to complex real-world predictions, these values define the boundaries of the scale. Any value in between represents a degree of uncertainty</p>
+<div class="schools-container">
+    <p>There are four important <strong>Schools of Thought</strong> on the concept of probability:</p>
+    
+    <ul class="schools-list">
+        <li>
+            <span class="school-name">1. Classical Probability</span> 
+            <span class="school-subtext">(A Priori Approach)</span>
+        </li>
+        <li>
+            <span class="school-name">2. Statistical Probability</span> 
+            <span class="school-subtext">(Relative Frequency Theory / Empirical / A Posteriori)</span>
+        </li>
+        <li>
+            <span class="school-name">3. Personalistic or Subjective Probability</span> 
+            <span class="school-subtext">(Bayessian Theorem)</span>
+        </li>
+        <li>
+            <span class="school-name">4. Axiomatic Approach to Probability</span> 
+            <span class="school-subtext">(Modern Mathematical Foundation)</span>
+        </li>
+    </ul>
+</div>
+<p>Probability is defined as the ratio of the number of favouring cases to the total number of equally likely cases i.e. probability of the occurrence of event A is expressed as:
+    $$P(A) = \frac{\text{Number of Favourable Cases}}{\text{Total Number of Possible Cases}}$$
+</p>
+<h3>The Foundation: Sample Space ($S$)</h3>
+        <p>Before calculating probabilities, we must define the <strong>Sample Space</strong>. The Sample Space is the set of all possible outcomes of a random experiment. Each individual outcome in this space is called a <strong>Sample Point</strong>.</p>
+        
+        <ul>
+            <li><strong>Finite Sample Space:</strong> When the outcomes can be counted (e.g., tossing a coin).</li>
+            <li><strong>Infinite Sample Space:</strong> When outcomes are continuous (e.g., the time it takes for a bulb to fail).</li>
+        </ul>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Experiment</th>
+                    <th>Sample Space ($S$)</th>
+                    <th>Total Outcomes $n(S)$</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Tossing a Coin</td>
+                    <td>$\{H, T\}$</td>
+                    <td>2</td>
+                </tr>
+                <tr>
+                    <td>Rolling a Die</td>
+                    <td>$\{1, 2, 3, 4, 5, 6\}$</td>
+                    <td>6</td>
+                </tr>
+                <tr>
+                    <td>Tossing Two Coins</td>
+                    <td>$\{HH, HT, TH, TT\}$</td>
+                    <td>4</td>
+                </tr>
+            </tbody>
+        </table>
+<h3>Some Sample problems using idea of Relative Frequency Approach</h3>
+<P>Three unbaied coins are tossed. What is the probability of obtaining (1) All heads (2)two heads (3) one head (4) at least one head (5) atleast two heads (6) all tails.</p> 
+
+<p> Eg. A bag contains <strong>5 white and 6 black balls</strong>. Then the <strong>probability for drawing a white ball is</strong> $\frac{5}{11} $ since favourable number of balls are white and they are 6 the total no of balls is 11 </p>
+    </div>
+	<h2>1. Relative Frequency Theory of Probability</h2>
+<p>
+    Let us consider a random experiment and let 'A' be an event. 
+    Suppose the random experiment is repeated $n$ times. 
+    Let the event 'A' occur in $f$ out of these repetitions and fail to occur in $n - f$ repetitions. 
+    The ratio $\frac{f}{n}$ is called the relative frequency ratio of the event A. 
+    As the number of repetitions increases ($n \to \infty$), the ratio $\frac{f}{n}$ tends to a specific constant value. 
+    This limiting value is defined as the probability of the event A.
+    <br><br>
+    Therefore, <strong> $P(A) = \lim_{n \to \infty} \frac{f}{n}$ </strong>
+	<div class="example-problem">
+    <div class="problem-header">Sample Problem: Relative Frequency Approach</div>
+    
+    <div class="problem-content">
+        Three unbiased coins are tossed. What is the probability of obtaining:
+        <br>(1) All heads, (2) Two heads, (3) One head, (4) At least one head, (5) At least two heads, (6) All tails.
+    </div>
+
+    <div class="solution-content">
+        <h3>Solution:</h3>
+        
+        <div class="solution-step">
+            <strong>Step 1: Define the Sample Space ($S$)</strong>
+            <p><br>There are four types of card Spade,Clubs, Hearts and Diamond: 
+			Each type of cards has 13 number of items (Jack,King,Queen,Ace,2...10)
+            <br>Hence Total Number of Cases ($N$) = 13 *4 = 52</p>
+        </div>
+
+        <div class="solution-step">
+            <strong>Step 2: Calculate Probabilities</strong>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Favourable Cases</th>
+                        <th>Count ($f$)</th>
+                        <th>$P(A) = f/N$</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>(1) All Heads</td><td>{HHH}</td><td>1</td><td>$1/8$</td></tr>
+                    <tr><td>(2) Two Heads</td><td>{HHT, HTH, THH}</td><td>3</td><td>$3/8$</td></tr>
+                    <tr><td>(3) One Head</td><td>{HTT, THT, TTH}</td><td>3</td><td>$3/8$</td></tr>
+                    <tr><td>(4) At least 1 Head</td><td>All except {TTT}</td><td>7</td><td>$7/8$</td></tr>
+                    <tr><td>(5) At least 2 Heads</td><td>{HHH, HHT, HTH, THH}</td><td>4</td><td>$4/8 = 0.5$</td></tr>
+                    <tr><td>(6) All Tails</td><td>{TTT}</td><td>1</td><td>$1/8$</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+	<div class="example-problem">
+    <div class="problem-header">Sample Problem: Probability with Two Dice</div>
+    
+    <div class="problem-content">
+        Two unbiased dice are thrown. Find the probability that:
+        <br>(1) Both the dice show the same number, (2) One die shows five, (3) First die shows five, (4) The total of the numbers on the dice is Eight, (5) Total of the numbers on the dice is greater than 8.
+    </div>
+
+    <div class="solution-content">
+        <h3>Solution:</h3>
+        
+        <div class="solution-step">
+            <strong>Step 1: Define the Sample Space ($S$)</strong>
+            <p>When two dice are thrown, each has 6 faces. Total possible outcomes ($6 \times 6$):</p>
+            <div style="font-family: monospace; font-size: 0.8rem; background: #eee; padding: 10px; text-align: center;">
+                (1,1) (1,2) (1,3) (1,4) (1,5) (1,6)<br>
+                (2,1) (2,2) (2,3) (2,4) (2,5) (2,6)<br>
+                (3,1) (3,2) (3,3) (3,4) (3,5) (3,6)<br>
+                (4,1) (4,2) (4,3) (4,4) (4,5) (4,6)<br>
+                (5,1) (5,2) (5,3) (5,4) (5,5) (5,6)<br>
+                (6,1) (6,2) (6,3) (6,4) (6,5) (6,6)
+            </div>
+            <p>Total Number of Cases ($N$) = 36</p>
+        </div>
+
+        
+
+        <div class="solution-step">
+            <strong>Step 2: Calculate Probabilities</strong>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Favourable Cases</th>
+                        <th>Count ($f$)</th>
+                        <th>$P(A) = f/36$</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>(1) Same Number (Doublets)</td>
+                        <td>(1,1), (2,2), (3,3), (4,4), (5,5), (6,6)</td>
+                        <td>6</td>
+                        <td>$6/36 = 1/6$</td>
+                    </tr>
+                    <tr>
+                        <td>(2) One die shows five</td>
+                        <td>(1,5), (2,5), (3,5), (4,5), (6,5), (5,1), (5,2), (5,3), (5,4), (5,6)</td>
+                        <td>10</td>
+                        <td>$10/36 = 5/18$</td>
+                    </tr>
+                    <tr>
+                        <td>(3) First die shows five</td>
+                        <td>(5,1), (5,2), (5,3), (5,4), (5,5), (5,6)</td>
+                        <td>6</td>
+                        <td>$6/36 = 1/6$</td>
+                    </tr>
+                    <tr>
+                        <td>(4) Total is 8</td>
+                        <td>(2,6), (3,5), (4,4), (5,3), (6,2)</td>
+                        <td>5</td>
+                        <td>$5/36$</td>
+                    </tr>
+                    <tr>
+                        <td>(5) Total > 8</td>
+                        <td>(3,6), (4,5), (4,6), (5,4), (5,5), (5,6), (6,3), (6,4), (6,5), (6,6)</td>
+                        <td>10</td>
+                        <td>$10/36 = 5/18$</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+	<div class="example-problem">
+    <div class="problem-header">Sample Problem: Probability using Combinations</div>
+    
+    <div class="problem-content">
+        Four cards are drawn from a pack of 52 cards. Find the probability that:
+        <br>(a) There is one card of each suit, (b) Two cards are spades and two are hearts, (c) All the four are kings, (d) All the four are spades and one of them is a king, (e) At least one of the four cards is an ace.
+    </div>
+
+    <div class="solution-content">
+        <h3>Solution:</h3>
+        
+        <div class="solution-step">
+            <strong>Step 1: Total Outcomes ($N$)</strong>
+            <p>Total ways to draw 4 cards from 52 is given by $^{52}C_4$:</p>
+            <div style="text-align:center; padding: 10px;">
+                $$ N = \binom{52}{4} = \frac{52 \times 51 \times 50 \times 49}{4 \times 3 \times 2 \times 1} = 270,725 $$
+				<div class="data-type-card">
+    <span class="tag">Mathematical Foundation</span>
+    <h3>The Combination Formula ($^nC_r$)</h3>
+    <p>When drawing multiple items at once without replacement, we use the combination formula to find the number of ways to select $r$ items from a set of $n$:</p>
+    
+    <div class="formula-container">
+        $$ \binom{n}{r} = \frac{n!}{r!(n - r)!} $$
+    </div>
+    
+    <p><strong>Example:</strong> Ways to pick 2 Aces from 4 Aces:</p>
+    <div style="text-align: center;">
+        $$ \binom{4}{2} = \frac{4 \times 3}{2 \times 1} = 6 \text{ ways} $$
+    </div>
+</div>
+            </div>
+        </div>
+
+        
+
+        <div class="solution-step">
+            <strong>Step 2: Calculate Probabilities</strong>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Logic (Combinations)</th>
+                        <th>Probability $P(A)$</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>(a) One of each suit</strong></td>
+                        <td>One from each of 13 c</p suits: <br> $\binom{13}{1} \times \binom{13}{1} \times \binom{13}{1} \times \binom{13}{1}$</td>
+                        <td>$$ \frac{13^4}{^{52}C_4} $$<p>1. The Multiplication Principle (The "AND" Rule)If one task can be done in $m$ ways and a second task can be done in $n$ ways, then the two tasks together can be done in $m \times n$ ways.Here in this problem: First take 1 Spade from among 13 cards AND next 1 Heart AND 1 Diamond AND 1 Club.Action: Multiply the combinations (mxnxpxq).</p</td>
+                    </tr>
+                    <tr>
+                        <td><strong>(b) 2 Spades & 2 Hearts</strong></td>
+                        <td>Two from 13 Spades AND two from 13 Hearts: <br> $\binom{13}{2} \times \binom{13}{2}$</td>
+                        <td>$$ \frac{78 \times 78}{270,725} $$</td>
+                    </tr>
+                    <tr>
+                        <td><strong>(c) All 4 are Kings</strong></td>
+                        <td>Four Kings from the 4 available: <br> $\binom{4}{4}$</td>
+                        <td>$$ \frac{1}{270,725} $$</td>
+                    </tr>
+                    <tr>
+                        <td><strong>(d) 4 Spades (one is King)</strong></td>
+                        <td>The King of Spades (1) AND 3 other Spades (12): <br> $\binom{1}{1} \times \binom{12}{3}$</td>
+                        <td>$$ \frac{220}{270,725} $$</td>
+                    </tr>
+                    <tr>
+                        <td><strong>(e) At least one Ace</strong></td>
+                        <td>$1 - P(\text{No Ace})$. <br> No Ace means drawing from 48 non-aces: $\binom{48}{4}$</td>
+                        <td>$$ 1 - \frac{^{48}C_4}{^{52}C_4} $$</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+	</div>
+</div>
+</p>
+
+    <h2>2.Fundamental Probability Laws</h2>
+    
+    <div class="data-type-card highlight-blue">
+        <h3>A. The Axioms of Probability</h3>
+        <p>For any event $A$ in sample space $S$:</p>
+        <ul>
+            <li><strong>Non-negativity:</strong> $P(A) \ge 0$</li>
+            <li><strong>Normalization:</strong> $P(S) = 1$</li>
+            <li><strong>Additivity:</strong> For mutually exclusive events, $P(A \cup B) = P(A) + P(B)$</li>
+        </ul>
+
+        <h3>B. The Complement Rule</h3>
+        <p>Essential for binary classification (e.g., Churn vs. No Churn):</p>
+        <div class="formula-container">
+            $$ P(A^c) = 1 - P(A) $$
+        </div>
+		<div class="example-problem">
+            <div class="problem-header">Problem: Complementary & Exhaustive Events</div>
+            <div class="problem-content">
+                There are three events A, B, C. One of which <strong>must</strong> happen and <strong>only one</strong> can happen. 
+                The odds are 7 to 3 against A, and 6 to 4 against B. Find the odds against C.
+            </div>
+            <div class="solution-content">
+                <div class="solution-step">
+                    <strong>1. Calculate P(A) and P(B):</strong>
+                    <p>Odds against A are 7 to 3 $\implies P(A) = \frac{3}{7+3} = \frac{3}{10}$</p>
+                    <p>Odds against B are 6 to 4 $\implies P(B) = \frac{4}{6+4} = \frac{4}{10}$</p>
+                </div>
+                <div class="solution-step">
+                    <strong>2. Apply Exhaustive Property:</strong>
+                    <p>Because A, B, and C are mutually exclusive and exhaustive: $P(A) + P(B) + P(C) = 1$.</p>
+                    <p>$$P(C) = 1 - (P(A) + P(B))$$</p>
+                    <p>$$P(C) = 1 - (\frac{3}{10} + \frac{4}{10}) = 1 - \frac{7}{10} = \frac{3}{10}$$</p>
+                </div>
+                <div class="solution-step">
+                    <strong>3. Find Odds Against C:</strong>
+                    <p>Since $P(C) = 3/10$, the probability of C not occurring is $P(C^c) = 7/10$.</p>
+                    <p><strong>Answer:</strong> The odds against C are <strong>7 to 3</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <h3>C. The Addition Rule (General)</h3>
+        <div class="formula-container">
+            $$ P(A \cup B) = P(A) + P(B) - P(A \cap B) $$
+        </div>
+		<div class="example-problem">
+            <div class="problem-header">Example: General Addition Rule</div>
+            <div class="problem-content">
+                The probability that a contractor will get a plumbing contract is $2/3$ and the probability that he will not get an electric contract is $5/9$. If the probability of getting at least one contract is $4/5$, what is the probability that he will get both contracts?
+            </div>
+            <div class="solution-content">
+                <div class="solution-step">
+                    <strong>1. Identify the given probabilities:</strong>
+                    <ul>
+                        <li>$P(\text{Plumbing}) = P(A) = \frac{2}{3}$</li>
+                        <li>$P(\text{No Electric}) = P(B^c) = \frac{5}{9} \implies P(B) = 1 - \frac{5}{9} = \frac{4}{9}$</li>
+                        <li>$P(\text{At least one}) = P(A \cup B) = \frac{4}{5}$</li>
+                    </ul>
+                </div>
+                <div class="solution-step">
+                    <strong>2. Solve for "Both" ($P(A \cap B)$):</strong>
+                    <p>Using the Addition Rule formula: $P(A \cup B) = P(A) + P(B) - P(A \cap B)$</p>
+                    <p>Rearranging to find the intersection:</p>
+                    <p>$$P(A \cap B) = P(A) + P(B) - P(A \cup B)$$</p>
+                    <p>$$P(A \cap B) = \frac{2}{3} + \frac{4}{9} - \frac{4}{5}$$</p>
+                </div>
+                <div class="solution-step">
+                    <strong>3. Final Calculation (Common Denominator 45):</strong>
+                    <p>$$P(A \cap B) = \frac{30}{45} + \frac{20}{45} - \frac{36}{45} = \frac{14}{45}$$</p>
+                    <p><strong>Answer:</strong> The probability that he gets both contracts is <span class="math-highlight">14/45</span>.</p>
+                </div>
+            </div>
+        </div>
+		
+        <h3>D. Conditional Probability and Statistical Independence</h3>
+<p><strong>Conditional Probability:</strong> The probability of event $A$ occurring given that event $B$ has already occurred.</p>
+<div class="formula-container">
+    $$P(A|B) = \frac{P(A \cap B)}{P(B)} \quad \text{or} \quad P(B|A) = \frac{P(A \cap B)}{P(A)}$$
+</div>
+
+<p><strong>The General Multiplication Rule:</strong> For any two events (dependent or independent), the probability that both occur is:</p>
+<div class="formula-container">
+    $$P(A \cap B) = P(A) \cdot P(B|A)$$
+	$$ \text{If } A \text{ and } B \text{ are independent, } P(A \cap B) = P(A) \cdot P(B|A) = P(A)P(B) $$
+    $$ \text{since } P(B|A) = P(B) \text{ because } P(B|A) \text{ is not dependent on } A. $$
+</div>
+
+<p><strong>Statistical Independence:</strong> Two events are considered statistically independent if the occurrence of one does not affect the probability of the other. In this specific case, $P(B|A) = P(B)$, and the formula simplifies to:</p>
+<div class="formula-container">
+    $$P(A \cap B) = P(A) \cdot P(B)$$
+</div>
+		<div class="example-problem">
+            <div class="problem-header">Example: Successive Draws Without Replacement</div>
+            <div class="problem-content">
+                A bag contains 8 red and 5 white balls. Two successive draws of 3 balls are made <strong>without replacement</strong>. Find the probability that the first drawing will give 3 white balls and the second drawing will give 3 red balls.
+            </div>
+            <div class="solution-content">
+                <div class="solution-step">
+                    <strong>Step 1: Probability of First Draw (Event A - 3 White Balls)</strong>
+                    <p>Total balls = 13. We choose 3 out of 5 white balls:</p>
+                    <p>$$P(A) = \frac{\binom{5}{3}}{\binom{13}{3}} = \frac{10}{286} = \frac{5}{143}$$</p>
+                </div>
+                <div class="solution-step">
+                    <strong>Step 2: Probability of Second Draw (Event B|A - 3 Red Balls)</strong>
+                    <p>After the first draw, 10 balls remain (8 red, 2 white). We choose 3 red from 8:</p>
+                    <p>$$P(B|A) = \frac{\binom{8}{3}}{\binom{10}{3}} = \frac{56}{120} = \frac{7}{15}$$</p>
+                </div>
+                <div class="solution-step">
+                    <strong>Step 3: Joint Probability ($P(A \cap B)$)</strong>
+                    <p>Using the Multiplication Rule:</p>
+                    <p>$$P(A \cap B) = P(A) \times P(B|A) = \frac{5}{143} \times \frac{7}{15}$$</p>
+                    <p>$$P(A \cap B) = \frac{35}{2145} = \frac{7}{429}$$</p>
+                    <p><strong>Answer:</strong> The probability is <span class="math-highlight">7/429</span>.</p>
+                </div>
+            </div>
+        </div>   
+	<div class="data-type-card highlight-green">
+    <span class="tag">Real-World Perspective</span>
+    <h3>Where does $P(A)$ come from?</h3>
+    <p>In textbook problems, $P(A)$ is usually a given constant. However, in practice, we derive this value in two distinct ways:</p>
+    
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Approach</th>
+                <th>Definition</th>
+                <th>Typical Use Case</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Measured Frequency</strong> (Frequentist)</td>
+                <td>Calculated from historical data. $P(A) = \frac{\text{Wins}}{\text{Total Trials}}$.</td>
+                <td>Insurance premiums, factory defect rates, coin tosses.</td>
+            </tr>
+            <tr>
+                <td><strong>Degree of Belief</strong> (Bayesian)</td>
+                <td>A subjective estimate based on expertise, intuition, or partial evidence.</td>
+                <td>Business contract bidding, weather forecasting, medical diagnosis.</td>
+            </tr>
+        </tbody>
+    </table>
+    <p><em>Note:</em> Modern AI often combines both. A model starts with a <strong>Prior</strong> (belief) and updates it as it sees more <strong>Empirical Data</strong> (frequency).</p>
+</div>
+	<h2>3.Personalistic or Subjective Probability(Bayessian Probability)</h2>
+	<div class container = "XXX"> <p> We shall discusss this school of thought as separate topic under Bayessian classification</p> </div>
+	
+</body>
+</html>			

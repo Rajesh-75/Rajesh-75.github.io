@@ -1,0 +1,424 @@
+\<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial</title>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']]
+            }
+        };
+    </script>
+</head>
+<body>
+
+    <div class="header-section">
+        <h1>Measures of Central Tendency Series</h1>
+        <h2>Average (Arithmetic Mean)</h2>
+    </div>
+
+    <div class="description-box">
+        <p>An average (Mean) is a simple figure which sums up the characteristics of a whole group of figures. An average is more or less a central value around which various values cluster.</p>
+    </div>
+
+    <h3>Mathematical Definition</h3>
+    <p>The Arithmetic Mean is the sum of all observations divided by the total number of observations.</p>
+    
+    <div class="formula-container">
+        $$ \text{Mean } (\bar{X}) = \frac{x_1 + x_2 + \dots + x_n}{n} = \frac{\sum x}{n} $$
+    </div>
+
+    <h3>Computation by Data Type</h3>
+
+    <div class="data-type-card">
+        <span class="tag">Series 1</span>
+        <h3>1. Individual Observations (Discrete Data)</h3>
+        <p>Used when individual values are given. Simply add all values and divide by the count ($n$).</p>
+        <p><strong>Example:</strong> Average income of 10 individuals (10, 90, 85, 103, 11, 29, 84, 15, 35, 80).</p>
+        <div style="text-align: center;">
+            $$ \bar{X} = \frac{\sum x}{N} = \frac{542}{10} = 54.2 \text{ Rs} $$
+        </div>
+    </div>
+
+    <div class="data-type-card">
+        <span class="tag">Series 2</span>
+        <h3>2. Discrete Frequency Distribution</h3>
+        <p>Used when values ($x$) have associated frequencies ($f$). We calculate the product of each value and its frequency ($fx$) to find the total.</p>
+        
+        <table class="data-table" style="max-width: 500px;">
+            <thead>
+                <tr>
+                    <th>Class (x)</th>
+                    <th>Frequency (f)</th>
+                    <th>Product (fx)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>5</td><td>15</td><td>75</td></tr>
+                <tr><td>15</td><td>20</td><td>300</td></tr>
+                <tr><td>25</td><td>25</td><td>625</td></tr>
+                <tr><td>35</td><td>24</td><td>840</td></tr>
+                <tr><td>45</td><td>12</td><td>540</td></tr>
+                <tr><td>55</td><td>31</td><td>1705</td></tr>
+                <tr><td>65</td><td>71</td><td>4615</td></tr>
+                <tr><td>75</td><td>52</td><td>3900</td></tr>
+                <tr style="font-weight:bold; background-color: #f0f0f0;">
+                    <td>Total</td>
+                    <td>N = 250</td>
+                    <td>&sum;fx = 12600</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="text-align: center;">
+            $$ \bar{X} = \frac{\sum fx}{N} = \frac{12600}{250} = 50.4 $$
+        </div>
+    </div>
+
+    <div class="data-type-card">
+        <span class="tag">Series 3</span>
+        <h3>3. Continuous Series (Grouped Data)</h3>
+        <p>For continuous data, we calculate the <strong>Mid-Value (m)</strong> for each class. We can compute the mean using three methods:</p>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Age</th>
+                    <th>f</th>
+                    <th>m</th>
+                    <th>f*m</th>
+                    <th>d (m-A)</th>
+                    <th>d' (d/i)</th>
+                    <th>f*d'</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>0-10</td><td>15</td><td>5</td><td>75</td><td>-30</td><td>-3</td><td>-45</td></tr>
+                <tr><td>10-20</td><td>30</td><td>15</td><td>450</td><td>-20</td><td>-2</td><td>-60</td></tr>
+                <tr><td>20-30</td><td>63</td><td>25</td><td>1575</td><td>-10</td><td>-1</td><td>-63</td></tr>
+                <tr class="highlight-row"><td>30-40</td><td>75</td><td>35 (A)</td><td>2625</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr><td>40-50</td><td>100</td><td>45</td><td>4500</td><td>10</td><td>1</td><td>100</td></tr>
+                <tr><td>50-60</td><td>110</td><td>55</td><td>6050</td><td>20</td><td>2</td><td>220</td></tr>
+                <tr><td>60-70</td><td>115</td><td>65</td><td>7475</td><td>30</td><td>3</td><td>345</td></tr>
+                <tr><td>70-80</td><td>125</td><td>75</td><td>9375</td><td>40</td><td>4</td><td>500</td></tr>
+                <tr style="font-weight:bold; background-color: #f0f0f0;">
+                    <td>Total</td>
+                    <td>N=633</td>
+                    <td>-</td>
+                    <td>&Sigma;fm=32125</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>&Sigma;fd'=997</td>
+                </tr>
+            </tbody>
+        </table>
+
+        
+
+        <h4>(1) Direct Method</h4>
+        <div class="formula-container">
+            $$ \bar{X} = \frac{\sum fm}{N} = \frac{32125}{633} \approx 50.75 $$
+        </div>
+
+        <h4>(2) Short-cut Method</h4>
+        <p>Using Assumed Mean ($A$) = 35 and $d = m - A$:</p>
+        <div class="formula-container">
+            $$ \bar{X} = A + \frac{\sum fd}{N} $$
+        </div>
+
+        <h4>(3) Step Deviation Method</h4>
+        <p>Using $A = 35$ and Class Interval ($i$) = 10:</p>
+        <div class="formula-container">
+            $$ \bar{X} = A + \left( \frac{\sum fd'}{N} \times i \right) = 35 + \left( \frac{997}{633} \times 10 \right) \approx 50.75 $$
+        </div>
+    </div>
+	<div class="median-section">
+        <div class="header-section">
+            <h2>Median</h2>
+        </div>
+
+        <div class="description-box">
+            <p>Median is defined as the size of the <strong>$(\frac{N+1}{2})^{th}$</strong> item when the items are arranged in the ascending order of magnitude.</p>
+        </div>
+
+        <div class="data-type-card">
+            <span class="tag">Case 1</span>
+            <h3>1. Individual Observations</h3>
+            <p>For ungrouped data, arrange the values in ascending order. The Median is the value of the middle item.</p>
+            <div class="formula-container">
+                $$ \text{Median} = \text{Size of } \left( \frac{N+1}{2} \right)^{th} \text{ item} $$
+            </div>
+        </div>
+
+        <div class="data-type-card">
+            <span class="tag">Case 2</span>
+            <h3>2. Discrete Frequency Distribution</h3>
+            <p>In the discrete case, the Median is defined as the size of the <strong>$(\frac{N+1}{2})^{th}$</strong> item, where $N = \sum f$. We use cumulative frequency to locate this item.</p>
+            <div class="formula-container">
+                $$ \text{Median} = \text{Size of } \left( \frac{\sum f + 1}{2} \right)^{th} \text{ item} $$
+            </div>
+        </div>
+
+        <div class="data-type-card">
+            <span class="tag">Case 3</span>
+            <h3>3. Continuous Series</h3>
+            <p>For grouped data, we first find the median class using $N/2$. Then, we apply the interpolation formula:</p>
+            
+            
+            
+            <div class="formula-container">
+                $$ \text{Median} = L_1 + \frac{\frac{N}{2} - cf}{f} \times c $$
+            </div>
+
+            <p><strong>Where:</strong></p>
+            <ul>
+                <li><strong>$L_1$:</strong> Lower limit of the median class.</li>
+                <li><strong>$N$:</strong> Total frequency ($\sum f$).</li>
+                <li><strong>$cf$:</strong> Cumulative frequency of the class just preceding the median class.</li>
+                <li><strong>$f$:</strong> Frequency of the median class.</li>
+                <li><strong>$c$:</strong> Class interval width.</li>
+            </ul>
+        </div>
+    </div>
+	<div class="mode-section">
+        <div class="header-section">
+            <h2>Mode</h2>
+        </div>
+
+        <div class="description-box">
+            <p><strong>Mode</strong> is the value of that item that occurs the greatest number of times in a distribution.</p>
+            <p><em>Example:</em> In the series $23, 35, 42, 62, 53, 35, 28, 42, 35, 23, 42, 35$, the value $35$ appears most frequently. Therefore, the <strong>Mode is 35</strong>.</p>
+        </div>
+
+        <div class="data-type-card">
+            <span class="tag">Empirical Relationship</span>
+            <h3>Asymmetrical Distributions</h3>
+            <p>When no item appears more times than any other, the mode is "ill-defined." In such asymmetrical distributions, the mode is calculated using the empirical formula:</p>
+            <div class="formula-container">
+                $$ \text{Mode} = 3 \times \text{Median} - 2 \times \text{Mean} $$
+            </div>
+        </div>
+
+        <div class="data-type-card">
+            <span class="tag">Continuous Case</span>
+            <h3>Continuous Distributions</h3>
+            <p>For grouped data, the mode is located within the modal class (the class with the highest frequency) and calculated as:</p>
+            
+            
+            
+            <div class="formula-container">
+                $$ \text{Mode} = L_1 + \frac{(f_1 - f_0) \times c}{(2f_1 - f_0 - f_2)} $$
+            </div>
+
+            <p><strong>Where:</strong></p>
+            <ul>
+                <li><strong>$L_1$:</strong> Lower limit of the modal class.</li>
+                <li><strong>$f_1$:</strong> Frequency of the modal class.</li>
+                <li><strong>$f_0$:</strong> Frequency of the class just preceding the modal class.</li>
+                <li><strong>$f_2$:</strong> Frequency of the class just succeeding the modal class.</li>
+                <li><strong>$c$:</strong> Class interval width.</li>
+            </ul>
+        </div>
+		<div class="sd-section">
+        <div class="header-section">
+            <h2>Standard Deviation</h2>
+        </div>
+
+        <div class="description-box">
+            <p>Standard Deviation ($\sigma$) is defined as the square root of the mean of the squares of deviations taken from the Arithmetic Mean. It is the most widely used measure of dispersion.</p>
+			<p>The relationship between Variance and Standard Deviation is simple:</p>
+        <div style="text-align: center; font-size: 1.2rem; margin: 10px 0;">
+            $$ \text{Variance} = \sigma^2 $$
+            $$ \text{Standard Deviation} = \sqrt{\text{Variance}} $$
+        </div>
+        <div class="data-type-card">
+            <span class="tag">Individual Observations</span>
+            <h3>Mathematical Formula</h3>
+            <p>For a population, the Standard Deviation is calculated as:</p>
+            <div class="formula-container">
+                $$ \sigma = \sqrt{\frac{\sum (x - \bar{X})^2}{N}} $$
+            </div>
+            <p>Where:</p>
+            <ul>
+                <li>$\sigma$: Standard Deviation</li>
+                <li>$\sum$: Summation</li>
+                <li>$x$: Individual values</li>
+                <li>$\bar{X}$: Arithmetic Mean</li>
+                <li>$N$: Total number of observations</li>
+            </ul>
+        </div>
+
+        <div class="data-type-card">
+            <span class="tag">Short-cut Method</span>
+            <h3>Calculation using Assumed Mean (A)</h3>
+            <div class="formula-container">
+                $$ \sigma = \sqrt{\frac{\sum fd^2}{N} - \left( \frac{\sum fd}{N} \right)^2} $$
+            </div>
+        </div>
+		<div class="data-type-card" style="border-left: 5px solid #e74c3c;">
+    <span class="tag">Interpretation</span>
+    <h3>Why the Mean needs the Standard Deviation</h3>
+    <p>The Mean gives us the <strong>location</strong> of the data, but the Standard Deviation (SD) gives us the <strong>context</strong>. One without the other can be misleading.</p>
+
+    <div class="description-box" style="background-color: #fdf2f2;">
+        <ul>
+            <li><strong>Low SD:</strong> The data points are close to the Mean. The average is a <strong>reliable</strong> representative of the group.</li>
+            <li><strong>High SD:</strong> The data points are spread out far from the Mean. This suggests that the average may <strong>not</strong> be a good representation because of high volatility or outliers.</li>
+        </ul>
+    </div>
+
+    
+
+    <h4>The "Consistency" Rule:</h4>
+    <p>A "High SD" tells us that the "Average" is not a typical experience for most members of the group. For example:</p>
+    <table class="data-table" style="max-width: 600px; margin: 10px auto;">
+        <thead>
+            <tr>
+                <th>Scenario</th>
+                <th>Mean Salary</th>
+                <th>SD</th>
+                <th>Conclusion</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Company A</td>
+                <td>Rs5000,000</td>
+                <td>Rs2,000</td>
+                <td><strong>Consistent:</strong> Most people earn very close to Rs5000000.</td>
+            </tr>
+            <tr>
+                <td>Company B</td>
+                <td>Rs500,000</td>
+                <td>Rs25,0000</td>
+                <td><strong>Inconsistent:</strong> There are likely very high and very low earners.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="data-type-card" style="border-left: 5px solid #e74c3c;">
+        <span class="tag">Analysis</span>
+        <h3>The Relationship: Mean vs. Standard Deviation</h3>
+        <p>The Mean gives the "center," but the Standard Deviation (SD) tells us if that center is <strong>reliable</strong>. As a rule of thumb: <strong>High SD means the average is not a good representative of the data.</strong></p>
+        
+        <div class="description-box" style="background-color: #fff5f5; border: 1px solid #feb2b2;">
+            <p>If the SD is high, the data is scattered; the "Average" might be skewed by extreme values (outliers) and does not reflect the typical experience of the group.</p>
+        </div>
+
+        
+
+        <span class="tag">Comparison Tool</span>
+        <h3>Coefficient of Variation (CV)</h3>
+        <p>To mathematically measure the consistency of the Mean, we use the <strong>Coefficient of Variation</strong>. It expresses the SD as a percentage of the Mean:</p>
+        
+        <div class="formula-container">
+            $$ CV = \left( \frac{\sigma}{\bar{X}} \right) \times 100 $$
+        </div>
+
+        <p><strong>Interpretation of CV:</strong></p>
+        <ul>
+            <li><strong>Lower CV:</strong> The data is more <strong>consistent</strong> and stable. The Mean is highly reliable.</li>
+            <li><strong>Higher CV:</strong> The data is more <strong>variable</strong> (less consistent). The Mean should be used with caution.</li>
+        </ul>
+
+        <table class="data-table" style="max-width: 600px; margin: 10px auto;">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Low CV Case</th>
+                    <th>High CV Case</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Stability</strong></td>
+                    <td>High Stability</td>
+                    <td>Low Stability</td>
+                </tr>
+                <tr>
+                    <td><strong>Uniformity</strong></td>
+                    <td>More Uniform</td>
+                    <td>Less Uniform</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    </div>
+	<div class="median-section"> <div class="header-section">
+            <h1>Measures of Skewness and Kurtosis</h1>
+        </div>
+
+        <div class="description-box">
+            <p>In statistics, measures of skewness and kurtosis are used to describe the shape of a probability distribution, which is simply a graph showing how often different values in a dataset occur. The most common reference point for these measures is the normal distribution, often called the "bell curve," where most data points cluster symmetrically in the middle and taper off equally at both ends. Skewness quantifies how much a distribution deviates from this symmetry; a positive skew indicates a "tail" stretching toward higher values on the right, while a negative skew indicates a tail extending toward lower values on the left. Kurtosis measures the "tailedness" of the distribution, or how the data behaves at the extreme ends compared to the bell curve. A high kurtosis (leptokurtic) signifies a sharp peak and heavy tails, suggesting more frequent outliers, whereas a low kurtosis (platykurtic) indicates a flatter top and thinner tails. Together, these tools help researchers identify how much their data "leans" or "bulges" compared to a standard normal model.While Mean and SD tell us about the center and spread, <strong>Skewness</strong> and <strong>Kurtosis</strong> describe the <strong>Shape</strong> of the distribution.</p>
+        </div>
+
+        <div class="data-type-card">
+            <span class="tag">Shape: Symmetry</span>
+            <h3>1. Measures of Skewness</h3>
+            <p>Skewness refers to the lack of symmetry in a distribution. A "Skewed" distribution is one that is not symmetrical and stretches out more on one side than the other.</p>
+            
+            
+
+            <div class="description-box" style="background-color: #f0f4f8;">
+                <ul>
+                    <li><strong>Symmetrical:</strong> Mean = Median = Mode.</li>
+                    <li><strong>Positive Skew (Right-skewed):</strong> The tail on the right side is longer. (Mean > Median > Mode).</li>
+                    <li><strong>Negative Skew (Left-skewed):</strong> The tail on the left side is longer. (Mean < Median < Mode).</li>
+                </ul>
+            </div>
+
+            <h4>Karl Pearson's Coefficient of Skewness ($S_k$):</h4>
+            <div class="formula-container">
+                $$ S_k = \frac{\text{Mean} - \text{Mode}}{\sigma} \quad \text{or} \quad S_k = \frac{3(\text{Mean} - \text{Median})}{\sigma} $$
+            </div>
+        </div>
+
+        <div class="data-type-card">
+            <span class="tag">Shape: Peakedness</span>
+            <h3>2. Measures of Kurtosis</h3>
+            <p>Kurtosis measures the "peakedness" or "flatness" of a distribution relative to a normal distribution. It tells us about the thickness of the tails.</p>
+
+            
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Condition ($\beta_2$)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Leptokurtic</strong></td>
+                        <td>Sharply peaked with heavy tails.</td>
+                        <td>$\beta_2 > 3$</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mesokurtic</strong></td>
+                        <td>Normal Distribution.</td>
+                        <td>$\beta_2 = 3$</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Platykurtic</strong></td>
+                        <td>Flat-topped with thin tails.</td>
+                        <td>$\beta_2 < 3$</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Formula for Kurtosis ($\beta_2$):</h4>
+            <p>Calculated using the fourth moment ($\mu_4$) and second moment ($\mu_2$):</p>
+            <div class="formula-container">
+                $$ \beta_2 = \frac{\mu_4}{\mu_2^2} $$
+            </div>
+        </div>
+    </div>
+</body>
+</html>

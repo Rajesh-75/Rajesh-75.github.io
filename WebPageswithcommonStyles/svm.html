@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial</title>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']]
+            }
+        };
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <h1>Support Vector Machine (SVM)</h1>
+
+    <h2>🚀 1. Linear SVM Training (Hard Margin and Soft Margin)</h2>
+    <p>The goal is to find the optimal hyperplane that maximizes the margin between the two classes.</p>
+
+    <h3>Step-by-Step Process:</h3>
+    <ol>
+        <li><strong>Load Data:</strong> Load the training data, consisting of feature vectors $(\mathbf{x}_i)$ and their corresponding class labels $(y_i \in \{-1, 1\})$.</li>
+        <li><strong>Define the Optimization Problem (The Objective):</strong>
+            <ul>
+                <li><strong>Hard Margin:</strong> Maximize the margin, which is equivalent to minimizing $||\mathbf{w}||^2$ (the squared norm of the weight vector $\mathbf{w}$), subject to the constraint that all points are correctly classified with a margin of at least 1: $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \ge 1$.</li>
+                <li><strong>Soft Margin:</strong> Minimize $||\mathbf{w}||^2$ plus a penalty term for misclassification. This introduces the slack variables ($\xi_i$) and the regularization hyperparameter ($C$):
+                    <div class="formula">
+                        $$\text{Minimize: } \frac{1}{2}||\mathbf{w}||^2 + C \sum_{i=1}^{N} \xi_i$$
+                        $$\text{Subject to: } y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \ge 1 - \xi_i \quad \text{and} \quad \xi_i \ge 0$$
+                    </div>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Choose Hyperparameters ($C$):</strong> Select the regularization parameter $C$ (for the Soft Margin case). A smaller $C$ allows for a wider margin and more misclassifications; a larger $C$ enforces a narrower margin and fewer misclassifications.</li>
+        <li><strong>Solve the Dual Problem:</strong> Convert the primal optimization problem into its dual form using the Lagrange Multipliers ($\alpha_i$). This dual problem is a easier-to-solve Quadratic Programming (QP) problem.</li>
+        <li><strong>Identify Support Vectors:</strong> After solving the QP problem, the data points corresponding to non-zero Lagrange multipliers ($\alpha_i > 0$) are identified as the **Support Vectors (SVs)**. These are the critical points that define the margin/hyperplane.</li>
+        <li><strong>Calculate Parameters:</strong> Use the determined $\alpha_i$ values and the Support Vectors to calculate the optimal weight vector $\mathbf{w}$ and the bias term $b$.</li>
+        <li><strong>Return:</strong> The final parameters $(\mathbf{w}, b)$ that define the optimal linear hyperplane.</li>
+    </ol>
+
+    <h2>🚀 2. Non-Linear SVM Training (Kernel Trick)</h2>
+    <p>The goal is to implicitly map the data into a higher-dimensional feature space where it is linearly separable, without explicitly calculating the coordinates in that space.</p>
+
+    <h3>Step-by-Step Process:</h3>
+    <ol>
+        <li><strong>Initial Steps (Same as Linear):</strong> Load the data and define the optimization problem, including the Soft Margin hyperparameters $C$ and slack variables $\xi_i$.</li>
+        <li><strong>Choose the Kernel Function ($K$):</strong> Select a suitable Kernel Function, $K(\mathbf{x}_i, \mathbf{x}_j)$, which calculates the dot product in the higher-dimensional feature space, $\phi(\mathbf{x}_i) \cdot \phi(\mathbf{x}_j)$, implicitly. Common kernels include:
+            <ul>
+                <li>RBF (Radial Basis Function) / Gaussian Kernel</li>
+                <li>Polynomial Kernel</li>
+                <li>Sigmoid Kernel</li>
+            </ul>
+        </li>
+        <li><strong>Define Hyperparameters (Kernel-Specific):</strong>
+            <ul>
+                <li>For the RBF Kernel, choose the gamma ($\gamma$) parameter, which defines the influence of a single training example.</li>
+                <li>Choose the regularization parameter $C$ (same as the linear case).</li>
+            </ul>
+        </li>
+        <li><strong>Solve the Kernelized Dual Problem:</strong> Solve the same Quadratic Programming (QP) dual problem as the linear case, but replace every dot product $\mathbf{x}_i \cdot \mathbf{x}_j$ with the chosen **Kernel function** $K(\mathbf{x}_i, \mathbf{x}_j)$. This is the **Kernel Trick**.</li>
+        <li><strong>Identify Support Vectors:</strong> Identify the Support Vectors ($\alpha_i > 0$). These points are now critical in the kernel feature space.</li>
+        <li><strong>Calculate Bias ($b$):</strong> Calculate the bias term $b$ using the SVs and the kernel function. The weight vector $\mathbf{w}$ in the high-dimensional space is typically not explicitly calculated.</li>
+        <li><strong>Return:</strong> The Lagrange Multipliers ($\alpha_i$), the bias term ($b$), the Support Vectors (SVs), and the chosen Kernel function.</li>
+    </ol>
+    
+    <hr>
+    
+    <h2>💡 The Power of the Kernel Trick (The Mathematical Shortcut)</h2>
+    <p>The main advantage of the **Kernel Trick** is that it allows us to work in a high-dimensional feature space ($\mathcal{F}$) where the data is linearly separable, **without ever explicitly calculating the coordinates** in that space. This avoids the huge computational cost associated with high dimensionality.</p>
+    
+    <h3>The Transformation:</h3>
+    <p>Instead of performing the complex two-step process:</p>
+    <ol>
+        <li>**Explicit Mapping:** Compute the high-dimensional vector $\Phi(\mathbf{x}_i)$ for every data point.</li>
+        <li>**Dot Product:** Compute the dot product $\Phi(\mathbf{x}_i) \cdot \Phi(\mathbf{x}_j)$.</li>
+    </ol>
+    <p>The Kernel Trick replaces the entire sequence with a simple function call:</p>
+    
+    <div class="formula">
+        $$K(\mathbf{x}_i, \mathbf{x}_j) = \Phi(\mathbf{x}_i) \cdot \Phi(\mathbf{x}_j)$$
+    </div>
+    
+    <p>For example, using the **Polynomial Kernel** $K(\mathbf{x}_i, \mathbf{x}_j) = (\mathbf{x}_i \cdot \mathbf{x}_j + 1)^d$ effectively computes the dot product of data mapped to an implied feature space of dimension $\binom{n+d}{d}$ (where $n$ is the original dimension), all through one fast calculation in the original space.</p>
+    
+    <h3>Key Benefit: Computationally Cheap</h3>
+    <p>The Kernel function takes only the original low-dimensional input vectors $\mathbf{x}_i$ and $\mathbf{x}_j$ and returns the scalar value of their dot product in the high-dimensional space. This makes it **computationally feasible** to find a non-linear boundary in the original input space.</p>
+
+    <hr>
+
+    <h2>Classification (Decision Function) in Both Cases</h2>
+    <p>Once the model is trained, the class of a new data point $\mathbf{x}_{\text{new}}$ is predicted using the Decision Function (which is simply the sign of the output):</p>
+
+    <h3>Linear Case:</h3>
+    <div class="formula">
+        $$\text{sign}(\mathbf{w} \cdot \mathbf{x}_{\text{new}} + b)$$
+    </div>
+
+    <h3>Non-Linear Case (Kernelized):</h3>
+    <div class="formula">
+        $$\text{sign}\left(\sum_{i \in \text{SV}} \alpha_i y_i K(\mathbf{x}_i, \mathbf{x}_{\text{new}}) + b\right)$$
+    </div>
+
+    <hr>
+    <h2>🔬 SVM Optimization Comparison</h2>
+    <p>A comparison of the underlying structure, objective, and solution method for Linear and Non-Linear SVMs.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>Linear SVM</th>
+                <th>Non-Linear SVM (Kernel SVM)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Model/Goal</strong></td>
+                <td>Find a single, <strong>straight hyperplane</strong> in the input space.</td>
+                <td>Find a <strong>linear hyperplane</strong> in the high-dimensional feature space ($\mathcal{F}$).</td>
+            </tr>
+            <tr>
+                <td><strong>Primal Cost (Objective)</strong></td>
+                <td>Minimize the weight vector norm ($\mathbf{w}$) to maximize the margin, subject to soft margin penalty $C$.</td>
+                <td>Conceptually the same (Minimize $\frac{1}{2} ||\mathbf{w}||^2 + C \sum \xi_i$), but applied to the mapped feature space $\mathcal{F}$.</td>
+            </tr>
+            <tr>
+                <td><strong>Optimization Method Solved</strong></td>
+                <td>Solved using the Dual Formulation, seeking the optimal Lagrange Multipliers ($\alpha_i$).</td>
+                <td>Solved using the <strong>Dual Formulation</strong>, incorporating the <strong>Kernel Function</strong> $K(\mathbf{x}_i, \mathbf{x}_j)$ instead of the simple dot product.</td>
+            </tr>
+            <tr>
+                <td><strong>Prediction Mode</strong></td>
+                <td>$f(\mathbf{x}) = \text{sign}(\mathbf{w} \cdot \mathbf{x} + b)$</td>
+                <td>$f(\mathbf{x}) = \text{sign}(\sum_{i \in \text{SV}} \alpha_i y_i K(\mathbf{x}_i, \mathbf{x}) + b)$</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="note">
+        <p><strong>Note on $\frac{1}{2} ||\mathbf{w}||^2$:</strong> Minimizing this term is mathematically equivalent to <strong>maximizing the margin width</strong>, which is $\frac{2}{||\mathbf{w}||}$.</p>
+    </div>
+
+    <hr>
+    <h2>🔍 How Support Vectors (SVs) are Chosen (Updated Insight)</h2>
+
+    <h3>Role of the Lagrange Multiplier ($\alpha_i^*$)</h3>
+    <p>The value of $\alpha_i^*$ determines the role of the corresponding data point $\mathbf{x}_i$ in defining the decision boundary, based on the Karush-Kuhn-Tucker (KKT) conditions:</p>
+    <ul>
+        <li>**If $\alpha_i^* = 0$:** The data point $\mathbf{x}_i$ is far away from the margin and has **no influence** on the decision boundary. It is **not** a Support Vector.</li>
+        <li>**If $0 < \alpha_i^* < C$:** The data point $\mathbf{x}_i$ lies **exactly on the margin** (i.e., $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) = 1$). It is a Support Vector (SVs on the margin). These points are **crucial** for defining the optimal hyperplane.</li>
+        <li>**If $\alpha_i^* = C$:** The data point $\mathbf{x}_i$ is a **margin violator** (it is misclassified or inside the margin, i.e., $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) < 1$). It is a Support Vector (error SVs). The model exerts **maximum penalty** $C$ to try and correct it.</li>
+    </ul>
+
+    <h3>G. Compute Weight Vector ($\mathbf{w}$) (Implicit)</h3>
+    <p>The optimal weight vector $\mathbf{w}$ is implicitly defined **only by the Support Vectors** (those with $\alpha_i^* > 0$):</p>
+    <div class="formula">
+        $$\mathbf{w} = \sum_{i \in \text{SV}} \alpha_i y_i \Phi(\mathbf{x}_i)$$
+    </div>
+    <p>*(In the linear case, $\Phi(\mathbf{x}_i)$ is simply $\mathbf{x}_i$).*</p>
+
+    <h3>H. Compute Bias ($b$)</h3>
+    <p>The bias term ($b$) is calculated using any of the Support Vectors that lie **exactly on the margin** ($0 < \alpha_i^* < C$).</p>
+
+    <hr>
+    <h2>📐 The SVM Optimization: Lagrangian Duality (Detailed Derivation)</h2>
+    <p>
+        We don't directly solve inequalities to get $\alpha_i$ and $\mathbf{w}$. Instead, we solve a **constrained optimization problem** using the method of **Lagrange multipliers**, which transforms the problem into finding the optimal $\alpha_i$ values. Once we have the $\alpha_i$ values, we can then compute $\mathbf{w}$ and $b$.
+    </p>
+
+    <h3>1. The Primal Problem (The Original Optimization Problem)</h3>
+    <p>For a soft-margin SVM, the goal is to find a hyperplane defined by $\mathbf{w} \cdot \mathbf{x} + b = 0$ that maximizes the margin while allowing some classification errors. This is formulated as:</p>
+    <p>
+        **Minimize:**
+        $$P(\mathbf{w}, b, \xi) = \frac{1}{2}||\mathbf{w}||^2 + C\sum_{i=1}^{N}\xi_i$$
+    </p>
+    <p>
+        **Subject to the constraints:**
+        $$\begin{align*} y_i(\mathbf{w} \cdot \mathbf{x}_i + b) &\ge 1 - \xi_i \quad &\text{(Correct classification or margin violation)} \\ \xi_i &\ge 0 \quad &\text{(Slack variables must be non-negative)}\end{align*}$$
+    </p>
+    <p>
+        Here: $||\mathbf{w}||^2$ is related to the inverse of the margin (minimizing this maximizes the margin). $C$ is the regularization parameter, and $\xi_i$ are the slack variables.
+    </p>
+
+    <h3>2. Forming the Lagrangian</h3>
+    <p>We introduce Lagrange multipliers for each constraint: $\alpha_i \ge 0$ (for the margin constraint) and $\mu_i \ge 0$ (for the slack variable constraint). The Lagrangian function $L$ is formed by subtracting the constraints (multiplied by their respective Lagrange multipliers) from the objective function:</p>
+    <div class="formula">
+        $$L(\mathbf{w}, b, \xi, \alpha, \mu) = \frac{1}{2}||\mathbf{w}||^2 + C\sum_{i=1}^{N}\xi_i - \sum_{i=1}^{N}\alpha_i[y_i(\mathbf{w} \cdot \mathbf{x}_i + b) - 1 + \xi_i] - \sum_{i=1}^{N}\mu_i\xi_i$$
+    </div>
+
+    <h3>3. Deriving the Dual Problem (The Optimization Problem We Actually Solve)</h3>
+    <p>The key idea is to find the saddle point of the Lagrangian by minimizing $L$ with respect to the primal variables ($\mathbf{w}, b, \xi$). We take partial derivatives and set them to zero:</p>
+    <p>
+        **Derivative w.r.t. $\mathbf{w}$:**
+        $$\frac{\partial L}{\partial \mathbf{w}} = \mathbf{w} - \sum_{i=1}^{N}\alpha_i y_i \mathbf{x}_i = 0 \quad \Rightarrow \quad \mathbf{w} = \sum_{i=1}^{N}\alpha_i y_i \mathbf{x}_i$$
+        <p class="note" style="margin-top: 5px; font-size: 0.9em; background-color: #e2f0ff;">
+            This is how we compute $\mathbf{w}$! Once we have the $\alpha_i$ values, we can directly calculate $\mathbf{w}$.
+        </p>
+    </p>
+    <p>
+        **Derivative w.r.t. $b$:**
+        $$\frac{\partial L}{\partial b} = - \sum_{i=1}^{N}\alpha_i y_i = 0 \quad \Rightarrow \quad \sum_{i=1}^{N}\alpha_i y_i = 0$$
+        <p class="note" style="margin-top: 5px; font-size: 0.9em; background-color: #e2f0ff;">
+            This is a crucial equality constraint that the $\alpha_i$ values must satisfy.
+        </p>
+    </p>
+    <p>
+        **Derivative w.r.t. $\xi_i$:**
+        $$\frac{\partial L}{\partial \xi_i} = C - \alpha_i - \mu_i = 0 \quad \Rightarrow \quad \alpha_i + \mu_i = C$$
+        <p class="note" style="margin-top: 5px; font-size: 0.9em; background-color: #e2f0ff;">
+            Since $\mu_i \ge 0$, this implies $\alpha_i \le C$. Combined with $\alpha_i \ge 0$, this yields the bound: $\mathbf{0 \le \alpha_i \le C}$.
+        </p>
+    </p>
+    <p>
+        **Substituting back:** Substituting these relationships back into the Lagrangian eliminates $\mathbf{w}$, $b$, and $\xi_i$, resulting in the **Dual Problem** solely in terms of the Lagrange multipliers $\alpha_i$.
+    </p>
+
+    <p>
+        **Maximize** (with respect to $\alpha_i$):
+    </p>
+    <div class="formula">
+        $$D(\alpha) = \sum_{i=1}^{N}\alpha_i - \frac{1}{2}\sum_{i=1}^{N}\sum_{j=1}^{N}\alpha_i \alpha_j y_i y_j (\mathbf{x}_i \cdot \mathbf{x}_j)$$
+    </div>
+    <p>
+        **Subject to the constraints:**
+        $$\begin{align*} 0 &\le \alpha_i \le C \quad &\text{for all } i=1, \dots, N \\ \sum_{i=1}^{N}\alpha_i y_i &= 0 \end{align*}$$
+    </p>
+
+    <h3>4. Solving the Dual Problem to Get $\alpha_i$</h3>
+    <p>
+        The dual problem is a **Quadratic Programming (QP) problem**. It involves maximizing a quadratic function subject to linear inequality and equality constraints. Specialized numerical optimization algorithms (like Sequential Minimal Optimization, or **SMO**) are used to iteratively adjust the $\alpha_i$ values until they converge to the optimal solution. **This is the main computational step for the SVM.**
+    </p>
+
+    <h3>5. Computing $\mathbf{w}$ and $b$ from $\alpha_i$</h3>
+    <p>Once we have the optimal $\alpha_i$ values from solving the dual problem:</p>
+    <ul>
+        <li>**Compute $\mathbf{w}$:** We use the relationship derived from the partial derivative w.r.t. $\mathbf{w}$:
+            $$\mathbf{w} = \sum_{i=1}^{N}\alpha_i y_i \mathbf{x}_i$$
+            Notice that only data points with $\alpha_i > 0$ (**the Support Vectors**) contribute to $\mathbf{w}$.
+        </li>
+        <li>**Compute $b$:** The intercept $b$ is determined using the KKT conditions for any Support Vector $\mathbf{x}_k$ that lies **exactly on the margin** (i.e., $0 < \alpha_k < C$). For such a point, the constraint $y_k(\mathbf{w} \cdot \mathbf{x}_k + b) = 1$ is active. Rearranging for $b$:
+            $$b = y_k - \mathbf{w} \cdot \mathbf{x}_k$$
+            In practice, $b$ is often averaged over all such Support Vectors to improve numerical stability.
+        </li>
+    </ul>
+
+</div>
+
+</body>
+</html>

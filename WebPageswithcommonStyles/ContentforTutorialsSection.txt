@@ -1,0 +1,60 @@
+1. Machine learning Pipeline
+	1.1 Data Cleaning
+	1.2 Feature Engineering 
+	1.3 Training
+	1.4 Testing
+	1.5 Deployment
+
+2. Learning concepts
+	2.4 Training
+	2.5 Measuring Performance of the Models
+	2.5 Testing
+	2.6 Ensemble learning
+	
+3.Clustering
+	3.0.1 Definition
+	3.0.2 Different Clustering Algorithms
+	3.0.3 Figure
+3.1 K-means
+3.1.1 K-means Algorithm (Pseudo code)
+3.1.2 Hyper parameter
+3.1.3 Practical Application of k-means
+3.1.4.Failures of k-means
+3.1.5 link for k-means application code in Python code   
+3.2 Mixture Models
+
+4.k-nearest neigbhourhood
+5.Decision Tree
+6.SVM
+7.Shallow Neural Networks
+8.Decision Tree
+9.Principal Component Analysis
+10. Naive Bayessian
+11. Bootstrapping and RandomForest 
+
+Deep learning
+Introduction
+1.0 Deep MLP
+	2.1 Initialization 
+	2.2 Relu  
+	2.3 Batch Normalization 
+	2.4 Dropout
+	2.5 Adams Differntiation
+	2.6 Batch learning
+3. Comparison with Shallow MLP
+4. 
+
+
+
+
+In logistic regression, instead of using a squared loss and trying to minimize the empirical
+risk, we maximize the likelihood of our training set according to the model
+
+The first thing to say is that logistic regression is not a regression, but a classification learning
+algorithm
+ 
+
+
+	
+
+

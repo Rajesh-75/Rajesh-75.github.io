@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformer Architectures — Encoder, Decoder, and the Layer Stack</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #0f172a;
+    --ink-mid:   #334155;
+    --ink-soft:  #64748b;
+    --page:      #f8fafc;
+    --card:      #ffffff;
+    --border:    #e2e8f0;
+    --accent:    #2563eb;
+    --accent-lt: #eff6ff;
+
+    --teal-bg:   #e1f5ee; --teal-bdr: #1d9e75; --teal-txt: #085041;
+    --coral-bg:  #faece7; --coral-bdr:#993c1d; --coral-txt:#4a1b0c;
+    --purple-bg: #eeedfe; --purple-bdr:#534ab7;--purple-txt:#26215c;
+    --amber-bg:  #faeeda; --amber-bdr:#ba7517; --amber-txt:#412402;
+    --blue-bg:   #e6f1fb; --blue-bdr: #185fa5; --blue-txt: #042c53;
+    --red-bg:    #fef2f2; --red-bdr:  #ef4444; --red-txt:  #7f1d1d;
+    --gray-bg:   #f1efe8; --gray-bdr: #b4b2a9; --gray-txt: #2c2c2a;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--ink-mid);
+    background: var(--page);
+  }
+
+  /* ── Layout ── */
+  .page-wrap { max-width: 960px; margin: 0 auto; padding: 0 32px 80px; }
+
+  /* ── Page header ── */
+  .page-header {
+    padding: 52px 0 32px;
+    border-bottom: 3px solid var(--accent);
+    margin-bottom: 56px;
+  }
+  .eyebrow {
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 10px;
+  }
+  .page-header h1 {
+    font-size: 2rem; font-weight: 800;
+    color: var(--ink); line-height: 1.15;
+  }
+  .page-header .subtitle {
+    margin-top: 12px; color: var(--ink-soft);
+    font-size: 0.97rem; max-width: 680px;
+  }
+
+  /* ── Section ── */
+  .section { margin-bottom: 72px; }
+
+  h2 {
+    font-size: 1.3rem; font-weight: 700;
+    color: var(--ink); margin-bottom: 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .sec-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    background: var(--accent); color: #fff;
+    border-radius: 7px; font-size: 0.78rem;
+    font-weight: 700; flex-shrink: 0;
+  }
+  h3 {
+    font-size: 1.02rem; font-weight: 700;
+    color: #1e3a8a; margin: 26px 0 10px;
+  }
+  p { margin-bottom: 14px; color: var(--ink-mid); }
+  ul, ol { padding-left: 22px; margin-bottom: 14px; color: var(--ink-mid); }
+  li { margin-bottom: 6px; }
+  strong { color: var(--ink); }
+  code {
+    background: #e2e8f0; border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.86em; color: #1e3a8a;
+  }
+
+  /* ── Callout ── */
+  .callout {
+    border-radius: 8px; padding: 16px 20px;
+    margin: 18px 0; border-left: 4px solid;
+    border-top-left-radius: 0; border-bottom-left-radius: 0;
+  }
+  .callout-title { font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; }
+  .cl-blue   { background: var(--blue-bg);   border-color: var(--blue-bdr);   color: var(--blue-txt); }
+  .cl-teal   { background: var(--teal-bg);   border-color: var(--teal-bdr);   color: var(--teal-txt); }
+  .cl-amber  { background: var(--amber-bg);  border-color: var(--amber-bdr);  color: var(--amber-txt); }
+  .cl-red    { background: var(--red-bg);    border-color: var(--red-bdr);    color: var(--red-txt); }
+  .cl-purple { background: var(--purple-bg); border-color: var(--purple-bdr); color: var(--purple-txt); }
+  .cl-coral  { background: var(--coral-bg);  border-color: var(--coral-bdr);  color: var(--coral-txt); }
+
+  /* ── Figure wrapper ── */
+  .fig-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 20px 16px;
+    margin: 24px 0;
+  }
+  .fig-wrap svg { width: 100%; height: auto; display: block; }
+  .fig-caption {
+    font-style: italic; color: var(--ink-soft);
+    font-size: 0.82rem; margin-top: 12px;
+    text-align: center; line-height: 1.5;
+  }
+
+  /* ── Comparison table ── */
+  .cmp-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.88rem; }
+  .cmp-table thead tr { background: #1e3a8a; color: #fff; }
+  .cmp-table thead th { padding: 11px 14px; text-align: left; }
+  .cmp-table tbody tr:nth-child(even) { background: #f1f5f9; }
+  .cmp-table tbody tr:nth-child(odd)  { background: #fff; }
+  .cmp-table tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .cmp-table .yes { color: #166534; font-weight: 700; }
+  .cmp-table .no  { color: #991b1b; font-weight: 700; }
+
+  /* ── Divider ── */
+  hr.divider { border: none; border-top: 2px solid var(--border); margin: 60px 0; }
+
+  /* ── Bridge ── */
+  .bridge {
+    background: linear-gradient(135deg, var(--blue-bg) 0%, var(--purple-bg) 100%);
+    border: 1px solid #c7d2fe; border-radius: 10px;
+    padding: 20px 24px; margin: 28px 0;
+    color: #312e81; font-size: 0.93rem;
+  }
+
+  /* ── Math block ── */
+  .math-block {
+    background: #f1f5f9; border-radius: 8px;
+    padding: 14px 20px; margin: 16px 0;
+    overflow-x: auto; text-align: center;
+  }
+
+  /* ── SVG shared colours (self-contained, no external deps) ── */
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- ══ PAGE HEADER ══ -->
+  <div class="page-header">
+    <div class="eyebrow">Deep Learning Series · Transformers</div>
+    <h1>Transformer Architectures</h1>
+    <p class="subtitle">
+      A structured walkthrough of the three core Transformer configurations —
+      Encoder-only, Decoder-only, and the general layer stack —
+      explaining what each is, how it differs internally, and which real-world
+      models use it.
+    </p>
+  </div>
+
+
+  <!-- ══ SECTION 0: OVERVIEW ══ -->
+  <div class="section">
+    <h2><span class="sec-num">0</span> Why Three Architectures?</h2>
+
+    <p>
+      The original 2017 Transformer paper introduced a full
+      <strong>Encoder–Decoder</strong> architecture for machine translation.
+      Since then, researchers discovered that for many tasks you only need
+      one half of that structure. This gave rise to two specialised families:
+    </p>
+
+    <ul>
+      <li>
+        <strong>Encoder-only</strong> — reads the full input in both directions,
+        produces rich contextual vectors, used for understanding tasks.
+        Example: BERT.
+      </li>
+      <li>
+        <strong>Decoder-only</strong> — generates output one token at a time,
+        can only attend to past tokens (causal masking), used for text generation.
+        Example: GPT, Claude.
+      </li>
+      <li>
+        <strong>Encoder–Decoder</strong> — the original full architecture,
+        used when you need to transform one sequence into another.
+        Example: T5, original Transformer.
+      </li>
+    </ul>
+
+    <p>
+      All three are built from the same <strong>Transformer layer block</strong>
+      — the difference is in which layers are present and how attention is masked.
+      The layer stack diagram in Section 3 shows this common building block.
+    </p>
+
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th>Architecture</th>
+          <th>Attention direction</th>
+          <th>Can generate text?</th>
+          <th>Best for</th>
+          <th>Example models</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Encoder-only</strong></td>
+          <td>Bidirectional</td>
+          <td class="no">No</td>
+          <td>Understanding, classification, search</td>
+          <td>BERT, RoBERTa</td>
+        </tr>
+        <tr>
+          <td><strong>Decoder-only</strong></td>
+          <td>Causal (left-to-right only)</td>
+          <td class="yes">Yes</td>
+          <td>Text generation, chat, code</td>
+          <td>GPT, Claude, LLaMA</td>
+        </tr>
+        <tr>
+          <td><strong>Encoder–Decoder</strong></td>
+          <td>Enc: bidirectional · Dec: causal</td>
+          <td class="yes">Yes</td>
+          <td>Translation, summarisation, Seq2Seq</td>
+          <td>T5, BART, original Transformer</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 1: ENCODER-ONLY ══ -->
+  <div class="section">
+    <h2><span class="sec-num">1</span> Encoder-Only Transformer</h2>
+
+    <p>
+      An Encoder-only Transformer reads the entire input sequence and
+      produces a rich contextual vector for every token. Because there is
+      no generation happening, every token is free to attend to every other
+      token in <strong>both directions</strong> — past and future — at the same time.
+      This bidirectional view is what makes Encoder-only models excellent at
+      understanding tasks like classification and search.
+    </p>
+
+    <div class="callout cl-teal">
+      <div class="callout-title">The key property — bidirectional self-attention</div>
+      When producing the output vector for "cat" in "The cat sat on the mat",
+      the Encoder can attend to every word simultaneously — including words that
+      come <em>after</em> "cat". This gives it a richer, more complete understanding
+      of each token's meaning in context. No causal mask is applied.
+    </div>
+
+    <!-- DIAGRAM 1 -->
+    <div class="fig-wrap">
+      <svg viewBox="0 0 680 580" role="img">
+        <title>Encoder-only Transformer architecture</title>
+        <desc>Input tokens flow through embedding plus positional encoding into a stack of N encoder layers, each containing multi-head self-attention and a feed-forward network both with residual connections and layer normalisation, producing contextual output vectors used for classification tasks like BERT.</desc>
+        <defs>
+          <marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- ── LEFT: input → embedding → stack ── -->
+
+        <!-- Input tokens -->
+        <rect x="40" y="510" width="180" height="38" rx="6" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#2c2c2a" x="130" y="529" text-anchor="middle" dominant-baseline="central">"The cat sat"</text>
+
+        <line x1="130" y1="510" x2="130" y2="482" stroke="#64748b" stroke-width="1.2" marker-end="url(#a1)"/>
+
+        <!-- Embedding -->
+        <rect x="40" y="436" width="180" height="46" rx="8" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#444441" x="130" y="453" text-anchor="middle" dominant-baseline="central">Embedding</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#5f5e5a" x="130" y="470" text-anchor="middle" dominant-baseline="central">+ positional encoding</text>
+
+        <line x1="130" y1="436" x2="130" y2="406" stroke="#64748b" stroke-width="1.2" marker-end="url(#a1)"/>
+
+        <!-- Encoder stack outer box -->
+        <rect x="30" y="36" width="200" height="370" rx="16" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#042c53" x="130" y="62" text-anchor="middle" dominant-baseline="central">Encoder stack</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0c447c" x="130" y="78" text-anchor="middle" dominant-baseline="central">N identical layers (e.g. N = 12 in BERT)</text>
+
+        <!-- Layer 1 detail -->
+        <rect x="50" y="96" width="160" height="84" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#085041" x="130" y="116" text-anchor="middle" dominant-baseline="central">Multi-head self-attention</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="130" y="135" text-anchor="middle" dominant-baseline="central">bidirectional — sees all tokens</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="130" y="153" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+
+        <line x1="130" y1="180" x2="130" y2="198" stroke="#1d9e75" stroke-width="1.2" marker-end="url(#a1)"/>
+
+        <rect x="50" y="200" width="160" height="72" rx="8" fill="#faece7" stroke="#993c1d" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#4a1b0c" x="130" y="222" text-anchor="middle" dominant-baseline="central">Feed-forward network</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#712b13" x="130" y="241" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+
+        <!-- Repeat -->
+        <line x1="130" y1="272" x2="130" y2="294" stroke="#64748b" stroke-width="1" marker-end="url(#a1)"/>
+        <rect x="50" y="296" width="160" height="44" rx="8" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5" stroke-dasharray="4 3"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#5f5e5a" x="130" y="312" text-anchor="middle" dominant-baseline="central">⋮  repeated × (N−1) more</text>
+
+        <line x1="130" y1="340" x2="130" y2="364" stroke="#64748b" stroke-width="1" marker-end="url(#a1)"/>
+        <rect x="50" y="366" width="160" height="32" rx="6" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#042c53" x="130" y="382" text-anchor="middle" dominant-baseline="central">contextual output vectors</text>
+
+        <!-- Arrow out of stack up -->
+        <line x1="130" y1="36" x2="130" y2="14" stroke="#185fa5" stroke-width="1.5" marker-end="url(#a1)"/>
+
+        <!-- ── RIGHT: annotations ── -->
+
+        <!-- Output description -->
+        <rect x="278" y="36" width="360" height="100" rx="12" fill="#eeedfe" stroke="#534ab7" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#26215c" x="458" y="62" text-anchor="middle" dominant-baseline="central">Contextual output vectors</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="458" y="82" text-anchor="middle" dominant-baseline="central">one rich vector per token</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="458" y="100" text-anchor="middle" dominant-baseline="central">every token has seen the full sentence</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="458" y="118" text-anchor="middle" dominant-baseline="central">bidirectional — past AND future visible</text>
+
+        <line x1="232" y1="86" x2="276" y2="86" stroke="#534ab7" stroke-width="1.5" marker-end="url(#a1)"/>
+
+        <!-- Use cases -->
+        <rect x="278" y="162" width="360" height="100" rx="12" fill="#faeeda" stroke="#ba7517" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#412402" x="458" y="186" text-anchor="middle" dominant-baseline="central">Used for understanding tasks</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="458" y="208" text-anchor="middle" dominant-baseline="central">sentiment classification</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="458" y="226" text-anchor="middle" dominant-baseline="central">named entity recognition</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="458" y="244" text-anchor="middle" dominant-baseline="central">semantic search and retrieval</text>
+
+        <line x1="458" y1="136" x2="458" y2="160" stroke="#64748b" stroke-width="1" marker-end="url(#a1)"/>
+
+        <!-- Cannot generate -->
+        <rect x="278" y="288" width="360" height="80" rx="12" fill="#fef2f2" stroke="#ef4444" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#7f1d1d" x="458" y="312" text-anchor="middle" dominant-baseline="central">No decoder — cannot generate text</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#991b1b" x="458" y="334" text-anchor="middle" dominant-baseline="central">reads and encodes only</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#991b1b" x="458" y="352" text-anchor="middle" dominant-baseline="central">example model: BERT (12 layers, 110M params)</text>
+
+        <line x1="458" y1="262" x2="458" y2="286" stroke="#64748b" stroke-width="1" marker-end="url(#a1)"/>
+
+        <!-- Residual connection explainer -->
+        <rect x="278" y="394" width="360" height="120" rx="12" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#085041" x="458" y="418" text-anchor="middle" dominant-baseline="central">Inside each layer — residual connection</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="458" y="440" text-anchor="middle" dominant-baseline="central">output = LayerNorm(input + sublayer(input))</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="458" y="460" text-anchor="middle" dominant-baseline="central">the original input is added back before</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="458" y="478" text-anchor="middle" dominant-baseline="central">normalisation — prevents vanishing gradients</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="458" y="498" text-anchor="middle" dominant-baseline="central">allows gradients to flow cleanly through all N layers</text>
+
+        <line x1="458" y1="370" x2="458" y2="392" stroke="#64748b" stroke-width="1" marker-end="url(#a1)"/>
+      </svg>
+      <p class="fig-caption">
+        <strong>Figure 1:</strong> Encoder-only Transformer (BERT-style).
+        The encoder stack reads the full sentence bidirectionally at every layer.
+        No decoder is present — output vectors are fed to a task-specific head for classification.
+      </p>
+    </div>
+
+    <h3>Inside one Encoder layer</h3>
+    <p>Every layer performs the same two operations in sequence:</p>
+    <ol>
+      <li>
+        <strong>Multi-head self-attention</strong> — each token attends to all
+        other tokens, producing attention-weighted representations. A residual
+        connection adds back the original input before layer normalisation.
+      </li>
+      <li>
+        <strong>Feed-forward network</strong> — a two-layer MLP applied
+        independently to each token position. Another residual connection
+        and layer norm follows.
+      </li>
+    </ol>
+
+    <div class="math-block">
+      $$\text{AttentionOutput} = \text{LayerNorm}(x + \text{MultiHeadAttn}(x))$$
+      $$\text{LayerOutput} = \text{LayerNorm}(\text{AttOut} + \text{FFN}(\text{AttOut}))$$
+    </div>
+
+    <div class="callout cl-red">
+      <div class="callout-title">Why BERT cannot generate text</div>
+      Because every token attends to every other token — including future tokens —
+      the model has "cheated" during training by seeing the answer. If you asked
+      it to generate "cat ___", it would already have attended to the blank position.
+      Generation requires causal masking — which the Decoder introduces.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 2: DECODER-ONLY ══ -->
+  <div class="section">
+    <h2><span class="sec-num">2</span> Decoder-Only Transformer</h2>
+
+    <p>
+      A Decoder-only Transformer generates text one token at a time. The key
+      architectural difference from the Encoder is <strong>causal masking</strong>:
+      when processing token at position t, the attention mechanism is
+      mathematically prevented from attending to any token at position t+1 or
+      beyond. This ensures the model cannot "peek" at future tokens during
+      training or generation.
+    </p>
+
+    <div class="callout cl-purple">
+      <div class="callout-title">Causal masking — the defining feature</div>
+      Attention scores for future positions are set to −∞ before the softmax,
+      which zeroes out those weights. Token at position t sees positions
+      1, 2, …, t only — never t+1, t+2, … This is what makes generation
+      autoregressive: each token can only be predicted from what came before it.
+    </div>
+
+    <!-- DIAGRAM 2 -->
+    <div class="fig-wrap">
+      <svg viewBox="0 0 680 640" role="img">
+        <title>Decoder-only Transformer architecture</title>
+        <desc>Input tokens flow through embedding plus positional encoding into a stack of N decoder layers, each containing masked multi-head self-attention followed by a feed-forward network with residual connections and layer norm. The output layer applies softmax over the vocabulary to predict the next token, which is fed back as the next input, creating an autoregressive generation loop. Used by GPT and Claude.</desc>
+        <defs>
+          <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- Input tokens -->
+        <rect x="40" y="572" width="180" height="38" rx="6" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#2c2c2a" x="130" y="591" text-anchor="middle" dominant-baseline="central">"The cat sat on"</text>
+
+        <line x1="130" y1="572" x2="130" y2="544" stroke="#64748b" stroke-width="1.2" marker-end="url(#a2)"/>
+
+        <!-- Embedding -->
+        <rect x="40" y="498" width="180" height="46" rx="8" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#444441" x="130" y="515" text-anchor="middle" dominant-baseline="central">Embedding</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#5f5e5a" x="130" y="532" text-anchor="middle" dominant-baseline="central">+ positional encoding</text>
+
+        <line x1="130" y1="498" x2="130" y2="470" stroke="#64748b" stroke-width="1.2" marker-end="url(#a2)"/>
+
+        <!-- Decoder stack outer box -->
+        <rect x="30" y="36" width="200" height="434" rx="16" fill="#eeedfe" stroke="#534ab7" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#26215c" x="130" y="62" text-anchor="middle" dominant-baseline="central">Decoder stack</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="130" y="78" text-anchor="middle" dominant-baseline="central">N identical layers (e.g. N = 96 in GPT-3)</text>
+
+        <!-- Masked attention -->
+        <rect x="50" y="96" width="160" height="92" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#085041" x="130" y="116" text-anchor="middle" dominant-baseline="central">Masked multi-head</text>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#085041" x="130" y="132" text-anchor="middle" dominant-baseline="central">self-attention</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="130" y="152" text-anchor="middle" dominant-baseline="central">sees past tokens only</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="130" y="168" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+
+        <line x1="130" y1="188" x2="130" y2="208" stroke="#1d9e75" stroke-width="1.2" marker-end="url(#a2)"/>
+
+        <!-- FFN -->
+        <rect x="50" y="210" width="160" height="72" rx="8" fill="#faece7" stroke="#993c1d" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#4a1b0c" x="130" y="232" text-anchor="middle" dominant-baseline="central">Feed-forward network</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#712b13" x="130" y="251" text-anchor="middle" dominant-baseline="central">+ residual + layer norm</text>
+
+        <!-- Repeat -->
+        <line x1="130" y1="282" x2="130" y2="304" stroke="#64748b" stroke-width="1" marker-end="url(#a2)"/>
+        <rect x="50" y="306" width="160" height="44" rx="8" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5" stroke-dasharray="4 3"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#5f5e5a" x="130" y="322" text-anchor="middle" dominant-baseline="central">⋮  repeated × (N−1) more</text>
+
+        <line x1="130" y1="350" x2="130" y2="374" stroke="#64748b" stroke-width="1" marker-end="url(#a2)"/>
+
+        <!-- Output layer -->
+        <rect x="50" y="376" width="160" height="44" rx="6" fill="#eeedfe" stroke="#534ab7" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#26215c" x="130" y="395" text-anchor="middle" dominant-baseline="central">Output layer</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="130" y="412" text-anchor="middle" dominant-baseline="central">softmax → next token</text>
+
+        <!-- Predicted token out -->
+        <line x1="130" y1="420" x2="130" y2="444" stroke="#534ab7" stroke-width="1.5" marker-end="url(#a2)"/>
+        <rect x="50" y="446" width="160" height="34" rx="6" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="500" fill="#2c2c2a" x="130" y="463" text-anchor="middle" dominant-baseline="central">"the" (predicted)</text>
+
+        <!-- Feedback loop arrow -->
+        <path d="M130 480 Q130 540 40 540 Q18 540 18 591 Q18 610 40 610" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a2)"/>
+
+        <!-- ── RIGHT side annotations ── -->
+
+        <!-- Causal masking -->
+        <rect x="278" y="36" width="360" height="126" rx="12" fill="#fef2f2" stroke="#ef4444" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#7f1d1d" x="458" y="62" text-anchor="middle" dominant-baseline="central">Causal masking — the key difference</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#991b1b" x="458" y="84" text-anchor="middle" dominant-baseline="central">when predicting token at position t,</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#991b1b" x="458" y="102" text-anchor="middle" dominant-baseline="central">attention only sees positions 1 … t−1</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#991b1b" x="458" y="120" text-anchor="middle" dominant-baseline="central">future positions are masked to −∞ before softmax</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#991b1b" x="458" y="138" text-anchor="middle" dominant-baseline="central">so their attention weight becomes zero</text>
+
+        <line x1="232" y1="142" x2="276" y2="142" stroke="#ef4444" stroke-width="1.5" marker-end="url(#a2)"/>
+
+        <!-- Autoregressive loop -->
+        <rect x="278" y="188" width="360" height="116" rx="12" fill="#faeeda" stroke="#ba7517" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#412402" x="458" y="212" text-anchor="middle" dominant-baseline="central">Autoregressive generation loop</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="458" y="234" text-anchor="middle" dominant-baseline="central">predicted token appended to input sequence</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="458" y="252" text-anchor="middle" dominant-baseline="central">full sequence runs through stack again</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="458" y="270" text-anchor="middle" dominant-baseline="central">one new token per pass through the stack</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="458" y="288" text-anchor="middle" dominant-baseline="central">repeats until end-of-sequence token</text>
+
+        <line x1="458" y1="162" x2="458" y2="186" stroke="#64748b" stroke-width="1" marker-end="url(#a2)"/>
+
+        <!-- Feedback loop label -->
+        <line x1="278" y1="460" x2="278" y2="480" stroke="#64748b" stroke-width="1" marker-end="url(#a2)"/>
+        <rect x="278" y="482" width="360" height="56" rx="10" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#5f5e5a" x="458" y="502" text-anchor="middle" dominant-baseline="central">predicted token fed back as next input</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#5f5e5a" x="458" y="520" text-anchor="middle" dominant-baseline="central">(dashed arrow on left shows this loop)</text>
+
+        <!-- Usage -->
+        <rect x="278" y="326" width="360" height="80" rx="12" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#042c53" x="458" y="352" text-anchor="middle" dominant-baseline="central">Used for generation tasks</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0c447c" x="458" y="374" text-anchor="middle" dominant-baseline="central">chat, code generation, text completion</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0c447c" x="458" y="392" text-anchor="middle" dominant-baseline="central">example models: GPT-3 (96 layers), Claude</text>
+
+        <line x1="458" y1="304" x2="458" y2="324" stroke="#64748b" stroke-width="1" marker-end="url(#a2)"/>
+      </svg>
+      <p class="fig-caption">
+        <strong>Figure 2:</strong> Decoder-only Transformer (GPT / Claude-style).
+        Causal masking ensures each token only attends to past positions.
+        The dashed feedback arrow shows the autoregressive loop — each predicted token
+        becomes the next input.
+      </p>
+    </div>
+
+    <h3>The generation loop step by step</h3>
+    <ol>
+      <li>Input tokens are embedded and positional encodings added.</li>
+      <li>All tokens pass through all N decoder layers simultaneously.</li>
+      <li>The output layer applies softmax over the vocabulary — highest probability token is selected.</li>
+      <li>That token is appended to the input sequence.</li>
+      <li>Steps 2–4 repeat until <code>&lt;/s&gt;</code> is predicted.</li>
+    </ol>
+
+    <div class="callout cl-amber">
+      <div class="callout-title">Why each generation step runs all N layers</div>
+      Even though only one new token is added per step, the entire sequence is
+      processed through all N layers again. This is computationally expensive —
+      which is why techniques like KV-caching exist in production systems, storing
+      the key and value vectors from previous steps to avoid recomputing them.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 3: LAYER STACK ══ -->
+  <div class="section">
+    <h2><span class="sec-num">3</span> The General Layer Stack</h2>
+
+    <p>
+      Both architectures above are built from the same fundamental unit —
+      a <strong>Transformer layer block</strong>. Understanding this block
+      and why they are stacked is the key to understanding why bigger models
+      are generally smarter.
+    </p>
+
+    <!-- DIAGRAM 3 -->
+    <div class="fig-wrap">
+      <svg viewBox="0 0 680 510" role="img">
+        <title>General stack of Transformer layers</title>
+        <desc>Diagram showing N identical Transformer blocks stacked vertically from bottom to top. Token embeddings enter at the bottom, the output of layer 1 feeds into layer 2, layers 3 to N-1 are shown as a dashed repeat block, and layer N produces final output vectors at the top. Side annotations explain same structure with different weights, depth builds understanding, and why layer count matters more than width.</desc>
+        <defs>
+          <marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- Input -->
+        <rect x="50" y="452" width="200" height="38" rx="6" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#2c2c2a" x="150" y="471" text-anchor="middle" dominant-baseline="central">Token embeddings + position</text>
+        <line x1="150" y1="452" x2="150" y2="422" stroke="#64748b" stroke-width="1.2" marker-end="url(#a3)"/>
+
+        <!-- Layer 1 -->
+        <rect x="50" y="354" width="200" height="68" rx="10" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#085041" x="150" y="378" text-anchor="middle" dominant-baseline="central">Layer 1</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="150" y="396" text-anchor="middle" dominant-baseline="central">attention + feed-forward</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="150" y="412" text-anchor="middle" dominant-baseline="central">own weight matrices W₁</text>
+
+        <line x1="150" y1="354" x2="150" y2="324" stroke="#1d9e75" stroke-width="1.2" marker-end="url(#a3)"/>
+
+        <!-- Layer 2 -->
+        <rect x="50" y="256" width="200" height="68" rx="10" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#085041" x="150" y="280" text-anchor="middle" dominant-baseline="central">Layer 2</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="150" y="298" text-anchor="middle" dominant-baseline="central">attention + feed-forward</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="150" y="314" text-anchor="middle" dominant-baseline="central">own weight matrices W₂</text>
+
+        <line x1="150" y1="256" x2="150" y2="226" stroke="#1d9e75" stroke-width="1.2" marker-end="url(#a3)"/>
+
+        <!-- Middle dots -->
+        <rect x="50" y="160" width="200" height="66" rx="10" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5" stroke-dasharray="4 3"/>
+        <text font-family="Segoe UI,sans-serif" font-size="15" fill="#5f5e5a" x="150" y="187" text-anchor="middle" dominant-baseline="central">⋮</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#5f5e5a" x="150" y="210" text-anchor="middle" dominant-baseline="central">layers 3 … N−1 (same structure)</text>
+
+        <line x1="150" y1="160" x2="150" y2="130" stroke="#64748b" stroke-width="1" marker-end="url(#a3)"/>
+
+        <!-- Layer N -->
+        <rect x="50" y="62" width="200" height="68" rx="10" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#085041" x="150" y="86" text-anchor="middle" dominant-baseline="central">Layer N</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="150" y="104" text-anchor="middle" dominant-baseline="central">attention + feed-forward</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="150" y="120" text-anchor="middle" dominant-baseline="central">own weight matrices Wₙ</text>
+
+        <line x1="150" y1="62" x2="150" y2="38" stroke="#1d9e75" stroke-width="1.5" marker-end="url(#a3)"/>
+
+        <!-- Final output -->
+        <rect x="50" y="14" width="200" height="24" rx="5" fill="#f1efe8" stroke="#b4b2a9" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#2c2c2a" x="150" y="26" text-anchor="middle" dominant-baseline="central">final output vectors</text>
+
+        <!-- ── RIGHT annotations ── -->
+
+        <!-- Same structure, different weights -->
+        <rect x="296" y="62" width="352" height="120" rx="12" fill="#eeedfe" stroke="#534ab7" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#26215c" x="472" y="88" text-anchor="middle" dominant-baseline="central">Same structure, different weights</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="472" y="110" text-anchor="middle" dominant-baseline="central">every layer has an identical internal design</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="472" y="128" text-anchor="middle" dominant-baseline="central">attention + feed-forward + residual + norm</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="472" y="146" text-anchor="middle" dominant-baseline="central">but each layer learns its own independent</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="472" y="164" text-anchor="middle" dominant-baseline="central">weight matrices W during training</text>
+
+        <line x1="252" y1="96" x2="294" y2="96" stroke="#534ab7" stroke-width="1.5" marker-end="url(#a3)"/>
+
+        <!-- Depth builds understanding -->
+        <rect x="296" y="210" width="352" height="136" rx="12" fill="#faeeda" stroke="#ba7517" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#412402" x="472" y="234" text-anchor="middle" dominant-baseline="central">Depth builds understanding</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="472" y="256" text-anchor="middle" dominant-baseline="central">layer 1 — grammar and basic syntax</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="472" y="274" text-anchor="middle" dominant-baseline="central">layer 5 — word groupings and phrases</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="472" y="292" text-anchor="middle" dominant-baseline="central">layer 30 — facts and world knowledge</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="472" y="310" text-anchor="middle" dominant-baseline="central">layer 60 — reasoning and abstraction</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#633806" x="472" y="328" text-anchor="middle" dominant-baseline="central">layer N — deep contextual understanding</text>
+
+        <line x1="252" y1="290" x2="294" y2="290" stroke="#ba7517" stroke-width="1.5" marker-end="url(#a3)"/>
+
+        <!-- Why stack depth matters -->
+        <rect x="296" y="374" width="352" height="110" rx="12" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.6"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="500" fill="#042c53" x="472" y="398" text-anchor="middle" dominant-baseline="central">Why stack depth matters more than width</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0c447c" x="472" y="420" text-anchor="middle" dominant-baseline="central">GPT-2: 12 layers · GPT-3: 96 layers</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0c447c" x="472" y="438" text-anchor="middle" dominant-baseline="central">more layers = more abstract patterns learned</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0c447c" x="472" y="456" text-anchor="middle" dominant-baseline="central">parameter count grows as N × (params per layer)</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0c447c" x="472" y="474" text-anchor="middle" dominant-baseline="central">this is why deeper models are generally smarter</text>
+
+        <line x1="252" y1="408" x2="294" y2="408" stroke="#185fa5" stroke-width="1.5" marker-end="url(#a3)"/>
+      </svg>
+      <p class="fig-caption">
+        <strong>Figure 3:</strong> General Transformer layer stack.
+        Every layer has the same architecture but learns its own independent weights.
+        Depth accumulates from basic pattern recognition at layer 1 to complex
+        abstract reasoning at layer N.
+      </p>
+    </div>
+
+    <h3>Why the same block is repeated — not the same weights</h3>
+    <p>
+      A common misconception is that all layers share the same weights.
+      They do not. Each layer has its own independently learned
+      weight matrices for attention and the feed-forward network.
+      The <em>structure</em> is shared; the <em>parameters</em> are not.
+      This means every additional layer adds a full set of new learnable
+      parameters, allowing it to capture increasingly abstract features of the input.
+    </p>
+
+    <div class="callout cl-teal">
+      <div class="callout-title">The output of layer N is the input of layer N+1</div>
+      The same token vectors pass through every layer, but their values are updated
+      at each step. A "cat" vector entering layer 1 with generic word meaning
+      exits layer 96 carrying deep contextual understanding of what that specific
+      "cat" is doing in this specific sentence. The vector size never changes —
+      only its values become richer.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 4: COMPARISON SUMMARY ══ -->
+  <div class="section">
+    <h2><span class="sec-num">4</span> Side-by-Side Comparison</h2>
+
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Encoder-only</th>
+          <th>Decoder-only</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Attention masking</strong></td>
+          <td>Bidirectional — sees all tokens</td>
+          <td>Causal — sees past tokens only</td>
+        </tr>
+        <tr>
+          <td><strong>Output</strong></td>
+          <td>One vector per input token</td>
+          <td>One predicted next token per pass</td>
+        </tr>
+        <tr>
+          <td><strong>Can generate text?</strong></td>
+          <td class="no">No</td>
+          <td class="yes">Yes — autoregressively</td>
+        </tr>
+        <tr>
+          <td><strong>Training objective</strong></td>
+          <td>Masked language modelling (predict masked words)</td>
+          <td>Next token prediction (causal LM)</td>
+        </tr>
+        <tr>
+          <td><strong>Internal layers</strong></td>
+          <td>Self-attention + FFN</td>
+          <td>Masked self-attention + FFN</td>
+        </tr>
+        <tr>
+          <td><strong>Residual connections</strong></td>
+          <td class="yes">Yes — both sublayers</td>
+          <td class="yes">Yes — both sublayers</td>
+        </tr>
+        <tr>
+          <td><strong>Layer norm</strong></td>
+          <td class="yes">Yes — after each sublayer</td>
+          <td class="yes">Yes — after each sublayer</td>
+        </tr>
+        <tr>
+          <td><strong>Typical task</strong></td>
+          <td>Classification, search, NER</td>
+          <td>Chat, code generation, completion</td>
+        </tr>
+        <tr>
+          <td><strong>Example models</strong></td>
+          <td>BERT, RoBERTa, DistilBERT</td>
+          <td>GPT-2/3/4, Claude, LLaMA, Gemini</td>
+        </tr>
+        <tr>
+          <td><strong>Layer counts (typical)</strong></td>
+          <td>12 (BERT-base) · 24 (BERT-large)</td>
+          <td>12 (GPT-2) · 96 (GPT-3) · 96+ (Claude)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="bridge">
+      <strong>What comes next — the full Encoder–Decoder Transformer:</strong><br><br>
+      The architectures above each use only one half of the original 2017 Transformer.
+      The full version — used for translation, summarisation, and other Seq2Seq tasks —
+      combines both: an Encoder stack that reads the source sequence bidirectionally,
+      and a Decoder stack that generates the target sequence autoregressively,
+      connected by a <strong>cross-attention</strong> layer inside the Decoder that
+      lets the Decoder attend directly to the Encoder's output vectors at every
+      generation step. This is the Transformer upgrade of the RNN Encoder–Decoder
+      you already studied — and the architecture that replaced Bahdanau Attention's
+      sequential bottleneck with fully parallel processing.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

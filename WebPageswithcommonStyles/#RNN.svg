@@ -1,0 +1,55 @@
+<svg width="800" height="400" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Styles for a clean technical look -->
+  <style>
+    .node { fill: #ffffff; stroke: #334155; stroke-width: 2; }
+    .label { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px; fill: #1e293b; font-weight: bold; }
+    .weight { font-family: 'serif'; font-size: 16px; font-style: italic; fill: #2563eb; font-weight: bold; }
+    .arrow { stroke: #64748b; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+  </style>
+
+  <!-- Arrowhead definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+    </marker>
+  </defs>
+
+  <!-- Horizontal dashed lines for sequence continuation -->
+  <line x1="20" y1="200" x2="60" y2="200" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,5" />
+  <line x1="740" y1="200" x2="780" y2="200" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,5" />
+
+  <!-- Time Steps: t-1, t, t+1, t+2 -->
+  
+  <!-- Step t-1 -->
+  <circle class="node" cx="100" cy="350" r="25" /> <text class="label" x="90" y="355">xₜ₋₁</text>
+  <circle class="node" cx="100" cy="200" r="25" /> <text class="label" x="90" y="205">hₜ₋₁</text>
+  <circle class="node" cx="100" cy="50" r="25" />  <text class="label" x="90" y="55">oₜ₋₁</text>
+  <path class="arrow" d="M 100 325 L 100 225" />   <text class="weight" x="80" y="280">U</text>
+  <path class="arrow" d="M 100 175 L 100 75" />    <text class="weight" x="80" y="130">V</text>
+
+  <!-- Step t -->
+  <circle class="node" cx="300" cy="350" r="25" /> <text class="label" x="290" y="355">xₜ</text>
+  <circle class="node" cx="300" cy="200" r="25" /> <text class="label" x="290" y="205">hₜ</text>
+  <circle class="node" cx="300" cy="50" r="25" />  <text class="label" x="290" y="55">oₜ</text>
+  <path class="arrow" d="M 300 325 L 300 225" />   <text class="weight" x="280" y="280">U</text>
+  <path class="arrow" d="M 300 175 L 300 75" />    <text class="weight" x="280" y="130">V</text>
+
+  <!-- Step t+1 -->
+  <circle class="node" cx="500" cy="350" r="25" /> <text class="label" x="485" y="355">xₜ₊₁</text>
+  <circle class="node" cx="500" cy="200" r="25" /> <text class="label" x="485" y="205">hₜ₊₁</text>
+  <circle class="node" cx="500" cy="50" r="25" />  <text class="label" x="485" y="55">oₜ₊₁</text>
+  <path class="arrow" d="M 500 325 L 500 225" />   <text class="weight" x="480" y="280">U</text>
+  <path class="arrow" d="M 500 175 L 500 75" />    <text class="weight" x="480" y="130">V</text>
+
+  <!-- Step t+2 -->
+  <circle class="node" cx="700" cy="350" r="25" /> <text class="label" x="685" y="355">xₜ₊₂</text>
+  <circle class="node" cx="700" cy="200" r="25" /> <text class="label" x="685" y="205">hₜ₊₂</text>
+  <circle class="node" cx="700" cy="50" r="25" />  <text class="label" x="685" y="55">oₜ₊₂</text>
+  <path class="arrow" d="M 700 325 L 700 225" />   <text class="weight" x="680" y="280">U</text>
+  <path class="arrow" d="M 700 175 L 700 75" />    <text class="weight" x="680" y="130">V</text>
+
+  <!-- Horizontal Recurrence Weights (W) -->
+  <path class="arrow" d="M 125 200 L 275 200" /> <text class="weight" x="190" y="190">W</text>
+  <path class="arrow" d="M 325 200 L 475 200" /> <text class="weight" x="390" y="190">W</text>
+  <path class="arrow" d="M 525 200 L 675 200" /> <text class="weight" x="590" y="190">W</text>
+</svg>

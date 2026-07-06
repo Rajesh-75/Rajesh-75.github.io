@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sampling and Statistical Inference</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        options: {
+            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+    };
+</script>
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<div class="content-wrapper">
+    <h1>Sampling & Statistical Inference</h1>
+    
+    <p class="detail-description">
+        Probability distributions like the <strong>Multivariate Normal Distribution</strong> allow us to describe the "shape" of data when we already know the parameters ($\mu, \Sigma$). However, in the real world, we are rarely given these true parameters; instead, we use a small <strong>Sample</strong> to infer the shape of the entire <strong>Population</strong> with mathematical certainty.
+    </p>
+
+    <p class="detail-description">
+        In both modern AI development and traditional statistical thinking, the relationship between a sample and Statistical Inference is the fundamental bridge between observed data and the truth about the population. Whether you are a researcher conducting a Sample Survey or an ML engineer training a Large Language Model, you are working with a finite slice of a much larger Population.
+    </p>
+
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed; font-family: 'Courier New', monospace;">
+        <strong>Statistical Inference:</strong> Given a sample $X_1, X_2, \dots, X_N$ which follows a distribution $F$, how do we infer $F$?
+    </div>
+
+    <p class="detail-description">
+        In the world of statistics, measures obtained from a population are called <strong>Population Parameters</strong>. Conversely, measures calculated from a sample are known as <strong>Sample Statistics</strong>. We draw conclusions about the parameters based on the statistics. 
+    </p>
+
+    <p class="detail-description">
+        The two main branches of statistical inference are:
+    </p>
+    
+    <ul>
+        <li><strong>Estimation:</strong> Using sample data to calculate a specific value or range for a population parameter.</li>
+        <li><strong>Hypothesis Testing:</strong> Using sample data to evaluate the validity of a claim or "sanity check" regarding the population.</li>
+    </ul>
+</div>
+
+ <h2>Statistical Test of Hypothesis</h2>
+ <div class="content-wrapper">
+ <p class="detail-description"> Statistical Test of Hypothesis is  process or procedure under which statistical hypothesis is laid down and it is rejected or accepted. The test conducted to accept or to reject the Hypothesis are known of statistical test of Hypothesis.In other words, A <strong>Statistical Test of Hypothesis</strong> is a formal procedure used to decide whether the data from a sample supports a particular claim about the population. Think of it as a "Trial by Data": we start with an assumption, look at the evidence, and determine if that assumption holds up under scrutiny. </p>
+ <p class="detail-description">
+    In this process, we evaluate two competing statements:
+</p>
+
+<ul>
+    <li><strong>Null Hypothesis ($H_0$):</strong> The "default" assumption that there is no effect or no difference. (e.g., "This new medicine has the same effect as a sugar pill.")</li>
+    <li><strong>Alternative Hypothesis ($H_1$):</strong> The claim we are trying to prove. (e.g., "This new medicine is more effective than a sugar pill.")</li>
+</ul>
+<p class="detail-description">
+One can generalize the examples of the Testing Hypothesis as 
+<ul>
+	<li> To test whether a give sample is a give sample is a true sample</li>
+	<li> To test whether two attributes are independent</li>
+	<li> To test whether a give sample is a give sample is a true sample</li>
+	<li> To test whether population proportion is grate than a give value etc </li>
+</ul>	</p>
+<h3>Statistical Distributions for Tests of Hypothesis</h3>
+<div class="content-wrapper">
+    <p class="detail-description">
+        When we perform a hypothesis test, we calculate a <strong>Test Statistic</strong><span style="color: #555;">(It is a single number that summarizes how much your sample data disagrees with your starting assumption. The further this score is from zero, the more "guilty" your Null Hypothesis looks)</span>.. To decide if that value is "rare" or "normal," we compare it to a known probability distribution. While you have already studied the <strong>Normal Distribution</strong>, it has several "cousins" used depending on what we are testing:
+    </p>
+
+    
+        <ul>
+            <li>
+                <strong>Z-test (Standard Normal):</strong> Used when your sample size is large ($n > 30$) or when you already know the population variance. It is the "gold standard" for A/B testing in high-traffic ML systems.
+            </li>
+            <li>
+                <strong>t-test (Student’s t):</strong> Used when the sample size is small ($n < 30$) and the population variance is unknown. It looks like a Normal Distribution but has "fresher" (heavier) tails to account for greater uncertainty.
+            </li>
+            
+            <li>
+                <strong>$\chi^2$-test (Chi-Square):</strong> Used to test the "Goodness of Fit" or independence between variables. For example: "Is the distribution of user clicks across different regions truly random?"
+            </li>
+            <li>
+                <strong>F-test (Fisher-Snedecor):</strong> Used to compare the variances of two different groups. In ML, we use this to see if one model's error variance is significantly lower than another's.
+            </li>
+        </ul>
+    </div>
+
+    <div class="stat-box" style="background: #fdfaf0; border: 1px solid #f1e4bc;">
+        <strong>Key Connection:</strong> Most of these distributions are derived from the Normal Distribution. For instance, if you square a Standard Normal variable, you get a $\chi^2$ distribution. If you divide two $\chi^2$ variables, you get an $F$ distribution.
+    </div>
+	<h3>Algorithmic appraoch for Testing of hypothesis</h3>
+	<div class="algorithm-box">
+        <span class="algorithm-title">Testing Hypothesis generic steps</span>
+	 <ol>
+            <li>Set a Null hypothesis($H_0$)and alternative hypothesis($H_1$) appropriate to the test to be conducted </li>
+            <li>Decide the test criterion suitable to the test statistic (such as t test, F-test) mentioned above,based on your data</li>
+            <li>Specifiy the suitable <strong>level of Significance (such as 5%,1% etc)</strong></li>
+			<li>Calculate the value of the <strong>test statistic</strong> using the appropriate forumula</li>
+			<li>Then find the <strong>table value</strong> of the test statistic using the approximate formula.Table Value" is often called the <strong>Critical Value</strong> and this value depends on <strong>Degrees of Freedom</strong></li>
+			<li>Make the decisions about accepting or rejecting the null hypothesis. The decision depends on whether the computed value of the test statistic falls in the acceptance region or rejection region. When the computed value of the test statistic is numerically less than the table value the test statistic falls in the acceptance region,otherwise in the rejection region.
+			<ul>
+                <li>If the <strong>Calculated Test Statistic Value < Table Value</strong>: We fall in the "Acceptance Region" (Fail to reject $H_0$).</li>
+                <li>If the <strong>Calculated Test Statistic Value  > Table Value</strong>: We fall in the "Rejection Region" (Accept $H_1$ as likely true).</li>
+            </ul>		
+	 </ol>	 
+    </div>
+	<p class="detail-description"> In the subsequent part of the tutorial, we shall discuss each of steps in detail. 
+	 </p>
+	<div class="description-box"> 
+	<h3>Null and Alternative Hypothesis</h3>
+	<p class="detail-description"> In any test of hypothesis first step is to set up a hypothesis about the population parameter. The conventional approach is to set up two different hypothesis. The two hypothesis are so constructed that if one hypothesis is accpeted,other is rejected. These two hypothesis is know n as the <strong>Null Hypothesis </strong>(Population mean is 65) and <strong>Alternative hypothesis </strong>(Population mean is not 65).Null hypothesis is assumed to be accpted. If test fails we choose alternative hypothesis</p>
+	
+		
+	<div class="highlight-box">
+    <h3 style="margin-top: 0;">The Four Possible Outcomes</h3>
+    <p class="detail-description">
+        Because we use sample data to make guesses about a population, there are four possible scenarios based on our decision:
+    </p>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="background-color: #eee;"></th>
+                <th style="color: #2e7d32;">$H_0$ is True (Innocent)</th>
+                <th style="color: #d32f2f;">$H_0$ is False (Guilty)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="background-color: #f4f4f4; font-weight: bold;">Accept $H_0$</td>
+                <td style="background-color: #f0fdf4;">
+                    <strong>Correct Decision</strong><br>
+                    <span style="font-size: 0.7rem;">(Confidence Level)</span>
+                </td>
+                <td style="background-color: #fff5f5;">
+                    <span style="color: #d32f2f; font-weight: bold;">Type II Error ($\beta$)</span><br>
+                    <span style="font-size: 0.7rem;">(False Negative)</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="background-color: #f4f4f4; font-weight: bold;">Reject $H_0$</td>
+                <td style="background-color: #fff5f5;">
+                    <span style="color: #d32f2f; font-weight: bold;">Type I Error ($\alpha$)</span><br>
+                    <span style="font-size: 0.7rem;">(False Positive)</span>
+                </td>
+                <td style="background-color: #f0fdf4;">
+                    <strong>Correct Decision</strong><br>
+                    <span style="font-size: 0.7rem;">(Power of the Test)</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="example-box">
+        Suppose the population mean is 125. But the test conducted on the basis of a sample drawn from the populaion leads to the conclusion that population mean is not equal to 125. This is type 1 error.
+    </div>
+<div class="description-box"> 
+	<h3>Step 3: Level of Significance ($\alpha$)</h3>
+<p class="detail-description">
+    The confidence with which we reject a Null Hypothesis depends on the <strong>Level of Significance.</strong>
+</p>
+    <div class="intuition-box">
+        <strong>The Balancing Act:</strong> As you decrease $\alpha$ (e.g., from 5% to 0.1%), you become more strict. 
+        In our University example: If you raise the passing mark from 43 to 95, you rarely pass an unqualified person (Low Type I Error), but you might fail many geniuses (High Type II Error).
+    </div>
+
+    <div class="math-breakdown">
+        <strong>Mathematical Definitions:</strong>
+        <p>$$ \alpha = P(\text{Reject } H_0 \mid H_0 \text{ is True}) \text{ [Type I Error]} $$</p>
+        <p>$$ \beta = P(\text{Accept } H_0 \mid H_0 \text{ is False}) \text{ [Type II Error]} $$</p>
+    </div>
+<div class="description-box"> 
+	<h3>Critical Region</h3>
+<p class="detail-description">
+    The statistical procedure divides the <strong>Sample Space ($S$)</strong>—which represents all possible outcomes of our test statistic—into two distinct subsets:
+</p>
+
+<div class="grid-list">
+    <div class="grid-item">
+        <span class="tag">Acceptance Region ($A$)</span>
+        <p>The set of outcomes that are likely to occur if the Null Hypothesis is true. If our calculated statistic falls here, we <strong>fail to reject $H_0$</strong>.</p>
+    </div>
+    <div class="grid-item">
+        <span class="tag" style="background: #d32f2f;">Critical Region ($R$)</span>
+        <p>Also known as the <strong>Rejection Region</strong>. If our calculated statistic falls in this subset, we <strong>reject $H_0$</strong> in favor of $H_1$.</p>
+    </div>
+</div>
+
+
+
+<div class="math-breakdown">
+    <strong>Size of the Critical Region ($\alpha$):</strong>
+    <p>The "size" of the critical region is exactly equal to our Level of Significance. It represents the probability that a sample result will fall in the rejection zone even though the Null Hypothesis is actually true.</p>
+    $$ \alpha = P(\text{Test Statistic} \in R \mid H_0 \text{ is True}) $$
+</div>
+
+<p class="detail-description">
+    In simpler terms, if the outcome of our test belongs to the subset $R$, the evidence is considered "significant," and the Null Hypothesis is rejected.
+</p>
+
+<div class="plot-container" style="text-align: center; margin: 20px 0;">
+        <svg width="600" height="320" viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">
+            <line x1="50" y1="250" x2="550" y2="250" stroke="#333" stroke-width="2" />
+            <path d="M 50 250 C 150 250 200 50 300 50 C 400 50 450 250 550 250" fill="none" stroke="#0056b3" stroke-width="3" />
+            
+            <path d="M 185 250 V 165 C 220 100 260 50 300 50 C 340 50 380 100 415 165 V 250 Z" fill="#e7f3ff" opacity="0.6" />
+            
+            <path d="M 50 250 C 100 250 150 220 185 165 V 250 Z" fill="#d32f2f" opacity="0.7" />
+            <path d="M 415 165 C 450 220 500 250 550 250 H 415 Z" fill="#d32f2f" opacity="0.7" />
+
+            <text x="300" y="130" text-anchor="middle" font-family="sans-serif" font-weight="bold" fill="#0056b3">Acceptance Region (R')</text>
+            <text x="100" y="280" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#d32f2f" font-weight="bold">Critical Region (R)</text>
+            <text x="500" y="280" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#d32f2f" font-weight="bold">Critical Region (R)</text>
+        </svg>
+    </div>
+<h3>How to find the critical region when the size of the critical region is fixed</h3>
+<div class="description-box"> 
+    <h3>Test Statistic or Test Criterion</h3>
+    
+    <p class="detail-description">
+        The decision to accept or reject a null hypothesis ($H_0$) is made based on a statistic computed from a sample drawn from a population. Since a statistic is a function of sample values, it serves as our "evidence."
+    </p>
+
+    <p class="detail-description">
+        If the computed value of this statistic falls within the <strong>Acceptance Region</strong>, we fail to reject the null hypothesis. This calculated value is known as the <strong>Test Statistic</strong>.
+    </p>
+
+    
+
+    <p class="detail-description">
+        Test statistics follow specific sampling distributions such as the <strong>Normal (Z)</strong>, <strong>t-distribution</strong>, <strong>$\chi^2$ (Chi-square)</strong>, or <strong>F-distribution</strong>. Most statistical tests are actually named after these distributions.
+    </p>
+
+    <div style="background: #fdfdfd; padding: 15px; border: 1px solid #ddd; border-left: 5px solid #0056b3; margin: 10px 0;">
+        <strong>Standardizing the Test Statistic:</strong><br>
+        If a statistic $t$ follows a normal distribution, we convert it into a standard Z-score to use the Z-table:
+        $$Z = \frac{t - E(t)}{\sqrt{\text{Var}(t)}}$$
+    </div>
+
+    <p class="detail-description">
+        There are many other test statistics depending on the parameters being tested. We shall discuss these specific test statistics using numerical examples in the following sections.
+    </p>
+</div>
+
+<div class="content-wrapper">
+    <h2>Two Taileds vs One Tailed Tests </h2>
+    
+    <p class="detail-description">
+        The structure of the <strong>Alternative Hypothesis ($H_1$)</strong> determines the "tails" of the test. This tells us whether we are looking for a difference in any direction or a specific direction (higher or lower).
+    </p>
+
+    <div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Test Type</th>
+                <th>Hypotheses ($H_1$)</th>
+                <th>Probability Statement</th>
+                <th>Critical Region ($w$)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Two-Tailed</strong></td>
+                <td>$\theta \neq \theta_0$</td>
+                <td>$P(|t| > t_{\alpha/2}) = \alpha$</td>
+                <td>$(-\infty, -t_{\alpha/2}) \cup (t_{\alpha/2}, \infty)$</td>
+            </tr>
+            <tr>
+                <td><strong>Left-Tailed</strong></td>
+                <td>$\theta < \theta_0$</td>
+                <td>$P(t < -t_{\alpha}) = \alpha$</td>
+                <td>$(-\infty, -t_{\alpha})$</td>
+            </tr>
+            <tr>
+                <td><strong>Right-Tailed</strong></td>
+                <td>$\theta > \theta_0$</td>
+                <td>$P(t > t_{\alpha}) = \alpha$</td>
+                <td>$(t_{\alpha}, \infty)$</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+    <div>
+</div>
+<div class="example-box" style="border: 1px solid #0056b3; border-radius: 8px; overflow: hidden; margin: 20px 0;">
+    <div class="problem-header" style="background-color: #0056b3; color: white; padding: 10px 15px; font-weight: bold;">
+        Worked Example: Size and Power of a Test
+    </div>
+    
+    <div style="padding: 15px; background-color: #fcfcfc;">
+        <p class="detail-description">
+            A box contains 10 balls, of which $\theta$ are white and the rest are black. 
+            We wish to test: <br>
+            $H_0: \theta = 5$ (5 White, 5 Black) <br>
+            $H_1: \theta = 4$ (4 White, 6 Black)
+        </p>
+        <p>
+            <strong>Test Procedure:</strong> Draw two balls at random <em>with replacement</em>. 
+            Reject $H_0$ if both balls are of the same color. 
+            Find the <strong>Size of the Critical Region</strong> and the <strong>Power of the Test</strong>.
+        </p>
+    </div>
+</div>
+
+<div class="solution-content" style="padding: 15px; border: 1px solid #ddd; border-top: none; background-color: #fff;">
+    <h3 style="color: #0056b3;">Solution:</h3>
+    
+    
+
+    <h4>1. Size of the Critical Region ($\alpha$)</h4>
+    <p>
+        The size ($\alpha$) is the probability of a <strong>Type I Error</strong>: rejecting $H_0$ when it is actually true.
+    </p>
+    <div style="background: #f4f4f4; padding: 10px; border-radius: 4px;">
+        $\alpha = P(\text{Reject } H_0 \mid \theta = 5)$ <br>
+        $\alpha = P(\text{Both balls same color} \mid \text{5 White, 5 Black})$ <br>
+        $\alpha = P(WW \text{ or } BB \mid \theta = 5)$ <br>
+        $\alpha = \left(\frac{5}{10} \times \frac{5}{10}\right) + \left(\frac{5}{10} \times \frac{5}{10}\right)$ <br>
+        $\alpha = 0.25 + 0.25 = \mathbf{0.50}$
+    </div>
+
+    <h4>2. Power of the Test ($1 - \beta$)</h4>
+    <p>
+        The power is the probability of <strong>rightly rejecting</strong> $H_0$ when the alternative $H_1$ is true.
+    </p>
+    <div style="background: #e7f3ff; padding: 10px; border-radius: 4px; border-left: 5px solid #0056b3;">
+        Power $= P(\text{Reject } H_0 \mid H_1 \text{ is true})$ <br>
+        Power $= P(WW \text{ or } BB \mid \theta = 4)$ <br>
+        Power $= \left(\frac{4}{10} \times \frac{4}{10}\right) + \left(\frac{6}{10} \times \frac{6}{10}\right)$ <br>
+        Power $= 0.16 + 0.36 = \mathbf{0.52}$
+    </div>
+
+    <p style="margin-top: 15px;">
+        <strong>Conclusion:</strong> In this specific test, the probability of a false alarm is $50\%$, 
+        and the probability of correctly detecting the change to $\theta=4$ is $52\%$.
+    </p>
+</div>
+<div class="example-box">
+    <h4>Mathematical Derivation: Finding the Best Critical Region (BCR)</h4>
+    <p class="detail-description">
+        To find the most powerful test for example let's say $H_0: \mu = 5$ vs $H_1: \mu > 5$ with $\sigma = 1$, Assuming that Since the population is Normal with a known variance, we are looking for the region that is best critical region (maximizes the power of the test for a fixed $\alpha = 0.05). Hence we apply the <strong>Neyman-Pearson Lemma</strong>.
+		<div class="intuition-box">
+    <strong>Neyman-Pearson Theorem:</strong> 
+    Let $L_1$ (or $L(\mu_1)$) be the Likelihood Function when the null hypothesis $H_0$ is true, 
+    and $L_2$ (or $L(\mu_2)$) be the Likelihood Function when the alternative hypothesis $H_1$ is true. 
+    Let $\alpha$ be the level of significance and $\omega$ be the critical region 
+    (where $\omega$ is the set of samples for which the test statistic falls in the rejection region). 
+    
+    The <strong>Neyman-Pearson</strong> theorem states we can determine $\omega$ in such a way that:
+    <div style="text-align: center; margin: 15px 0; font-weight: bold;">
+        $$\frac{L_1}{L_2} \leq k$$
+    </div>
+    where $k$ is a value determined on the basis of the level of significance $\alpha$. 
+    This region $\omega$ is the <strong>most powerful critical region</strong> of the significance level $\alpha$ for testing $H_0$ against $H_1$.
+</div>
+    </p>
+
+    <div class="math-breakdown">
+        <strong>1. The Likelihood Ratio</strong>
+        <p>The BCR ($R$) consists of all points where the ratio of the Null Likelihood to the Alternative Likelihood is less than a constant $k'$:</p>
+        $$ \frac{L(\mu_0)}{L(\mu_1)} \le k' $$
+
+        <strong>2. Substitute the Normal Density</strong>
+        <p>For a sample of size $n$ from $N(\mu, 1)$, the joint likelihood is:</p>
+        $$ L(\mu) = (2\pi)^{-n/2} \exp\left( -\frac{1}{2} \sum_{i=1}^n (x_i - \mu)^2 \right) $$
+        
+        <p>Plugging in $\mu_0 = 5$ and a specific $\mu_1 > 5$:</p>
+        $$ \frac{\exp\left( -\frac{1}{2} \sum (x_i - 5)^2 \right)}{\exp\left( -\frac{1}{2} \sum (x_i - \mu_1)^2 \right)} \le k' $$
+
+        <strong>3. Simplify via Logarithms</strong>
+        <p>Taking the natural log ($\ln$) and expanding the squares:</p>
+        $$ -\frac{1}{2} \left[ \sum (x_i - 5)^2 - \sum (x_i - \mu_1)^2 \right] \le \ln(k') $$
+        
+        <p>After algebraic simplification (terms like $\sum x_i^2$ cancel out):</p>
+        $$ (\mu_1 - 5) \sum x_i + \frac{n}{2}(5^2 - \mu_1^2) \ge \text{constant} $$
+
+        <strong>4. Isolate the Sufficient Statistic ($\bar{x}$)</strong>
+        <p>Since $\mu_1 > 5$, the term $(\mu_1 - 5)$ is positive. Dividing by it gives:</p>
+        $$ \sum x_i \ge C \implies \frac{\sum x_i}{n} \ge k \implies \mathbf{\bar{x} \ge k} $$
+    </div>
+
+    <div class="intuition-box">
+        <strong>Conclusion:</strong> The derivation proves that for a normal population, the <strong>Sample Mean ($\bar{x}$)</strong> is the best tool for the test. We reject $H_0$ if:
+        $$ \bar{x} \ge 5 + z_{\alpha} \frac{\sigma}{\sqrt{n}} $$
+        For $\alpha = 0.05$, $z_{\alpha} = 1.645$.
+    </div>
+	<div class="intuition-box">
+    <strong>What makes a Critical Region the "Best"?</strong>
+    <p>
+        A Critical Region is considered the <strong>Best (or Most Powerful)</strong> if, for a fixed significance level ($\alpha$), it provides the maximum possible <strong>Power ($1 - \beta$)</strong>. 
+    </p>
+    <p>
+        In other words, it is the region that is most "sensitive" at detecting a real effect when one actually exists.
+    </p>
+	</div>
+	
+	
+	<div class="example-problem" style="border: 1px solid #0056b3; border-radius: 8px; overflow: hidden; margin: 20px 0;">
+    <div class="problem-header" style="background-color: #0056b3; color: white; padding: 10px 15px; font-weight: bold;">
+        Worked Example: Finding Critical Regions
+    </div>
+    
+    <div style="padding: 15px; background-color: #fcfcfc;">
+        <p class="detail-description">
+            <strong>Question:</strong> For a Normal population $N(\mu, 144)$, a random sample of size $n=16$ is drawn. For testing $H_0: \mu = 35$ against $H_1: \mu = 38$, find the one-tailed and two-tailed critical regions of size $\alpha = 0.05$.
+        </p>
+        </div>
+</div>
+
+
+    <div class="math-breakdown">
+        <strong>Step 1: Identify Given Data</strong>
+        <ul>
+            <li>Population Variance ($\sigma^2$): $144 \implies$ Standard Deviation ($\sigma$): $12$</li>
+            <li>Sample size ($n$): $16$</li>
+            <li>Standard Error ($SE$): $\frac{\sigma}{\sqrt{n}} = \frac{12}{\sqrt{16}} = \frac{12}{4} = \mathbf{3}$</li>
+            <li>Null Hypothesis ($H_0$): $\mu = 35$</li>
+            <li>Alternative Hypothesis ($H_1$): $\mu = 38$</li>
+            <li>Significance Level ($\alpha$): $0.05$</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <h4>Part 1: One-Tailed Critical Region (Right-Tailed)</h4>
+    <p class="detail-description">
+        Since $H_1$ specifies $\mu = 38$ (which is greater than $35$), we look for the rejection zone in the <strong>right tail</strong>.
+    </p>
+    
+    <div class="math-breakdown">
+        <ul>
+            <li><strong>Critical Z-value:</strong> For $\alpha = 0.05$ (one-tailed), $Z_{0.05} = 1.645$.</li>
+            <li><strong>The Inequality:</strong> We reject $H_0$ if $Z_{calc} > 1.645$.</li>
+            <li><strong>Calculate the Boundary ($k$):</strong>
+                $$ \frac{\bar{x} - 35}{3} > 1.645 $$
+                $$ \bar{x} - 35 > 1.645 \times 3 \implies \bar{x} - 35 > 4.935 $$
+                $$ \mathbf{\bar{x} > 39.935} $$
+            </li>
+        </ul>
+        <p><strong>One-Tailed Critical Region:</strong> $R = \{ \bar{x} : \bar{x} > 39.935 \}$</p>
+    </div>
+
+    <hr>
+
+    <h4>Part 2: Two-Tailed Critical Region</h4>
+    <p class="detail-description">
+        For a two-tailed test, we split the $5\%$ risk into two tails of $2.5\%$ each ($\alpha/2 = 0.025$).
+    </p>
+    
+    <div class="math-breakdown">
+        <ul>
+            <li><strong>Critical Z-values:</strong> For $\alpha/2 = 0.025$, the critical values are $\pm 1.96$.</li>
+            <li><strong>The Inequalities:</strong> We reject $H_0$ if $Z_{calc} > 1.96$ or $Z_{calc} < -1.96$.</li>
+            <li><strong>Calculate the Boundaries:</strong>
+                <ul>
+                    <li>Upper Bound: $\bar{x} > 35 + (1.96 \times 3) \implies \mathbf{\bar{x} > 40.88}$</li>
+                    <li>Lower Bound: $\bar{x} < 35 - (1.96 \times 3) \implies \mathbf{\bar{x} < 29.12}$</li>
+                </ul>
+            </li>
+        </ul>
+        <p><strong>Two-Tailed Critical Region:</strong> $R = \{ \bar{x} : \bar{x} < 29.12 \text{ or } \bar{x} > 40.88 \}$</p>
+    </div>
+
+    <hr>
+
+    <h4>Comparison of Results</h4>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Measure</th>
+                <th>$\sigma = \sqrt{12}$ (Old Context)</th>
+                <th>$\sigma = 12$ (Current Question)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Standard Error</strong></td>
+                <td>$0.866$</td>
+                <td>$3.000$</td>
+            </tr>
+            <tr>
+                <td><strong>One-Tailed Cutoff</strong></td>
+                <td>$36.42$</td>
+                <td>$39.94$</td>
+            </tr>
+            <tr>
+                <td><strong>Two-Tailed Cutoffs</strong></td>
+                <td>$33.30$ & $36.70$</td>
+                <td>$29.12$ & $40.88$</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="example-box">
+
+    <div class="problem-header" style="background-color: #0056b3; color: white; padding: 10px 15px; font-weight: bold;">
+        Worked example: Z-Test for Single Mean (Tyres)
+    </div>
+    
+    <div style="padding: 15px; background-color: #fcfcfc;">
+        <p class="detail-description">
+            <strong>Problem:</strong> It is claimed that a random sample of 100 tyres with a mean life of 15269 KM is drawn from a population of tyres which has a mean life of 15200 KM and a Standard Deviation (SD) of 1248 KM. Test the validity of this claim.
+        </p>
+
+        <h3 class="detail-author-title">Solution:</h3>
+        <p class="detail-description">
+            Given: 
+            <ul>
+                <li>Population Mean ($\mu_0$) = 15200 KM</li>
+                <li>Population SD ($\sigma$) = 1248 KM</li>
+                <li>Sample Size ($n$) = 100</li>
+                <li>Sample Mean ($\bar{x}$) = 15269 KM</li>
+            </ul>
+        </p>
+
+        <p class="detail-description">
+            <strong>1. Null Hypothesis ($H_0$):</strong> $\mu = 15200$ (The claim is valid).<br>
+            <strong>2. Alternative Hypothesis ($H_1$):</strong> $\mu \neq 15200$ (The claim is invalid).
+        </p>
+
+        <p class="detail-description">
+            <strong>3. Test Statistic (Z-score):</strong><br>
+            The formula is $Z = \frac{\bar{x} - \mu_0}{\sigma / \sqrt{n}}$.
+            <br><br>
+            $Z = \frac{15269 - 15200}{1248 / \sqrt{100}} = \frac{69}{124.8} = 0.5529$
+        </p>
+
+        <div class="intuition-box" style="border-left: 4px solid #2ecc71; background-color: #f0fff4;">
+            <strong>Final Conclusion:</strong><br>
+            Since the calculated value of $|Z| = 0.5529$ is less than the critical value of $1.96$ (at the 5% level of significance), we <strong>fail to reject the Null Hypothesis ($H_0$)</strong>. 
+            <br><br>
+            The difference between the sample mean and the population mean is not statistically significant. Therefore, the claim is <strong>valid</strong>.
+        </div>
+    </div>
+</div>
+</div>
+		
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML & DL Parameter Reference</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<div class="content-wrapper">
+    <h1>Hyperparameters, Regularization, Cost Functions, and Optimization</h1>
+    
+    <p class="detail-description">
+        This master table illustrates how the <strong>Model</strong>, <strong>Cost Function</strong>, and <strong>Optimization Algorithm</strong> intertwine with specific hyperparameters and regularization methods across Machine Learning and Deep Learning.
+    </p>
+
+    
+
+    <div class="table-container" style="overflow-x: auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Category / Algorithm</th>
+                    <th>Model</th>
+                    <th>Cost Function (Loss)</th>
+                    <th>Optimization Algorithm</th>
+                    <th>Hyperparameter</th>
+                    <th>Description</th>
+                    <th>Typical Range / Considerations</th>
+                    <th>Regularization Methods</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td rowspan="5"><strong>General ML/DL</strong></td>
+                    <td rowspan="5">N/A</td>
+                    <td rowspan="5">N/A</td>
+                    <td rowspan="5">N/A</td>
+                    <td>Learning Rate ($\eta$)</td>
+                    <td>Controls step size at each iteration.</td>
+                    <td>Small (0.001, 0.01) for precision; Large (0.1, 0.5) for speed but risks overshooting.</td>
+                    <td>L1, L2, Elastic Net, Early Stopping</td>
+                </tr>
+                <tr>
+                    <td>Batch Size</td>
+                    <td>Samples processed before internal parameter updates.</td>
+                    <td>Small (1, 32) is noisy/frequent; Large (256, 1024) is smooth but risks poor generalization.</td>
+                    <td>N/A</td>
+                </tr>
+                <tr>
+                    <td>Epochs</td>
+                    <td>Number of full passes through the training set.</td>
+                    <td>Too few = underfitting; Too many = overfitting.</td>
+                    <td>Early Stopping</td>
+                </tr>
+                <tr>
+                    <td>Optimizer</td>
+                    <td>Algorithm used to update weights and minimize loss.</td>
+                    <td>SGD, Adam, RMSprop, Adagrad, Adadelta. Each has specific default rates.</td>
+                    <td>N/A</td>
+                </tr>
+                <tr>
+                    <td>Regularization Strength</td>
+                    <td>Controls penalty applied to model complexity.</td>
+                    <td>L1 (Lasso) and L2 (Ridge). Higher values increase penalty.</td>
+                    <td>L1, L2, Elastic Net</td>
+                </tr>
+
+                <tr>
+                    <td rowspan="4"><strong>Linear Models</strong></td>
+                    <td>Linear Regression</td>
+                    <td>Mean Squared Error (MSE)</td>
+                    <td>Gradient Descent, OLS</td>
+                    <td>Alpha ($\alpha$)</td>
+                    <td>Regularization parameter in Lasso/Ridge.</td>
+                    <td>Larger values imply stronger regularization.</td>
+                    <td>L1, L2, Elastic Net</td>
+                </tr>
+                <tr>
+                    <td rowspan="3">Logistic Regression</td>
+                    <td rowspan="3">Binary Cross-Entropy (Log Loss)</td>
+                    <td rowspan="3">GD, L-BFGS, SAGA</td>
+                    <td>C Parameter</td>
+                    <td>Inverse of regularization strength.</td>
+                    <td>Smaller $C$ = Stronger regularization.</td>
+                    <td>L1, L2</td>
+                </tr>
+                <tr>
+                    <td>Fit Intercept</td>
+                    <td>Whether to calculate an intercept term.</td>
+                    <td>True / False</td>
+                    <td>N/A</td>
+                </tr>
+                <tr>
+                    <td>Solver</td>
+                    <td>Optimization algorithm choice.</td>
+                    <td>'liblinear', 'saga', 'lbfgs' based on data size.</td>
+                    <td>N/A</td>
+                </tr>
+
+                <tr>
+                    <td rowspan="6"><strong>Tree-based Models</strong></td>
+                    <td rowspan="4">Decision Tree</td>
+                    <td rowspan="4">Gini, Entropy, MSE</td>
+                    <td rowspan="4">Greedy Algorithm</td>
+                    <td>Max Depth</td>
+                    <td>Maximum depth of the tree.</td>
+                    <td>Higher depth = risk of overfitting.</td>
+                    <td>Pruning</td>
+                </tr>
+                <tr>
+                    <td>Min Samples Split</td>
+                    <td>Minimum samples to split an internal node.</td>
+                    <td>Higher values prevent over-specialization.</td>
+                    <td>Pruning</td>
+                </tr>
+                <tr>
+                    <td>Min Samples Leaf</td>
+                    <td>Minimum samples required at a leaf node.</td>
+                    <td>Higher values lead to more generalized trees.</td>
+                    <td>Pruning</td>
+                </tr>
+                <tr>
+                    <td>Criterion</td>
+                    <td>Function to measure split quality.</td>
+                    <td>'gini', 'entropy' (class); 'mse' (reg).</td>
+                    <td>N/A</td>
+                </tr>
+                <tr>
+                    <td>Random Forest</td>
+                    <td>Gini / Entropy</td>
+                    <td>Bagging (Ensemble)</td>
+                    <td>N Estimators</td>
+                    <td>Number of trees in the ensemble.</td>
+                    <td>More trees improve accuracy but increase cost.</td>
+                    <td>Bagging, Feature Subsampling</td>
+                </tr>
+                <tr>
+                    <td>Gradient Boosting</td>
+                    <td>MSE, Log Loss</td>
+                    <td>Additive Modeling</td>
+                    <td>Subsample</td>
+                    <td>Fraction of samples used for each base learner.</td>
+                    <td>Reduces variance/overfitting.</td>
+                    <td>Subsampling, Shrinkage</td>
+                </tr>
+
+                <tr>
+                    <td rowspan="3"><strong>SVMs</strong></td>
+                    <td rowspan="3">SVC / SVR</td>
+                    <td rowspan="3">Hinge Loss, Epsilon-Insensitive</td>
+                    <td rowspan="3">Quadratic Programming</td>
+                    <td>Kernel</td>
+                    <td>Function to transform data to higher dimensions.</td>
+                    <td>'linear', 'poly', 'rbf', 'sigmoid'.</td>
+                    <td>C Parameter, L2</td>
+                </tr>
+                <tr>
+                    <td>C Parameter</td>
+                    <td>Penalty for misclassification (soft margin).</td>
+                    <td>Smaller $C$ = Smoother decision surface.</td>
+                    <td>Soft Margin Regularization</td>
+                </tr>
+                <tr>
+                    <td>Gamma ($\gamma$)</td>
+                    <td>Kernel coefficient (influence radius).</td>
+                    <td>Low = large radius; High = complex boundary.</td>
+                    <td>Complexity Control</td>
+                </tr>
+
+                <tr>
+                    <td rowspan="4"><strong>Neural Networks</strong></td>
+                    <td rowspan="4">FNN / CNN / RNN</td>
+                    <td rowspan="4">MSE, Cross-Entropy</td>
+                    <td rowspan="4">SGD, Adam, RMSprop</td>
+                    <td>Hidden Layers / Neurons</td>
+                    <td>Architecture depth and capacity.</td>
+                    <td>More = higher capacity but risk of vanishing gradients.</td>
+                    <td>Dropout, L1/L2, Batch Norm</td>
+                </tr>
+                <tr>
+                    <td>Activation Function</td>
+                    <td>Non-linear transformation at each neuron.</td>
+                    <td>ReLU, Sigmoid, Tanh, Softmax.</td>
+                    <td>N/A</td>
+                </tr>
+                <tr>
+                    <td>Dropout Rate</td>
+                    <td>Probability of dropping neurons during training.</td>
+                    <td>Typically 0.2 to 0.5.</td>
+                    <td>Dropout</td>
+                </tr>
+                <tr>
+                    <td>Recurrent Dropout</td>
+                    <td>Dropout applied to recurrent connections (RNN).</td>
+                    <td>Prevents overfitting in sequences.</td>
+                    <td>Recurrent Dropout</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    
+
+    <p style="margin-top: 40px; font-style: italic; color: #666; border-top: 1px solid #eee; padding-top: 10px;">
+        Note: Optimization in Deep Learning often requires balancing the <strong>Batch Size</strong> and <strong>Learning Rate</strong> simultaneously to ensure the model finds a stable global minimum.
+    </p>
+</div>
+
+</body>
+</html>

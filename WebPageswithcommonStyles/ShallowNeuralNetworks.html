@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shallow Neural Networks</title>
+    <link rel="stylesheet" href="Style.css">
+
+    <script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        options: {
+            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<h2>Neural Networks</h2>
+<div class="description-box">
+        <h3>Neural Networks</h3>
+<p>
+        A Neural Network is a powerful Machine Learning model designed to identify complex patterns in data. 
+        It is the foundational technology behind modern AI, widely used for <strong>Pattern Recognition</strong> (such as identifying objects in photos), 
+        <strong>Image Generation</strong>, and <strong>Natural Language Processing</strong> (like predicting the next word in a sentence).
+    </p>
+
+    <p>
+        A Neural Network is one of the few Machine Learning models capable of handling massive amounts of high-dimensional data, 
+        such as millions of pixels in an image or billions of tokens in text, to train for accurate predictions. 
+        Compared to the early days of AI, modern Neural Networks are significantly larger, both in terms of 
+        <strong>learnable parameters</strong> (the weights) and the <strong>depth of internal processing</strong> (the number of hidden layers).
+    </p>
+	<p> modern Neural Networks require massive computational infrastructure. Training these models on a standard CPU (Central Processing Unit) would take years because CPUs are designed for general-purpose tasks. Instead, modern AI relies on GPUs (Graphics Processing Units) and specialized chips like TPUs (Tensor Processing Units).These processors are built for massive parallelism, allowing them to perform thousands of mathematical calculations (like the matrix multiplications in our weighted sums) simultaneously. This hardware evolution, combined with large-scale data centers, is what allows us to train models with billions of parameters in a matter of weeks rather than decades. </p>
+	</div>
+	<div class="description-box">
+    <h3>From Linear Regression to Layers of Logistic Regression</h3>
+    
+    <p>
+        Linear and Logistic Regression, as seen in earlier chapters, take inputs, multiply them by weights, and produce an output. 
+        A Neural Network is a "multi-layer" stack of linear and logistic regression units that introduces intermediate processing steps. 
+        This multi-layer structure allows the model to process data in stages.
+    </p>
+
+	<div class="image-container">
+        <img src="NeuralNetworkDiagram.png" alt="Neural Network Layer Diagram" class="network-image">
+    </div>
+	In each layer, processing leads to the creation of new <strong>features</strong>. 
+    By using non-linear <strong>Activation Functions</strong> (like ReLU or Sigmoid)  within the hidden layers—mathematically represented for a shallow network as:$$n_1^{(2)} = \sigma\left(W_{11}^{(1)}n_1^{(1)} + b_1^{(2)}\right), \qquad n_1^{(3)} = \sigma\left(W_{11}^{(2)}n_1^{(2)} + b_2^{(3)}\right)$$ 
+    The network automatically learns to combine raw inputs into complex, high-level features that best solve the task. 
+    These features are then fed into a <strong>Softmax Layer</strong> (a Probabilistic Output Function), 
+    which computes the probabilities of specific classes or predicts the likelihood of the 
+    <strong>next word</strong> in applications like Large Language Models (LLMs).
+</div>
+
+
+ 
+	
+<div class="plot-container">
+        <svg width="850" height="650" viewBox="0 0 850 650" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+            <defs>
+                <marker id="arrow" markerWidth="5" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                    <polygon points="0 0, 5 2.5, 0 5" fill="#cbd5e0" />
+                </marker>
+            </defs>
+
+            <text x="120" y="30" text-anchor="middle" font-weight="bold" font-size="16" fill="#0056b3">L=0 (Input)</text>
+            <text x="340" y="30" text-anchor="middle" font-weight="bold" font-size="16" fill="#0056b3">L=1 (Hidden)</text>
+            <text x="560" y="30" text-anchor="middle" font-weight="bold" font-size="16" fill="#0056b3">L=2 (Hidden)</text>
+            <text x="760" y="30" text-anchor="middle" font-weight="bold" font-size="16" fill="#0056b3">L=3 (Output)</text>
+
+            <g stroke="#f0f4f8" stroke-width="1" marker-end="url(#arrow)">
+                <line x1="120" y1="80" x2="310" y2="150" stroke="#ecc94b" stroke-opacity="0.7" />
+                <line x1="340" y1="80" x2="530" y2="150" stroke="#ecc94b" stroke-opacity="0.7" />
+                <line x1="560" y1="80" x2="720" y2="250" stroke="#ecc94b" stroke-opacity="0.7" />
+
+                <line x1="120" y1="200" x2="310" y2="150" /> <line x1="120" y1="200" x2="310" y2="250" />
+                <line x1="120" y1="300" x2="310" y2="350" /> <line x1="120" y1="400" x2="310" y2="450" />
+                <line x1="340" y1="150" x2="530" y2="150" /> <line x1="340" y1="450" x2="530" y2="450" />
+                <line x1="560" y1="150" x2="710" y2="250" /> <line x1="560" y1="450" x2="710" y2="400" />
+            </g>
+
+            <g stroke="#0056b3" stroke-width="2">
+                <circle cx="120" cy="80" r="22" fill="#fffdf5" stroke="#d4af37" stroke-dasharray="4" />
+                <text x="120" y="84" text-anchor="middle" font-size="11" fill="#d4af37" font-weight="bold">+1</text>
+                <text x="120" y="50" text-anchor="middle" font-size="10" fill="#d4af37">b<tspan baseline-shift="super">(1)</tspan></text>
+
+                <circle cx="120" cy="200" r="28" fill="#f0f7ff" />
+                <circle cx="120" cy="300" r="28" fill="#f0f7ff" />
+                <circle cx="120" cy="400" r="28" fill="#f0f7ff" />
+            </g>
+            <g font-size="12" text-anchor="middle" fill="#0056b3" font-weight="bold">
+                <text x="120" y="204">a<tspan baseline-shift="super">(0)</tspan><tspan baseline-shift="sub">1</tspan></text>
+                <text x="120" y="304">a<tspan baseline-shift="super">(0)</tspan><tspan baseline-shift="sub">2</tspan></text>
+                <text x="120" y="404">a<tspan baseline-shift="super">(0)</tspan><tspan baseline-shift="sub">3</tspan></text>
+            </g>
+
+            <g fill="#fff" stroke="#0056b3" stroke-width="1.5">
+                <circle cx="340" cy="80" r="22" fill="#fffdf5" stroke="#d4af37" stroke-dasharray="4" />
+                <circle cx="340" cy="150" r="38" /> <circle cx="340" cy="250" r="32" />
+                <circle cx="340" cy="350" r="32" /> <circle cx="340" cy="450" r="32" />
+            </g>
+            <text x="340" y="84" text-anchor="middle" font-size="11" fill="#d4af37" font-weight="bold">+1</text>
+            <g font-size="8" text-anchor="middle" fill="#333">
+                <text x="340" y="145">z<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">1</tspan>=Σw·a+b</text>
+                <text x="340" y="158" font-weight="bold" fill="#0056b3">a<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">1</tspan>=σ(z)</text>
+                <text x="340" y="253">a<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">2</tspan></text>
+                <text x="340" y="353">a<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">3</tspan></text>
+                <text x="340" y="453">a<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">4</tspan></text>
+            </g>
+
+            <g fill="#fff" stroke="#0056b3" stroke-width="1.5">
+                <circle cx="560" cy="80" r="22" fill="#fffdf5" stroke="#d4af37" stroke-dasharray="4" />
+                <circle cx="560" cy="150" r="32" /> <circle cx="560" cy="250" r="32" />
+                <circle cx="560" cy="350" r="32" /> <circle cx="560" cy="450" r="32" />
+            </g>
+            <text x="560" y="84" text-anchor="middle" font-size="11" fill="#d4af37" font-weight="bold">+1</text>
+            <g font-size="9" text-anchor="middle" fill="#0056b3">
+                <text x="560" y="153">a<tspan baseline-shift="super">(2)</tspan><tspan baseline-shift="sub">1</tspan></text>
+                <text x="560" y="253">a<tspan baseline-shift="super">(2)</tspan><tspan baseline-shift="sub">2</tspan></text>
+                <text x="560" y="353">a<tspan baseline-shift="super">(2)</tspan><tspan baseline-shift="sub">3</tspan></text>
+                <text x="560" y="453">a<tspan baseline-shift="super">(2)</tspan><tspan baseline-shift="sub">4</tspan></text>
+            </g>
+
+            <g font-size="10" fill="#718096">
+                <text x="210" y="145">w<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">11</tspan></text>
+                <text x="180" y="110" fill="#b8860b">w<tspan baseline-shift="super">(1)</tspan><tspan baseline-shift="sub">10</tspan></text>
+                <text x="440" y="145">w<tspan baseline-shift="super">(2)</tspan><tspan baseline-shift="sub">11</tspan></text>
+            </g>
+
+            <g fill="#fffafa" stroke="#e53e3e" stroke-width="2">
+                <circle cx="760" cy="250" r="50" />
+                <circle cx="760" cy="400" r="50" />
+            </g>
+            <g text-anchor="middle" font-size="10" fill="#e53e3e">
+                <text x="760" y="240">e<tspan baseline-shift="super">z<tspan baseline-shift="super">(3)</tspan><tspan baseline-shift="sub">1</tspan></tspan></text>
+                <line x1="735" y1="245" x2="785" y2="245" stroke="#e53e3e" stroke-width="1"/>
+                <text x="760" y="260">Σe<tspan baseline-shift="super">z<tspan baseline-shift="super">(3)</tspan><tspan baseline-shift="sub">k</tspan></tspan></text>
+                <text x="830" y="255" font-weight="bold" font-size="13">→ ŷ<tspan baseline-shift="sub">1</tspan></text>
+                
+                <text x="760" y="390">e<tspan baseline-shift="super">z<tspan baseline-shift="super">(3)</tspan><tspan baseline-shift="sub">2</tspan></tspan></text>
+                <line x1="735" y1="395" x2="785" y2="395" stroke="#e53e3e" stroke-width="1"/>
+                <text x="760" y="410">Σe<tspan baseline-shift="super">z<tspan baseline-shift="super">(3)</tspan><tspan baseline-shift="sub">k</tspan></tspan></text>
+                <text x="830" y="405" font-weight="bold" font-size="13">→ ŷ<tspan baseline-shift="sub">2</tspan></text>
+            </g>
+        </svg>
+    </div>
+
+    
+
+    <div class="detail-description">
+        A neural networks broadly involves the following process 
+        <ol class="process-list">
+            <li>(1) Forward Pass: Data is fed through the network to generate predictions.</li>
+            <li>(2) Loss Calculation: A loss function measures how far off the predictions were from the true labels.</li>
+            <li>(3) Backpropagation: The error is propagated backward through the network to compute the gradients (how much each weight should be adjusted).</li>
+            <li>(4) Weight Update: The optimizer (e.g., Adam) uses the gradients to update the network's weights.</li>
+        </ol>
+        (1) - (4) will be repeated as desired no of loops
+        <br><br>
+        While the above steps are  the same, the details of what the network is doing at each step are very different, Processing of  NN say MLP layers are different from the processing of layers in CNN
+    </div>
+
+    <div class="tutorial-content">
+        <ul>
+            <li class="section-item">
+                <span class="section-title">1. The Inputs (Layer L1): The Feature Vector</span>
+                The first layer, L1, is the starting point where your "raw features" live.
+                <ul class="sub-list">
+                    <li>The "Real" Facts: Each neuron ($n_1, n_2, n_3$) represents a specific, measurable attribute. If you are identifying a "Cat," $n_1$ might be "Pointy Ears," $n_2$ might be "Whiskers," and $n_3$ might be "Tail Length."</li>
+                    <li>No Abstraction Yet: These are the only values that are grounded in reality. In an MLP, we don't need the complex spatial filters used in images (CNNs); we just pass these direct facts to the first "team" of Logistic Regressors.</li>
+                </ul>
+            </li>
+
+            <li class="section-item">
+                <span class="section-title">2. The Weights ($W_{jk}^{(l)}$): Trust and Influence</span>
+                The lines are the Weights, representing the "influence" one neuron has on the next. Since each neuron in the next layer acts like its own LR model, these weights are essentially the coefficients ($\beta$ or $w$) of that model.
+                <ul class="sub-list">
+                    <li>Positive Weight: A vote of confidence. If $n_1$ (Ears) is high, it increases the "probability" that the next neuron (e.g., "Cat-like shape") will fire.</li>
+                    <li>Negative Weight: A "veto." If the input is $n_2$ (Barking), a negative weight tells the next neuron to not fire, because it's probably not a cat.</li>
+                    <li>Zero Weight: The connection is irrelevant to that specific sub-decision.</li>
+                </ul>
+            </li>
+
+            <li class="section-item">
+                <span class="section-title">3. The Weighted Sum: The Linear Core</span>
+                Before the "Logistic" part happens, the neuron must perform a calculation. This is the linear regression step of the process. It gathers all incoming signals and accumulates them into a single value, $z$.
+                <p>The Accumulator: It calculates the weighted sum of all inputs plus a Bias ($b$), which acts like the intercept in a standard regression:</p>
+                <div class="math-display">
+                    $$z_j^{(l)} = \sum_{k} (w_{jk}^{(l-1)} \cdot n_k^{(l-1)}) + b_j^{(l)}$$
+                </div>
+            </li>
+
+            <li class="section-item">
+                <span class="section-title">4. The Activation Function: The "Logistic" Step</span>
+                This is where the neuron truly becomes a Logistic Regression unit. The weighted sum $z$ is passed through a function to decide its "signal strength."
+                <ul class="sub-list">
+                    <li>The Probability Gate: If we use a Sigmoid activation, the neuron is exactly a Logistic Regression—it takes the sum and "squashes" it into a value between 0 and 1.</li>
+                    <li>The Non-Linear Magic: While LR is appropriate here, we stack them because one "linear" decision isn't enough. By using functions like ReLU or Sigmoid, we allow the network to "bend" the rules, enabling it to learn relationships that aren't just straight lines.</li>
+                </ul>
+            </li>
+
+            <li class="section-item">
+                <span class="section-title">5. The Loss (The Final Verdict): The Teacher</span>
+                At the final layer (L4), the network gives its best guess. The Loss (or Cost) is the math that tells the network how wrong it was.
+                <ul class="sub-list">
+                    <li>Measuring Error: If the final LR unit in the output layer predicts "90% Cat" but the ground truth is "Dog," the Loss function (like Cross-Entropy) generates a high penalty.</li>
+                    <li>Optimization: The "Training" process uses this Loss to work backward. It says, "To make this Loss smaller next time, which weights ($W$) in our team of logistic regressors do we need to nudge up or down?"</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+	<li class="section-item">
+    <span class="section-title">The Calculus of ReLU: Why the Gradient is 1</span>
+    It is important to distinguish between a constant and a linear slope. For all values where $z > 0$, ReLU acts as the identity function ($f(z) = z$).
+    <ul class="sub-list">
+        <li><strong>Linear Slope:</strong> Because $f(z) = z$ in the positive region, its derivative is exactly 1. It is like a ramp with a 45-degree angle.</li>
+        <li><strong>Not a Constant:</strong> If ReLU gave a constant value (like 5), the gradient would be 0 and the network would never learn. By providing a gradient of 1, it allows the "error signal" to pass through the neuron unchanged.</li>
+        <li><strong>Dead Neurons:</strong> If $z < 0$, the gradient <i>is</i> 0. This is known as the "Dying ReLU" problem, where a neuron stops updating because it is stuck in the negative region.</li>
+    </ul>
+</li>
+	<div style="border-left: 5px solid #2ecc71; background: #f0fff4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h4 style="margin-top: 0; color: #27ae60;">Architectural Math: Parameter Counting</h4>
+    <p class="detail-description">
+        To calculate the complexity of a <strong>Dense Layer</strong>, we multiply the input dimension by the output dimension.
+    </p>
+    
+    <div style="background: white; padding: 10px; border: 1px dashed #27ae60; font-family: monospace;">
+        Input Size ($L_1$): n <br>
+        Output Size ($L_2$): n - 4 <br>
+        -------------------------- <br>
+        <strong>Connection Count:</strong> n * (n - 4) = n² - 4n
+    </div>
+    
+    <p style="font-size: 0.85rem; margin-top: 15px;">
+        <em>Note:</em> In Large Language Models, $n$ is often 4096 or higher. A single layer can have <strong>16 million+</strong> connections!
+    </p>
+</div>
+	</body>
+</html>

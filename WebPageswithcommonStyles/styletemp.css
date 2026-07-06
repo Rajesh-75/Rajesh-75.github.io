@@ -1,0 +1,191 @@
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #1e293b;
+    background: #f8fafc;
+  }
+
+  .page-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 40px 80px;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    border-bottom: 3px solid #3b82f6;
+    padding-bottom: 24px;
+    margin-bottom: 48px;
+  }
+  .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #3b82f6;
+    margin-bottom: 8px;
+  }
+  .page-header h1 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+  }
+  .page-header .subtitle {
+    margin-top: 10px;
+    color: #64748b;
+    font-size: 0.95rem;
+  }
+
+  /* ── Section blocks ── */
+  .section-block { margin-bottom: 56px; }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .sec-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px; height: 30px;
+    background: #3b82f6;
+    color: #fff;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  h3 {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 24px 0 10px;
+  }
+  p { margin-bottom: 14px; color: #334155; }
+  ul, ol { padding-left: 24px; margin-bottom: 14px; color: #334155; }
+  li { margin-bottom: 6px; }
+  strong { color: #0f172a; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 18px 0;
+    border-left: 4px solid;
+  }
+  .callout-blue   { background: #eff6ff; border-color: #3b82f6; }
+  .callout-green  { background: #f0fdf4; border-color: #22c55e; }
+  .callout-amber  { background: #fffbeb; border-color: #f59e0b; }
+  .callout-red    { background: #fef2f2; border-color: #ef4444; }
+  .callout-purple { background: #faf5ff; border-color: #8b5cf6; }
+  .callout-title  { font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; color: #0f172a; }
+
+  /* ── Math block ── */
+  .math-block {
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin: 14px 0;
+    overflow-x: auto;
+    text-align: center;
+    font-size: 0.95rem;
+  }
+
+  /* ── Code / equation inline ── */
+  code {
+    background: #e2e8f0;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.88em;
+    color: #1e3a8a;
+  }
+
+  /* ── Code block ── */
+  .code-block {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 18px 22px;
+    border-radius: 8px;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    overflow-x: auto;
+    margin: 18px 0;
+    border-left: 4px solid #10b981;
+  }
+  .code-block pre { margin: 0; white-space: pre; }
+  .cc { color: #64748b; font-style: italic; }
+  .ck { color: #f43f5e; font-weight: bold; }
+  .ch { color: #34d399; }
+
+  /* ── SVG figure wrapper ── */
+  .fig-wrap {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px 16px 12px;
+    margin: 20px 0;
+  }
+  .fig-wrap svg { width: 100%; height: auto; }
+  .fig-caption {
+    font-style: italic;
+    color: #64748b;
+    font-size: 0.82rem;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  /* ── Dilution table ── */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.88rem; }
+  thead tr { background: #1e3a8a; color: #fff; }
+  thead th { padding: 10px 14px; text-align: left; }
+  tbody tr:nth-child(even) { background: #f1f5f9; }
+  tbody tr:nth-child(odd)  { background: #fff; }
+  tbody td { padding: 9px 14px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+
+  /* ── Bridge box ── */
+  .bridge {
+    background: linear-gradient(135deg, #eff6ff 0%, #faf5ff 100%);
+    border: 1px solid #c7d2fe;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin: 28px 0;
+    color: #312e81;
+    font-size: 0.93rem;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    border: none;
+    border-top: 2px solid #e2e8f0;
+    margin: 48px 0;
+  }
+
+  /* ── Step pill ── */
+  .step-pill {
+    display: inline-block;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  @media (max-width: 640px) {
+    .page-wrap { padding: 24px 16px 48px; }
+  }
+</style>

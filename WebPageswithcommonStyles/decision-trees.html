@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial</title>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']]
+            }
+        };
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <h1>Decision Trees: Entropy and Information Gain</h1>
+
+    <h2>🧠 Introduction to Decision Trees</h2>
+    <p>
+        A **Decision Tree** is a non-parametric supervised learning algorithm used for both classification and regression. It models decisions by creating a tree structure, where internal nodes represent tests on features, branches represent the outcome of the test, and leaf nodes represent the final class label or value. The goal is to create a model that predicts the value of a target variable by learning simple decision rules inferred from the data features.
+    </p>
+
+    <h3>Key Algorithms</h3>
+    <p>
+        Several well-known algorithms guide the construction of Decision Trees by determining the optimal way to perform splits:
+        <ul>
+            <li>**ID3 (Iterative Dichotomiser 3) / C4.5:** These algorithms primarily use **Information Gain** based on **Entropy** as the splitting criterion. They are designed to find the feature that maximizes the reduction in impurity at each step.</li>
+            <li>**CART (Classification and Regression Trees):** This algorithm uses the **Gini Impurity** measure for classification and the Mean Squared Error (MSE) for regression. CART is the most commonly used framework today.</li>
+        </ul>
+        The splitting criterion (Entropy/Information Gain or Gini Impurity) is the core mechanism that drives the tree's construction and performance.
+    </p>
+    
+    <hr>
+    <h2>🌳 Core Concepts: Entropy and Information Gain</h2>
+    <p>Entropy Gain is the criterion used to select the best feature split at a node. The split is chosen to achieve the <strong>maximum reduction in impurity</strong>.</p>
+
+    <h3>1. Entropy (Impurity Measure)</h3>
+    <p>Measures the disorder or randomness in a set of data. Value ranges from 0 (pure) to $\log_2(C)$ (maximum disorder). **A value zero means no further split is required, and high disorder requires us to split based on the variation in the dataset.**</p>
+    
+    <div class="note">
+        <h3>Maximum Disorder (Entropy = 1.0) 🎲</h3>
+        <p>A 50/50 split for a binary classification problem results in an Entropy of $\mathbf{1.0}$. This is the highest possible impurity for two classes.</p>
+        <p><strong>Concept:</strong> This node is maximally uncertain. If you picked a ball at random, your chances of being right (Red or Green) are only $50\%$. The algorithm gains the maximum potential information by splitting this node.</p>
+        <p><strong>The Math:</strong></p>
+        <div style="padding-left: 20px;">
+            $$\text{Entropy}(S) = - \sum_{c=1}^{C} P_c \log_2(P_c)$$
+            $$\text{Entropy} = - \left[ \left(\frac{5}{10} \log_2\left(\frac{5}{10}\right)\right) + \left(\frac{5}{10} \log_2\left(\frac{5}{10}\right)\right) \right]$$
+            $$\text{Entropy} = - \left[ (0.5 \times -1) + (0.5 \times -1) \right] = \mathbf{1.0}$$
+        </div>
+        
+        <hr style="border-color: #bee5eb;">
+
+        <h3>Perfect Purity (Entropy = 0) ✅</h3>
+        <p>A node containing only one type of item (e.g., 5 Red balls) has an Entropy of $\mathbf{0}$.</p>
+        <p><strong>Concept:</strong> This node is **pure** (or homogeneous). There is no uncertainty about the class, so **no further split is required**. This node becomes a leaf node in the Decision Tree.</p>
+        <p><strong>The Math:</strong></p>
+        <div style="padding-left: 20px;">
+            $$\text{Entropy} = - \left[ \left(\frac{5}{5} \log_2\left(\frac{5}{5}\right)\right) + \left(\frac{0}{5} \log_2\left(\frac{0}{5}\right)\right) \right]$$
+            $$\text{Entropy} = - \left[ (1.0 \times \log_2(1)) + 0 \right] = \mathbf{0}$$
+            <p style="font-size: 0.9em; margin-top: 5px;">*(Note: In information theory, the term $0 \log_2(0)$ is conventionally treated as $0$).*</p>
+        </div>
+        <p style="font-weight: bold; margin-top: 15px;">This confirms the core rule: The goal of the Decision Tree is to choose splits that drive the Entropy value from a high number (like 1.0) down toward 0.0.</p>
+    </div>
+    
+    <div class="formula">
+        $$\text{Entropy}(S) = - \sum_{c=1}^{C} P_c \log_2(P_c)$$
+    </div>
+    <p><strong>Example:</strong> A node with 5 Red and 5 Green balls has $\text{Entropy} = 1.0$ (maximum impurity for two classes).</p>
+
+    <h3>2. Information Gain (IG)</h3>
+    <p>The gain is the difference between the parent's entropy and the weighted average of the children's entropies. The feature that yields the highest Information Gain is chosen for the split.</p>
+    <div class="formula">
+        $$\text{Information Gain}(S, A) = \text{Entropy}(S) - \sum_{v \in \text{Values}(A)} \frac{|S_v|}{|S|} \text{Entropy}(S_v)$$
+    </div>
+
+    <hr>
+    
+    <h2>⚖️ Alternative Impurity Measure: Gini Impurity</h2>
+    <p>While **Entropy** and **Information Gain** are used by algorithms like ID3/C4.5, an equally popular measure of impurity is **Gini Impurity**. Like Entropy, Gini Impurity also aims for zero, with the best split being the one that minimizes the Gini Impurity of the child nodes.</p>
+
+    <hr>
+
+    <h3>Multi-Feature Split Scenario (Detailed)</h3>
+    <p>To classify balls by a combination of Circumference ($>$ Val, $\le$ Val) and Color (Red, Green, etc.), the algorithm:</p>
+    <ol>
+        <li>Defines the target as **distinct classes** (e.g., Red Large, Red Small, Green Large, etc.).</li>
+        <li>Tests every possible numerical value in the dataset as the **threshold Val** for numerical features.</li>
+        <li>Calculates the **Information Gain** for that specific $Val$ across the resulting subsets.</li>
+        <li>Chooses the **Val** or feature split that produces the **Maximum Information Gain**.</li>
+    </ol>
+</div>
+
+</body>
+</html>

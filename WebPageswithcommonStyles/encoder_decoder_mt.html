@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RNN Encoder–Decoder for Machine Translation</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #1e293b;
+    background: #f8fafc;
+  }
+
+  .page-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 40px 80px;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    border-bottom: 3px solid #3b82f6;
+    padding-bottom: 24px;
+    margin-bottom: 48px;
+  }
+  .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #3b82f6;
+    margin-bottom: 8px;
+  }
+  .page-header h1 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+  }
+  .page-header .subtitle {
+    margin-top: 10px;
+    color: #64748b;
+    font-size: 0.95rem;
+  }
+
+  /* ── Section blocks ── */
+  .section-block { margin-bottom: 56px; }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .sec-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px; height: 30px;
+    background: #3b82f6;
+    color: #fff;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  h3 {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 24px 0 10px;
+  }
+  p { margin-bottom: 14px; color: #334155; }
+  ul, ol { padding-left: 24px; margin-bottom: 14px; color: #334155; }
+  li { margin-bottom: 6px; }
+  strong { color: #0f172a; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 18px 0;
+    border-left: 4px solid;
+  }
+  .callout-blue   { background: #eff6ff; border-color: #3b82f6; }
+  .callout-green  { background: #f0fdf4; border-color: #22c55e; }
+  .callout-amber  { background: #fffbeb; border-color: #f59e0b; }
+  .callout-red    { background: #fef2f2; border-color: #ef4444; }
+  .callout-purple { background: #faf5ff; border-color: #8b5cf6; }
+  .callout-title  { font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; color: #0f172a; }
+
+  /* ── Math block ── */
+  .math-block {
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin: 14px 0;
+    overflow-x: auto;
+    text-align: center;
+    font-size: 0.95rem;
+  }
+
+  /* ── Code / equation inline ── */
+  code {
+    background: #e2e8f0;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.88em;
+    color: #1e3a8a;
+  }
+
+  /* ── Code block ── */
+  .code-block {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 18px 22px;
+    border-radius: 8px;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    overflow-x: auto;
+    margin: 18px 0;
+    border-left: 4px solid #10b981;
+  }
+  .code-block pre { margin: 0; white-space: pre; }
+  .cc { color: #64748b; font-style: italic; }
+  .ck { color: #f43f5e; font-weight: bold; }
+  .ch { color: #34d399; }
+
+  /* ── SVG figure wrapper ── */
+  .fig-wrap {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px 16px 12px;
+    margin: 20px 0;
+  }
+  .fig-wrap svg { width: 100%; height: auto; }
+  .fig-caption {
+    font-style: italic;
+    color: #64748b;
+    font-size: 0.82rem;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  /* ── Dilution table ── */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.88rem; }
+  thead tr { background: #1e3a8a; color: #fff; }
+  thead th { padding: 10px 14px; text-align: left; }
+  tbody tr:nth-child(even) { background: #f1f5f9; }
+  tbody tr:nth-child(odd)  { background: #fff; }
+  tbody td { padding: 9px 14px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+
+  /* ── Bridge box ── */
+  .bridge {
+    background: linear-gradient(135deg, #eff6ff 0%, #faf5ff 100%);
+    border: 1px solid #c7d2fe;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin: 28px 0;
+    color: #312e81;
+    font-size: 0.93rem;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    border: none;
+    border-top: 2px solid #e2e8f0;
+    margin: 48px 0;
+  }
+
+  /* ── Step pill ── */
+  .step-pill {
+    display: inline-block;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  @media (max-width: 640px) {
+    .page-wrap { padding: 24px 16px 48px; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- ══ HEADER ══ -->
+  <div class="page-header">
+    <div class="eyebrow">RNN Series · Sequence-to-Sequence</div>
+    <h1>RNN Encoder–Decoder for Machine Translation</h1>
+    <p class="subtitle">
+      How an RNN reads a source sentence, compresses it into a context vector,
+      and generates the translation word by word — including exactly what each
+      decoding step relies on, and why the bottleneck matters.
+    </p>
+  </div>
+
+
+  <!-- ══ SECTION 1 ══ -->
+  <div class="section-block">
+    <h2><span class="sec-num">1</span> The Task: Why Seq2Seq?</h2>
+    <p>
+      Machine translation was the original motivating task for the Encoder–Decoder framework.
+      The goal is to take a sentence in one language — say English — and produce an equivalent
+      sentence in another language, say French. The challenge is that input and output sentences
+      can differ in length, word order, and grammatical structure, so a simple word-by-word
+      mapping does not work.
+    </p>
+    <p>
+      The Encoder–Decoder architecture handles this by splitting the problem into two sequential
+      stages — a <strong>reading stage</strong> (Encoder) and a <strong>writing stage</strong>
+      (Decoder) — connected by a single compressed vector called the <strong>context vector c</strong>.
+    </p>
+
+    <div class="callout callout-blue">
+      <div class="callout-title">Example used throughout this document</div>
+      <strong>Source (English):</strong> "The cat sat"<br>
+      <strong>Target (French):</strong> "Le chat était"<br><br>
+      We will trace exactly how each French word is generated, and what the Decoder
+      relies on at every step.
+    </div>
+  </div>
+
+
+  <!-- ══ SECTION 2 ══ -->
+  <div class="section-block">
+    <h2><span class="sec-num">2</span> The Encoder — Reading the Source</h2>
+
+    <p>
+      The Encoder is a standard RNN. It reads the English sentence one word at a time,
+      updating its hidden state at each step. After the final word is processed,
+      its last hidden state becomes the <strong>context vector c</strong> — a single
+      fixed-size numerical vector that is supposed to carry the full meaning of
+      the source sentence.
+    </p>
+
+    <div class="fig-wrap">
+      <svg viewBox="0 0 680 310" role="img">
+        <title>RNN Encoder for machine translation</title>
+        <desc>Unrolled RNN Encoder reading The, cat, sat — producing hidden states h1, h2, h3 then compressing to context vector c</desc>
+        <defs>
+          <marker id="arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- Section label -->
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="600" fill="#1e3a8a" x="340" y="26" text-anchor="middle">Encoder — reads source sentence (English)</text>
+
+        <!-- h0 init -->
+        <rect x="30" y="52" width="78" height="34" rx="5" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" fill="#64748b" x="69" y="73" text-anchor="middle">h₀ = 0</text>
+        <line x1="69" y1="86" x2="69" y2="128" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr1)"/>
+
+        <!-- Hidden states -->
+        <rect x="30"  y="130" width="78" height="48" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="14" font-weight="600" fill="#085041" x="69" y="151" text-anchor="middle">h₁</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="69" y="168" text-anchor="middle">hidden state</text>
+
+        <rect x="180" y="130" width="78" height="48" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="14" font-weight="600" fill="#085041" x="219" y="151" text-anchor="middle">h₂</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="219" y="168" text-anchor="middle">hidden state</text>
+
+        <rect x="330" y="130" width="78" height="48" rx="7" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="14" font-weight="600" fill="#085041" x="369" y="151" text-anchor="middle">h₃</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#0f6e56" x="369" y="168" text-anchor="middle">hidden state</text>
+
+        <!-- Context vector -->
+        <rect x="490" y="130" width="110" height="48" rx="7" fill="#faece7" stroke="#993c1d" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="600" fill="#4a1b0c" x="545" y="151" text-anchor="middle">context c</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#712b13" x="545" y="168" text-anchor="middle">fixed vector</text>
+
+        <!-- Input word boxes -->
+        <rect x="30"  y="228" width="78" height="34" rx="5" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" fill="#334155" x="69" y="249" text-anchor="middle">"The"</text>
+
+        <rect x="180" y="228" width="78" height="34" rx="5" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" fill="#334155" x="219" y="249" text-anchor="middle">"cat"</text>
+
+        <rect x="330" y="228" width="78" height="34" rx="5" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" fill="#334155" x="369" y="249" text-anchor="middle">"sat"</text>
+
+        <!-- Vertical: word → hidden -->
+        <line x1="69"  y1="228" x2="69"  y2="180" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr1)"/>
+        <line x1="219" y1="228" x2="219" y2="180" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr1)"/>
+        <line x1="369" y1="228" x2="369" y2="180" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr1)"/>
+
+        <!-- U labels -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-style="italic" fill="#2563eb" x="76" y="210" text-anchor="start">U</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-style="italic" fill="#2563eb" x="226" y="210" text-anchor="start">U</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-style="italic" fill="#2563eb" x="376" y="210" text-anchor="start">U</text>
+
+        <!-- Horizontal recurrence h→h -->
+        <line x1="110" y1="154" x2="178" y2="154" stroke="#1d9e75" stroke-width="1.5" marker-end="url(#arr1)"/>
+        <line x1="260" y1="154" x2="328" y2="154" stroke="#1d9e75" stroke-width="1.5" marker-end="url(#arr1)"/>
+
+        <!-- W labels -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-style="italic" fill="#0f6e56" x="141" y="147" text-anchor="middle">W</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-style="italic" fill="#0f6e56" x="291" y="147" text-anchor="middle">W</text>
+
+        <!-- h3 → context (thicker, important) -->
+        <line x1="410" y1="154" x2="488" y2="154" stroke="#993c1d" stroke-width="2" marker-end="url(#arr1)"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#712b13" x="447" y="146" text-anchor="middle">compress</text>
+
+        <!-- Bottleneck warning -->
+        <rect x="490" y="194" width="180" height="44" rx="6" fill="#fef2f2" stroke="#ef4444" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="600" fill="#991b1b" x="580" y="211" text-anchor="middle">⚠ bottleneck</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#b91c1c" x="580" y="228" text-anchor="middle">whole sentence → 1 vector</text>
+
+        <!-- Time step labels -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#94a3b8" x="69"  y="280" text-anchor="middle">t = 1</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#94a3b8" x="219" y="280" text-anchor="middle">t = 2</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#94a3b8" x="369" y="280" text-anchor="middle">t = 3</text>
+      </svg>
+      <p class="fig-caption">
+        <strong>Figure 1:</strong> RNN Encoder reading "The cat sat". Hidden states h₁→h₂→h₃
+        carry memory forward. The final h₃ becomes the context vector c — the only
+        information passed to the Decoder.
+      </p>
+    </div>
+
+    <h3>Encoder equations</h3>
+    <div class="math-block">
+      $$h_t = \tanh(W h_{t-1} + U x_t + b_h) \quad \text{for } t = 1 \dots T$$
+      $$c = h_T \quad \text{(context vector = final hidden state)}$$
+    </div>
+
+    <p>
+      The same weight matrices W and U are reused at every step. At the end of the sequence,
+      <code>c = h₃</code> — a fixed-size vector containing the RNN's compressed understanding
+      of the entire English sentence.
+    </p>
+  </div>
+
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 3 ══ -->
+  <div class="section-block">
+    <h2><span class="sec-num">3</span> The Decoder — Generating the Translation</h2>
+
+    <p>
+      The Decoder is also an RNN, but its job is to <em>generate</em> rather than
+      <em>read</em>. It starts with the context vector <code>c</code> as its initial
+      hidden state and produces one French word at each time step.
+    </p>
+
+    <div class="fig-wrap">
+      <svg viewBox="0 0 680 340" role="img">
+        <title>RNN Decoder for machine translation</title>
+        <desc>Unrolled RNN Decoder receiving context vector c, then generating Le, chat, était, end-token one at a time with feedback arrows</desc>
+        <defs>
+          <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- Section label -->
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="600" fill="#1e3a8a" x="340" y="26" text-anchor="middle">Decoder — generates target sentence (French)</text>
+
+        <!-- Context vector (from encoder) -->
+        <rect x="10" y="142" width="90" height="48" rx="7" fill="#faece7" stroke="#993c1d" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="600" fill="#4a1b0c" x="55" y="162" text-anchor="middle">context c</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#712b13" x="55" y="179" text-anchor="middle">from encoder</text>
+
+        <!-- Decoder hidden states -->
+        <rect x="148" y="142" width="78" height="48" rx="7" fill="#eeedfe" stroke="#534ab7" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="14" font-weight="600" fill="#26215c" x="187" y="163" text-anchor="middle">s₁</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="187" y="180" text-anchor="middle">hidden state</text>
+
+        <rect x="282" y="142" width="78" height="48" rx="7" fill="#eeedfe" stroke="#534ab7" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="14" font-weight="600" fill="#26215c" x="321" y="163" text-anchor="middle">s₂</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="321" y="180" text-anchor="middle">hidden state</text>
+
+        <rect x="416" y="142" width="78" height="48" rx="7" fill="#eeedfe" stroke="#534ab7" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="14" font-weight="600" fill="#26215c" x="455" y="163" text-anchor="middle">s₃</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="455" y="180" text-anchor="middle">hidden state</text>
+
+        <rect x="550" y="142" width="78" height="48" rx="7" fill="#eeedfe" stroke="#534ab7" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="14" font-weight="600" fill="#26215c" x="589" y="163" text-anchor="middle">s₄</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#3c3489" x="589" y="180" text-anchor="middle">hidden state</text>
+
+        <!-- Output word boxes -->
+        <rect x="148" y="258" width="78" height="34" rx="5" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" fill="#334155" x="187" y="279" text-anchor="middle">"Le"</text>
+
+        <rect x="282" y="258" width="78" height="34" rx="5" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" fill="#334155" x="321" y="279" text-anchor="middle">"chat"</text>
+
+        <rect x="416" y="258" width="78" height="34" rx="5" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" fill="#334155" x="455" y="279" text-anchor="middle">"était"</text>
+
+        <rect x="550" y="258" width="78" height="34" rx="5" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" fill="#334155" x="589" y="279" text-anchor="middle">&lt;/s&gt;</text>
+
+        <!-- Start token -->
+        <rect x="148" y="62" width="78" height="34" rx="5" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#64748b" x="187" y="83" text-anchor="middle">&lt;s&gt; start</text>
+        <line x1="187" y1="96" x2="187" y2="140" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+
+        <!-- c → s1 -->
+        <line x1="102" y1="166" x2="146" y2="166" stroke="#993c1d" stroke-width="2" marker-end="url(#arr2)"/>
+
+        <!-- Recurrence s→s -->
+        <line x1="228" y1="166" x2="280" y2="166" stroke="#534ab7" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="362" y1="166" x2="414" y2="166" stroke="#534ab7" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="496" y1="166" x2="548" y2="166" stroke="#534ab7" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+        <!-- W labels -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-style="italic" fill="#534ab7" x="252" y="158" text-anchor="middle">W</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-style="italic" fill="#534ab7" x="386" y="158" text-anchor="middle">W</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-style="italic" fill="#534ab7" x="520" y="158" text-anchor="middle">W</text>
+
+        <!-- Vertical: s → output word -->
+        <line x1="187" y1="192" x2="187" y2="256" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr2)"/>
+        <line x1="321" y1="192" x2="321" y2="256" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr2)"/>
+        <line x1="455" y1="192" x2="455" y2="256" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr2)"/>
+        <line x1="589" y1="192" x2="589" y2="256" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr2)"/>
+
+        <!-- V labels -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-style="italic" fill="#2563eb" x="194" y="230" text-anchor="start">V</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-style="italic" fill="#2563eb" x="328" y="230" text-anchor="start">V</text>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-style="italic" fill="#2563eb" x="462" y="230" text-anchor="start">V</text>
+
+        <!-- Feedback arrows: predicted word → next step (curved below) -->
+        <path d="M187 292 Q187 316 253 316 Q319 316 321 292" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+        <path d="M321 292 Q321 316 387 316 Q453 316 455 292" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+        <path d="M455 292 Q455 316 521 316 Q587 316 589 292" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+
+        <!-- Feedback label -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#94a3b8" x="388" y="333" text-anchor="middle">predicted word fed back as next input</text>
+      </svg>
+      <p class="fig-caption">
+        <strong>Figure 2:</strong> RNN Decoder generating "Le chat était". The context vector c
+        initialises the Decoder. At each step, the previously predicted word is fed back
+        (dashed arrows) as the next input alongside the recurrent hidden state.
+      </p>
+    </div>
+
+    <h3>Decoder equations</h3>
+    <div class="math-block">
+      $$s_0 = c \quad \text{(context vector initialises the Decoder)}$$
+      $$s_t = \tanh(W s_{t-1} + U y_{t-1} + b_h)$$
+      $$o_t = \text{softmax}(V s_t + b_o) \quad \Rightarrow \quad \hat{y}_t = \arg\max(o_t)$$
+    </div>
+
+    <p>
+      where <code>y_{t-1}</code> is the previously predicted word (fed back as input),
+      and <code>ŷ_t</code> is the word with the highest probability at step t.
+    </p>
+  </div>
+
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 4 ══ -->
+  <div class="section-block">
+    <h2><span class="sec-num">4</span> What Does Each Decoding Step Actually Rely On?</h2>
+
+    <p>
+      This is the most important question to understand deeply. Let us trace
+      every dependency for generating "Le", "chat", and "était".
+    </p>
+
+    <!-- Step 1 -->
+    <h3><span class="step-pill">Step 1</span> Generating "Le" — relies on c and &lt;s&gt;</h3>
+
+    <div class="callout callout-purple">
+      <div class="callout-title">What s₁ depends on</div>
+      <ul>
+        <li>
+          <strong>Context vector c</strong> — arrives as <code>s₀ = c</code>, carrying
+          the compressed meaning of the entire English sentence "The cat sat".
+          This is the <em>only</em> direct link between the Encoder and the Decoder.
+        </li>
+        <li>
+          <strong>Start token &lt;s&gt;</strong> — since there is no previously predicted
+          word yet, a special start token triggers the first prediction. It is
+          converted to an embedding and fed in via matrix U.
+        </li>
+        <li>
+          <strong>Learned weight matrices W, U, V</strong> — do the actual computation.
+        </li>
+      </ul>
+    </div>
+
+    <div class="math-block">
+      $$s_1 = \tanh(\underbrace{W \cdot c}_{\text{context vector}} + \underbrace{U \cdot \text{emb}(\langle s \rangle)}_{\text{start token}} + b_h)$$
+      $$\text{"Le"} = \arg\max\,\text{softmax}(V \cdot s_1 + b_o)$$
+    </div>
+
+    <p>
+      The softmax produces a probability over the entire French vocabulary.
+      "Le" wins because — given this context — it has the highest probability.
+    </p>
+
+    <!-- Step 2 -->
+    <h3><span class="step-pill">Step 2</span> Generating "chat" — c now indirect</h3>
+
+    <div class="callout callout-amber">
+      <div class="callout-title">What s₂ depends on — and this is where it gets critical</div>
+      <ul>
+        <li>
+          <strong>Previous hidden state s₁</strong> via matrix W —
+          s₁ was computed from c, so c is now <em>one step removed</em>.
+        </li>
+        <li>
+          <strong>Previously predicted word "Le"</strong> — fed back as input via matrix U.
+        </li>
+      </ul>
+      <br>
+      Notice: <strong>c does not appear directly in this equation.</strong>
+      It influences s₂ only through the chain s₁ → s₂.
+    </div>
+
+    <div class="math-block">
+      $$s_2 = \tanh(\underbrace{W \cdot s_1}_{\text{c is one step removed}} + \underbrace{U \cdot \text{emb}(\text{"Le"})}_{\text{previous prediction}} + b_h)$$
+      $$\text{"chat"} = \arg\max\,\text{softmax}(V \cdot s_2 + b_o)$$
+    </div>
+
+    <!-- Step 3 -->
+    <h3><span class="step-pill">Step 3</span> Generating "était" — c two steps removed</h3>
+
+    <div class="math-block">
+      $$s_3 = \tanh(W \cdot s_2 + U \cdot \text{emb}(\text{"chat"}) + b_h)$$
+      $$\text{"était"} = \arg\max\,\text{softmax}(V \cdot s_3 + b_o)$$
+    </div>
+
+    <p>
+      Now c has passed through two hidden state updates before influencing s₃.
+      The signal from the original English sentence is becoming diluted.
+    </p>
+  </div>
+
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 5 ══ -->
+  <div class="section-block">
+    <h2><span class="sec-num">5</span> The Dilution Problem — How c Fades Over Steps</h2>
+
+    <p>
+      The context vector <code>c</code> is injected <em>only once</em> — as the initial
+      hidden state <code>s₀</code>. After that, it influences future decoding steps
+      <em>only indirectly</em>, through the chain of hidden states.
+      At each step it is passed through one more tanh transformation, progressively
+      losing its signal.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Decoding step</th>
+          <th>Output word</th>
+          <th>Distance of c from this step</th>
+          <th>Signal strength</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Step 1 — s₁</td>
+          <td>"Le"</td>
+          <td>c is directly present as s₀</td>
+          <td style="color:#16a34a; font-weight:600;">Full ✓</td>
+        </tr>
+        <tr>
+          <td>Step 2 — s₂</td>
+          <td>"chat"</td>
+          <td>c is 1 step removed (through s₁)</td>
+          <td style="color:#92400e; font-weight:600;">Slightly diluted</td>
+        </tr>
+        <tr>
+          <td>Step 3 — s₃</td>
+          <td>"était"</td>
+          <td>c is 2 steps removed (through s₁→s₂)</td>
+          <td style="color:#b45309; font-weight:600;">More diluted</td>
+        </tr>
+        <tr>
+          <td>Step 10 — s₁₀</td>
+          <td>word 10</td>
+          <td>c is 9 steps removed</td>
+          <td style="color:#dc2626; font-weight:600;">Severely diluted ⚠</td>
+        </tr>
+        <tr>
+          <td>Step 30 — s₃₀</td>
+          <td>word 30</td>
+          <td>c is 29 steps removed</td>
+          <td style="color:#991b1b; font-weight:600;">Effectively lost ✗</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      For our short example "The cat sat" → "Le chat était", this works fine —
+      there are only 3 decoding steps. But for a real sentence like
+      "The prime minister announced a new economic policy yesterday afternoon"
+      (10 words → perhaps 12 French words), by the time the Decoder reaches
+      word 10 it has almost no reliable signal from the original English source.
+      Early source words — which might carry the most important meaning — are
+      effectively forgotten.
+    </p>
+
+    <div class="callout callout-red">
+      <div class="callout-title">The context vector bottleneck — summarised</div>
+      <ul>
+        <li>c is a <strong>single fixed-size vector</strong> regardless of input length</li>
+        <li>c is injected <strong>only once</strong> at the start of decoding</li>
+        <li>c becomes <strong>progressively less accessible</strong> as decoding continues</li>
+        <li>For long sentences, the Decoder <strong>loses track of the source</strong> partway through</li>
+      </ul>
+    </div>
+  </div>
+
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 6 ══ -->
+  <div class="section-block">
+    <h2><span class="sec-num">6</span> The Complete Dependency Chain — One View</h2>
+
+    <div class="fig-wrap">
+      <svg viewBox="0 0 680 400" role="img">
+        <title>Complete Encoder-Decoder dependency chain</title>
+        <desc>Full pipeline from English source words through encoder hidden states to context vector c, then through decoder steps producing Le, chat, était with dependency annotations</desc>
+        <defs>
+          <marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- ── ENCODER half ── -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="600" fill="#0f6e56" x="175" y="22" text-anchor="middle">ENCODER</text>
+        <line x1="40" y1="28" x2="310" y2="28" stroke="#1d9e75" stroke-width="0.8" stroke-dasharray="3 2"/>
+
+        <!-- Encoder inputs -->
+        <rect x="30"  y="52" width="66" height="30" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#334155" x="63" y="71" text-anchor="middle">"The"</text>
+
+        <rect x="122" y="52" width="66" height="30" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#334155" x="155" y="71" text-anchor="middle">"cat"</text>
+
+        <rect x="214" y="52" width="66" height="30" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#334155" x="247" y="71" text-anchor="middle">"sat"</text>
+
+        <!-- Encoder hidden states -->
+        <rect x="30"  y="118" width="66" height="40" rx="6" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="600" fill="#085041" x="63" y="143" text-anchor="middle">h₁</text>
+
+        <rect x="122" y="118" width="66" height="40" rx="6" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="600" fill="#085041" x="155" y="143" text-anchor="middle">h₂</text>
+
+        <rect x="214" y="118" width="66" height="40" rx="6" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="600" fill="#085041" x="247" y="143" text-anchor="middle">h₃</text>
+
+        <!-- Encoder vertical arrows -->
+        <line x1="63"  y1="82"  x2="63"  y2="116" stroke="#64748b" stroke-width="1" marker-end="url(#arr3)"/>
+        <line x1="155" y1="82"  x2="155" y2="116" stroke="#64748b" stroke-width="1" marker-end="url(#arr3)"/>
+        <line x1="247" y1="82"  x2="247" y2="116" stroke="#64748b" stroke-width="1" marker-end="url(#arr3)"/>
+
+        <!-- Encoder recurrence -->
+        <line x1="98"  y1="138" x2="120" y2="138" stroke="#1d9e75" stroke-width="1.2" marker-end="url(#arr3)"/>
+        <line x1="190" y1="138" x2="212" y2="138" stroke="#1d9e75" stroke-width="1.2" marker-end="url(#arr3)"/>
+
+        <!-- ── CONTEXT VECTOR ── (centre) -->
+        <rect x="306" y="118" width="90" height="40" rx="6" fill="#faece7" stroke="#993c1d" stroke-width="1.2"/>
+        <text font-family="Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#4a1b0c" x="351" y="143" text-anchor="middle">c = h₃</text>
+
+        <!-- h3 → c -->
+        <line x1="282" y1="138" x2="304" y2="138" stroke="#993c1d" stroke-width="2" marker-end="url(#arr3)"/>
+
+        <!-- ── DECODER half ── -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="600" fill="#3c3489" x="528" y="22" text-anchor="middle">DECODER</text>
+        <line x1="398" y1="28" x2="660" y2="28" stroke="#534ab7" stroke-width="0.8" stroke-dasharray="3 2"/>
+
+        <!-- Decoder hidden states -->
+        <rect x="406" y="118" width="66" height="40" rx="6" fill="#eeedfe" stroke="#534ab7" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="600" fill="#26215c" x="439" y="143" text-anchor="middle">s₁</text>
+
+        <rect x="496" y="118" width="66" height="40" rx="6" fill="#eeedfe" stroke="#534ab7" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="600" fill="#26215c" x="529" y="143" text-anchor="middle">s₂</text>
+
+        <rect x="586" y="118" width="66" height="40" rx="6" fill="#eeedfe" stroke="#534ab7" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="13" font-weight="600" fill="#26215c" x="619" y="143" text-anchor="middle">s₃</text>
+
+        <!-- c → s1 -->
+        <line x1="398" y1="138" x2="404" y2="138" stroke="#993c1d" stroke-width="2" marker-end="url(#arr3)"/>
+
+        <!-- Decoder recurrence -->
+        <line x1="474" y1="138" x2="494" y2="138" stroke="#534ab7" stroke-width="1.2" marker-end="url(#arr3)"/>
+        <line x1="564" y1="138" x2="584" y2="138" stroke="#534ab7" stroke-width="1.2" marker-end="url(#arr3)"/>
+
+        <!-- Decoder output words -->
+        <rect x="406" y="206" width="66" height="30" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#334155" x="439" y="225" text-anchor="middle">"Le"</text>
+
+        <rect x="496" y="206" width="66" height="30" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#334155" x="529" y="225" text-anchor="middle">"chat"</text>
+
+        <rect x="586" y="206" width="66" height="30" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#334155" x="619" y="225" text-anchor="middle">"était"</text>
+
+        <!-- s → word -->
+        <line x1="439" y1="160" x2="439" y2="204" stroke="#64748b" stroke-width="1" marker-end="url(#arr3)"/>
+        <line x1="529" y1="160" x2="529" y2="204" stroke="#64748b" stroke-width="1" marker-end="url(#arr3)"/>
+        <line x1="619" y1="160" x2="619" y2="204" stroke="#64748b" stroke-width="1" marker-end="url(#arr3)"/>
+
+        <!-- Feedback arrows -->
+        <path d="M439 236 Q439 256 483 256 Q527 256 529 236" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arr3)"/>
+        <path d="M529 236 Q529 256 573 256 Q617 256 619 236" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arr3)"/>
+
+        <!-- ── DILUTION ANNOTATIONS ── -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="600" fill="#0f172a" x="340" y="290" text-anchor="middle">How far is c from each decoding step?</text>
+
+        <!-- s1 annotation -->
+        <line x1="439" y1="278" x2="439" y2="272" stroke="#94a3b8" stroke-width="0.8"/>
+        <rect x="374" y="280" width="130" height="44" rx="5" fill="#f0fdf4" stroke="#22c55e" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="600" fill="#14532d" x="439" y="298" text-anchor="middle">s₁: c is direct</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#166534" x="439" y="316" text-anchor="middle">full signal ✓</text>
+
+        <!-- s2 annotation -->
+        <line x1="529" y1="278" x2="529" y2="272" stroke="#94a3b8" stroke-width="0.8"/>
+        <rect x="464" y="280" width="130" height="44" rx="5" fill="#fffbeb" stroke="#f59e0b" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="600" fill="#78350f" x="529" y="298" text-anchor="middle">s₂: c is 1 step away</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#92400e" x="529" y="316" text-anchor="middle">slightly diluted</text>
+
+        <!-- s3 annotation -->
+        <line x1="619" y1="278" x2="619" y2="272" stroke="#94a3b8" stroke-width="0.8"/>
+        <rect x="554" y="280" width="118" height="44" rx="5" fill="#fef2f2" stroke="#ef4444" stroke-width="0.8"/>
+        <text font-family="Segoe UI,sans-serif" font-size="11" font-weight="600" fill="#991b1b" x="613" y="298" text-anchor="middle">s₃: c is 2 steps away</text>
+        <text font-family="Segoe UI,sans-serif" font-size="10" fill="#b91c1c" x="613" y="316" text-anchor="middle">more diluted ⚠</text>
+
+        <!-- bottom note -->
+        <text font-family="Segoe UI,sans-serif" font-size="11" fill="#64748b" x="340" y="378" text-anchor="middle">At step 30, c is 29 hidden states away — its signal is effectively lost</text>
+      </svg>
+      <p class="fig-caption">
+        <strong>Figure 3:</strong> Complete Encoder–Decoder pipeline with dilution annotations.
+        The green/amber/red callouts show how the signal from c weakens with each decoding step.
+      </p>
+    </div>
+  </div>
+
+
+  <hr class="divider">
+
+
+  <!-- ══ SECTION 7 ══ -->
+  <div class="section-block">
+    <h2><span class="sec-num">7</span> Summary — The Three Things Each Step Relies On</h2>
+
+    <div class="code-block"><pre><code><span class="ch"># Step 1 — generating "Le"</span>
+s₁ = tanh( W·c          <span class="cc"># context vector — DIRECT, full signal</span>
+         + U·emb(&lt;s&gt;)   <span class="cc"># start token embedding</span>
+         + b_h )
+"Le" = argmax softmax(V·s₁)
+
+<span class="ch"># Step 2 — generating "chat"</span>
+s₂ = tanh( W·s₁         <span class="cc"># c is ONE step removed — slightly diluted</span>
+         + U·emb("Le")   <span class="cc"># previous prediction fed back</span>
+         + b_h )
+"chat" = argmax softmax(V·s₂)
+
+<span class="ch"># Step 3 — generating "était"</span>
+s₃ = tanh( W·s₂         <span class="cc"># c is TWO steps removed — more diluted</span>
+         + U·emb("chat") <span class="cc"># previous prediction fed back</span>
+         + b_h )
+"était" = argmax softmax(V·s₃)
+
+<span class="ch"># Step N — for long sentences</span>
+sₙ = tanh( W·sₙ₋₁       <span class="cc"># c is N-1 steps removed — severely diluted</span>
+         + U·emb(ŷₙ₋₁)   <span class="cc"># previous prediction</span>
+         + b_h )
+ŷₙ  = argmax softmax(V·sₙ)</code></pre></div>
+
+    <div class="callout callout-green">
+      <div class="callout-title">Three things every decoding step relies on</div>
+      <ol style="margin-top:8px;">
+        <li>
+          <strong>The previous hidden state sₜ₋₁</strong> via W —
+          carries memory of c and all prior predictions, but diluted with each step.
+        </li>
+        <li>
+          <strong>The previous predicted word ŷₜ₋₁</strong> via U —
+          the model uses its own outputs as the next inputs (autoregressive generation).
+        </li>
+        <li>
+          <strong>Learned weight matrices W, U, V</strong> —
+          the same matrices are reused at every decoding step (parameter sharing).
+        </li>
+      </ol>
+      <br>
+      <strong>What is missing:</strong> direct access to c at step 2, 3, 4 … — and
+      direct access to the Encoder hidden states h₁, h₂, h₃. The Decoder cannot
+      re-read the source sentence. It only has its running memory state.
+    </div>
+
+
+    <!-- ══ Bridge to Bahdanau ══ -->
+    <div class="bridge">
+      <strong>This is exactly the problem Bahdanau Attention (2015) solved.</strong>
+      <br><br>
+      Instead of injecting c only once at step 1, Bahdanau's key insight was:
+      let the Decoder <em>re-read all the Encoder hidden states h₁, h₂, h₃ at
+      every single decoding step</em> — computing a fresh weighted sum each time.
+      <br><br>
+      When generating "chat" at step 2, instead of relying on a diluted memory of c
+      through s₁, the Decoder directly attends to h₁ ("The"), h₂ ("cat"),
+      h₃ ("sat") and decides which ones matter most right now.
+      <br><br>
+      <strong>Without Bahdanau:</strong> &nbsp;s₂ depends on c only through s₁ — one level of indirection, diluted.<br>
+      <strong>With Bahdanau:</strong> &nbsp;&nbsp;&nbsp;s₂ attends directly to h₁, h₂, h₃ at this very step — fresh, direct access.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

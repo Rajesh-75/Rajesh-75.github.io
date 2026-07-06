@@ -1,0 +1,384 @@
+Introduction (The problem with RNNs).Input Preparation (The Foundation):Tokenization: Slicing the text.
+
+Embeddings: 
+Translating text to vectors.Positional Encoding: 
+Adding the order information.Self-Attention (The Engine):
+$Q, K, V$ derivation.Scaled Dot-Product Attention math.
+Encoder-Decoder Architecture
+ (The Vehicle):The structure of the stacks.Cross-Attention (The bridge).Autoregressive generation.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Transformer Algorithm & Architecture From First Principles</title>
+    
+    <link rel="stylesheet" href="styles.css">
+    
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+    <main class="container" style="max-width: 950px; margin: 0 auto; padding: 20px; font-family: system-ui, -apple-system, sans-serif; color: #1e293b; line-height: 1.6;">
+        
+        <header style="margin-bottom: 40px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px;">
+            <h1 style="font-size: 2.5rem; color: #0f172a; margin-bottom: 10px;">The Transformer Algorithm</h1>
+            <p style="font-size: 1.1rem; color: #475569; margin: 0;">
+                A comprehensive architectural breakdown from historical lineage to token-by-token execution.
+            </p>
+        </header>
+		<section id="transformer-introduction" style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 750px; margin: 20px 0;">
+    
+    <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Sequence-to-Sequence (Seq2Seq) & The Encoder-Decoder Framework</h2>
+    <p>
+        Many real-world language tasks—such as translation, summarization, and question-answering—are <strong>sequence-to-sequence (Seq2Seq)</strong> problems. They require transforming a variable-length input sequence into a completely different variable-length output sequence.
+    </p>
+
+    <p>To handle this, researchers designed the <strong>Encoder-Decoder framework</strong>, which cleanly splits the work into two dedicated roles:</p>
+    <ul style="padding-left: 20px;">
+        <li><strong>The Encoder:</strong> Reads the entire input sequence word-by-word and compresses its complete meaning into a single hidden vector (the "context" vector).</li>
+        <li><strong>The Decoder:</strong> Takes this single vector and generates the new output sequence, one token at a time.</li>
+    </ul>
+
+    <div style="background-color: #fff8e1; border-left: 4px solid #ffca28; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <strong style="color: #bf360c;">💡 The Analogy:</strong> Think of the Encoder as a translator who reads and digests a foreign document, and the Decoder as a writer who recreates that document in a new language using only the translator's summary notes.
+    </div>
+
+    
+
+    <h2 style="color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 5px; margin-top: 40px;">From RNNs to Attention: The Engineering Bottleneck</h2>
+    <p>
+        Before the Transformer was introduced in the landmark 2017 paper <em>"Attention Is All You Need"</em>, Seq2Seq architectures relied entirely on recurrent networks like RNNs and LSTMs. However, these recurrent systems suffer from massive architectural limitations:
+    </p>
+
+    <ul style="padding-left: 20px;">
+        <li style="margin-bottom: 10px;"><strong>The Information Bottleneck:</strong> Forcing a 100-word sentence into a single, fixed-length context vector is mathematically inefficient. Important historical details introduced early in a long passage get diluted or completely lost by the time the vector reaches the decoder.</li>
+        <li style="margin-bottom: 10px;"><strong>Vanishing Gradients:</strong> As text sequences grow, backpropagating errors across deep temporal paths causes gradients to vanish or explode, making long-range dependencies incredibly difficult to model.</li>
+        <li style="margin-bottom: 10px;"><strong>The Parallelization Wall:</strong> By definition, RNNs process data sequentially—they cannot compute step $t$ until step $t-1$ is finished. This sequential constraint means they cannot exploit the massive parallel computing power of modern hardware (GPUs), leading to painfully slow training cycles.</li>
+    </ul>
+
+    <p><em>While LSTMs mitigated the vanishing gradient problem slightly, their added cell complexity made them even slower to train.</em></p>
+
+    <h2 style="color: #c62828; border-bottom: 2px solid #c62828; padding-bottom: 5px; margin-top: 40px;">The Solution: Transformers</h2>
+    <p>
+        The Transformer eliminates recurrence entirely. By replacing sequential loops with <strong>Self-Attention mechanisms</strong>, it allows the network to look at an entire sequence simultaneously. This structural shift resolves the information bottleneck, captures long-range context perfectly, and allows training to be fully parallelized across GPUs.
+    </p>
+
+</section>
+
+        <section id="core-pipeline" style="margin-bottom: 40px;">
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 30px;">
+                <h3 style="margin-top: 0; color: #166534;">The Core Idea in One Line</h3>
+                <p style="font-size: 1.2rem; font-weight: bold; margin: 0; color: #15803d;">
+                    Instead of reading word by word &rarr; Look at ALL words at once and learn relationships between them.
+                </p>
+            </div>
+<h2>Transformer Architecture </h2>
+<p>the Transformer model is solely based on attention mechanisms without any convolutional or recurrent layer (Vaswani et al., 2017). Though originally proposed for sequence-to-sequencelearning ontextdata, Transformershavebeen pervasive in a wide range of modern deep learning applications, such as in areas to do with language, vision, speech, and reinforcement learning. </p>
+            <h3>Key Structural Components Pipeline</h3>
+            <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display: flex; flex-direction: column; align-items: center; font-family: monospace;">
+                    <div style="background: #e2e8f0; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center;">Input Sentence</div>
+                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
+                    <div style="background: #bae6fd; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #0284c7;">Tokenization</div>
+                    <p style="font-family: sans-serif; font-size: 0.9rem; color: #64748b; margin: 4px 0 12px 0;">Words are sliced into sub-word token elements</p>
+                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
+                    <div style="background: #c7d2fe; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #4f46e5;">Embeddings</div>
+                    <p style="font-family: sans-serif; font-size: 0.9rem; color: #64748b; margin: 4px 0 12px 0;">Tokens projected into continuous high-dimensional vector spaces</p>
+                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
+                    <div style="background: #fed7aa; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #ea580c;">Positional Encoding</div>
+                    <p style="font-family: sans-serif; font-size: 0.9rem; color: #64748b; margin: 4px 0 12px 0;">Injects geometric coordinate signals to maintain sequence order</p>
+                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
+                    <div style="background: #bbf7d0; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #16a34a;">Self-Attention Block</div>
+                    <p style="font-family: sans-serif; font-size: 0.9rem; color: #64748b; margin: 4px 0 12px 0;">Tokens look at every other token to compute dynamic relevance matrix</p>
+                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
+                    <div style="background: #fbcfe8; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #db2777;">Feed Forward Networks</div>
+                    <p style="font-family: sans-serif; font-size: 0.9rem; color: #64748b; margin: 4px 0 12px 0;">Applies non-linear projections separately to each token representation</p>
+                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
+                    <div style="border: 2px dashed #cbd5e1; padding: 8px 16px; border-radius: 4px; font-style: italic; color: #64748b;">Repeat Stacked Iteratively Across N Layers</div>
+                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
+                    <div style="background: #f1f5f9; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border: 1px solid #cbd5e1;">Output Projections</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="self-attention-heart" style="margin-bottom: 40px;">
+            <h3>Self-Attention: Context-Aware Weighting</h3>
+            <p>
+                Consider this text example parsed by the architecture: <br>
+                <code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 1rem;">"The cat sat on the mat because it was soft"</code>
+            </p>
+            <p>
+                When processing the pronoun <strong>"it"</strong>, the attention mechanism distributes dynamic scalar scores across the contextual tokens. These softmax-normalized weights are optimized during training:
+            </p>
+            
+            <div class="derivation-box" style="border-left-color: #3b82f6; background-color: #f0fdfa; padding: 15px 20px;">
+                <ul style="list-style-type: none; padding: 0; margin: 0;">
+                    <li style="padding: 6px 0; border-bottom: 1px solid #e2e8f0;"><code>it</code> &rarr; <code>cat</code> : <span style="font-family: monospace; font-weight: bold;">0.05</span> <span style="color:#64748b;">(low contextual relationship)</span></li>
+                    <li style="padding: 6px 0; border-bottom: 1px solid #e2e8f0; background-color: #ccfbf1;"><code>it</code> &rarr; <code>mat</code> : <span style="font-family: monospace; font-weight: bold; color:#0d9488;">0.85</span> &nbsp;&larr; <strong>Resolved Target (High semantic relationship because "it" refers to "mat")</strong></li>
+                    <li style="padding: 6px 0;"><code>it</code> &rarr; <code>sat</code> : <span style="font-family: monospace; font-weight: bold;">0.10</span> <span style="color:#64748b;">(low contextual relationship)</span></li>
+                </ul>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 25px;">
+                <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; background: #fff;">
+                    <h5 style="margin: 0 0 8px 0; color:#1e3a8a;">Embedded C Systems</h5>
+                    <p style="font-size: 0.85rem; margin: 0; color:#475569;">Copilot & Claude accelerating low-level hardware interface generation.</p>
+                </div>
+                <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; background: #fff;">
+                    <h5 style="margin: 0 0 8px 0; color:#1e3a8a;">Automated Debugging</h5>
+                    <p style="font-size: 0.85rem; margin: 0; color:#475569;">Parsing physical register code configurations to map edge hardware flaws.</p>
+                </div>
+                <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; background: #fff;">
+                    <h5 style="margin: 0 0 8px 0; color:#1e3a8a;">Driver Documentation</h5>
+                    <p style="font-size: 0.85rem; margin: 0; color:#475569;">Generating deterministic commentary pipelines for system driver frameworks.</p>
+                </div>
+                <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; background: #fff;">
+                    <h5 style="margin: 0 0 8px 0; color:#1e3a8a;">TinyML Optimization</h5>
+                    <p style="font-size: 0.85rem; margin: 0; color:#475569;">Compiling streamlined, lightweight attention blocks directly onto microcontrollers.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="self-attention-math" style="margin-bottom: 40px;">
+            <h2>Self-Attention Mathematical Derivation ($Q, K, V$)</h2>
+            
+            <p><strong>The Query, Key, and Value Intuition:</strong></p>
+            <p>Every token projection matrix queries the surrounding space by formulating three operational vector profiles:</p>
+            <ul style="padding-left: 20px;">
+                <li><strong>$Q$ (Query):</strong> <span style="color:#2563eb;">"What descriptive properties am I searching for?"</span></li>
+                <li><strong>$K$ (Key):</strong> <span style="color:#16a34a;">"What semantic identities and profiles do I contain?"</span></li>
+                <li><strong>$V$ (Value):</strong> <span style="color:#dc2626;">"What actual informational payload do I yield or pass forward?"</span></li>
+            </ul>
+
+            <div class="derivation-box" style="border-left-color: #8b5cf6; margin-top: 25px;">
+                <h4 style="margin-top:0; color:#4c1d95;">Step-by-Step Mathematical Flow</h4>
+                
+                <p><strong>Step 1: Input Vector Matrix Construction ($X$)</strong></p>
+                <p>Given a baseline sentence layout: <code>"Cat sat mat"</code>, each word is mapped to a static embedding space ($d_{\text{model}} = 4$):</p>
+                <div class="math-block">
+                    $$X = \begin{bmatrix} 
+                    0.2 & 0.8 & 0.1 & 0.5 \\ 
+                    0.9 & 0.1 & 0.7 & 0.3 \\ 
+                    0.4 & 0.6 & 0.2 & 0.8 
+                    \end{bmatrix} \begin{matrix} \leftarrow \text{Cat} \\ \leftarrow \text{sat} \\ \leftarrow \text{mat} \end{matrix}$$
+                </div>
+
+                <p><strong>Step 2: Linear Projection using Learned Weight Parameters</strong></p>
+                <p>The shared input matrix $X$ undergoes projection via specialized learned transformation weights $W^Q, W^K, W^V$ to initialize the operational matrices:</p>
+                <div class="math-block">
+                    $$Q = X \times W^Q \quad \lvert \quad K = X \times W^K \quad \lvert \quad V = X \times W^V$$
+                </div>
+
+                <p><strong>Step 3: Calculating Scaled Dot-Product Attention Scores</strong></p>
+                <p>Pairwise token alignment is computed by multiplying the Queries matrix directly by the transposed Keys matrix ($Q \times K^T$). This is scaled by the square root of the key dimension ($\sqrt{d_k}$) to prevent extreme variance bounds in deep networks:</p>
+                <div class="math-block">
+                    $$\text{Score Matrix} = \frac{Q \times K^T}{\sqrt{d_k}} = \begin{bmatrix} 
+                    1.0 & 0.2 & 0.1 \\ 
+                    0.3 & 1.0 & 0.2 \\ 
+                    0.1 & 0.2 & 1.0 
+                    \end{bmatrix}$$
+                </div>
+
+                <p><strong>Step 4: Softmax Normalization</strong></p>
+                <p>We apply a row-wise Softmax operation to transform these raw scores into positive probability values that sum to 1.0:</p>
+                <div class="math-block">
+                    $$\text{Softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}}\right) = \begin{bmatrix} 
+                    0.70 & 0.20 & 0.10 \\ 
+                    0.25 & 0.65 & 0.10 \\ 
+                    0.10 & 0.15 & 0.75 
+                    \end{bmatrix} \begin{matrix} \leftarrow \text{Cat attends 70\% to itself, 20\% to sat, 10\% to mat} \\ \leftarrow \text{sat attends 25\% to Cat, 65\% to itself, 10\% to mat} \\ \leftarrow \text{mat attends 10\% to Cat, 15\% to sat, 75\% to itself} \end{matrix}$$
+                </div>
+
+                <p><strong>Step 5: Aggregating the Final Value Vectors Matrix</strong></p>
+                <p>The normalized attention coefficient weights filter the Value matrix ($V$) via matrix multiplication, outputting a context-enriched token map:</p>
+                <div class="math-block">
+                    $$\text{Output} = \text{Softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}}\right) \times V$$
+                </div>
+            </div>
+
+            <h4 style="margin-top: 30px; color: #0f172a;">The Universal Formulation</h4>
+            <div class="math-block" style="background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                $$\text{Attention}(Q,K,V) = \text{Softmax}\left( \frac{Q \times K^T}{\sqrt{d_k}} \right) \times V$$
+            </div>
+
+            <h3 style="margin-top: 30px;">Multi-Head Attention Optimization</h3>
+            <p>
+                Rather than tracking relationships through a single attention mechanism, the model parallelizes the operation across $H$ distinct "heads." Each head maintains a completely separate set of projection weights ($W^Q_i, W^K_i, W^V_i$). This lets the model focus on different aspects of the text simultaneously:
+            </p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Head 1:</strong> Tracks core syntax and grammatical structures.</li>
+                <li><strong>Head 2:</strong> Maps long-range semantic coreferences and pronouns.</li>
+                <li><strong>Head 3:</strong> Evaluates immediate spatial or positional tokens.</li>
+            </ul>
+            <div class="math-block">
+                $$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{Head}_1, \text{Head}_2, \dots, \text{Head}_H) \times W^O$$
+            </div>
+        </section>
+
+        <section id="llm-anatomy" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px;">
+            <h2>The Internal Anatomy of a Modern LLM (e.g., Claude)</h2>
+            <p>
+                Large Language Models stack dozens of these individual Transformer layers together (typically 96+ layers in production variants) to build deep, abstract reasoning capabilities.
+            </p>
+
+            <h3 style="color:#0f172a;">How Tokens Move Through the Stack Together</h3>
+            <p>
+                A common misconception is that models process text word-by-word through the layers. In reality, <strong>all tokens in a sequence travel through all layers together at the exact same time as a unified data matrix.</strong>
+            </p>
+
+            <p>Let's map out how the sequence <code>"The cat sat on the mat"</code> moves through the network step-by-step to predict the next word (<code>"and"</code>):</p>
+
+            <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; font-family: monospace; font-size: 0.9rem;">
+                <div style="text-align:center; font-weight:bold; color:#1e293b;">[Execution Map: Layer Stack Pass-Through]</div>
+                <hr style="border:0; border-top:1px solid #cbd5e1; margin:10px 0;">
+                
+                <strong>Input Tokens:</strong> [T1: "The", T2: "cat", T3: "sat", T4: "on", T5: "the", T6: "mat"]<br>
+                <span style="color:#64748b;">&darr; All 6 tokens are converted to dense vectors and stacked into a matrix</span><br><br>
+                
+                <div style="border: 1px solid #94a3b8; padding: 10px; background: #fff; border-radius: 4px; margin-bottom: 10px;">
+                    <strong>Layer 1 Execution (All 6 Vectors Enter Simultaneously):</strong><br>
+                    • Self-Attention: "mat" vector calculates dynamic relationships with "The", "cat", "sat", "on".<br>
+                    • Feed-Forward Network: Processes each vector column independently.<br>
+                    • Output: $T_1', T_2', T_3', T_4', T_5', T_6'$ <span style="color: #059669;">(Vectors updated with basic grammar context)</span>
+                </div>
+                <div style="text-align:center; color:#94a3b8; margin: 5px 0;">&darr; Layer 1 outputs feed directly as inputs into Layer 2</div>
+                
+                <div style="border: 1px solid #94a3b8; padding: 10px; background: #fff; border-radius: 4px; margin-bottom: 10px;">
+                    <strong>Layer 2 Execution (All 6 Refined Vectors Enter):</strong><br>
+                    • Learns subject-action pairings (e.g., matching the action "sat" to the subject "cat").<br>
+                    • Output: $T_1'', T_2'', T_3'', T_4'', T_5'', T_6''$
+                </div>
+                <div style="text-align:center; color:#94a3b8; margin: 5px 0;">&darr; Sequential layer flow loops through N layers...</div>
+                
+                <div style="border: 1px solid #4f46e5; padding: 10px; background: #f5f3ff; border-radius: 4px;">
+                    <strong>Final Layer N Execution:</strong><br>
+                    • Builds a deep semantic map of the entire scene (a calm cat resting on a surface).<br>
+                    • Output: $T_1^N, T_2^N, T_3^N, T_4^N, T_5^N, T_6^N$ <span style="color: #4f46e5;">(Full context-rich matrix)</span>
+                </div>
+                <hr style="border:0; border-top:1px solid #cbd5e1; margin:15px 0;">
+                
+                <strong>The Next-Token Prediction Filter:</strong><br>
+                To generate the next word, the model checks <em>only</em> the final representation of the <strong>last token ($T_6^N$ "mat")</strong>. Because of the self-attention mechanism, this vector has already ingested information from all preceding words.<br><br>
+                
+                <strong>Output Softmax Layer Probability Distribution:</strong><br>
+                • "and" &nbsp;&nbsp;&nbsp;&rarr; <span style="color:#16a34a; font-weight:bold;">0.35 (Highest Probability Target &rarr; Selected)</span><br>
+                • "then" &nbsp;&nbsp;&rarr; 0.20<br>
+                • "." &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&rarr; 0.18
+            </div>
+
+            <p style="margin-top: 15px;">
+                Once <strong>"and"</strong> is generated, it is appended to the input sequence. The new sequence, <em>"The cat sat on the mat and"</em> (now 7 tokens), is passed through all $N$ layers again to predict the next token: <strong>"slept"</strong>. This autoregressive loop repeats until an end-of-sequence token is generated.
+            </p>
+        </section>
+
+        <section id="between-layers" style="margin-bottom: 40px;">
+            <h3>The Mechanics Inside a Single Transformer Layer</h3>
+            <p>
+                As vectors travel through the network, the raw mathematical outputs can easily degrade or grow too large across 96+ layers. To keep values stable, each layer runs internal normalization and residual tracking pipelines:
+            </p>
+
+            <div class="derivation-box" style="border-left-color: #ec4899; background-color: #fff1f2;">
+                <strong>Detailed Matrix Pipeline Between and Inside Layers:</strong><br>
+                Let's look at the transformations a single vector (like <code>"cat"</code>) undergoes within one layer:
+                <ol style="margin-top: 10px; padding-left: 20px; line-height: 1.7;">
+                    <li><strong>Self-Attention:</strong> Token vectors interact to capture context.</li>
+                    <li><strong>Residual Connection (Skip Layer):</strong> The raw incoming input vector is added back directly to the attention output: 
+                        $$\text{Output}_{\text{residual}} = X + \text{Attention}(X)$$
+                        <em>Why? This preserves early features and prevents structural information from getting lost in deep networks.</em>
+                    </li>
+                    <li><strong>Layer Normalization:</strong> Standardizes the values across the vector dimensions to maintain a stable mean of 0 and variance of 1. This prevents numbers from exploding or vanishing.</li>
+                    <li><strong>Feed-Forward Network (FFN):</strong> Passes the normalized vector through dense neural network layers for non-linear feature processing.</li>
+                    <li><strong>Second Residual &amp; Layer Norm:</strong> The FFN input is added back to its output and normalized one more time before entering the next layer.</li>
+                </ol>
+            </div>
+        </section>
+
+        <section id="training-stages" style="margin-bottom: 40px;">
+            <h3>How Large Language Models are Trained</h3>
+            <p>Building production models like Claude requires a three-stage training pipeline:</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <div style="border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; background: #fff;">
+                    <h4 style="margin: 0 0 10px 0; color:#b45309;">1. Unsupervised Pre-Training</h4>
+                    <p style="font-size: 0.9rem; margin: 0; color:#475569;">
+                        The model ingests massive datasets (websites, books, code). By predicting the next token billions of times, it naturally learns grammar, facts, world logic, and foundational reasoning patterns.
+                    </p>
+                </div>
+                <div style="border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; background: #fff;">
+                    <h4 style="margin: 0 0 10px 0; color:#0f766e;">2. Supervised Fine-Tuning (SFT)</h4>
+                    <p style="font-size: 0.9rem; margin: 0; color:#475569;">
+                        The pre-trained model is fine-tuned on high-quality, curated dialog templates. This teaches the system how to format answers and behave like an interactive, helpful AI assistant.
+                    </p>
+                </div>
+                <div style="border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; background: #fff;">
+                    <h4 style="margin: 0 0 10px 0; color:#4338ca;">3. RLHF &amp; Constitutional AI</h4>
+                    <p style="font-size: 0.9rem; margin: 0; color:#475569;">
+                        Uses Reinforcement Learning from Human Feedback along with explicit safety rules (Constitutional AI). This step aligns the model's outputs with core principles like being helpful, harmless, and honest.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="technical-summary">
+            <h3>Technical Reference Architecture Map</h3>
+            <table style="width:100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95rem;">
+                <thead>
+                    <tr style="background-color: #0f172a; color: #ffffff; text-align: left;">
+                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Model Architecture Reference</th>
+                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Parameter Footprint</th>
+                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Stacked Layer Count ($N$)</th>
+                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Parallel Attention Heads</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background-color: #ffffff;">
+                        <td style="padding: 10px; border: 1px solid #cbd5e1; font-weight:bold;">GPT-2 (Base variant)</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1;">117 Million</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1;">12</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1;">12</td>
+                    </tr>
+                    <tr style="background-color: #f8fafc;">
+                        <td style="padding: 10px; border: 1px solid #cbd5e1; font-weight:bold;">GPT-3 (Full variant)</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1;">175 Billion</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1;">96</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1;">96</td>
+                    </tr>
+                    <tr style="background-color: #ffffff;">
+                        <td style="padding: 10px; border: 1px solid #cbd5e1; font-weight:bold;">LLaMA 3 (Dense Large)</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1;">70 Billion</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1;">80</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1;">64</td>
+                    </tr>
+                    <tr style="background-color: #f8fafc;">
+                        <td style="padding: 10px; border: 1px solid #cbd5e1; font-weight:bold;">Claude 3 Stack Pro profiles</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1; font-style:italic; color:#64748b;">Proprietary / Undisclosed</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1; font-style:italic; color:#64748b;">Highly Deep Custom</td>
+                        <td style="padding: 10px; border: 1px solid #cbd5e1; font-style:italic; color:#64748b;">Multi-Head Optimized</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <p style="font-size: 0.9rem; color: #475569; margin-top: 10px; font-style: italic;">
+                * Note for trainees: Parameters represent the physical value entries populated within the $W^Q, W^K, W^V$ weight configurations across all internal layers, optimized entirely during the pre-training execution phase.
+            </p>
+        </section>
+
+    </main>
+
+</body>
+</html>

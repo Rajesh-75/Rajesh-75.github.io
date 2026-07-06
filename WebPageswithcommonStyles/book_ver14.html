@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial - Yamuna Publications</title>
+    
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body>
+
+    <h1 class="publisher-heading">Yamuna Publications</h1>
+    
+    <div class="publisher-address">
+        <p class="address-line">Sreekandeswaram</p>
+        <p class="address-line">Thiruvananthapuram</p>
+        <p class="address-line">kerala - 695023</p>
+        <p class="address-line">Contact Details - 9446185404</p>
+    </div>
+    
+    <div class="nav-bar">
+        <a id="navBooks" class="nav-link">Books</a>
+        <a id="navTutorials" class="nav-link">Tutorials</a>
+        <a id="navBlogs" class="nav-link">Blogs</a>
+        <a id="navGalleries" class="nav-link">Galleries</a>
+    </div>
+
+    <div class="carousel-wrapper" id="carouselWrapper">	
+        <button id="prevBtn" class="carousel-arrow prev" aria-label="Previous Book">❮</button>	
+        <div class="carousel-container">
+            <div id="bookTrack" class="book-track"></div>
+        </div>
+        <button id="nextBtn" class="carousel-arrow next" aria-label="Next Book">❯</button>
+    </div>
+
+    <div id="mainContentArea" class="main-content-area">
+        <div style="padding: 20px; width: 100%;">	
+            <h2 class="detail-title">Book Details</h2>
+            <p id="descriptionText" class="detail-description">Click on any book in the carousel above to see its detailed description here.</p>
+            <h4 id="authorInfoHeading" class="detail-author-title" style="display: none;">About the Author: </h4>
+            <p id="authorInfoText" class="detail-description"></p>
+        </div>
+    </div>
+
+    <script>
+        const authorBio = "L.R.Potti is a renowned academic with over two decades of experience in the field of Statistics and Business Studies. His passion lies in making complex mathematical concepts accessible to students across various disciplines.";
+        
+        const books = [
+            { id: 1, title: "Statistics for Commerece", author: "L.R.Potti", description: "This a text book of Statistics for students of business studies. It explains statistical concepts in a lucid manner by sacrificing mathematical rigours", authorBio: authorBio},
+            { id: 2, title: "Statistics for Economics", author: "L.R.Potti", description: "This a text book of Statistics for students for Economics. It explains statistical and mathematical concepts by using day to day Economical events.", authorBio: authorBio},
+            { id: 3, title: "MS", author: "L.R.Potti", description: "Mathematical Statistical.", authorBio: authorBio },
+            { id: 4, title: "OR", author: "L.R.Potti", description: "Operations Research.", authorBio: authorBio },
+            { id: 5, title: "QT", author: "L.R.Potti", description: "Quantitative Techniques.", authorBio: authorBio },
+            { id: 6, title: "BLs", author: "L.R.Potti", description: "Business Laws.", authorBio: authorBio },
+            { id: 7, title: "FCS (Vol 1)", author: "L.R.Potti", description: "Full course in Statistics, Volume 1.", authorBio: authorBio },
+            { id: 8, title: "FCS (Vol 2)", author: "L.R.Potti", description: "Second volume for the Full Course in Statistics.", authorBio: authorBio },
+            { id: 9, title: "FCS (Vol 3)", author: "L.R.Potti", description: "Third volume for the Full Course in Statistics.", authorBio: authorBio },
+            { id: 10, title: "ADD", author: "L.R.Potti", description: "Advanced Data Decisions.", authorBio: authorBio },
+            { id: 11, title: "FCS (Vol 4)", author: "L.R.Potti", description: "Fourth volume for the Full Course in Statistics.", authorBio: authorBio },
+            { id: 13, title: "FCS (Vol 5)", author: "L.R.Potti", description: "Fifth volume for the Full Course in Statistics.", authorBio: authorBio }
+        ];
+        
+        const tutorials = [
+    {    
+        title: "Introduction", 
+        subtopics: [
+            { title: "Machine learning Pipeline", filePath: "MachineLearningPipeline.html" }
+        ]
+    },
+    {    
+        title: "Machine Learning",    
+        subtopics: [
+            { 
+                title: "Machine Learning Basics", 
+                content: "Machine Learning use cases and terminologies shall be discussed here. Further Model, Cost, and Optimization aspects shall be discussed more taking examples of ML Models." 
+            },
+            { title: "ML and DL Comparison Table", filePath: "ComparisonTable.html" },
+            {    
+                title: "Nearest Neighbor",    
+                content: `<h2 class="detail-title">Nearest Neighbor (k-NN)</h2><p class="detail-description">The k-Nearest Neighbors (k-NN) algorithm is a non-parametric, lazy learning algorithm...</p>`    
+            },
+            { title: "K-Mean Clustering", filePath: "decision-trees.html" },    
+            { title: "Decision Trees", filePath: "decision-trees.html" },
+            { title: "Bayesian Classification", filePath: "Bay-class.html" },
+            { title: "Random Forests", filePath: "random-forests.html" },
+            { title: "Support Vector Machines (SVM)", filePath: "svm.html" },    
+            { title: "Neural Networks", filePath: "NN_version1.html"},
+            { title: "Gradient Descent and Backpropagation", filePath: "BP2.html"},
+            { title: "Kernel Density Estimation (KDE)" },
+            /* FIX: Cleaned duplicate lines, added missing closing quote and comma */
+            { title: "Principal Component Analysis (PCA)", filePath: "PCA.html" },
+			{ title: "K-nearest neighbourhood", filePath: "KNN.html" },
+        ]
+    },
+    {    
+        title: "Probability & MLE",    
+        subtopics: [
+            { title: "Basic Probability", filePath:"Probability.html" },
+            { title: "Random Variable and Operations", filePath:"RandomVariableandExpectations.html" },
+            { title: "Normal Distributions", filePath: "NormalDistribution.html" },
+            { title: "Maximum Likelihood Estimation (MLE)",filePath:"MaximumLikelihoodEstimation.html" }
+        ]
+    },
+    {    
+        title: "Deep Learning",    
+        subtopics: [
+            { title: "Convolutional Neural Networks", filePath: "CNN.html" },
+            { title: "Recurrent Neural Networks (RNN)", filePath: "RNN.html" },
+			{ title: "Attention and Transformer", filePath: "Transformer.html" },
+			{ title: "LLM and RAG", filePath: "LLMRAG.html" }
+        ]
+    },
+    {    
+        title: "Statistics",    
+        subtopics: [
+            { title: "Measures of Central Tendency", filePath: "CentralTendency.html" },
+            { title: "Estimation theory", filePath: "EstimationTheory.html" },
+            { title: "Hypothesis Testing", filePath:"HypothesisTesting.html" },
+            { title: "Regression Analysis", content: "Simple and multiple linear regression." },
+            { title: "Statistical Data Visualization", filePath: "StatisticalDataVisualization.html" }
+        ]
+    },
+    {    
+        title: "Python",    
+        content: "Master Python libraries crucial for data science (Pandas, NumPy, Matplotlib)."
+    }
+];
+        const bookTrack = document.getElementById('bookTrack');
+        const carouselWrapper = document.getElementById('carouselWrapper');
+        const mainContentArea = document.getElementById('mainContentArea');	
+        const initialContent = `<div style="padding: 20px; width: 100%;"><h2 class="detail-title">Book Details</h2><p id="descriptionText" class="detail-description">Click on any book in the carousel above to see its detailed description here.</p><h4 id="authorInfoHeading" class="detail-author-title" style="display: none;">About the Author: </h4><p id="authorInfoText" class="detail-description"></p></div>`;
+
+        const navBooks = document.getElementById('navBooks');	
+        const navTutorials = document.getElementById('navTutorials');
+        const navBlogs = document.getElementById('navBlogs');
+        const navGalleries = document.getElementById('navGalleries');
+
+        let currentIndex = 0;	
+        const booksToShow = 5;	
+        const totalBooks = books.length;	
+        const bookWidth = 200;	
+        const bookMargin = 20;	
+        const moveDistance = bookWidth + bookMargin;	
+        
+        function getRandomColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 70%, 60%)`;	
+        }
+
+        function handleCarouselBookClick(book) {
+            loadHomeView();	
+            const dText = document.querySelector('#mainContentArea #descriptionText');
+            const aHeading = document.querySelector('#mainContentArea #authorInfoHeading');
+            const aText = document.querySelector('#mainContentArea #authorInfoText');
+
+            if(dText && aHeading && aText){
+                dText.textContent = book.description;
+                aHeading.textContent = `About the Author: ${book.author}`;
+                aHeading.style.display = 'block';
+                aText.textContent = book.authorBio;
+            }
+        }
+
+        function loadHomeView() {
+            carouselWrapper.style.display = 'block';	
+            mainContentArea.innerHTML = initialContent;	
+        }
+
+        function displayBookDetails(book, listElement) {
+            const detailsArea = document.getElementById('detailPane');
+            detailsArea.innerHTML = `<h2 class="detail-title">${book.title}</h2><p class="detail-description">${book.description}</p><h4 class="detail-author-title">About the Author: ${book.author}</h4><p class="detail-author-bio">${book.authorBio}</p>`;
+            document.querySelectorAll('.list-item').forEach(item => { item.classList.remove('selected'); });
+            listElement.classList.add('selected');
+        }
+
+        function loadBookListView() {
+            carouselWrapper.style.display = 'none';	
+            mainContentArea.innerHTML = `<div class="two-column-container"><div class="left-panel-nav"><h3 class="detail-title">All Titles</h3><ul id="bookList" style="padding: 0;"></ul></div><div id="detailPane" class="right-panel-content"><p class="detail-description">Select a title from the left to view details and author information.</p></div></div>`;
+            
+            const bookList = document.getElementById('bookList');
+            books.forEach(book => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-item';
+                listItem.textContent = book.title;
+                listItem.addEventListener('click', (e) => { displayBookDetails(book, e.currentTarget); });
+                bookList.appendChild(listItem);
+            });
+            
+            if (books.length > 0) {
+                const firstListItem = bookList.querySelector('.list-item');
+                displayBookDetails(books[0], firstListItem);
+            }
+        }
+
+        async function displayTutorialContent(tutorial, listElement) {
+            const contentArea = document.getElementById('tutorialContentPane');
+            
+            document.querySelectorAll('.left-panel-nav .list-item').forEach(item => { item.classList.remove('selected'); });
+            document.querySelectorAll('.left-panel-nav .topic-header').forEach(item => { item.classList.remove('selected'); });
+            listElement.classList.add('selected');
+
+            if (tutorial.filePath) {
+                contentArea.innerHTML = `<h1 class="detail-title">Loading...</h1>`;
+                try {
+                    const response = await fetch(tutorial.filePath);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const htmlContent = await response.text();
+                    contentArea.innerHTML = htmlContent;
+
+                    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                        MathJax.typesetPromise([contentArea]);
+                    }
+                } catch (error) {
+                    contentArea.innerHTML = `<h1 class="detail-title" style="color: red;">Error Loading Content</h1><p>${error.message}</p>`;
+                }
+            } else if (tutorial.content) {
+                contentArea.innerHTML = tutorial.content.trim().startsWith('<h') ? 
+                    tutorial.content : `<h1 class="detail-title">${tutorial.title}</h1><div class="detail-description">${tutorial.content}</div>`;
+                
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                    MathJax.typesetPromise([contentArea]);
+                }
+            }
+        }
+
+        function loadTutorialsView() {
+            carouselWrapper.style.display = 'none';	
+            mainContentArea.innerHTML = `
+                <div class="two-column-container">
+                    <div id="tutorialNav" class="left-panel-nav">
+                        <h3 class="topic-header" style="margin-top: 0; padding-top: 10px; font-weight: bold; color: #000;">Tutorial Topics</h3>
+                        <ul id="tutorialList" style="padding: 0;"></ul>
+                    </div>
+                    <div id="tutorialContentPane" class="right-panel-content">
+                        <h1 class="detail-title">Welcome to Tutorials</h1>
+                        <p class="detail-description">Click a topic to view its detailed content here.</p>
+                    </div>
+                </div>
+            `;
+            
+            const tutorialList = document.getElementById('tutorialList');
+            tutorials.forEach(topic => {
+                if (topic.subtopics) {
+                    const header = document.createElement('li');
+                    header.className = 'topic-header';
+                    header.innerHTML = `▶ ${topic.title}`;
+                    
+                    const subList = document.createElement('ul');
+                    subList.className = 'sub-topics';
+
+                    header.addEventListener('click', (e) => {
+                        const isVisible = subList.style.display === 'block';
+                        e.currentTarget.innerHTML = isVisible ? `▶ ${topic.title}` : `▼ ${topic.title}`;
+                        subList.style.display = isVisible ? 'none' : 'block';
+                        document.querySelectorAll('.left-panel-nav .topic-header').forEach(item => item.classList.remove('selected'));
+                        e.currentTarget.classList.add('selected');
+                    });
+                    
+                    topic.subtopics.forEach(subtopic => {
+                        const subItem = document.createElement('li');
+                        subItem.className = 'list-item';
+                        subItem.textContent = subtopic.title;
+                        subItem.addEventListener('click', (e) => { displayTutorialContent(subtopic, e.currentTarget); });
+                        subList.appendChild(subItem);
+                    });
+                    
+                    tutorialList.appendChild(header);
+                    tutorialList.appendChild(subList);
+                } else {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-item';	
+                    listItem.textContent = topic.title;
+                    listItem.addEventListener('click', (e) => { displayTutorialContent(topic, e.currentTarget); });
+                    tutorialList.appendChild(listItem);
+                }
+            });
+        }
+
+        books.forEach(book => {
+            const item = document.createElement('div');
+            item.className = 'book-item';
+            item.style.backgroundColor = getRandomColor();
+            item.innerHTML = `<span class="book-author">${book.title}<br>(${book.author})</span>`;	
+            item.addEventListener('click', () => { handleCarouselBookClick(book); });
+            bookTrack.appendChild(item);
+        });
+
+        function updateTrackPosition() {
+            const offset = -currentIndex * moveDistance;
+            bookTrack.style.transform = `translateX(${offset}px)`;
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            const nextIndexMax = totalBooks - booksToShow;
+            document.getElementById('nextBtn').disabled = currentIndex >= (nextIndexMax < 0 ? 0 : nextIndexMax);
+        }
+
+        navBooks.addEventListener('click', loadBookListView);
+        navTutorials.addEventListener('click', loadTutorialsView);
+        navBlogs.addEventListener('click', loadHomeView);
+        navGalleries.addEventListener('click', loadHomeView);
+        
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentIndex > 0) { currentIndex -= 1; updateTrackPosition(); }
+        });
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentIndex < totalBooks - booksToShow) { currentIndex += 1; updateTrackPosition(); }
+        });
+
+        updateTrackPosition();
+    </script>
+</body>
+</html>

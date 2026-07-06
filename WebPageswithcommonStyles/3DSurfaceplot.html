@@ -1,0 +1,31 @@
+
+<li class="section-item" style="list-style-type: none; margin-bottom: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <span class="section-title" style="font-size: 1.4rem; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #e67e22;">
+        6. The Parameterized Loss Landscape (3D Visualization)
+    </span>
+
+    <div style="text-align: center; margin: 20px 0; padding: 15px; background: #fff; border: 1px solid #eee; border-radius: 8px;">
+        <div style="font-style: italic; color: #7f8c8d; margin-bottom: 10px;">
+            [3D Surface Plot: $w_1$ (X), $w_2$ (Y), and Loss (Z)]
+        </div>
+        <p style="font-size: 0.9rem; color: #2c3e50; max-width: 600px; margin: 0 auto; line-height: 1.5;">
+            The surface represents the function $L(w_1, w_2)$. Training is the process of navigating this 
+            non-convex "terrain" to find the global minimum.
+        </p>
+    </div>
+
+    <p style="line-height: 1.6; color: #333;">
+        As noted by Bishop, the loss function $f(y_i, t_i; w_i)$ creates a <strong>non-convex surface</strong>. 
+        In this 3D projection:
+    </p>
+    
+    <ul style="line-height: 1.6; color: #555;">
+        <li><strong>Axes $x, y$:</strong> Represent the weights $w_1$ and $w_2$ of the neurons.</li>
+        <li><strong>Axis $z$:</strong> Represents the value $y$ (Loss/Error).</li>
+        <li><strong>Local Minima:</strong> The "valleys" where the model can get stuck if the learning rate is not optimized.</li>
+    </ul>
+
+    <div style="background-color: #fdf2f2; border-left: 4px solid #e74c3c; padding: 10px; font-size: 0.85rem; margin-top: 10px;">
+        <strong>Architect's Tip:</strong> Modern models have billions of weights, creating a "high-dimensional" landscape that we cannot visualize, but the same mathematical principles of <em>Gradient Descent</em> apply.
+    </div>
+</li>

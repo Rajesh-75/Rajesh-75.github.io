@@ -1,0 +1,78 @@
+
+To make your tutorial pages publicly accessible via GitHub and ensure they are discoverable by search engines like Google, you should use **GitHub Pages**. This is the standard, free, and robust way to host static websites directly from your repository.
+
+### 1. How to make your site accessible (GitHub Pages)
+
+GitHub Pages turns your repository into a live website. Once enabled, your site will be accessible via a URL like `https://yourusername.github.io/repository-name/`.
+
+**Steps to enable it:**
+
+1. **Push your code:** Ensure your `index.html` and all your CSS/SVG assets are pushed to a repository on GitHub.
+2. **Go to Repository Settings:** Navigate to your repo on GitHub, click the **Settings** tab.
+3. **Enable Pages:** On the left sidebar, click **Pages**.
+4. **Select Source:** Under "Build and deployment," ensure the source is set to "Deploy from a branch." Under "Branch," select `main` (or `master`) and the `/ (root)` folder, then click **Save**.
+5. **Wait:** GitHub will provide a link at the top of that page. It may take 1–2 minutes to "publish." Once it says "Your site is live at...", anyone with that link can view your tutorial.
+
+---
+
+### 2. Linking pages through `index.html`
+
+To allow users to navigate between pages (e.g., from your RNN page to a future Transformer page), use **relative paths** in your `index.html`.
+
+In your `index.html` (the root), use standard anchor tags:
+
+```html
+<nav>
+    <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="rnn-tutorial.html">RNN Encoder-Decoder</a></li>
+        <li><a href="transformer-intro.html">Transformer Architecture</a></li>
+    </ul>
+</nav>
+
+```
+
+**Crucial rule:** Ensure your file names exactly match the `href` values. If `rnn-tutorial.html` is in the same folder as `index.html`, this will work perfectly both locally and on GitHub Pages.
+
+---
+
+### 3. Making your page searchable (SEO)
+
+To help Google find your tutorial (like when someone searches "RNN Encoder Decoder"), you need to optimize for **Search Engine Optimization (SEO)**.
+
+* **Meta Tags:** Add these inside the `<head>` section of **every** HTML file:
+```html
+<meta name="description" content="A comprehensive tutorial on RNN Encoder-Decoder architectures for machine translation.">
+<meta name="keywords" content="RNN, Encoder-Decoder, Machine Translation, Deep Learning, Tutorial">
+
+```
+
+
+* **Semantic HTML:** You are already using `<h1>`, `<h2>`, and `<section>` tags, which is excellent. Google loves this because it helps their craws understand your page structure.
+* **The `sitemap.xml`:** Create a file named `sitemap.xml` in your root folder. This file tells Google exactly which pages exist on your site.
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://yourusername.github.io/your-repo/</loc>
+  </url>
+  <url>
+    <loc>https://yourusername.github.io/your-repo/rnn-tutorial.html</loc>
+  </url>
+</urlset>
+
+```
+
+
+* **Google Search Console:** Once your site is live on GitHub Pages, go to [Google Search Console](https://search.google.com/search-console/), add your site URL, and submit your `sitemap.xml` link. This is the "official" way to ask Google to index your pages.
+
+---
+
+### Summary Checklist for your Beta Release:
+
+* [ ] **Verify folder structure:** Ensure all images, CSS, and HTML files are in the repository.
+* [ ] **Test relative links:** Open your local `index.html` in a browser and click every link to ensure it opens the correct file.
+* [ ] **Enable GitHub Pages:** Follow the steps in Section 1.
+* [ ] **Submit Sitemap:** Once live, add your site to Google Search Console.
+
+As you build out the rest of your site, would you like advice on how to structure the navigation menu so it scales well as you add more topics?

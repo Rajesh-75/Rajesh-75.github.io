@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial</title>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']]
+            }
+        };
+    </script>
+</head>
+<body>
+
+<div class="backprop-section">
+    <h1 class="detail-title">Backpropagation in MLP</h1>
+    <p>
+        To understand Backpropagation in an MLP, we need to look at exactly what happens inside one single layer. 
+        <strong>Backpropagation</strong> is the specific algorithm used to compute the derivatives (gradients), 
+        while <strong>Gradient Descent</strong> is the optimization algorithm that uses those derivatives to update the weights and reduce loss. Gradient Descent is the rule that actually changes the weight; it uses the derivative to decide exactly how much to adjust each value to reach the minimum error. In this tutorial, both the logic of Gradient Descent and the step-by-step derivation of differentials at each neuron will be discussed.Gradient Descent is used by many Machine learning algorithms.In the context of Neural Networks, Gradient Descent acts as the "learning engine." Its application extends to every major architecture such as CNN,RNN and LSTMS, Transformers(LLM).Beyond Neural Networks  and Deep learning (DL) Gradient Descent is the  cornerstone of mathematical optimization which itself is backbone of many ML algorithms such as  Linear/Logistic Regression and Support Vector Machines (SVMs). Here in this tutorial we emphasize Gradient Descent from the perspective of Neural Networks and Deep learning.
+    </p>
+
+    <h2>Gradient Descent</h2>
+    <p>Based on the optimization framework used in neural network training:</p>
+    
+    <div class="math-breakdown">
+        <span class="algorithm-title">Overall Gradient Descent Algorithm</span>
+        <ul>
+            <li><strong>Initialize:</strong>
+                <ul>
+                    <li>$x^0$</li>
+                    <li>$k = 0$</li>
+                </ul>
+            </li>
+        </ul>
+        <div style="border: 1px solid #2980b9; padding: 15px; margin-left: 20px; background-color: #fdfdfd;">
+            <strong>do</strong>
+            <ul>
+                <li>$x^{k+1} = x^k - \eta\frac{\partial f}{\partial x^k}$</li>
+                <li>$k = k + 1$</li>
+            </ul>
+            <strong>while</strong> $|f(x^{k+1}) - f(x^k)| > \epsilon$
+        </div>
+		<div style="text-align: center; margin: 20px 0;">
+            <img src="GDescentDiagram.png" alt="Gradient Descent Diagram" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px;">
+            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;"><em>Figure: Visualization of the Gradient Descent "landscape" and optimization path.Blue Lines (Path on the Error Surface): These represent the steps taken along the actual function or "landscape" ($f(x)$). They visualize how the error value changes as the algorithm moves from one state to the next.Red Lines (Path in the Parameter Space): These represent the updates made to the variable $x$ (such as weights or biases) on the horizontal axis. They show the physical distance and direction the algorithm moves in the parameter space during each iteration.</em></p>
+        </div>
+        <p>
+            $f(x)$ (The Objective/Loss Function): This represents the "landscape" or the error. In machine learning, $f(x)$ measures how far off your model's predictions are. Our goal is to find the value of $x$ that makes $f(x)$ as small as possible. $x^k$ (Current State): This is the value of your parameters (like weights) at step $k$. $\frac{\partial f}{\partial x^k}$ (The Gradient): This is the derivative. It tells you the slope and the direction of the steepest ascent(See the Figure above). $\eta$. This derivative computation is the central part of Back Propogation algorithm (Learning Rate / Step Size): This determines how large of a step you take. If it's too large, you might overstep the bottom; if it's too small, the hiker moves too slowly. $\epsilon$ (Epsilon/Tolerance): This is your "stopping condition." Since the algorithm might never reach the exact zero, we stop when the change in error becomes so tiny that it’s no longer worth calculating. Learning rate/Step size and epsilon are parameters set externally. There are many such parameters in the advanced versions of Gradient Descent. We should discuss separately about these parameters later.
+			
+			
+        <p>
+    The algorithm above describes <strong>Generic Gradient Descent</strong>. In a Neural Network, the variables represented by $x$ in the formula are actually the <strong>Weights ($W$) and Biases ($b$)</strong>, often represented collectively as the parameter <strong>$\theta$</strong>. Hence, we write the differentiation of the Loss function with respect to this <strong> $\theta$ as $\nabla_\theta L$: </strong>
+    
+</p>
+    <p>
+        These parameters are the variables of the <strong>Loss Function</strong>. During training, the <strong>Derivative</strong> is computed specifically with respect to these weights. This tells the network exactly how to "nudge" each weight to minimize the error.
+    </p>
+	
+    
+
+    <hr style="border: 0; border-top: 1px solid #fab1a0; margin: 15px 0;">
+    
+    <p>Because calculating these derivatives for every weight across the entire dataset at once is memory-intensive, we use three main implementations:</p>
+    <ul style="margin-bottom: 0;">
+        <li><strong>Batch:</strong> Uses all data points (High accuracy, high memory).</li>
+        <li><strong>Stochastic (SGD):</strong> Uses 1 data point (Low memory, high speed, high noise).</li>
+        <li><strong>Mini-Batch:</strong> Uses 16 to 512 data points (The best balance of speed and stability).</li>
+    </ul>
+</div>
+			
+    <div style="padding-left: 20px; border-left: 3px solid #3498db; margin: 30px 0;">
+    <h3>Batch Gradient Descent (BGD)</h3>
+    <p>
+        <strong>Batch Gradient Descent (BGD)</strong> is the most straightforward and deterministic version of the gradient descent algorithm. In this approach, the model calculates the error for <strong>every single example</strong> in the entire training dataset before any weights are updated. 
+    </p>
+    <p>
+        Because it aggregates information from the whole data collection at once, the resulting gradient is a very stable and accurate representation of the overall error surface. This allows the algorithm to follow a smooth, direct path toward the minimum, avoiding the "jittery" or erratic movements seen in stochastic methods. However, this precision comes at a high cost: it is extremely slow and requires immense memory to store the gradients for the entire dataset simultaneously.
+    </p>
+
+    <div class="algorithm-box">
+        <span class="algorithm-title">Pseudo-Algorithm for Batch Gradient Descent</span>
+        <ol>
+            <li><strong>Initialize</strong> the model parameters $\theta$ (weights and biases) randomly.</li>
+            <li><strong>Set</strong> the learning rate $\eta$ and the number of epochs $E$.</li>
+            <li><strong>For</strong> each epoch from 1 to $E$:
+                <ul>
+                    <li>Calculate the <strong>gradient</strong> of the loss function $L$ for the <strong>entire</strong> training set of $N$ samples:
+                        <div class="math-block">
+                            $$\nabla_\theta L_{total} = \frac{1}{N} \sum_{i=1}^{N} \nabla_\theta L(\theta; x_i, y_i)$$
+                            <small>(Summing up the slopes for every individual data point)</small>
+                        </div>
+                    </li>
+                    <li><strong>Update</strong> the parameters $\theta$ by taking a single step in the opposite direction of the average gradient:
+                        <div class="math-block">
+                            $$\theta = \theta - \eta \cdot \nabla_\theta L_{total}$$
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <li><strong>Repeat</strong> until the parameters stop changing significantly (convergence).</li>
+            <li><strong>Return</strong> the optimized parameters $\theta$.</li>
+        </ol>
+    </div>
+
+    <h4>Explanation of the BGD Algorithm Steps</h4>
+    <ul>
+        <li><strong>The Global Summation:</strong> The most critical part is the $\sum$ (summation). In Batch GD, you do not touch the weights until you have seen every single piece of data in your possession.</li>
+        <li><strong>Averaging the Gradient:</strong> By dividing by $N$, the algorithm finds the "average" direction. This ensures that the update isn't overly influenced by a single "noisy" data point.</li>
+        <li><strong>Deterministic Nature:</strong> There is no need to shuffle. Since you use every point for every update, the path the algorithm takes will be exactly the same every time you run it.</li>
+        <li><strong>Memory and Speed Bottleneck:</strong> The computer must keep all calculated gradients in memory. For 1 million rows, it performs 1 million calculations just to move the weights one tiny step, making it very "heavy."</li>
+        <li><strong>Smooth Convergence:</strong> If you plot the loss, it looks like a perfect, smooth sliding curve. While stable, it is more likely to get stuck if the landscape has a flat spot (plateau).</li>
+    </ul>
+</div>
+	<div style="padding-left: 20px; border-left: 3px solid #3498db; margin: 30px 0;">
+        <h3>Stochastic Gradient Descent (SGD)</h3>
+        <p>
+            <strong>Stochastic Gradient Descent (SGD)</strong> is a powerful and widely used optimization algorithm in machine learning designed to minimize a model's loss function. Unlike Batch Gradient Descent, which computes the gradient using the entire training dataset for every single update, SGD performs parameter updates using only a single training example (or a small "mini-batch") at each step.
+        </p
+        <p>
+            This makes the algorithm significantly faster and more memory-efficient, especially when dealing with massive datasets that cannot fit into memory. Because the gradient is calculated based on just one sample, the updates are often "noisy"—meaning the loss doesn't always decrease smoothly in every step. However, this randomness is actually a feature: it helps the algorithm "jump out" of local minima or saddle points, often leading to a better overall solution in complex, non-convex landscapes.
+        </p>
+
+        <div class="algorithm-box">
+            <span class="algorithm-title">Pseudo-Algorithm for SGD</span>
+            <ol>
+                <li><strong>Initialize</strong> the model parameters $\theta$ (weights and biases) with random values or zeros.</li>
+                <li><strong>Set</strong> the learning rate $\eta$ and the number of epochs (passes over the data) $E$.</li>
+                <li><strong>For</strong> each epoch from 1 to $E$:
+                    <ul>
+                        <li><strong>Shuffle</strong> the training dataset to ensure the order of samples is random.</li>
+                        <li><strong>For</strong> each individual training example $(x_i, y_i)$ in the dataset:
+                            <div class="math-block">
+                                Calculate the <strong>gradient</strong> (the derivative) of the loss function $L$ with respect to the parameters $\theta$ for that specific sample:
+                                <br>$$g = \nabla_\theta L(\theta; x_i, y_i)$$
+                            </div>
+                            <div class="math-block">
+                                <strong>Update</strong> the parameters by moving in the opposite direction of the gradient:
+                                <br>$$\theta = \theta - \eta \cdot g$$
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li><strong>Repeat</strong> until the parameters converge or the maximum number of epochs is reached.</li>
+                <li><strong>Return</strong> the optimized parameters $\theta$.</li>
+            </ol>
+        </div>
+
+        <h4>Explanation of the SGD Algorithm Steps</h4>
+        <ul>
+            <li><strong>Initialization:</strong> You start with an initial guess for the weights. Without a starting point, the algorithm has nothing to "tweak."</li>
+            <li><strong>Learning Rate ($\eta$):</strong> This is a crucial hyperparameter that determines the size of the steps taken toward the minimum. If it’s too high, the algorithm might overshoot the minimum; if it’s too low, convergence will be painfully slow.</li>
+            <li><strong>Shuffling:</strong> By shuffling the data before each epoch, you prevent the model from learning "cycles" or patterns based solely on the order in which data was collected. This maintains the "stochastic" (random) nature of the algorithm.</li>
+            <li><strong>Gradient Calculation ($\nabla$):</strong> The gradient tells you the "slope" of the loss function at the current point. In SGD, this slope is estimated based on just one data point. It represents the direction of the steepest increase in error.</li>
+            <li><strong>The Update Rule:</strong> Since we want to minimize error, we subtract the gradient from our current parameters. This "descents" the hill of the loss function. Multiplying the gradient by the learning rate ($\eta$) ensures we don't move too far in a single step based on potentially noisy data from one sample.</li>
+            <li><strong>Epochs:</strong> One epoch is completed when every sample in the dataset has been used once to update the weights. Multiple epochs are usually required for the model to "learn" the general patterns of the data.</li>
+        </ul>
+    </div>
+	<div style="padding-left: 20px; border-left: 3px solid #3498db; margin: 30px 0;">
+    <h3>Mini-Batch Stochastic Gradient Descent (Mini-batch SGD)</h3>
+    <p>
+        <strong>Mini-Batch Stochastic Gradient Descent (Mini-batch SGD)</strong> is the most common variation of gradient descent used in modern deep learning because it strikes a perfect balance between Batch Gradient Descent and pure SGD. 
+    </p>
+
+    
+
+    <p>
+        Instead of using the entire dataset (which is slow) or just a single data point (which is noisy), this algorithm divides the training data into small, manageable groups called <strong>mini-batches</strong> (typically in powers of two, like 32, 64, or 128). By calculating the gradient based on these small groups, the algorithm benefits from the computational efficiency of vectorized operations on modern hardware like GPUs, while still maintaining enough "noise" to help the model escape local minima. This results in smoother convergence than pure SGD and significantly faster training times than Batch GD.
+    </p>
+
+    <div class="algorithm-box">
+        <span class="algorithm-title">Pseudo-Algorithm for Mini-Batch SGD</span>
+        <ol>
+            <li><strong>Initialize</strong> the model parameters $\theta$ (weights and biases).</li>
+            <li><strong>Set</strong> the learning rate $\eta$, the batch size $B$, and the number of epochs $E$.</li>
+            <li><strong>For</strong> each epoch from 1 to $E$:
+                <ul>
+                    <li><strong>Shuffle</strong> the training dataset to ensure that each mini-batch is a random sample.</li>
+                    <li><strong>Divide</strong> the training dataset into $m$ mini-batches, each containing $B$ examples.</li>
+                    <li><strong>For</strong> each mini-batch $(x^{(batch)}, y^{(batch)})$:
+                        <div class="math-block">
+                            Calculate the <strong>average gradient</strong> for all $B$ examples:
+                            <br>$$g = \frac{1}{B} \sum_{i=1}^{B} \nabla_\theta L(\theta; x_i, y_i)$$
+                        </div>
+                        <div class="math-block">
+                            <strong>Update</strong> the parameters $\theta$ using this averaged gradient:
+                            <br>$$\theta = \theta - \eta \cdot g$$
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <li><strong>Repeat</strong> until the loss plateaus or the maximum number of epochs is reached.</li>
+            <li><strong>Return</strong> the optimized parameters $\theta$.</li>
+        </ol>
+    </div>
+
+    <h4>Explanation of the Algorithm Steps</h4>
+    <ul>
+        <li><strong>Batch Size ($B$):</strong> This is the key hyperparameter. If $B=1$, it is exactly pure SGD. If $B$ equals the total number of samples, it becomes Batch GD. Usually, 32 to 256 is chosen to maximize hardware performance.</li>
+        <li><strong>Dataset Shuffling:</strong> Shuffling at the start of every epoch ensures that the model doesn't learn specific sequences or biases inherent in the data's storage order.</li>
+        <li><strong>Average Gradient Calculation:</strong> Mini-batch SGD calculates the error for every sample in the batch and averages them. This acts as a more stable direction for the update, reducing the erratic zig-zagging seen in pure SGD.</li>
+        <li><strong>Vectorized Updates:</strong> One of the biggest practical advantages is that computers can process a batch of data simultaneously (in parallel). This makes the update step extremely efficient on GPUs.</li>
+        <li><strong>Convergence:</strong> Because the gradient estimate is more accurate than a single point but less perfect than the whole dataset, the "path" to the minimum is relatively smooth but still contains enough randomness to navigate complex loss landscapes effectively.</li>
+    </ul>
+</div>
+
+  <h2> Computation of Derivatives </h2>
+    <h3>1. The Variables</h3>
+    <div class="variable-list">
+        <ul>
+            <li>$A_{i-1}$: The input coming from the previous layer.</li>
+            <li>$W_i, b_i$: The weights and biases of the current layer.</li>
+            <li>$Z_i$: The result of $W_i \cdot A_{i-1} + b_i$ (pre-activation sum).</li>
+            <li>$A_i$: The output after the activation function $\sigma(Z_i)$.</li>
+            <li>$L$: The total Loss (the error).</li>
+        </ul>
+    </div>
+
+    <h3>2. The Three Key Derivatives</h3>
+    <p>During Backpropagation, we receive $\frac{\partial L}{\partial A_i}$ from the layer ahead. We then perform three specific differentiations:</p>
+
+    <div class="derivative-step">
+        <span class="tag" style="background:#e74c3c;">Step A</span>
+        <h4>Differentiation of the Activation Function ($\frac{\partial L}{\partial Z_i}$)</h4>
+        <p>We "undo" the Sigmoid function to find how the loss changes with respect to $Z$.</p>
+        <div class="formula-container">
+            $$\frac{\partial L}{\partial Z_i} = \frac{\partial L}{\partial A_i} \cdot \sigma'(Z_i)$$
+        </div>
+        <code class="code-snippet">dZ = dA * sigmoid_derivative(A)</code>
+        <div class="intuition-box">
+            <strong>Intuition:</strong> If the neuron is in a "flat" part of the Sigmoid curve, the gradient becomes near zero (Vanishing Gradient), and learning slows down.
+        </div>
+    </div>
+
+    <div class="derivative-step">
+        <span class="tag" style="background:#f39c12;">Step B</span>
+        <h4>Differentiation for Weights ($\frac{\partial L}{\partial W_i}$)</h4>
+        <p>In Step A, we found <strong>$dZ$</strong> (the error signal). Now, we calculate exactly how to adjust the weights to reduce that error.</p>
+        
+        <div class="formula-container" style="text-align: center; font-size: 1.1rem; background: #fdfdfd; padding: 10px; border: 1px solid #eee;">
+            $$\frac{\partial L}{\partial W_i} = \underbrace{\frac{\partial L}{\partial Z_i}}_{\text{Error Signal}} \cdot \underbrace{\frac{\partial Z_i}{\partial W_i}}_{\text{Input Signal}}$$
+        </div>
+
+        <div class="math-breakdown">
+            <strong>The Mathematical Breakdown:</strong>
+            <p>Since $Z_i = W_i \cdot A_{i-1} + b_i$, the partial derivative of $Z_i$ with respect to $W_i$ is simply the input $A_{i-1}$. This means the weight's contribution to the error is directly proportional to the signal it carried.</p>
+            <p>Formula: $$\frac{\partial L}{\partial W_i} = dZ_i \cdot (A_{i-1})^T$$</p>
+        </div>
+
+        <div class="intuition-box">
+            <strong>Technically Speaking:</strong> This product <strong>IS</strong> the differentiation of the loss function. It determines the "slope" of the error for that specific weight.
+            <br>$$\text{Gradient} = \text{Signal Strength (Input)} \times \text{Error Contribution (dZ)}$$
+        </div>
+
+        <h4>NumPy Implementation</h4>
+        <code class="code-snippet">dW = (1/m) * np.dot(dZ, A_prev.T)</code>
+        
+        <p><strong>Why the Transpose ($T$)?</strong> To align the dimensions of our matrices. For a single weight $w_{jk}$, the gradient is $dZ_j \cdot a_k$. The dot product with a transpose calculates this for every weight in the layer at once.</p>
+    </div>
+	<div style="text-align: center; margin: 30px 0; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+   
+    <p style="font-size: 0.9rem; color: #718096; margin-top: 10px;">
+        <em>Figure: Visualization of Layer $i$ processing. The blue arrows indicate the <strong>Backward Pass</strong> where gradients are calculated.</em>
+    </p>
+</div>
+    <div class="derivative-step">
+        <span class="tag" style="background:#3498db;">Step C</span>
+        <h4>Differentiation for the Next Layer ($\frac{\partial L}{\partial A_{i-1}}$)</h4>
+        <p>We "pass the baton" backward to the previous layer.</p>
+        
+        <div class="formula-container">
+            $$\frac{\partial L}{\partial A_{i-1}} = (W_i)^T \cdot \frac{\partial L}{\partial Z_i}$$
+        </div>
+        <code class="code-snippet">dA_prev = np.dot(W.T, dZ)</code>
+        <div class="intuition-box">
+            <strong>Why the Transpose ($W^T$)?</strong> To move the error backwards, we must use the connection weights in reverse order.
+        </div>
+    </div>
+	<div style="text-align: center; margin: 30px 0;">
+            <img src="BackPropagGraidenFlow.png" alt="BP Graident Flow Diagram" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px;">
+            <p style="font-size: 0.95rem; color: #666; margin-top: 5px;"><em>Figure shows Gradient flow back to the network</em></p>
+        </div>
+    <h3>3. Visualizing the "Chain"</h3>
+    <p>Each layer calculates its own local derivative and multiplies it by the one it received:</p>
+    <div class="formula-container" style="background: #f8f9fa; padding: 15px; text-align: center;">
+        $$\frac{\partial L}{\partial W_i} = \underbrace{\frac{\partial L}{\partial A_n} \cdot \dots \frac{\partial A_{i+1}}{\partial A_i}}_{\text{Received Error}} \cdot \underbrace{\frac{\partial A_i}{\partial Z_i} \cdot \frac{\partial Z_i}{\partial W_i}}_{\text{Local Gradient}}$$
+    </div>
+	
+    <h3>Summary for NumPy Implementation</h3>
+    <table class="data-table">
+        <thead>
+            <tr style="background-color: #f4f4f4;">
+                <th>Derivative</th>
+                <th>Math Symbol</th>
+                <th>NumPy Variable</th>
+                <th>Purpose</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Output Error</strong></td>
+                <td>$\frac{\partial L}{\partial A_i}$</td>
+                <td><code>dA</code></td>
+                <td>The error signal received from the next layer.</td>
+            </tr>
+            <tr>
+                <td><strong>Activation Grad</strong></td>
+                <td>$\frac{\partial L}{\partial Z_i}$</td>
+                <td><code>dZ</code></td>
+                <td>The error signal filtered through the activation function.</td>
+            </tr>
+            <tr>
+                <td><strong>Weight Grad</strong></td>
+                <td>$\frac{\partial L}{\partial W_i}$</td>
+                <td><code>dW</code></td>
+                <td>The final differentiation used to update weight values.</td>
+            </tr>
+            <tr>
+                <td><strong>Input Grad</strong></td>
+                <td>$\frac{\partial L}{\partial A_{i-1}}$</td>
+                <td><code>dA_prev</code></td>
+                <td>The error signal to be passed backward.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sampling Distribution</title>
+    <link rel="stylesheet" href="Style.css">
+
+    <script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        options: {
+            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<div class="content-wrapper">
+    <h1>Sampling Distribution</h1>
+    
+    <div class="description-box">
+        <h3>Statistics and Parameters</h3>
+        <p class="detail-description">
+            A measurable, single-valued function of the observations in a sample is called a <strong>statistic.</strong>
+            If $x_1, x_2, \dots, x_n$ is a sample drawn from a population, then $t = f(x_1, x_2, \dots, x_n)$ is a statistic. 
+            For example: Sample mean = $\frac{x_1 + x_2 + \dots + x_n}{n}$ is a function of the sample values. So it is a statistic. 
+            Any function of the population values is called parameters. For example mean and standard deviation are parameters of the population distribution.
+        </p>
+    </div>
+
+    <div class="description-box">
+        <h3>Sampling Distribution</h3>
+        <p class="detail-description">
+            A statistic is a random variable. Because the sample is random, the statistic calculated from it changes with every new sample, and the distribution of samples thus obtained is the <strong>sampling distribution</strong>.
+            Since the sample mean is a statistic, the distribution of the sample mean is a <strong>sampling distribution</strong>.
+        </p>
+    </div>
+
+    <div class="description-box">
+        <h3>Standard Error</h3>
+        <p class="detail-description">
+            The standard deviation of a sampling distribution is called the <strong>Standard Error (S.E.)</strong>.
+        </p>
+        
+        <ul class="detail-description">
+            <li>$\bar{x}$ has a sampling distribution. The S.D. of this distribution is called the <strong>Standard Error of $\bar{x}$</strong>.</li>
+            <li>If '$t$' is a statistic, then the Standard Error of '$t$' is the S.D. of the sampling distribution of $t$.</li>
+            <li>Mathematically, the S.E. of $t = \sqrt{E[t - E(t)]^2}$. This is analogous to the S.D. of the population.</li>
+            <li>In practical terms, the Standard Error is the standard deviation of the means calculated from all possible samples of the same size drawn from the population.</li>
+        </ul>
+
+        <div class="stat-box" style="background: #e7f3ff; border-left: 5px solid #0056b3; padding: 10px; margin-top: 10px;">
+            <strong>Note:</strong> When the population follows a normal distribution, we can study the sampling distributions even if the sample size is small. Similarly, if the sample size is large, we can study the sampling distribution even without knowing the specific distribution of the population.
+        </div>
+    </div>
+
+    <h3>Sampling Distribution of mean of samples drawn from a normal population</h3>
+    
+    <p class="detail-description">
+        To derive the sampling distribution of the mean $\bar{x}$, we use the property that the Moment Generating Function (MGF) of a sum of independent random variables is the product of their individual MGFs.
+    </p>
+
+    <div class="derivation-container" style="border: 2px solid #0056b3; border-radius: 8px; padding: 20px; background-color: #fcfdfe; margin: 20px 0;">
+        <h4 style="margin-top: 0; color: #0056b3;">Mathematical Derivation via MGF</h4>
+        
+        <div class="math-breakdown">
+            <strong>1. The MGF of the Population</strong>
+            <p>Given that $x \sim N(\mu, \sigma^2)$, the MGF of a single observation $x_i$ is:</p>
+            $$M_{x_i}(t) = E[e^{tx_i}] = \exp\left( \mu t + \frac{\sigma^2 t^2}{2} \right)$$
+
+            <strong>2. Define the Sample Mean</strong>
+            <p>Let $x_1, x_2, \dots, x_n$ be a random sample of size $n$. The sample mean is defined as:</p>
+            $$\bar{x} = \frac{1}{n} \sum_{i=1}^n x_i$$
+
+            <strong>3. Derive the MGF of $\bar{x}$</strong>
+            <p>By definition, the MGF of the sample mean is:</p>
+            $$M_{\bar{x}}(t) = E[e^{t\bar{x}}] = E\left[ e^{t \left( \frac{1}{n} \sum x_i \right)} \right]$$
+            
+            <p>Using the properties of exponents and independence, we can rewrite this as the product of expectations:</p>
+            $$M_{\bar{x}}(t) = E[e^{\frac{t}{n}x_1}] \cdot E[e^{\frac{t}{n}x_2}] \cdots E[e^{\frac{t}{n}x_n}]$$
+            $$M_{\bar{x}}(t) = \prod_{i=1}^n M_{x_i}\left( \frac{t}{n} \right)$$
+
+            <strong>4. Substitute the Normal MGF</strong>
+            <p>Substitute the expression for $M_{x_i}$ where the argument is $\frac{t}{n}$:</p>
+            $$M_{\bar{x}}(t) = \prod_{i=1}^n \exp\left( \mu \left(\frac{t}{n}\right) + \frac{\sigma^2 \left(\frac{t}{n}\right)^2}{2} \right)$$
+            
+            <p>Since we are multiplying $n$ identical terms, we raise the expression to the power of $n$ and simplify:</p>
+            $$M_{\bar{x}}(t) = \left[ \exp\left( \frac{\mu t}{n} + \frac{\sigma^2 t^2}{2n^2} \right) \right]^n$$
+            $$M_{\bar{x}}(t) = \exp\left( n \cdot \frac{\mu t}{n} + n \cdot \frac{\sigma^2 t^2}{2n^2} \right)$$
+            $$M_{\bar{x}}(t) = \exp\left( \mu t + \frac{(\sigma^2/n) t^2}{2} \right)$$
+        </div>
+    </div>
+
+    <div class="intuition-box" style="margin-top: 15px; background: #f0f7ff; padding: 15px; border-left: 5px solid #0056b3;">
+        <strong>Conclusion:</strong> The final expression is the MGF of a Normal distribution with mean $\mu$ and variance $\sigma^2/n$. Therefore, we have proven:
+        <p style="text-align: center; font-weight: bold; font-size: 1.1rem; margin-top: 10px;">$\bar{x} \sim N\left(\mu, \frac{\sigma^2}{n}\right)$</p>
+    </div>
+
+    <div class="note-box" style="background-color: #fff9db; border-left: 5px solid #fcc419; padding: 15px; margin: 20px 0;">
+        <strong>Note: Why use MGF to derive Sampling Distributions?</strong>
+        <p class="detail-description" style="margin-top: 10px;">
+            When we derive the distribution of a sample mean ($\bar{x}$), we are essentially adding up $n$ different random variables. Doing this directly with Probability Density Functions (PDFs) is extremely difficult. The MGF is the preferred tool because:
+        </p>
+        <p><strong>Multiplication is easier than Convolution</strong></p>
+        <p>In the "Normal" world (PDFs), adding two variables requires a mathematical operation called <strong>Convolution</strong>, which involves solving a complex integral. However, in the "MGF" world, adding variables is equivalent to simple multiplication.</p>
+        
+        <ul style="list-style-type: none; padding-left: 0;">
+            <li><strong>PDF Approach:</strong> $\int f(x) \cdot f(z-x) dx$ <span style="color: #c92a2a;">(Hard)</span></li>
+            <li><strong>MGF Approach:</strong> $M_x(t) \cdot M_y(t)$ <span style="color: #2b8a3e;">(Easy)</span></li>
+        </ul>
+    </div>
+
+    <div class="example-box" style="border: 2px solid #0056b3; border-radius: 8px; margin-top: 30px; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+        <div class="example-header" style="background-color: #0056b3; color: white; padding: 12px 20px; font-weight: bold; font-size: 1.2rem;">
+            Example: Probability and the Sampling Distribution
+        </div>
+        
+        <div class="example-body" style="padding: 20px; background-color: #f8f9fa; line-height: 1.6;">
+            <p><strong>Question:</strong> A sample of 20 items is drawn from a normal population with mean $\mu = 30$ and $SD = 10$. Find the probability that the mean of the sample ($\bar{x}$):
+                <br>(1) Exceeds 35 
+                <br>(2) Lies between 28 and 32.
+            </p>
+
+            <hr style="border: 0; border-top: 1px solid #dee2e6; margin: 20px 0;">
+
+            <h4 style="color: #0056b3;">Solution</h4>
+
+            <p><strong>Step 1: Identify the Parameters</strong></p>
+            <ul style="list-style-type: none; padding-left: 10px;">
+                <li>Population Mean ($\mu$): $30$</li>
+                <li>Population SD ($\sigma$): $10$</li>
+                <li>Sample Size ($n$): $20$</li>
+                <li><strong>Standard Error (SE):</strong> 
+                    $$SE = \frac{\sigma}{\sqrt{n}} = \frac{10}{\sqrt{20}} = \frac{10}{4.472} \approx 2.236$$
+                </li>
+            </ul>
+            <p>The sampling distribution is $\bar{x} \sim N(30, 2.236)$.</p>
+
+            <p><strong>Step 2: Probability that $\bar{x}$ exceeds 35</strong></p>
+            <p>We want to find $P(\bar{x} > 35)$. First, calculate the Z-score:</p>
+            $$Z = \frac{\bar{x} - \mu}{SE} = \frac{35 - 30}{2.236} = \frac{5}{2.236} \approx 2.24$$
+            <p>Using the Z-table, the area to the left of $Z = 2.24$ is approximately $0.9875$.</p>
+            <p>Find the right tail:</p>
+            $$P(Z > 2.24) = 1 - 0.9875 = 0.0125$$
+            <p><strong>Answer (1):</strong> There is a <strong>1.25%</strong> probability that the sample mean exceeds 35.</p>
+
+            <p><strong>Step 3: Probability that $\bar{x}$ lies between 28 and 32</strong></p>
+            <p>We want to find $P(28 < \bar{x} < 32)$. Calculate Z-scores for both boundaries:</p>
+            <ul>
+                <li>For 32: $Z_1 = \frac{32 - 30}{2.236} = \frac{2}{2.236} \approx 0.89$</li>
+                <li>For 28: $Z_2 = \frac{28 - 30}{2.236} = \frac{-2}{2.236} \approx -0.89$</li>
+            </ul>
+            <p>Using the Z-table:</p>
+            <ul style="list-style-type: none;">
+                <li>Area for $Z = 0.89$ is $0.8133$</li>
+                <li>Area for $Z = -0.89$ is $0.1867$</li>
+            </ul>
+            <p>Subtract the areas to find the region between them:</p>
+            $$P(-0.89 < Z < 0.89) = 0.8133 - 0.1867 = 0.6266$$
+            <p><strong>Answer (2):</strong> There is a <strong>62.66%</strong> probability that the sample mean lies between 28 and 32.</p>
+        </div>
+    </div>
+
+    <div class="description-box">
+        <h3> Commonly Used Sampling Distributions</h3>
+         <p class="detail-description">
+           There are several standard distributions used for testing of hypothesis and other statistical inferences purposes. Given below is a table listing the widely sampling distributions.
+        </p>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #fff; font-size: 0.95rem; font-family: sans-serif;">
+                <thead>
+                    <tr style="background-color: #0056b3; color: white; text-align: left;">
+                        <th style="padding: 12px; border: 1px solid #dee2e6;">Distribution</th>
+                        <th style="padding: 12px; border: 1px solid #dee2e6;">Probability Density Function $f(x)$</th>
+                        <th style="padding: 12px; border: 1px solid #dee2e6;">Mean</th>
+                        <th style="padding: 12px; border: 1px solid #dee2e6;">Standard Deviation (SD)</th>
+                        <th style="padding: 12px; border: 1px solid #dee2e6;">Standardized Statistic</th>
+                        <th style="padding: 12px; border: 1px solid #dee2e6;">Purpose in Hypothesis Testing</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Normal</strong><br>$N(\mu, \sigma^2)$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$f(x) = \frac{1}{\sigma \sqrt{2\pi}} e^{-\frac{1}{2}\left(\frac{x-\mu}{\sigma}\right)^2}$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$\mu$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$\sigma$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$Z = \frac{\bar{x} - \mu}{\sigma / \sqrt{n}}$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used for Z-tests concerning population means when variance is known or sample size is large.</td>
+                    </tr>
+                    <tr style="background-color: #f9f9f9;">
+                        <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Chi-Square ($\chi^2$)</strong><br>with $n$ d.f.</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$f(x) = \frac{1}{2^{n/2}\Gamma(n/2)} x^{(n/2)-1} e^{-x/2}$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$n$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$\sqrt{2n}$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$\chi^2 = \frac{(n-1)s^2}{\sigma^2}$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used for testing population variance, Goodness of Fit, and Independence in contingency tables.</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Student's $t$</strong><br>with $n$ d.f.</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$f(t) = \frac{\Gamma(\frac{n+1}{2})}{\sqrt{n\pi}\Gamma(\frac{n}{2})} \left(1 + \frac{t^2}{n}\right)^{-\frac{n+1}{2}}$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$0$ <small>($n > 1$)</small></td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$\sqrt{\frac{n}{n-2}}$ <small>($n > 2$)</small></td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$t = \frac{\bar{x} - \mu}{s / \sqrt{n}}$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used for testing means when the population variance is unknown and the sample size is small.</td>
+                    </tr>
+                    <tr style="background-color: #f9f9f9;">
+                        <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>F-Distribution</strong><br>with $n_1, n_2$ d.f.</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$f(x) = \frac{\sqrt{\frac{(n_1 x)^{n_1} n_2^{n_2}}{(n_1 x + n_2)^{n_1 + n_2}}}}{x B(\frac{n_1}{2}, \frac{n_2}{2})}$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$\frac{n_2}{n_2-2}$ <small>($n_2 > 2$)</small></td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">Complex formula</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$F = \frac{s_1^2}{s_2^2}$</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used to compare two population variances and as the basis for Analysis of Variance (ANOVA).</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 20px 0; padding: 25px; border: 1px solid #e1e4e8; border-radius: 8px; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+
+        <h2 style="color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px;">Deriving the Chi-Square Test statistic </h2>
+
+        <div style="margin-bottom: 25px; padding: 15px; background-color: #fff8e1; border-left: 5px solid #ffc107; border-radius: 4px;">
+            <h4 style="margin: 0 0 10px 0; color: #856404;">The Rule of Transformation (Jacobian)</h4>
+            <p style="margin: 0; font-size: 0.95rem;">
+                <strong>The Concept:</strong> If we have a random variable $Y$ with a known PDF and we define a new variable $X$ such that $Y = g(X)$, the PDF of $X$ is not simply $f_Y(g(x))$. We must multiply by the <strong>Jacobian</strong> $\left| \frac{dy}{dx} \right|$.
+                <br><br>
+                <strong>The Purpose:</strong> This ensures the <em>total probability remains conserved</em>. The Jacobian acts as a correction factor to stretch or compress the probability density so the area under the new curve still equals 1.
+            </p>
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <h3 style="color: #444; font-size: 1.2rem;">1. Define the Chi-Square Variable</h3>
+            <p>We start with the standardized statistic $Y = \frac{nS^2}{\sigma^2}$. We know $Y \sim \chi^2_{n-1}$:</p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center;">
+                $$f_Y(y) = \frac{1}{2^{(n-1)/2}\Gamma(\frac{n-1}{2})} y^{(\frac{n-1}{2})-1} e^{-y/2}$$
+            </div>
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <h3 style="color: #444; font-size: 1.2rem;">2. Apply the Transformation Rule</h3>
+            <p>To find the density of the actual sample variance $S^2$, we map the density of $Y$ onto the scale of $s^2$:</p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center;">
+                $$f_{S^2}(s^2) = f_Y(y) \cdot \left| \frac{dy}{ds^2} \right|$$
+            </div>
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <h3 style="color: #444; font-size: 1.2rem;">3. The Scaling Factor (Jacobian Calculation)</h3>
+            <p>Given $y = \left(\frac{n}{\sigma^2}\right)s^2$, the derivative is:</p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center;">
+                $$\frac{dy}{ds^2} = \frac{n}{\sigma^2}$$
+            </div>
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <h3 style="color: #444; font-size: 1.2rem;">4. Final Result: The PDF of $S^2$</h3>
+            <p>Substituting $y$ and the scaling factor, we arrive at the distribution specifically for sample variance:</p>
+            <div style="background: #eef4fb; padding: 20px; border-left: 5px solid #0056b3; border-radius: 0 5px 5px 0;">
+                $$f_{S^2}(s^2) = \frac{1}{2^{(n-1)/2}\Gamma(\frac{n-1}{2})} \left( \frac{ns^2}{\sigma^2} \right)^{(\frac{n-1}{2})-1} e^{-\frac{ns^2}{2\sigma^2}} \cdot \left( \frac{n}{\sigma^2} \right)$$
+                <p style="margin-top: 15px;">This identifies $S^2$ as following a <strong>Gamma Distribution</strong> with:</p>
+                <ul style="margin-bottom: 0;">
+                    <li><strong>Shape ($\alpha$):</strong> $\frac{n-1}{2}$</li>
+                    <li><strong>Scale ($\beta$):</strong> $\frac{2\sigma^2}{n}$</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="example-box" style="border: 2px solid #0056b3; border-radius: 8px; margin: 20px 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+        <div class="example-header" style="background-color: #0056b3; color: white; padding: 12px 20px; font-weight: bold; font-size: 1.2rem;">
+            Worked Example: Finding Minimum Sample Variance
+        </div>
+
+        <div class="example-body" style="padding: 20px; background-color: #f8f9fa; line-height: 1.6;">
+            <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #c3e6cb; margin-bottom: 20px;">
+                <p style="margin: 0;"><strong>Problem:</strong> A sample of $n = 25$ items is drawn from a normal population with a variance $\sigma^2 = 60$. Find the minimum value of the sample variance ($s^2$) such that the probability of the variance being at least this value is $0.75$.</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #155724; font-size: 1.1rem; margin-top: 0;">Step 1: Identify Given Parameters</h3>
+                <ul style="list-style-type: none; padding-left: 10px; margin: 0;">
+                    <li>• Sample size ($n$) = $25$</li>
+                    <li>• Degrees of Freedom ($df$) = $n - 1 = 24$</li>
+                    <li>• Population Variance ($\sigma^2$) = $60$</li>
+                    <li>• Target Probability: $P(S^2 \geq s^2_{min}) = 0.75$</li>
+                </ul>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #155724; font-size: 1.1rem;">Step 2: Relate to Chi-Square Distribution</h3>
+                <p>The standardized statistic follows the Chi-square distribution:</p>
+                <div style="background: #ffffff; padding: 10px; border-radius: 5px; text-align: center; border: 1px solid #eee; margin: 10px 0;">
+                    $$\chi^2 = \frac{(n-1)s^2}{\sigma^2}$$
+                </div>
+                <p>We need the critical value $y$ such that $P(\chi^2_{24} \geq y) = 0.75$.</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #155724; font-size: 1.1rem;">Step 3: Solve for $s^2$</h3>
+                <p>From Chi-square tables ($df = 24$), $y \approx 19.037$:</p>
+                <div style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #eee;">
+                    $$19.037 = \frac{24 \cdot s^2}{60} \implies s^2 = 19.037 \times 2.5 = 47.5925$$
+                </div>
+            </div>
+
+            <div style="background-color: #155724; color: #fff; padding: 15px; border-radius: 5px; text-align: center;">
+                <p style="margin: 0; font-size: 1.1rem;"><strong>Result:</strong> The minimum sample variance is approximately <strong>47.59</strong>.</p>
+            </div>
+
+            <div style="margin-top: 20px; padding: 12px; background-color: #d1ecf1; border-left: 5px solid #0c5460; font-size: 0.9rem; color: #0c5460;">
+                <strong>Important Distinction:</strong> While we use <strong>Chi-Square</strong> here, we assume the <strong>Population</strong> is <strong>Normal</strong>.
+            </div>
+        </div>
+    </div>
+	<div class="derivation-box" style="border: 1px solid #0056b3; border-radius: 8px; margin: 25px 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    
+    <div style="background-color: #0056b3; color: white; padding: 15px 20px; font-weight: bold; font-size: 1.25rem;">
+        Deriving the Test statistic for T-Distribution
+    </div>
+
+    <div style="padding: 25px; background-color: #ffffff; line-height: 1.7; color: #2c3e50;">
+        
+        <p style="margin-top: 0;">A $t$-distributed variable is mathematically defined as the ratio of a <strong>Standard Normal variable ($Z$)</strong> to the square root of an independent <strong>Chi-square variable ($V$)</strong> divided by its degrees of freedom ($k$):</p>
+        
+        <div style="text-align: center; background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 15px 0; border: 1px dashed #0056b3;">
+            $$t = \frac{Z}{\sqrt{V / k}}$$
+        </div>
+
+        <h3 style="color: #0056b3; font-size: 1.15rem; border-bottom: 1px solid #eee; padding-bottom: 5px;">1. Let us define each components of Ratio</h3>
+        <p>Assuming $S^2$ is the biased sample variance: $S^2 = \frac{1}{n}\sum(x_i - \bar{x})^2$.</p>
+        
+        <div style="margin-left: 15px;">
+            <p><strong>Numerator part: The Standard Normal ($Z$)</strong><br>
+            If $x \sim N(\mu, \sigma^2)$, then the sample mean $\bar{x} \sim N(\mu, \sigma^2/n)$. Standardizing gives:</p>
+            <div style="text-align: center;">$$Z = \frac{(\bar{x} - \mu)\sqrt{n}}{\sigma}$$</div>
+
+            <p><strong>Denominator part:The Chi-square ($V$)</strong><br>
+            The sum of squared deviations follows a Chi-square distribution with $k = n-1$ degrees of freedom:</p>
+            <div style="text-align: center;">$$V = \frac{\sum(x_i - \bar{x})^2}{\sigma^2} = \frac{nS^2}{\sigma^2} \sim \chi^2_{(n-1)}$$</div>
+        </div>
+
+        <h3 style="color: #0056b3; font-size: 1.15rem; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px;">Step 2. Construct the Ratio</h3>
+        <p>Plugging $Z$ and $V$ into the $t$-definition formula:</p>
+        <div style="text-align: center; background: #f8f9fa; padding: 15px; border-radius: 6px;">
+            $$t = \frac{\frac{(\bar{x} - \mu)\sqrt{n}}{\sigma}}{\sqrt{\frac{nS^2/\sigma^2}{n-1}}}$$
+			Which leads to 		
+            $$t = \frac{(\bar{x} - \mu)\sqrt{n}}{\sigma} \cdot \frac{\sigma \sqrt{n-1}}{S \sqrt{n}}$$
+			$$t = \frac{(\bar{x} - \mu)\sqrt{n-1}}{S}$$
+        </div>
+        <h3 style="color: #0056b3; font-size: 1.15rem; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px;">Step 4. Conclusion</h3>
+        <p>Because we represented the expression as $Z / \sqrt{V/k}$ = $t = \frac{(\bar{x} - \mu)\sqrt{n-1}}{S}$, it follows the <strong>Student's $t$-distribution with $n-1$ degrees of freedom.</strong></p>
+
+        <div style="margin-top: 20px; padding: 15px; background-color: #e7f3ff; border-left: 5px solid #0056b3; font-size: 0.95rem;">
+            <strong></strong> Mathematical Idea." The $(\bar{x} - \mu)$ part brings in the Normal property, and the $S$ part brings in the Chi-square property. By combining them, the <strong>unknown population variance $\sigma$ disappears</strong>, allowing for inference without perfect population knowledge.
+        </div>
+
+    </div> </div> 
+	<div class="example-box" style="border: 2px solid #0056b3; border-radius: 8px; margin: 25px 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    
+    <div class="example-header" style="background-color: #0056b3; color: white; padding: 12px 20px; font-weight: bold; font-size: 1.2rem;">
+        Numerical Example: Inference with the $t$-Distribution
+    </div>
+
+    <div class="example-body" style="padding: 20px; background-color: #f8f9fa; line-height: 1.6;">
+        
+        <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #dee2e6; margin-bottom: 20px;">
+            <p style="margin: 0;"><strong>Question:</strong> A sample of size $n=25$ drawn from a normal population has mean $\mu=20$ and sample variance $s^2=8$. Find the probability that:
+                <br><strong>(1)</strong> The sample mean ($\bar{x}$) is greater than 21.
+                <br><strong>(2)</strong> The sample mean ($\bar{x}$) lies between 19 and 21.
+            </p>
+        </div>
+
+        <p><strong>Note on Distribution Selection:</strong> Because the <strong>population variance ($\sigma^2$)</strong> is unknown and we are utilizing the <strong>sample variance ($s^2$)</strong>, we must use the Student's $t$-distribution rather than the Standard Normal ($Z$) distribution.</p>
+
+        <hr style="border: 0; border-top: 1px solid #dee2e6; margin: 20px 0;">
+
+        <div style="margin-bottom: 20px;">
+            <h4 style="color: #0056b3; margin-top: 0;">Step 1: Identify the Constituent Parameters</h4>
+            <ul style="list-style-type: none; padding-left: 10px;">
+                <li>• Sample Size ($n$): $25$</li>
+                <li>• Population Mean ($\mu$): $20$</li>
+                <li>• Sample Variance ($s^2$): $8$</li>
+                <li>• Sample Standard Deviation ($s$): $\sqrt{8} \approx 2.8284$</li>
+                <li>• Degrees of Freedom ($df$): $n - 1 = 24$</li>
+            </ul>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h4 style="color: #0056b3;">Step 2: Calculate the Standard Error ($SE$)</h4>
+            <p>The standard error quantifies the expected stochastic variation of the sample mean:</p>
+            <div style="background: #ffffff; padding: 10px; border-radius: 5px; text-align: center; border: 1px solid #eee;">
+                $$SE = \frac{s}{\sqrt{n}} = \frac{2.8284}{\sqrt{25}} = \mathbf{0.5657}$$
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h4 style="color: #0056b3;">Step 3: Solve for $P(\bar{x} > 21)$</h4>
+            <p>First, calculate the $t$-statistic for $\bar{x} = 21$:</p>
+            <div style="text-align: center;">$$t = \frac{\bar{x} - \mu}{SE} = \frac{21 - 20}{0.5657} = \mathbf{1.768}$$</div>
+            <p>Consulting the $t$-table for $df = 24$, the area in the upper tail is:</p>
+            <div style="background-color: #e7f3ff; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">
+                $P(t_{24} > 1.768) \approx \mathbf{0.0449}$ (4.49%)
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h4 style="color: #0056b3;">Step 4: Solve for $P(19 < \bar{x} < 21)$</h4>
+            <p>Due to the symmetry of the $t$-distribution around the mean:</p>
+            <ul style="list-style-type: none; padding-left: 10px;">
+                <li>• For $\bar{x} = 21$, $t = 1.768$</li>
+                <li>• For $\bar{x} = 19$, $t = -1.768$</li>
+            </ul>
+            <div style="text-align: center;">
+                $$P(-1.768 < t_{24} < 1.768) = 1 - 2 \times P(t_{24} > 1.768)$$
+                $$1 - 2(0.0449) = \mathbf{0.9102}$$
+            </div>
+            <p><strong>Result:</strong> There is a <strong>91.02%</strong> probability that the sample mean falls within this range.</p>
+        </div>
+
+        <div style="margin-top: 20px; padding: 12px; background-color: #fff9db; border-left: 5px solid #fcc419; font-size: 0.9rem; color: #856404;">
+            <strong>Theoretical Note:</strong> The $t$-distribution effectively "penalizes" our uncertainty by having thicker tails. If we had used $Z$ here, our estimated probability would be slightly higher, potentially leading to an overconfident (and incorrect) conclusion.
+        </div>
+
+    </div> </div> ```
+	<div class="derivation-box" style="border: 1px solid #28a745; border-radius: 8px; margin: 25px 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    
+    <div class="derivation-box" style="border: 1px solid #0056b3; border-radius: 8px; margin: 25px 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    
+    <div style="background-color: #0056b3; color: white; padding: 15px 20px; font-weight: bold; font-size: 1.25rem;">
+        Mathematical Proof: The Derivation of the $F$-Distribution Ratio
+    </div>
+
+    <div style="padding: 25px; background-color: #ffffff; line-height: 1.7; color: #2c3e50;">
+        
+        <p style="margin-top: 0;">To demonstrate that the ratio of two independent sample variances ($s_1^2 / s_2^2$) follows an $F$-distribution, we must align it with the formal stochastic definition of the $F$-statistic.</p>
+
+        <h3 style="color: #0056b3; font-size: 1.15rem; border-bottom: 1px solid #eee; padding-bottom: 5px;">1. The Formal Definition of $F$</h3>
+        <p>By definition, an $F$-distributed random variable is the ratio of two <strong>independent Chi-square variables</strong>, each normalized by its respective degrees of freedom ($d_1$ and $d_2$):</p>
+        
+        <div style="text-align: center; background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 15px 0; border: 1px dashed #0056b3;">
+            $$F = \frac{U / d_1}{V / d_2}$$
+            <small>where $U \sim \chi^2_{(d_1)}$ and $V \sim \chi^2_{(d_2)}$</small>
+        </div>
+
+        <h3 style="color: #0056b3; font-size: 1.15rem; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px;">2. Identify the Constituent Chi-square Components</h3>
+        <p>Consider two independent samples drawn from normal populations $N(\mu_1, \sigma_1^2)$ and $N(\mu_2, \sigma_2^2)$. The relationship between sample variance ($s^2$) and the Chi-square distribution is:</p>
+        
+        <div style="margin-left: 15px; background-color: #f0f7ff; padding: 10px; border-radius: 5px;">
+            <p><strong>Component 1 (Sample 1):</strong> $U = \frac{(n_1-1)s_1^2}{\sigma_1^2} \sim \chi^2_{(n_1-1)}$</p>
+            <p style="margin-bottom: 0;"><strong>Component 2 (Sample 2):</strong> $V = \frac{(n_2-1)s_2^2}{\sigma_2^2} \sim \chi^2_{(n_2-1)}$</p>
+        </div>
+
+        <h3 style="color: #0056b3; font-size: 1.15rem; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px;">3. Construct the Ratio</h3>
+        <p>Substituting these components and their respective degrees of freedom ($d_1 = n_1-1$ and $d_2 = n_2-1$) into the definition:</p>
+        <div style="text-align: center; background: #f8f9fa; padding: 15px; border-radius: 6px;">
+            $$F = \frac{\left[ \frac{(n_1-1)s_1^2}{\sigma_1^2} \right] / (n_1-1)}{\left[ \frac{(n_2-1)s_2^2}{\sigma_2^2} \right] / (n_2-1)}$$
+        </div>
+
+        <h3 style="color: #0056b3; font-size: 1.15rem; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px;">4. Algebraic Simplification</h3>
+        <p>The degrees of freedom terms ($(n_1-1)$ and $(n_2-1)$) cancel out within the numerator and denominator, leaving:</p>
+        <div style="text-align: center;">
+            $$F = \frac{s_1^2 / \sigma_1^2}{s_2^2 / \sigma_2^2}$$
+        </div>
+        <p>Under the <strong>Null Hypothesis ($\sigma_1^2 = \sigma_2^2$)</strong>, where we assume both samples originate from populations with identical variances, the population variance terms cancel entirely:</p>
+        <div style="text-align: center; font-size: 1.2rem; font-weight: bold; color: #0056b3;">
+            $$F = \frac{s_1^2}{s_2^2}$$
+        </div>
+
+        <h3 style="color: #0056b3; font-size: 1.15rem; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px;">5. Conclusion</h3>
+        <p>Because the ratio $\frac{s_1^2}{s_2^2}$ is algebraically equivalent to the ratio of two independent, normalized Chi-square variables, it follows the <strong>$F$-distribution with $(n_1-1, n_2-1)$ degrees of freedom.</strong></p>
+
+        <div style="margin-top: 20px; padding: 15px; background-color: #e7f3ff; border-left: 5px solid #0056b3; font-size: 0.95rem; color: #0c5460;">
+            <strong>Tutorial Insight:</strong> This proof is the reason why the $F$-test is so powerful for comparing variances. It allows us to determine if two samples have significantly different variabilities without needing to know the actual value of the population variance ($\sigma^2$), provided the populations are normally distributed.
+        </div>
+
+    </div> </div> ```
+
+
+
+
+</div> </body>
+</html>

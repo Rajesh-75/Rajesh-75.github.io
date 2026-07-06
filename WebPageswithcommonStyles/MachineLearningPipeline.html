@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial</title>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']]
+            }
+        };
+    </script>
+</head>
+<body>
+
+    <h1 class="detail-title">AI and Statistics</h1>
+    
+    <p class="detail-description">AI (Artificial Intelligence) is one of the most important and fastest-growing fields of technology today. Applications of AI are becoming ubiquitous, and solutions learned from data are increasingly displacing traditional hand-crafted algorithms. Machine Learning (ML) and Deep Learning (DL) are major branches of artificial intelligence (AI) that provide systems with the ability to automatically learn and improve from experience without being explicitly programmed.</p>
+    
+    <p class="detail-description">This tutorial explores the fundamental theory and practical engineering of various Machine Learning and Deep Learning models, including classic algorithms like SVM, Decision Trees, and Naive Bayesian, as well as advanced architectures such as Convolutional Neural Networks (CNN), Recurrent Neural Networks (RNN), and Transformers. We will also demonstrate how to train and apply these models across diverse real-world applications.</p>
+  
+    <p class="detail-description">Serving as the major foundational tool, Statistics underpins the entire scope of this tutorial.</p>
+   
+    <p class="detail-description">Both Machine Learning and Deep Learning follow a pipeline structure to create and deploy AI-based systems. The pipeline commonly has the following form:</p>
+     
+    <img src="image_fdb59d.png" alt="Machine Learning Pipeline" class="pipeline-image">
+    <p class="image-title">ML Pipeline Flow</p>
+
+    <img src="NNbasedPipelineforImageRecongition.png" alt="Neural Network based Pipeline" class="pipeline-image"> 
+    <p class="image-title">An example pipeline based on Neural Network for Image Recognition</p>
+
+    <h2>The ML Pipeline</h2>
+    <ul>
+        <li><strong>Data Ingestion:</strong> Gathering and loading data from various sources (databases, APIs, files).</li>
+        <li><strong>Preprocessing:</strong> Cleaning the data, handling missing values, and dealing with inconsistencies.</li>
+        <li><strong>Feature Engineering:</strong> Transforming raw data into features that better represent the underlying problem to the predictive models.</li>
+        <li><strong>Model Training:</strong> Feeding the prepared data to the chosen algorithm to learn patterns.</li>
+        <li><strong>Evaluation:</strong> Testing the model's performance on unseen data to ensure accuracy and robustness.</li>
+        <li><strong>Deployment:</strong> Integrating the model into a live environment where it can make real-time predictions.</li>
+    </ul>
+
+    <h2>Data Ingestion</h2>
+    <p class="detail-description">
+        Progress in the last decade shows that the success of an ML system depends largely on the data it was trained on. Instead of focusing on improving ML algorithms, most companies focus on managing and improving their data. The first three blocks of the pipeline—Data Ingestion, Data Preprocessing, and Feature Engineering—form the data preparation layer. These blocks are somewhat interchangeable; in certain cases, Feature Engineering happens at the time of Data collection (Ingestion) itself.
+    </p>
+
+    <p class="detail-description">
+        Data Ingestion, the first stage of the ML pipeline, involves a structured process of acquiring raw data and preparing its storage environment. This sub-pipeline ensures data is collected reliably and organized efficiently for subsequent processing.
+    </p>
+
+    <img src="DataStorage.png" alt="Data Engineering Sub-pipeline" class="pipeline-image">
+    <p class="image-title">Data Ingestion Sub-Pipeline (Acquisition and Storage Stages)</p>
+    
+    <hr>
+    
+    <h2>The Data Engineering Sub-Pipeline for ML/DL</h2>
+    <p class="detail-description">The Data Engineering pipeline is responsible for transforming raw, disparate data into the clean, reliable, and accessible features required for model training and inference. It generally follows a structured ETL or ELT pattern.</p>  
+    
+    <h3>Stage 1: Data Acquisition & Ingestion (The "Extract" Phase)</h3>
+    <p class="detail-description">This initial stage focuses on finding, collecting, and moving raw data from various sources into a central landing zone.</p>
+   
+    <h4>1. Finding Data Sources</h4>
+    <ul>
+        <li>Internal Sources: Databases (OLTP), logs, Sensor data, CRM systems.</li>
+        <li>External Sources: Third-party APIs, public datasets, web scraping.</li>
+        <li>Specific Data Types: Sources for unstructured data like images/video (e.g., ImageNet, COCO) or proprietary camera feeds.</li>
+    </ul>
+
+    <h4>2. Ingestion Modes</h4>
+    <ul>
+        <li>Batch Ingestion: Processing large volumes at scheduled intervals (e.g., nightly jobs).</li>
+        <li>Streaming Ingestion: Continuous, real-time processing (e.g., Kafka).</li>
+    </ul>
+
+    <h4>3. Validation & Schema Check</h4>
+    <p class="detail-description">As data enters the pipeline, basic validation ensures the data type and format conform to the expected schema.</p>
+   
+    <h3>Stage 2: Data Storage & Governance (The "Load" Phase)</h3>
+    <p class="detail-description">This stage determines where the raw and processed data resides, optimized for both cost and query performance.</p>
+   
+    <h4>1. Storage Solutions</h4>
+    <ul>
+        <li>Data Lake: Stores raw, uncleaned, unstructured data (S3, GCS).</li>
+        <li>Data Warehouse: Stores structured, cleaned data optimized for analytical querying.</li>
+        <li>Feature Store: Stores curated feature vectors for consistent batch training and real-time inference.</li>
+    </ul>
+
+    <h4>2. Data Governance and Security</h4>
+    <p class="detail-description">Implementing access controls, encryption, and tracking data lineage.</p>
+    
+    <hr>
+    
+    <h2>Data Pre-processing</h2>
+    <p class="detail-description">Data pre-processing is the critical stage that cleans, transforms, and prepares the raw data. It consists of Data cleaning, Data Transformation, and Data Reduction. These steps are iterative and dependent on the learning application.</p>
+
+    <img src="DataPreProcessing.jpg" alt="Data Pre-Processing" class="pipeline-image">
+
+    <h3>1. Data Cleaning 🧹</h3>
+    <p class="detail-description">Focuses on fixing errors and inconsistencies.</p>
+    <ul>
+        <li>Handling Missing Values: Imputing (mean/median) or Deleting.</li>
+        <li>Handling Noisy Data: Smoothing out random errors.</li>
+        <li>Outlier Detection: Removing or capping deviations.</li>
+        <li>Inconsistent Data: Correcting structural errors (e.g., typos).</li>
+    </ul>
+
+    <h3>2. Data Transformation 🔄</h3>
+    <p class="detail-description">Changes format or scale for algorithmic efficiency.</p>
+    <ul>
+        <li>Normalization (Min-Max) and Standardization (Z-score).</li>
+        <li>Encoding Categorical Data: One-Hot Encoding or Label Encoding.</li>
+        <li>Discretization: Binning continuous numbers.</li>
+    </ul>
+
+    <h3>3. Data Reduction 📉</h3>
+    <p class="detail-description">Obtains a reduced representation to improve efficiency.</p>
+    <ul>
+        <li>Dimensionality Reduction: Feature Selection or Extraction (PCA).</li>
+        <li>Data Compression and Numerosity Reduction.</li>
+    </ul>    
+
+    <h3 style="margin-top: 20px;">4. Handling Imbalanced Data ⚖️</h3>
+    <p class="detail-description">
+        Whenever you are working on text classification problems, it is a good idea to examine the distribution of examples across the classes. A dataset with a <strong>skewed class distribution</strong> might require a different treatment in terms of the training loss and evaluation metrics than a balanced one.
+    </p>
+
+    
+
+    <p class="detail-description">There are several ways to deal with imbalanced data, including:</p>
+    <ul>
+        <li><strong>Randomly oversample the minority class:</strong> Replicating examples from the smaller class to increase its representation.</li>
+        <li><strong>Randomly undersample the majority class:</strong> Removing examples from the larger class to balance the proportions.</li>
+        <li><strong>Gather more labeled data:</strong> Specifically collecting more data from the underrepresented classes to strengthen the predictive signal.</li>
+    </ul>
+
+    <hr>
+    
+    <h2>Feature Engineering (FE)</h2>
+    <p class="detail-description">
+        Feature Engineering (FE) is the pivotal step defined as the process of transforming raw input data into features that best expose the underlying problem structure to a model. 
+    </p>
+
+    <h3>The Primacy of Features in Classical ML</h3>
+    <ul>
+        <li><strong>Necessity of Manual FE:</strong> In the era of traditional algorithms (SVM, Decision Trees, Naive Bayes), model quality depended entirely on human-engineered features. Because these models are often "shallow," data scientists had to manually construct predictive signals to ensure success.</li>
+    </ul>
+
+    <h3>The Shift to Automatic Feature Learning</h3>
+    <p class="detail-description">The rise of Deep Learning (DL) fundamentally changed manual FE, particularly for unstructured data.</p>
+    <ul>
+        <li><strong>Automation in DL:</strong> Modern deep networks (like CNNs) act as multi-layered feature extractors, automatically learning hierarchical representations directly from raw pixels or text.</li>
+        <li><strong>Domain of Success:</strong> Highly successful for unstructured data (images, video, text), reducing the need for tedious manual extraction.</li>
+    </ul>
+
+    <h3>The Enduring Role of Manual FE</h3>
+    <p class="detail-description">Despite automation, Feature Engineering remains critical:</p>
+    <ul>
+        <li><strong>Structured Data:</strong> For tabular data, manual construction (e.g., creating time-series lags like "Days since last login") provides performance boosts that deep networks cannot easily replicate.</li>
+        <li><strong>Unstructured Data:</strong> Techniques like TF-IDF are still used for specialized text tasks.</li>
+    </ul>
+    
+    <p class="detail-description" style="margin-top:10px;">
+        While algorithms provide the machinery for learning, feature engineering provides the refined fuel; it requires a blend of domain expertise and creativity.
+    </p>
+
+    <h3>Examples of Transformations</h3>
+    
+    <div class="detail-description">
+        <h4>1. Transforming Temporal Data (Time-Series)</h4>
+        <ul>
+            <li><strong>Timestamp Decomposition:</strong> Extracting components like <span class="code-style">Day_of_Week</span> (Friday) or <span class="code-style">Hour_of_Day</span> (18) to capture seasonality.</li>
+            <li><strong>Cyclical Encoding:</strong> Converting time into Sine/Cosine coordinates so the model understands 11 PM and Midnight are close.</li>
+        </ul>
+    </div>
+
+    <div class="detail-description">
+        <h4>2. Manipulating Numerical Values</h4>
+        <ul>
+            <li><strong>Scaling:</strong> Scaling Income and Age to a [0, 1] range so the model treats them fairly.</li>
+            <li><strong>Binning:</strong> Grouping ages (18–25) into buckets ("Young Adult") to reduce noise.</li>
+        </ul>
+    </div>
+
+    <div class="detail-description">
+        <h4>3. Transforming Categorical Data</h4>
+        <ul>
+            <li><strong>One-Hot Encoding:</strong> Converting "Red/Green" into binary columns (<span class="code-style">Is_Red: 1</span>).</li>
+            <li><strong>Target Encoding:</strong> Replacing a Zip Code with the average house price of that area.</li>
+        </ul>
+    </div>
+
+    <div class="detail-description">
+        <h4>4. Creating Interaction Features</h4>
+        <ul>
+            <li><strong>Ratios:</strong> <span class="code-style">Price_Per_SqFt = Price / SqFt</span> reveals value better than raw price alone.</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <h2>Model Training: The Computational Heart</h2>
+    <p class="detail-description">
+        Once the features are defined—either manually through traditional feature engineering or automatically via Deep Learning's internal layers—the **Model Training** phase begins. This is the orchestrated interaction between three distinct components: the Model, the Cost Function, and the Optimization.
+    </p>
+
+    <h3>1. The Model (The Hypothesis Space)</h3>
+    <p class="detail-description">
+        The Model is the mathematical "blueprint." Depending on whether the features were engineered by a human or the machine, the model structure varies:
+    </p>
+    <ul>
+        <li><strong>Structured Models:</strong> For tabular data, we use algorithms like <strong>Decision Trees</strong>, <strong>Naive Bayes</strong>, or <strong>Support Vector Machines (SVM)</strong>. These rely on the high-quality features created in the previous pipeline stage.</li>
+        <li><strong>End-to-End Architectures:</strong> In <strong>Deep Learning</strong> and <strong>LLMs</strong>, the "Model" is massive. Here, the early layers of the model perform automated feature extraction, while the later layers map those features to the final output.</li>
+    </ul>
+
+    <h3>2. The Cost Function (The Scorer)</h3>
+    <p class="detail-description">
+        The Cost Function (or Loss Function) is the "Evaluation Metric" of the training heart. It calculates a numerical score representing the gap between the model's prediction and the ground truth.
+    </p>
+    <ul>
+        <li><strong>Goal:</strong> The training phase is mathematically defined as the quest to find parameters that yield the lowest possible cost.</li>
+    </ul>
+
+    <h3>3. The Optimization (The Mechanism of Change)</h3>
+    <p class="detail-description">
+        Optimization is the "Learning Engine." It uses the score from the Cost Function to iteratively adjust the model’s internal parameters (weights and biases).
+    </p>
+    <ul>
+        <li><strong>Gradient Descent:</strong> Most modern models, especially DL and LLMs, use some form of Gradient Descent to "step" toward the minimum error.</li>
+        <li><strong>Greedy Search:</strong> Algorithms like <strong>K-Means</strong> or <strong>Decision Trees</strong> use specific logic to group data or split nodes to optimize their internal structure.</li>
+    </ul>
+
+    <h3>The Iterative Loop: From Logic to Generalization</h3>
+    <p class="detail-description">
+        The training phase is not a single event but a continuous loop. The model makes a guess, the cost function measures the error, and the optimizer applies a correction.
+        The ultimate goal of the Training Phase is to solve for the <strong>optimal parameters (such as weights and biases) of the chosen ML model</strong>. These parameters represent the <strong>'knowledge'</strong> the model has acquired and discovered through optimization strategy. 
+    </p>
+    
+    <p class="detail-description">
+        This cycle continues until the model achieves <strong>Generalization</strong>—the ability to apply its learned patterns to new, unseen data accurately. Whether you are clustering data with K-Means or generating text with a Transformer, this three-part harmony is what transforms raw data into intelligence.
+    </p>
+    <h2>Evaluation Phase </h2>
+    <p class="detail-description">
+       In a professional ML pipeline, the Model Evaluation step acts as the final gatekeeper, ensuring that the patterns learned during training are truly predictive and not just the result of memorization <strong>(overfitting)</strong>. This stage is conducted using a <strong>Test Dataset</strong>—a subset of data that was strictly withheld during the training phase to simulate real-world conditions.
+    </p>
+    <p class="detail-description">The evaluation process typically follows these four critical steps:</p>
+    <h3>1. Quantitative Scoring: </h3>
+    <p class="detail-description">The model generates predictions for the test set, which are compared against the ground truth using specific metrics such as <strong>Accuracy, Precision, and Recall for classification, or Root Mean Square Error (RMSE) for regression</strong>.</p>    
+
+    <h3>2. Generalization check: </h3>
+    <p class="detail-description">Compare the <strong>training error against the test error</strong>; a large gap between the two signals that the model has overfit and requires better <strong>regularization</strong>.</p> 
+    
+    <h3>3. Residual & Error Analysis: </h3>
+    <p class="detail-description">Beyond aggregate metrics, this step involves a granular examination of failure cases. By using tools like a <strong>Confusion Matrix</strong>, identification of whether the model consistently fails on specific classes (e.g., mistaking 'dogs' for 'cats') allows for targeted improvements.</p>
+   <h2>Deployment </h2>
+   <p>Shall be covered later</p>
+</body>
+</html>

@@ -1,0 +1,197 @@
+/* style.css - MASTER STYLESHEET */
+
+/* --- 1. Global & Layout Styling (From Old HTML) --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #000;
+    background-color: #fff;
+    margin: 20px;
+    padding: 0;
+}
+h2 {
+    font-size: 1.8rem;
+    color: #0056b3; /* This makes h2 blue */
+    margin-top: 30px;
+}
+
+h3 {
+    font-size: 1.4rem;
+    color: #0056b3; /* Add this line to make h3 blue as well */
+    margin-top: 20px;
+}
+
+/* 3. Standardize Paragraphs and Lists */
+p, li {
+    font-size: 1rem; /* Exactly 16px */
+    margin-bottom: 10px;
+}
+
+.publisher-heading {
+    text-transform: uppercase;
+    font-size: 2.5em;
+    margin-bottom: 5px;
+    color: #2a6496;
+    text-align: center;
+}
+
+.publisher-address {
+    text-align: center;
+    font-size: 1.1em;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.address-line { margin: 0; line-height: 1.3; }
+
+/* --- 2. Navigation Bar --- */
+.nav-bar {
+    text-align: center;
+    margin: 20px auto 30px auto;	
+    max-width: 1100px;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    padding: 10px 0;
+    background-color: #fff;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #007bff;
+    font-size: 1.1em;
+    margin: 0 25px;
+    padding: 5px 10px;
+    transition: color 0.2s;
+    cursor: pointer;	
+}
+
+.nav-link:hover {
+    color: #0056b3;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+/* --- 3. Carousel Styling --- */
+.carousel-wrapper {
+    position: relative;
+    max-width: 1100px;	
+    margin: 0 auto;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+}
+
+.carousel-container { width: 100%; overflow: hidden; padding: 20px 0; }
+
+.book-track { 
+    display: flex; 
+    transition: transform 0.5s ease-in-out; 
+    width: fit-content; 
+}
+
+.book-item { 
+    min-width: 200px; 
+    height: 300px; 
+    margin-right: 20px; 
+    border: 1px solid #ccc; 
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    color: #fff; 
+    font-weight: bold; 
+    text-align: center;
+    cursor: pointer; 
+}
+
+.carousel-arrow { 
+    position: absolute; top: 50%; transform: translateY(-50%); 
+    background: rgba(0, 0, 0, 0.6); color: white; border: none; 
+    padding: 10px 15px; cursor: pointer; z-index: 10; font-size: 24px; 
+    border-radius: 50%; 
+}
+
+.prev { left: 10px; }
+.next { right: 10px; }
+
+/* --- 4. Main Content Area & Two-Column Layout --- */
+.main-content-area {
+    max-width: 1100px;
+    margin: 40px auto;
+    background-color: #fff;
+    min-height: 500px;
+    display: flex;	
+}
+
+.two-column-container {
+    display: flex;
+    height: 100%;
+    width: 100%;
+}
+
+.left-panel-nav {
+    flex: 0 0 280px;
+    overflow-y: auto;	
+    border-right: 2px solid #ccc;
+}
+
+.right-panel-content {
+    flex: 1;
+    padding: 20px 40px;
+    overflow-y: auto;
+}
+
+/* --- 5. Tutorial List & Selection Styles --- */
+.list-item {
+    list-style: none;
+    padding: 8px 15px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.topic-header {
+    font-weight: bold;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+.sub-topics { display: none; padding-left: 20px; }
+
+.list-item.selected {
+    font-weight: bold;
+    background-color: #e5f4ff;
+    border-left: 4px solid #007bff;
+}
+
+/* --- 6. Tutorial Content Boxes (Your New Styles) --- */
+.algorithm-box { 
+    background-color: #f5f5dc; 
+    border: 2px solid #2980b9; 
+    padding: 20px; 
+    border-radius: 8px; 
+    font-family: 'Courier New', monospace; 
+    margin: 20px 0; 
+}
+
+.intuition-box {
+    background-color: #eef7ff;
+    padding: 15px;
+    border-left: 4px solid #3498db;
+    margin-bottom: 10px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.data-table th, .data-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.data-table th { background-color: #f4f4f4; }

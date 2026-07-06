@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal Component Analysis (PCA) From First Principles</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+    <main class="container" style="max-width: 900px; margin: 0 auto; padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
+        
+        <section id="pca-introduction">
+            <h2>Principal Component Analysis (PCA)</h2>
+            <p>
+                Principal Component Analysis (PCA) is a powerful statistical technique used to reduce the dimensionality of a dataset (for instance features) while retaining as much structural variance and information as possible. It accomplishes this by transforming a set of correlated features into a new coordinate system of uncorrelated orthogonal axes called principal components.
+            </p>
+        </section>
+
+        <section id="pca-step-1">
+            <h3>1. Data Preparation: Standardization</h3>
+            <p>
+                The first crucial step is to standardize the raw dataset. Because PCA is highly sensitive to the absolute physical scales of individual variables, features with larger numeric ranges would naturally dominate the variance calculation. Transforming each feature ensures equal weighting.
+            </p>
+            
+            <div class="derivation-box" style="border-left: 4px solid #38bdf8; padding-left: 15px; margin: 15px 0;">
+                <strong>Mathematical Transformation:</strong><br>
+                We transform the raw data matrix \(X\) to yield the standardized matrix \(Z\), enforcing a mean of 0 and a standard deviation of 1 for each independent feature column:
+                <div class="math-block" style="margin: 10px 0;">
+                    $$Z = \frac{X - \mu}{\sigma}$$
+                </div>
+                <span style="color: #64748b; font-size: 0.9rem;">Where \(\mu\) represents the feature mean vector and \(\sigma\) represents the standard deviation vector.</span>
+            </div>
+        </section>
+
+        <section id="pca-step-2">
+            <h3>2. Covariance Matrix Calculation</h3>
+            <p>
+                To understand how the features vary together, we construct a covariance matrix. This matrix captures the geometric dispersion and pairwise linear dependencies across the entire standardized feature landscape.
+            </p>
+
+            <div class="derivation-box" style="border-left: 4px solid #10b981; padding-left: 15px; margin: 15px 0;">
+                <strong>Covariance Matrix Formula:</strong><br>
+                Given a standardized data matrix \(Z\) of size \((N \times D)\), the covariance matrix \(\Sigma\) is a \((D \times D)\) square, symmetric matrix calculated as:
+                <div class="math-block" style="margin: 10px 0;">
+                    $$\Sigma = \frac{1}{n-1} Z^T Z$$
+                </div>
+                
+                <p style="margin-top: 15px; margin-bottom: 5px;"><strong>Matrix Structural Anatomy:</strong></p>
+                The diagonal entries express the variance of individual features, while the off-diagonal entries represent the directional covariances between feature pairs:
+                <div class="math-block" style="margin: 10px 0;">
+                    $$\Sigma = \begin{bmatrix} 
+                    \text{Var}(z_1) & \text{Cov}(z_1, z_2) & \cdots & \text{Cov}(z_1, z_D) \\
+                    \text{Cov}(z_2, z_1) & \text{Var}(z_2) & \cdots & \text{Cov}(z_2, z_D) \\
+                    \vdots & \vdots & \ddots & \vdots \\
+                    \text{Cov}(z_D, z_1) & \text{Cov}(z_D, z_2) & \cdots & \text{Var}(z_D)
+                    \end{bmatrix}$$
+                </div>
+            </div>
+        </section>
+
+        <section id="pca-step-3">
+            <h3>3. Eigenvalue and Eigenvector Decomposition</h3>
+            <p>
+                By performing an eigen-decomposition on our covariance matrix \(\Sigma\), we unlock the baseline structural orientation of the data. Eigenvectors indicate the specific directional axes of maximum variance, while eigenvalues quantify the density of information stored along those respective axes.
+            </p>
+
+            <div class="derivation-box" style="border-left: 4px solid #8b5cf6; padding-left: 15px; margin: 15px 0;">
+                <strong>The Characteristic Equation:</strong><br>
+                We solve for the scalar eigenvalues (\(\lambda\)) and non-zero eigenvectors (\(v\)) satisfying:
+                <div class="math-block" style="margin: 10px 0;">
+                    $$\Sigma v = \lambda v$$
+                </div>
+
+                <p style="margin-top: 15px; margin-bottom: 5px;"><strong>Eigenvectors Matrix (\(V\)):</strong></p>
+                A \((D \times D)\) matrix where each column is an orthogonal unit vector \(v_i\). These establish our brand new coordinate axes system:
+                <div class="math-block" style="margin: 10px 0;">
+                    $$V = [v_1 \mid v_2 \mid \dots \mid v_D]$$
+                </div>
+
+                <p style="margin-top: 15px; margin-bottom: 5px;"><strong>Eigenvalues Matrix (\(\Lambda\)):</strong></p>
+                A \((D \times D)\) diagonal matrix where each entry \(\lambda_i\) corresponds exactly to the raw variance magnitude captured by its matching eigenvector column:
+                <div class="math-block" style="margin: 10px 0;">
+                    $$\Lambda = \begin{bmatrix} 
+                    \lambda_1 & 0 & \cdots & 0 \\
+                    0 & \lambda_2 & \cdots & 0 \\
+                    \vdots & \vdots & \ddots & \vdots \\
+                    0 & 0 & \cdots & \lambda_D 
+                    \end{bmatrix}$$
+                </div>
+            </div>
+        </section>
+
+        <section id="pca-step-4">
+            <h3>4. Feature Vector Selection</h3>
+            <p>
+                To compress our dimensions, we sort our calculated eigenvalues in strict descending order: \(\lambda_1 \ge \lambda_2 \ge \dots \ge \lambda_D\). The top eigenvectors containing the highest magnitude of variance are chosen to form our compression gateway.
+            </p>
+
+            <div class="derivation-box" style="border-left: 4px solid #f59e0b; padding-left: 15px; margin: 15px 0;">
+                <strong>Principal Components Projection Matrix (\(W_k\)):</strong><br>
+                By selecting the first \(k\) columns from our sorted matrix \(V\), we construct a truncated projection matrix \(W_k\) with a condensed dimensional shape of \((D \times k)\):
+                <div class="math-block" style="margin: 10px 0;">
+                    $$W_k = \begin{bmatrix} 
+                    v_{1,1} & v_{1,2} & \cdots & v_{1,k} \\
+                    v_{2,1} & v_{2,2} & \cdots & v_{2,k} \\
+                    \vdots & \vdots & \ddots & \vdots \\
+                    v_{D,1} & v_{D,2} & \cdots & v_{D,k}
+                    \end{bmatrix}$$
+                </div>
+            </div>
+        </section>
+<p><strong>Summary of Matrix Dimensions:</strong></p>
+<ul style="line-height: 1.6; padding-left: 20px;">
+    <li><strong>Original Data Matrix ($Z$):</strong> $N \times D$ (Each item (row) is a sample, and each sample has $D$ features. PCA reduces the number of features from $D$ down to $k$, while the number of samples ($N$) remains completely unchanged</li>
+    <li><strong>Covariance Matrix ($\Sigma$):</strong> $D \times D$</li>
+    <li><strong>Projection Matrix ($W_k$):</strong> $D \times k$</li>
+    <li><strong>Reduced Data Matrix ($Z_{\text{reduced}}$):</strong> $(N \times D) \times (D \times k) = N \times k$. </li>
+</ul>
+
+<section id="pca-matrix-deep-dive" style="margin: 35px 0;">
+    <div style="border-left: 4px solid #8b5cf6; background-color: #faf5ff; padding: 20px; border-radius: 0 8px 8px 0;">
+        <h3 style="color: #6d28d9; margin-top: 0;">💡 Deep Dive: How Do We Actually Get \(\Lambda\) and \(W_k\)?</h3>
+        <p>
+            When we solve the core eigen-decomposition equation \(\Sigma v = \lambda v\), the linear algebra solver doesn't give us matrices. It gives us a raw list of individual pairs: <strong>\(D\) eigenvalues</strong> (scalars representing strength) and <strong>\(D\) corresponding eigenvectors</strong> (vectors representing direction).
+        </p>
+        
+        <p><strong>Let's use a concrete example:</strong> Suppose we have a dataset with 3 features (\(D = 3\)). Solving the equation yields 3 random unsorted pairs:</p>
+        <ul style="line-height: 1.6; padding-left: 20px;">
+            <li>Pair A: \(\lambda = 0.2\), Vector \(v_A = [0.1, 0.8, 0.5]^T\)</li>
+            <li>Pair B: \(\lambda = 4.5\), Vector \(v_B = [0.7, 0.1, 0.7]^T\)</li>
+            <li>Pair C: \(\lambda = 1.3\), Vector \(v_C = [0.6, 0.5, 0.1]^T\)</li>
+        </ul>
+
+        <h4 style="color: #1e293b; margin-top: 20px; margin-bottom: 5px;">Step 1: The Sorting Rule (The Foundation)</h4>
+        <p style="margin-top: 0;">
+            Before building any matrix, we must sort these pairs in <strong>descending order</strong> based on their eigenvalues (\(\lambda\)). This ranks the directions from most informative to least informative:
+        </p>
+        <div style="background-color: #ffffff; padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: monospace; font-size: 0.95rem; text-align: center; margin-bottom: 20px;">
+            Sorted Order: \(\lambda_1 = 4.5\) (Pair B) &gt; \(\lambda_2 = 1.3\) (Pair C) &gt; \(\lambda_3 = 0.2\) (Pair A)
+        </div>
+
+        <h4 style="color: #1e293b; margin-bottom: 5px;">1. How We Construct the Eigenvalue Matrix (\(\Lambda\))</h4>
+        <p style="margin-top: 0;">
+            The matrix \(\Lambda\) is simply a structural storage locker for the variance strengths. We place our sorted eigenvalues safely along the <strong>main diagonal</strong> from top-left to bottom-right, and fill all other empty slots with <code>0</code> so they don't interfere during matrix multiplications:
+        </p>
+        <div class="math-block" style="margin: 15px 0;">H
+            $$\Lambda = \begin{bmatrix} 
+            \mathbf{\lambda_1} & 0 & 0 \\ 
+            0 & \mathbf{\lambda_2} & 0 \\ 
+            0 & 0 & \mathbf{\lambda_3} 
+            \end{bmatrix} = \begin{bmatrix} 
+            \mathbf{4.5} & 0 & 0 \\ 
+            0 & \mathbf{1.3} & 0 \\ 
+            0 & 0 & \mathbf{0.2} 
+            \end{bmatrix}$$
+        </div>
+        <p style="font-size: 0.9rem; color: #475569; font-style: italic;">
+            Takeaway for students: This matrix is just a cleanly organized diagnostic map showing that our first new axis holds 4.5 units of data variance, the second holds 1.3, and the third holds only 0.2.
+        </p>
+
+        <h4 style="color: #1e293b; margin-top: 25px; margin-bottom: 5px;">2. How We Construct the Projection Matrix (\(W_k\))</h4>
+        <p style="margin-top: 0;">
+            The matrix \(W_k\) is our actual dimensionality reduction gateway. If we want to reduce our data from 3 dimensions down to 2 dimensions, our target is <strong>\(k = 2\)</strong>. 
+        </p>
+        <p>
+            To build it, we look at our sorted list and grab <em>only</em> the first \(k\) eigenvectors. We take those standalone vertical columns and glue them side-by-side to construct a brand new coordinate transformation grid:
+        </p>
+        <div class="math-block" style="margin: 15px 0;">
+            $$W_k = \begin{bmatrix} \mid & \mid \\ v_1 & v_2 \\ \mid & \mid \end{bmatrix} = \begin{bmatrix} \mid & \mid \\ v_B & v_C \\ \mid & \mid \end{bmatrix} = \begin{bmatrix} \mathbf{0.7} & \mathbf{0.6} \\ \mathbf{0.1} & \mathbf{0.5} \\ \mathbf{0.7} & \mathbf{0.1} \end{bmatrix}$$
+			We selected \mid \\ v_B and \(v_c) as the features, because the highest eigen vectors and ignorning \mid \\(v_A)
+        </div>
+        <p style="font-size: 0.9rem; color: #475569; font-style: italic;">
+            Takeaway for students: Notice the shape change! The full eigenvector matrix \(V\) was a square \((3 \times 3)\). By cherry-picking only the top \(k=2\) columns, we engineered a non-square \((3 \times 2)\) matrix. This shape mismatch is the mathematical filter that drops the lowest-variance dimension during projection!
+        </p>
+    </div>
+</section>
+        <section id="pca-step-5">
+            <h3>5. Data Transformation (Projection)</h3>
+            <p>
+                The final operational step is to project our original standardized observations directly onto the subspace spanned by our chosen principal components matrix.
+            </p>
+
+            <div class="derivation-box" style="border-left: 4px solid #ec4899; padding-left: 15px
+			
+			<section id="pca-essence" style="margin: 40px 0; padding: 25px; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+    <h2 style="margin-top: 0; color: #1e293b;">The Essence of PCA</h2>
+    
+    <div style="margin-bottom: 25px;">
+        <h4 style="color: #0284c7; margin-bottom: 8px; font-size: 1.1rem;">Why It's Unsupervised</h4>
+        <p style="margin: 0; line-height: 1.6;">
+            PCA operates entirely without labeled output targets or "correct answers" ($y$). It looks solely at the internal distribution of the feature matrix ($X$) to uncover the hidden geometric structure and variance profiles of the data.
+        </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+        <div>
+            <h4 style="color: #0f766e; margin-bottom: 10px; font-size: 1.1rem;">Core Functions</h4>
+            <ul style="padding-left: 20px; margin: 0; line-height: 1.6;">
+                <li style="margin-bottom: 8px;">
+                    <strong>Feature Extraction:</strong> Transforms original, highly correlated variables into a smaller, optimized set of entirely new, uncorrelated Principal Components.
+                </li>
+                <li>
+                    <strong>Data Compression:</strong> Lowers downstream computational demands by discarding low-variance axes while retaining the most "informative" dimensions of the data.
+                </li>
+            </ul>
+        </div>
+        
+        <div>
+            <h4 style="color: #b45309; margin-bottom: 10px; font-size: 1.1rem;">Common Applications</h4>
+            <ul style="padding-left: 20px; margin: 0; line-height: 1.6;">
+                <li style="margin-bottom: 8px;">
+                    <strong>Exploratory Data Analysis (EDA):</strong> Enables the projection and mapping of high-dimensional datasets into 2D or 3D coordinate planes for human visualization.
+                </li>
+                <li style="margin-bottom: 8px;">
+                    <strong>Noise Reduction:</strong> By focusing exclusively on axes with high variance, it naturally filters out random, low-level data fluctuations.
+                </li>
+                <li>
+                    <strong>Model Preprocessing:</strong> Acts as a foundational pipeline step for other algorithms by systematically removing multicollinearity and improving training efficiency.
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 20px;">
+        <p style="margin: 0; line-height: 1.6; font-style: italic; color: #475569;">
+            <strong>The Bottom Line:</strong> By mapping the data observations onto these new orthogonal axes—which capture the maximum "spread" or variance of your original features—you effectively reduce complexity while preserving the fundamental geometric relationships hidden within your dataset.
+        </p>
+    </div>
+</section>

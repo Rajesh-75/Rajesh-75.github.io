@@ -1,0 +1,9 @@
+
+
+And in Chapter 12, we discussed generalized linear models, which generalizes these models to other kinds of output distributions, such as Poisson. However, all these models make the strong assumption that the input-output mapping is linear. A simple way of increasing the flexibility of such models is to perform a feature transformation, by replacing x with ϕ(x). For example, we can use a polynomial transform, which in 1d is given by ϕ(x) = [1,x,x2,x3,...], as we discussed in Section 1.2.2.2. This is sometimes called basis function expansion. The model now becomes
+
+F(x:thetha) = Wphi(x)+basis
+f(x;θ) = fL(fL−1(···(f1(x))···))
+
+
+Empirically, greater depth does seem to result in better generalization for a wide variety of tasks

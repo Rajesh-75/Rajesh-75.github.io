@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shallow Neural Networks</title>
+    <link rel="stylesheet" href="Style.css">
+
+    <script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        options: {
+            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<h2>Neural Networks</h2>
+
+<div class="description-box">
+    <h3>The Architecture of Intelligence</h3>
+    <p>
+        A Neural Network is a powerful Machine Learning model designed to identify complex patterns in data. 
+        It is the foundational technology behind modern AI, widely used for <strong>Pattern Recognition</strong> (such as identifying objects in photos), 
+        <strong>Image Generation</strong>, and <strong>Natural Language Processing</strong> (like predicting the next word in a sentence).
+    </p>
+    <p>
+        A Neural Network is one of the few Machine Learning models capable of handling massive amounts of high-dimensional data, 
+        such as millions of pixels in an image or billions of tokens in text. Modern Neural Networks are significantly larger than early AI models, both in terms of 
+        <strong>learnable parameters</strong> (the weights) and the <strong>depth of internal processing</strong> (the number of hidden layers).
+    </p>
+    <p> 
+        Modern Neural Networks require massive computational infrastructure. Training these models on a standard CPU (Central Processing Unit) would take years because CPUs are designed for general-purpose tasks. Instead, modern AI relies on GPUs (Graphics Processing Units) and specialized chips like TPUs (Tensor Processing Units). These processors are built for massive parallelism, allowing them to perform thousands of mathematical calculations simultaneously.
+    </p>
+</div>
+
+<div class="description-box">
+    <h3>From Linear Regression to Stacks of Logistic Units</h3>
+    <p>
+        Linear and Logistic Regression, as seen in earlier chapters, take inputs, multiply them by weights, and produce an output. 
+        A Neural Network is a "multi-layer" stack of linear and logistic regression units. This multi-layer structure allows the model to process data in stages, where each layer leads to the creation of new <strong>features</strong> and features given to cost function which computes probabilities of the output values. 
+
+    </p>
+	
+	 <h3>The Learning Cycle</h3>
+    <p>Training a Neural Network broadly involves four distinct phases. Later in the sections explore the mechanics of each phase in the following sections:</p>
+    <ol class="process-list">
+        <li><strong>Forward Pass:</strong> Data is fed through the network to generate predictions (detailed in Sections 1-4).</li>
+        <li><strong>Loss Calculation:</strong> A function measures how far off the predictions were from the true labels (Section 5).</li>
+        <li><strong>Backpropagation:</strong> The error is propagated backward to compute gradients.</li>
+        <li><strong>Weight Update:</strong> An optimizer (like Adam) uses gradients to update weights.</li>
+    </ol>
+    </div>
+	
+	<div class="image-container">
+        <img src="NeuralNetworkDiagram.png" alt="Neural Network Layer Diagram" class="network-image">
+    </div>
+
+<div class="tutorial-content">
+    <ul>
+        <li class="section-item">
+            <span class="section-title">1. As shown in the figure The Inputs (Layer L=0): The Feature Vector</span>
+            <p>The first layer is where your "raw features" live. Each neuron ($n_1, n_2, n_3$) represents a measurable attribute, like "Tail Length" or "Whiskers" in a cat classifier. These are the only values grounded in direct reality before the abstraction begins.</p>
+        </li>
+		
+        <li class="section-item">
+            <span class="section-title">2. The Weights ($W_{jk}^{(l)}$): Trust and Influence</span>
+            <p>Weights represent the "influence" one neuron has on the next. A positive weight is a vote of confidence, while a negative weight acts as a "veto."</p>
+        </li>
+
+        <li class="section-item">
+            <span class="section-title">3. The Weighted Sum: The Linear Core</span>
+            <p>Before the activation happens, each neuron performs a linear regression step, accumulating incoming signals plus a <strong>Bias ($b$)</strong> which acts as the intercept:</p>
+            <div class="math-display">
+                $$a_j^{(l)} = \sum_{k} (w_{jk}^{(l-1)} \cdot n_k^{(l-1)}) + b_j^{(l)}...(1),$$
+				()
+            </div>
+        </li>
+
+        <li class="section-item">
+            <span class="section-title">4. The Activation Function: The Non-Linear Step</span>
+            <p>
+     The Linear Regression step calculation step 3 is transformed using Activation. By using functions like <strong>ReLU</strong> or <strong>Sigmoid</strong> (denoted by $h$), 
+    the activation is represented as:
+    $$a_j^{(l)} = h(z_j^{(l)}) \dots (2)$$.
+</p>
+
+<p>
+    For <strong>Sigmoid</strong> Activation, we represent the layers as:
+    $$n_1^{(2)} = \sigma\left(W_{11}^{(1)}n_1^{(1)} + b_1^{(2)}\right), \qquad n_1^{(3)} = \sigma\left(W_{11}^{(2)}n_1^{(2)} + b_1^{(3)}\right) \dots (3)$$
+</p>
+
+<p>
+    For <strong>ReLU</strong> Activation, we represent the layers as:
+    $$n_1^{(2)} = \text{ReLU}\left(W_{11}^{(1)}n_1^{(1)} + b_1^{(2)}\right), \qquad n_1^{(3)} = \text{ReLU}\left(W_{11}^{(2)}n_1^{(2)} + b_1^{(3)}\right)$$
+</p>
+
+<p>
+    Combining these for a deeper network, we can write the nested activation for $n_1^{(4)}$ as:
+    $$n_1^{(4)} = \text{ReLU}\left(W_{11}^{(3)} \cdot \text{ReLU}\left(W_{11}^{(2)} \cdot \text{ReLU}\left(W_{11}^{(1)} \cdot n_1^{(1)} + b_1^{(2)}\right) + b_1^{(3)}\right) + b_1^{(4)}\right) \dots (4)$$
+</p>
+			
+			By using Activation Functions we allow the network to "bend" the rules, enabling it to learn relationships that aren't just straight lines. These hidden layers automatically combine raw inputs into high-level features.<div class="note-box" style="background-color: #fff5f5; border-left: 4px solid #e53e3e; padding: 10px; margin-top: 10px;">
+			<div class="formula-box" style="text-align: center; margin: 20px 0; background: #f8fafc; padding: 15px; border-radius: 8px;">
+			
+			
+        
+		The entire layer processing is given as 
+    </div>
+        <strong>The "Linear Collapse" Rule:</strong> 
+        Mathematically, the composition of linear functions is always just another linear function:
+        <div style="text-align: center; margin: 10px 0;">
+            $$f(g(x)) = W_2(W_1x) = (W_2W_1)x = W_{combined}x$$
+        </div>
+        Without non-linearity, your deep network with millions of parameters would have the same "expressive power" 
+        as a single-layer Linear Regression—unable to learn curves, circles, or complex decision boundaries.
+    </div></p>
+        </li>
+
+	<li class="section-item" style="list-style-type: none; margin-bottom: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <span class="section-title" style="font-size: 1.4rem; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db;">
+        5. Final Layer (L4) & Loss Evaluation
+    </span>
+    
+    <p style="line-height: 1.6; color: #333; margin-top: 15px;">
+        Before the final output is emitted, the weighted sums (<strong>Logits or $Z$ values</strong>) are passed through a non-linear activation function $f(\mathbf{z})$. This function "interprets" the raw scores to match the mathematical requirements of the specific task:
+    </p>
+
+    <ul style="line-height: 1.8; color: #555;">
+        <li><strong>Multi-Class Classification (e.g., Softmax):</strong> Maps $Z$ values to a categorical probability distribution where $\sum P_i = 1$. This is used when classes are mutually exclusive.</li>
+        <li><strong>Binary Classification (Sigmoid):</strong> Squashes a single $Z$ value into a $(0, 1)$ range, representing the probability of the positive class.</li>
+        <li><strong>Regression (Identity/Linear):</strong> A pass-through activation used when the goal is to predict a continuous scalar value (e.g., price or coordinate).</li>
+    </ul>
+
+    <p style="line-height: 1.6; color: #333;">
+        In the architectural flow, L4 outputs values represented as <strong>$y_i$</strong> (the Network Prediction). The <strong>Loss Function</strong>, denoted as $f(y_i, t_i)$, measures the discrepancy between these predictions and the <strong>Target Output ($t_i$)</strong>.
+    </p>
+
+    <p style="line-height: 1.6; color: #333;">
+        The Loss Function is parameterized by the weight values $w_i$, often expressed as $L(y_i, t_i; w_i)$. It determines the "cost" or deviation of the network output from the expected target. The mathematical formulation of this error depends strictly on the nature of the problem, as summarized in the table below:
+    </p>
+	<img src="loss_landscape.png" alt="3D Loss Landscape" style="max-width: 100%; height: auto; border-radius: 5px;">	
+
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-family: sans-serif;">
+    <thead>
+        <tr style="background-color: #34495e; color: white; text-align: left;">
+            <th style="padding: 12px; border: 1px solid #ddd;">Loss Function</th>
+            <th style="padding: 12px; border: 1px solid #ddd;">Output Characteristics</th>
+            <th style="padding: 12px; border: 1px solid #ddd;">Primary Use Case</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd;">
+                <strong>Mean Squared Error (MSE)</strong>
+                <div class="math-display" style="margin-top: 8px;">
+                    $$L(w) = \frac{1}{n} \sum_{i=1}^{n} (y_i - t_i)^2$$
+                </div>
+            </td>
+            <td style="padding: 12px; border: 1px solid #ddd;">A positive scalar representing average squared distance. Penalizes large errors heavily.</td>
+            <td style="padding: 12px; border: 1px solid #ddd;"><strong>Regression:</strong> Predicting house prices or coordinates.</td>
+        </tr>
+        <tr style="background-color: #f9f9f9;">
+            <td style="padding: 12px; border: 1px solid #ddd;">
+                <strong>Mean Absolute Error (MAE)</strong>
+                <div class="math-display" style="margin-top: 8px;">
+                    $$L(w) = \frac{1}{n} \sum_{i=1}^{n} |y_i - t_i|$$
+                </div>
+            </td>
+            <td style="padding: 12px; border: 1px solid #ddd;">A positive scalar representing average absolute distance.</td>
+            <td style="padding: 12px; border: 1px solid #ddd;"><strong>Regression:</strong> Use when data contains many <strong>outliers</strong>.</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd;">
+                <strong>Binary Cross-Entropy (BCE)</strong>
+                <div class="math-display" style="margin-top: 8px;">
+                    $$L(w) = -\frac{1}{n} \sum_{i=1}^{n} [t_i \ln y_i + (1 - t_i) \ln(1 - y_i)]$$
+                </div>
+            </td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Measures the distance between two probability distributions (0 or 1).</td>
+            <td style="padding: 12px; border: 1px solid #ddd;"><strong>Binary Classification:</strong> Yes/No, Spam detection.</td>
+        </tr>
+        <tr style="background-color: #f9f9f9;">
+            <td style="padding: 12px; border: 1px solid #ddd;">
+                <strong>Categorical Cross-Entropy</strong>
+                <div class="math-display" style="margin-top: 8px;">
+                    $$L(w) = -\sum_{i=1}^{n} \sum_{j=1}^{C} t_{i,j} \ln y_{i,j}$$
+                </div>
+            </td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Compares predicted class distribution against one-hot encoded targets.</td>
+            <td style="padding: 12px; border: 1px solid #ddd;"><strong>Multi-Class:</strong> Image recognition (MNIST, CIFAR) or LLMs.</td>
+        </tr>
+    </tbody>
+</table>
+</li>
+</div>
+<div class="description-box">
+    <h3>Gradient and Back Propogation</h3>
+	<div class="tutorial-content">
+	<p class="description-box">
+    Loss function is a surface with several minimums. Some of these minimums are called 
+    <strong>global minimums</strong> and <strong>local minimums</strong>. A core of the 
+    Neural Network training is finding these points. A minimum corresponds to a point where 
+    <strong>$$\nabla L(w) = 0 ...(5)$$.</strong> 
+    where $\nabla L(w)$ is the gradient of the Loss Function.Rather than using a single equation to solve (5) for weights, a repetitive, step-by-step method locates the lowest point of error, much like walking down a hill This gradient is computed 
+    by differentiating $L(w)$ with respect to weights ($w$).The most straightforward way to use gradient information is to update weights by taking a small step in the opposite direction of the gradient. This is calculated using the formula:$$w(\tau) = w(\tau-1) - \eta \nabla L(w(\tau-1))....(6)$$In this equation, the positive value $\eta$ is called the learning rate.The symbol $\tau$ represents a discrete time index, representing the specific iteration count within the sequence of weight updates. After each update, the gradient is calculated again for the new weights, and the process repeats. Because the weights constantly move toward the sharpest possible drop in error, this method is known as <strong>gradient descent or steapest descent</strong>. More about the Gradient Descent is covered in <a href = "BP2.html">BackPropogation</a>. For various parameters used by Neural Network Learning algorithm,please refer <a href = "BP2.html">Parameters</a>
+    <p style="color: #444; line-height: 1.5;"><h3>About Initialization of weight values</h3> <ul>
+        <li>When we use an algorithm like Gradient Descent to train a model, we have to pick a starting value for all the weights (parameters). Think of this as the "starting position" of your hiker on the 3D loss mountain we discussed.</li>
+		<li>Why it matters: Where you start has a huge impact. It determines how fast the model learns and how accurate it will be on new, unseen data.</li>
+
+		<li>The Problem: There isn't a perfect mathematical "rulebook" that tells us the best place to start.</li></ul>
+
+The Reality: Because we lack a solid theory, we often rely on common "best practices" (like small random numbers) and trial-and-error to find an initialization that works.
+    </p>		
+</p>
+</div>
+<div class="description-box">
+    <h3>Universal Approximation capabilities of Neural Networks</h3>
+
+It has been mathematically proven (most notably by Cybenko and Hornik) that Neural Networks are Universal Approximators. Using a property known as the 'density' of continuous functions, they proved that a single hidden layer can mimic any continuous relationship between inputs and outputs. While we won't go through the formal proof—which involves complex functional analysis—the takeaway is clear: if a logical pattern exists in your data, a Neural Network is theoretically capable of learning it.
+</div>
+
+<div class="description-box" style="overflow-x: auto;">
+    <h3 style="color: #2c3e50;">Comparison of Common Activation Functions</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; background-color: white;">
+        <thead>
+            <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e0;">
+                <th style="padding: 12px; text-align: left;">Function</th>
+                <th style="padding: 12px; text-align: center;">Visual Graph</th>
+                <th style="padding: 12px; text-align: left;">Range</th>
+                <th style="padding: 12px; text-align: left;">Differentiation ($f'(z)$)</th>
+                <th style="padding: 12px; text-align: left;">Vanishing Gradient?</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px;"><strong>Sigmoid</strong></td>
+                <td style="padding: 12px; text-align: center; min-width: 100px;">
+                    <span style="color: #0056b3; font-size: 1.2rem;">S-Curve</span>
+                </td>
+                <td style="padding: 12px;">(0, 1)</td>
+                <td style="padding: 12px;">$f(z)(1 - f(z))$</td>
+                <td style="padding: 12px; color: #e53e3e; font-weight: bold;">High Risk</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px;"><strong>Tanh</strong></td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="color: #0056b3; font-size: 1.2rem;">Zero-Centered S</span>
+                </td>
+                <td style="padding: 12px;">(-1, 1)</td>
+                <td style="padding: 12px;">$1 - f(z)^2$</td>
+                <td style="padding: 12px; color: #dd6b20;">Medium Risk</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px;"><strong>ReLU</strong></td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="color: #38a169; font-size: 1.2rem;">L-Shape (Hinge)</span>
+                </td>
+                <td style="padding: 12px;">[0, $\infty$)</td>
+                <td style="padding: 12px;">1 if $z > 0$, else 0</td>
+                <td style="padding: 12px; color: #38a169;">Low Risk</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px;"><strong>Leaky ReLU</strong></td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="color: #38a169; font-size: 1.2rem;">Bent Line</span>
+                </td>
+                <td style="padding: 12px;">(-$\infty$, $\infty$)</td>
+                <td style="padding: 12px;">1 if $z > 0$, else $\alpha$</td>
+                <td style="padding: 12px; color: #38a169;">Minimal</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="description-box">
+    <h3>Mathematical Deep Dives</h3>
+    
+    <div class="section-item">
+        <span class="section-title">The Calculus of ReLU: Why the Gradient is 1</span>
+        <p>For all values where $z > 0$, ReLU acts as the identity function ($f(z) = z$), meaning its derivative is exactly 1. This allows the "error signal" to pass through the neuron unchanged during training, though if $z < 0$, the gradient becomes 0—a state known as the "Dying ReLU" problem.</p>
+    </div>
+
+    <div style="border-left: 5px solid #2ecc71; background: #f0fff4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h4 style="margin-top: 0; color: #27ae60;">Architectural Math: Parameter Counting</h4>
+        <p>To calculate the complexity of a Dense Layer, we multiply the input dimension by the output dimension.</p>
+        <div style="background: white; padding: 10px; border: 1px dashed #27ae60; font-family: monospace;">
+            Input Size ($L_1$): n <br>
+            Output Size ($L_2$): n - 4 <br>
+            -------------------------- <br>
+            <strong>Connection Count:</strong> n * (n - 4) = n² - 4n
+        </div>
+        <p style="font-size: 0.85rem; margin-top: 15px;">
+            <em>Note:</em> In Large Language Models, $n$ is often 4096 or higher, leading to millions of connections per layer.
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
