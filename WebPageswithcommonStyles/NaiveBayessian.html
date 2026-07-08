@@ -1,0 +1,128 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial</title>
+   <script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  },
+  startup: {
+    ready: () => {
+      // wait for MathJax's own startup routine to finish loading fully
+      MathJax.startup.defaultReady();
+      // then run typesetting explicitly, ensuring the whole DOM is ready first
+      MathJax.typesetPromise();
+    }
+  }
+};
+</script>
+<script type="text/javascript" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+
+<section id="naive-bayes" class="section-block">
+    <h2><span class="sec-num">7</span> Bayes' Theorem: Prior, Likelihood, and Posterior</h2>
+
+    <h3>Definitions</h3>
+    <p><strong>Prior — P(A):</strong> What we believe about A <em>before</em> seeing any new evidence. It reflects existing knowledge, historical frequency, or assumption — essentially our starting belief.</p>
+    <p><strong>Likelihood — P(B|A):</strong> How probable the observed evidence B is, <em>assuming</em> A is true. It measures how well a given hypothesis explains the data we just observed.</p>
+    <p><strong>Posterior — P(A|B):</strong> Our <em>updated</em> belief about A after incorporating the new evidence B. This is the quantity we actually care about — it combines what we already knew with what we just observed.</p>
+
+    <p><strong>The relation:</strong></p>
+    <div class="math-block">
+        $$\text{Posterior} \propto \text{Prior} \times \text{Likelihood}$$
+    </div>
+    <p>In words: <em>start with what you believed, adjust it by how well the new evidence supports that belief, and arrive at an updated, more informed belief.</em></p>
+
+    <hr class="divider">
+
+    <h3>Intuitive Example 1: Box of Colored Balls</h3>
+    <p>Imagine two boxes:</p>
+    <ul>
+        <li><strong>Box A</strong> contains 8 red balls and 2 blue balls.</li>
+        <li><strong>Box B</strong> contains 3 red balls and 7 blue balls.</li>
+    </ul>
+    <p>You pick a box at random (50/50 chance — this is your <strong>prior</strong>, P(Box A) = P(Box B) = 0.5), then draw one ball without looking, and it turns out to be <strong>red</strong>.</p>
+    <p>Now you ask: <em>given that I drew a red ball, which box did I likely pick from?</em></p>
+    <ul>
+        <li><strong>Likelihood</strong> P(red | Box A) = 8/10 = 0.8 — red balls are common in Box A.</li>
+        <li><strong>Likelihood</strong> P(red | Box B) = 3/10 = 0.3 — red balls are rare in Box B.</li>
+    </ul>
+    <p>Multiplying prior × likelihood for each box:</p>
+    <ul>
+        <li>Box A: 0.5 × 0.8 = 0.4</li>
+        <li>Box B: 0.5 × 0.3 = 0.15</li>
+    </ul>
+    <p>Even though you started with equal belief in both boxes, observing a red ball shifts your <strong>posterior</strong> belief strongly toward Box A. This is the entire mechanism behind Bayesian reasoning — evidence reshapes prior belief into a posterior belief, and the shift is proportional to how well each hypothesis "explains" what you saw.</p>
+
+    <hr class="divider">
+
+    <h3>Intuitive Example 2: Image Processing (Pixel Classification)</h3>
+    <p>Suppose you're building a system to classify a pixel as <strong>"skin"</strong> or <strong>"not skin"</strong> in an image (a classic early computer vision task, before deep learning dominated).</p>
+    <ul>
+        <li><strong>Prior:</strong> P(skin) — what fraction of pixels in typical photos are skin-colored, based on general experience (say, 20%).</li>
+        <li><strong>Likelihood:</strong> P(pixel's RGB value | skin) — given that a pixel IS skin, how likely is it to have this specific color? Skin tones cluster in a fairly predictable RGB range, so this likelihood is high for skin-like colors and low for, say, bright green pixels.</li>
+        <li><strong>Posterior:</strong> P(skin | observed RGB value) — after seeing the actual pixel color, what's the updated probability it's skin?</li>
+    </ul>
+    <p>If a pixel's color strongly matches typical skin-tone statistics, the likelihood term dominates and pushes the posterior high — <em>even if skin pixels are relatively rare overall (low prior)</em>. This mirrors exactly how Naive Bayes text classification works later in this tutorial: instead of pixel colors, you'll see word occurrences updating the posterior probability of a class (e.g., spam vs. not-spam).</p>
+
+    <hr class="divider">
+
+    <h3>How This Inspired Classification Learning</h3>
+    <p>Bayes' theorem gives a natural, principled way to answer the core question of classification: <em>given the features I observe, which class is most probable?</em></p>
+    <div class="math-block">
+        $$P(\text{class} \mid \text{features}) \propto P(\text{class}) \times P(\text{features} \mid \text{class})$$
+    </div>
+    <p>This reframes classification as a <strong>belief-updating problem</strong>: start with how common each class is in general (prior), then ask how well the observed features match each class's typical pattern (likelihood), and combine the two to get an updated, evidence-informed probability for each class (posterior). The predicted class is simply the one with the highest posterior.</p>
+
+    <hr class="divider">
+
+    <h3>Why We Can't Use This Relation <em>Directly</em> for Classification</h3>
+    <p>The formula above looks simple, but there's a serious practical obstacle hiding inside the likelihood term: <strong>P(features | class)</strong> means the <em>joint</em> probability of every feature occurring together, given the class. In the pixel example, that was manageable because we only had one feature (RGB color). But real classification problems — like a text document — have <strong>dozens, hundreds, or thousands of features</strong> (every word position, every pixel, every sensor reading), and estimating their <strong>joint</strong> distribution directly requires accounting for every possible combination and correlation between them simultaneously.</p>
+    <p>This is computationally and statistically intractable for two reasons:</p>
+    <ol>
+        <li><strong>Combinatorial explosion</strong> — the number of possible feature combinations grows exponentially with the number of features, so you'd need an enormous (often impossible) amount of training data to reliably estimate probabilities for every combination.</li>
+        <li><strong>Data sparsity</strong> — with realistic dataset sizes, most specific feature combinations will simply never appear in training data at all, making their joint probability impossible to estimate from counts.</li>
+    </ol>
+
+    <h3>The Approach Used Instead: The "Naive" Independence Assumption</h3>
+    <p>To make this tractable, Naive Bayes introduces a simplifying assumption: <strong>treat every feature as conditionally independent of every other feature, given the class.</strong> Instead of estimating one enormous joint probability, this lets you break the likelihood into a product of small, individually estimable pieces:</p>
+    <div class="math-block">
+        $$P(\text{features} \mid \text{class}) \approx P(f_1 \mid \text{class}) \times P(f_2 \mid \text{class}) \times \dots \times P(f_n \mid \text{class})$$
+    </div>
+    <p>This is <em>why</em> it's called <strong>"Naive"</strong> Bayes — the independence assumption is almost never perfectly true in reality (word choices in a sentence <em>are</em> correlated, pixel colors <em>do</em> depend on neighboring pixels), but it makes the math solvable with a small, fixed amount of data per feature rather than an exponential amount of data per feature <em>combination</em>. It trades some accuracy for tractability.</p>
+
+    <hr class="divider">
+
+    <h3>How the Algorithm Is Actually Built From This Assumption</h3>
+    <p>Once the joint likelihood is broken into a product of individual, per-feature likelihoods, the entire Naive Bayes algorithm falls directly out of that one simplification — every step below exists purely to exploit the fact that each feature can now be handled <em>separately</em> rather than jointly.</p>
+    
+    <p><strong>1. Training becomes "estimate small, separate pieces" instead of "estimate one giant joint table."</strong><br>
+    Because $P(f_i \mid \text{class})$ only involves <em>one</em> feature at a time, each piece can be estimated independently just by counting: for every class, count how often each individual feature value occurs, and normalize. This is precisely why NB training is a single fast counting pass rather than an iterative search — the independence assumption is what makes a <strong>closed-form solution</strong> possible in the first place.</p>
+
+    <p><strong>2. The full posterior is reassembled by multiplying the independent pieces back together.</strong></p>
+    <div class="math-block">
+        $$P(\text{class} \mid \text{features}) \propto P(\text{class}) \times P(f_1 \mid \text{class}) \times P(f_2 \mid \text{class}) \times \dots \times P(f_n \mid \text{class})$$
+    </div>
+    <p>This is the direct algebraic consequence of the independence assumption — the algorithm literally <em>is</em> this formula, applied once per candidate class.</p>
+
+    <p><strong>3. Multiplying many small probabilities is numerically unstable, so the algorithm works in log-space instead.</strong><br>
+    Since probabilities are small fractions, multiplying dozens or hundreds of them together quickly underflows to zero. Taking the log converts every multiplication into an addition, which is exactly why the pseudocode you built earlier sums log-priors and log-likelihoods rather than multiplying raw probabilities:</p>
+    <div class="math-block">
+        $$\log P(\text{class} \mid \text{features}) \propto \log P(\text{class}) + \sum_{i=1}^{n} \log P(f_i \mid \text{class})$$
+    </div>
+
+    <p><strong>4. Classification is just comparing these sums across classes and picking the largest.</strong><br>
+    Because the denominator $P(\text{features})$ is identical across all classes (it doesn't depend on which class you're testing), it can be dropped entirely — the algorithm only needs to compute the sum above for <em>each</em> class and select the one with the highest value:</p>
+    <div class="math-block">
+        $$\hat{c} = \arg\max_{c} \left[ \log P(c) + \sum_{i=1}^{n} \log P(f_i \mid c) \right]$$
+    </div>
+
+    <p>So the entire Naive Bayes algorithm — training (counting per-feature statistics) and prediction (summing log-probabilities and taking argmax) — is nothing more than the practical machinery required to exploit the independence assumption. Every design choice in the algorithm (separate per-feature counting, log-space summation, argmax comparison) traces directly back to that single simplifying assumption you introduce with the "≈" in the formula above. This is a good moment to tell students: <em>the assumption isn't a side detail — it's the entire reason the algorithm is simple, fast, and trainable in one pass.</em></p>
+</section>
+</body>
+</html>
