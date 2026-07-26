@@ -3,16 +3,14 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
     <title>Machine Learning Tutorial</title>
-   <script>
+    <script>
 MathJax = {
   tex: {
     inlineMath: [['$', '$'], ['\\(', '\\)']]
   },
   startup: {
     ready: () => {
-      // wait for MathJax's own startup routine to finish loading fully
       MathJax.startup.defaultReady();
-      // then run typesetting explicitly, ensuring the whole DOM is ready first
       MathJax.typesetPromise();
     }
   }
@@ -100,7 +98,7 @@ MathJax = {
 
     <h3>How the Algorithm Is Actually Built From This Assumption</h3>
     <p>Once the joint likelihood is broken into a product of individual, per-feature likelihoods, the entire Naive Bayes algorithm falls directly out of that one simplification — every step below exists purely to exploit the fact that each feature can now be handled <em>separately</em> rather than jointly.</p>
-    
+
     <p><strong>1. Training becomes "estimate small, separate pieces" instead of "estimate one giant joint table."</strong><br>
     Because $P(f_i \mid \text{class})$ only involves <em>one</em> feature at a time, each piece can be estimated independently just by counting: for every class, count how often each individual feature value occurs, and normalize. This is precisely why NB training is a single fast counting pass rather than an iterative search — the independence assumption is what makes a <strong>closed-form solution</strong> possible in the first place.</p>
 
@@ -111,7 +109,7 @@ MathJax = {
     <p>This is the direct algebraic consequence of the independence assumption — the algorithm literally <em>is</em> this formula, applied once per candidate class.</p>
 
     <p><strong>3. Multiplying many small probabilities is numerically unstable, so the algorithm works in log-space instead.</strong><br>
-    Since probabilities are small fractions, multiplying dozens or hundreds of them together quickly underflows to zero. Taking the log converts every multiplication into an addition, which is exactly why the pseudocode you built earlier sums log-priors and log-likelihoods rather than multiplying raw probabilities:</p>
+    Since probabilities are small fractions, multiplying dozens or hundreds of them together quickly underflows to zero. Taking the log converts every multiplication into an addition, which is exactly why the pseudocode below sums log-priors and log-likelihoods rather than multiplying raw probabilities:</p>
     <div class="math-block">
         $$\log P(\text{class} \mid \text{features}) \propto \log P(\text{class}) + \sum_{i=1}^{n} \log P(f_i \mid \text{class})$$
     </div>
@@ -123,6 +121,82 @@ MathJax = {
     </div>
 
     <p>So the entire Naive Bayes algorithm — training (counting per-feature statistics) and prediction (summing log-probabilities and taking argmax) — is nothing more than the practical machinery required to exploit the independence assumption. Every design choice in the algorithm (separate per-feature counting, log-space summation, argmax comparison) traces directly back to that single simplifying assumption you introduce with the "≈" in the formula above. This is a good moment to tell students: <em>the assumption isn't a side detail — it's the entire reason the algorithm is simple, fast, and trainable in one pass.</em></p>
+
+    <hr class="divider">
+
+    <h3>Laplace Smoothing</h3>
+    <p>The counting-based estimation described above has a critical failure mode: what happens when a feature value never appeared in the training data for a given class?</p>
+    <p>If a word, say "quantum," never appeared in the "spam" class during training, then the raw count-based estimate gives:</p>
+    <div class="math-block">
+        $$P(\text{"quantum"} \mid \text{spam}) = \frac{0}{\text{total words in spam}} = 0$$
+    </div>
+    <p>This single zero is catastrophic because of step 2 above — the likelihoods are multiplied together (or summed in log-space). A single zero-probability feature forces the entire product to zero, regardless of how strongly every other word in the message points toward "spam." In log-space, this is even more visible as a breaking point: $\log(0)$ is undefined (negative infinity), which crashes the summation entirely. In short: one unseen word can override all other evidence and make classification impossible, even when the correct answer is otherwise obvious from the remaining features.</p>
+    <p>This is a direct consequence of the independence assumption's counting-based estimation — it has no built-in way to express "unlikely but not impossible" for something it simply never observed. Laplace smoothing fixes this by adding a small constant (typically 1) to every count before normalizing, so that no feature ever receives a probability of exactly zero:</p>
+    <div class="math-block">
+        $$P(f_i \mid \text{class}) = \frac{\text{count}(f_i, \text{class}) + 1}{\text{total count}(\text{class}) + V}$$
+    </div>
+    <p>where $V$ is the total number of possible feature values (e.g., vocabulary size). The "+1" in the numerator ensures every feature gets some nonzero probability mass, and the "+V" in the denominator compensates so the probabilities across all features still sum to 1. Effectively, Laplace smoothing encodes a modest, built-in assumption: "even things I've never seen are still possible — just unlikely."</p>
+    <p>Why this matters practically: without smoothing, a Naive Bayes classifier trained on a finite dataset would be fragile in exactly the scenario it's meant to handle well — real-world text with vocabulary the model hasn't seen before. Smoothing is what makes the counting-based approach robust enough for genuine deployment, and it's a direct patch for the specific failure mode created by the independence assumption's multiplicative structure. (As covered earlier, Laplace is the simplest fix — Lidstone, Good-Turing, Jelinek-Mercer, and Absolute Discounting are more refined alternatives, each addressing shortcomings in how Laplace distributes that extra probability mass.)</p>
+
+    <hr class="divider">
+
+    <h3>Algorithm: The Naive Bayes Implementation</h3>
+    <p>Below is the pseudocode for both the training and prediction phases. Note how the implementation relies on <strong>log-space</strong> arithmetic to maintain numerical stability and explicitly incorporates the <strong>Laplace smoothing</strong> constant ($\alpha$) during likelihood estimation.</p>
+
+    <h4>Training Phase</h4>
+    <div class="algorithm-box">
+<ol class="code-list">
+  <li>Function Train_naive_bayes(X_train, Y_train, Num_classes, Num_features):</li>
+    <li class="indent">Initialize Class_counts[num_classes] to 0</li>
+    <li class="indent">Initialize Feature_counts[num_classes][num_features] to 0</li>
+    <li class="indent">Initialize Total_feature_count_per_class[num_classes] to 0</li>
+    <li class="indent">N = Length(X_train)</li>
+    <li class="indent"># ---------- Pass 1: Count Statistics ----------</li>
+    <li class="indent">For i From 0 To N - 1:</li>
+    <li class="extra-indent">C = Y_train[i]</li>
+    <li class="extra-indent">Class_counts[c] = Class_counts[c] + 1</li>
+    <li class="extra-indent">For f From 0 To Num_features - 1:</li>
+    <li class="indent extra-indent">Feature_counts[c][f] = Feature_counts[c][f] + X_train[i][f]</li>
+    <li class="indent extra-indent">Total_feature_count_per_class[c] = Total_feature_count_per_class[c] + X_train[i][f]</li>
+    <li class="indent"># ---------- Compute Prior Probabilities ----------</li>
+    <li class="indent">Initialize Log_prior[num_classes] to 0</li>
+    <li class="indent">For c From 0 To Num_classes - 1:</li>
+    <li class="extra-indent">Log_prior[c] = Log(Class_counts[c] / N)</li>
+    <li class="indent"># ---------- Compute Likelihoods With Laplace Smoothing ----------</li>
+    <li class="indent">Initialize Log_likelihood[num_classes][num_features] to 0</li>
+    <li class="indent">Alpha = 1</li>
+    <li class="indent">For c From 0 To Num_classes - 1:</li>
+    <li class="extra-indent">For f From 0 To Num_features - 1:</li>
+    <li class="indent extra-indent">Numerator = Feature_counts[c][f] + Alpha</li>
+    <li class="indent extra-indent">Denominator = Total_feature_count_per_class[c] + (Alpha * Num_features)</li>
+    <li class="indent extra-indent">Log_likelihood[c][f] = Log(Numerator / Denominator)</li>
+    <li class="indent">return log_prior, log_likelihood</li>
+    <li> </li>
+    <li># Prediction Phase</li>
+    <li> </li>
+    <li>Function Predict_naive_bayes(X_test, Log_prior, Log_likelihood, Num_classes, Num_features):</li>
+    <li class="indent">Initialize Class_scores[num_classes] to 0</li>
+    <li class="indent">For c From 0 To Num_classes - 1:</li>
+    <li class="extra-indent">Score = Log_prior[c]</li>
+    <li class="extra-indent">For f From 0 To Num_features - 1:</li>
+    <li class="indent extra-indent">If X_test[f] > 0:</li>
+    <li class="indent extra-indent indent">Score = Score + (X_test[f] * Log_likelihood[c][f])</li>
+    <li class="extra-indent">Class_scores[c] = Score</li>
+    <li class="indent">Predicted_class = Argmax(Class_scores)</li>
+    <li class="indent">return predicted_class</li>
+    <li> </li>
+    <li>Function Test_naive_bayes(X_test, Y_test, Log_prior, Log_likelihood, Num_classes, Num_features):</li>
+    <li class="indent">Correct_predictions = 0</li>
+    <li class="indent">M = Length(X_test)</li>
+    <li class="indent">For i From 0 To M - 1:</li>
+    <li class="extra-indent">Predicted = Predict_naive_bayes(X_test[i], Log_prior, Log_likelihood, Num_classes, Num_features)</li>
+    <li class="extra-indent">If Predicted == Y_test[i]:</li>
+    <li class="indent extra-indent">Correct_predictions = Correct_predictions + 1</li>
+    <li class="indent">return correct_predictions / M</li>
+</ol>
+    </div>
+
 </section>
+
 </body>
 </html>
