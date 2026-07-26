@@ -776,6 +776,19 @@ For Epoch = 1 To MaxEpochs:
     <li><strong>What are ⊙ and ⊕?</strong> ⊙ = element-wise multiply, shown as "×" in diagram. ⊕ = element-wise add, shown as "+" in diagram.</li>
     <li><strong>Why tanh for Ĉ and C^{(t)}?</strong> Keeps cell values between -1 and 1, prevents explosion. Sigmoid for gates because we need values 0 to 1.</li>
 </ul>
+<div class="note" style="border-left-color: #2563eb; background-color: #eff6ff;">
+        <strong>The Long Short-Term Memory (LSTM) Insight</strong><br>
+        Before LSTMs, vanilla RNNs had a short-term memory \(h^{(t)}\) but no mechanism for long-term memory. Information older than a few steps would get washed out because \(h^{(t)}\) is repeatedly squashed through tanh and multiplied by weight matrices at every step (this is the classic vanishing gradient issue).<br><br>
+        Hochreiter &amp; Schmidhuber's insight (1997) was: let's give the network a second pathway — the cell state — that behaves like long-term memory, sitting alongside the existing short-term memory pathway \(h^{(t)}\). So "Long Short-Term Memory" literally means: a short-term memory (the hidden state, like an RNN already has) that has been extended to also hold long-term information (via the cell state).
+        
+        <p style="margin-top: 10px; margin-bottom: 5px;"><strong>Intuition for your students:</strong></p>
+        <ul style="margin-top: 0; padding-left: 20px;">
+            <li><strong>\(c^{(t)}\)</strong> is like a conveyor belt carrying facts learned long ago (e.g., "the subject of this sentence was plural," established 40 tokens back).</li>
+            <li><strong>\(h^{(t)}\)</strong> is like your immediate working thought at this instant — informed by the conveyor belt, but re-derived every step and used for the current output/prediction.</li>
+            <li><strong>The gates</strong> are the control mechanism deciding what gets written onto the belt \(i^{(t)}\), erased from the belt \(f^{(t)}\),, and read off the belt into your current thought \(o^{(t)}\)</li>
+        </ul>
+    </div>
+
     
 <div style="font-family: sans-serif; line-height: 1.5; color: #333; max-width: 800px; margin: 25px 0; padding-left: 10px; text-align: left;">
     
@@ -915,7 +928,7 @@ For Epoch = 1 To MaxEpochs:
       fixed-size numerical vector that is supposed to carry the full meaning of
       the source sentence.
     </p>
-
+	
     <div class="fig-wrap">
       <svg viewBox="0 0 680 310" role="img">
         <title>RNN Encoder for machine translation</title>
