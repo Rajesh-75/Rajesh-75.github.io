@@ -2,36 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A tutorial covering the fundamentals of Machine Learning and Deep Learning pipelines, from data ingestion through deployment.">
     <link rel="stylesheet" href="style.css">
     <title>Machine Learning Tutorial</title>
-    <script type="text/javascript" async
-        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-    </script>
+
+    <!-- Config must be defined BEFORE the async MathJax loader script,
+         so it is guaranteed to exist before MathJax initializes -->
     <script>
         window.MathJax = {
             tex: {
-                inlineMath: [['$', '$'], ['\(', '\)']],
-                displayMath: [['$$', '$$'], ['\[', '\]']]
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
             }
         };
     </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+    <style>
+        .section-divider { margin: 32px 0; border: none; border-top: 1px solid #ddd; }
+        .mt-20 { margin-top: 20px; }
+        .pipeline-image { max-width: 100%; height: auto; }
+        .flowchart-wrap { max-width: 900px; margin: 16px auto; }
+        .flowchart-wrap svg { width: 100%; height: auto; display: block; }
+        .flow-box { fill: #eef4fb; stroke: #2c6fbb; stroke-width: 1.5; }
+        .flow-text { font-family: inherit; font-size: 14px; fill: #1a1a1a; text-anchor: middle; }
+        .flow-num { font-family: inherit; font-size: 12px; fill: #2c6fbb; font-weight: bold; text-anchor: middle; }
+        .flow-arrow { stroke: #555; stroke-width: 2; marker-end: url(#arrowhead); fill: none; }
+    </style>
 </head>
 <body>
 
     <h1 class="detail-title">AI and Statistics</h1>
-    
-    <p class="detail-description">AI (Artificial Intelligence) is one of the most important and fastest-growing fields of technology today. Applications of AI are becoming ubiquitous, and solutions learned from data are increasingly displacing traditional hand-crafted algorithms. Machine Learning (ML) and Deep Learning (DL) are major branches of artificial intelligence (AI) that provide systems with the ability to automatically learn and improve from experience without being explicitly programmed.</p>
-    
-    <p class="detail-description">This tutorial explores the fundamental theory and practical engineering of various Machine Learning and Deep Learning models, including classic algorithms like SVM, Decision Trees, and Naive Bayesian, as well as advanced architectures such as Convolutional Neural Networks (CNN), Recurrent Neural Networks (RNN), and Transformers. We will also demonstrate how to train and apply these models across diverse real-world applications.</p>
-  
-    <p class="detail-description">Serving as the major foundational tool, Statistics underpins the entire scope of this tutorial.</p>
-   
-    <p class="detail-description">Both Machine Learning and Deep Learning follow a pipeline structure to create and deploy AI-based systems. The pipeline commonly has the following form:</p>
-     
-    <img src="image_fdb59d.png" alt="Machine Learning Pipeline" class="pipeline-image">
-    <p class="image-title">ML Pipeline Flow</p>
 
-    <img src="NNbasedPipelineforImageRecongition.png" alt="Neural Network based Pipeline" class="pipeline-image"> 
+    <p class="detail-description">AI (Artificial Intelligence) is one of the most important and fastest-growing fields of technology today. Applications of AI are becoming ubiquitous, and solutions learned from data are increasingly displacing traditional hand-crafted algorithms. Machine Learning (ML) and Deep Learning (DL) are major branches of artificial intelligence (AI) that provide systems with the ability to automatically learn and improve from experience without being explicitly programmed.</p>
+
+    <p class="detail-description">This tutorial explores the fundamental theory and practical engineering of various Machine Learning and Deep Learning models, including classic algorithms like SVM, Decision Trees, and Naive Bayes, as well as advanced architectures such as Convolutional Neural Networks (CNN), Recurrent Neural Networks (RNN), and Transformers. We will also demonstrate how to train and apply these models across diverse real-world applications.</p>
+
+    <p class="detail-description">Serving as the major foundational tool, Statistics underpins the entire scope of this tutorial.</p>
+
+    <p class="detail-description">Both Machine Learning and Deep Learning follow a pipeline structure to create and deploy AI-based systems. The pipeline commonly has the following form:</p>
+
+    <img src="image_fdb59d.png" alt="Machine Learning Pipeline" class="pipeline-image" loading="lazy" decoding="async">
+    <p class="image-title">ML Pipeline Flow</p>
+    <p class="detail-description" style="font-size:0.9em; color:#555;"><em>Note: the diagram above labels this stage "Model Selection" and includes a separate "Hyperparameter Tuning" step feeding into it. Hyperparameter tuning is now covered under "Model Training" below; model selection (choosing among candidate algorithms) is related but still a distinct topic not yet covered in detail here.</em></p>
+
+    <img src="NNbasedPipelineforImageRecongition.png" alt="Neural Network based Pipeline" class="pipeline-image" loading="lazy" decoding="async">
     <p class="image-title">An example pipeline based on Neural Network for Image Recognition</p>
 
     <h2>The ML Pipeline</h2>
@@ -44,6 +62,63 @@
         <li><strong>Deployment:</strong> Integrating the model into a live environment where it can make real-time predictions.</li>
     </ul>
 
+    <!-- Inline, dependency-free flowchart mirroring the actual pipeline image
+         above (image_fdb59d.png), including its "Hyperparameter Tuning"
+         branch into Model Selection. Kept as a text-searchable/accessible
+         equivalent of the raster diagram. -->
+    <div class="flowchart-wrap" role="img" aria-label="Flowchart of the ML pipeline: Data Collection, Pre-processing, Feature Extraction, Model Selection (fed by Hyperparameter Tuning), Testing, Deployment">
+        <svg viewBox="0 0 980 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#555"/>
+                </marker>
+            </defs>
+            <!-- main row -->
+            <g>
+                <rect class="flow-box" x="10"  y="50" width="140" height="60" rx="8"/>
+                <text class="flow-num"  x="80" y="66">1</text>
+                <text class="flow-text" x="80" y="86">Data</text>
+                <text class="flow-text" x="80" y="102">Collection</text>
+
+                <rect class="flow-box" x="180" y="50" width="140" height="60" rx="8"/>
+                <text class="flow-num"  x="250" y="66">2</text>
+                <text class="flow-text" x="250" y="86">Pre-</text>
+                <text class="flow-text" x="250" y="102">processing</text>
+
+                <rect class="flow-box" x="350" y="50" width="150" height="60" rx="8"/>
+                <text class="flow-num"  x="425" y="66">3</text>
+                <text class="flow-text" x="425" y="86">Feature</text>
+                <text class="flow-text" x="425" y="102">Extraction</text>
+
+                <rect class="flow-box" x="530" y="50" width="140" height="60" rx="8"/>
+                <text class="flow-num"  x="600" y="66">4</text>
+                <text class="flow-text" x="600" y="86">Model</text>
+                <text class="flow-text" x="600" y="102">Selection</text>
+
+                <rect class="flow-box" x="700" y="50" width="130" height="60" rx="8"/>
+                <text class="flow-num"  x="765" y="66">5</text>
+                <text class="flow-text" x="765" y="86">Testing</text>
+
+                <rect class="flow-box" x="860" y="50" width="115" height="60" rx="8"/>
+                <text class="flow-num"  x="917" y="66">6</text>
+                <text class="flow-text" x="917" y="86">Deployment</text>
+            </g>
+            <!-- hyperparameter tuning branch, feeding into Model Selection -->
+            <g>
+                <rect class="flow-box" x="530" y="145" width="140" height="45" rx="8" style="fill:#fdf3e7; stroke:#c98a2c;"/>
+                <text class="flow-text" x="600" y="172" style="fill:#8a5a10;">Hyperparameter</text>
+                <text class="flow-text" x="600" y="186" style="fill:#8a5a10; font-size:12px;">Tuning</text>
+                <path class="flow-arrow" style="stroke:#c98a2c;" d="M600,145 L600,113"/>
+            </g>
+            <!-- main arrows -->
+            <path class="flow-arrow" d="M150,80 L178,80"/>
+            <path class="flow-arrow" d="M320,80 L348,80"/>
+            <path class="flow-arrow" d="M500,80 L528,80"/>
+            <path class="flow-arrow" d="M670,80 L698,80"/>
+            <path class="flow-arrow" d="M830,80 L858,80"/>
+        </svg>
+    </div>
+
     <h2>Data Ingestion</h2>
     <p class="detail-description">
         Progress in the last decade shows that the success of an ML system depends largely on the data it was trained on. Instead of focusing on improving ML algorithms, most companies focus on managing and improving their data. The first three blocks of the pipeline—Data Ingestion, Data Preprocessing, and Feature Engineering—form the data preparation layer. These blocks are somewhat interchangeable; in certain cases, Feature Engineering happens at the time of Data collection (Ingestion) itself.
@@ -53,17 +128,18 @@
         Data Ingestion, the first stage of the ML pipeline, involves a structured process of acquiring raw data and preparing its storage environment. This sub-pipeline ensures data is collected reliably and organized efficiently for subsequent processing.
     </p>
 
-    <img src="DataStorage.png" alt="Data Engineering Sub-pipeline" class="pipeline-image">
+    <img src="DataStorage.png" alt="Data Engineering Sub-pipeline" class="pipeline-image" loading="lazy" decoding="async">
     <p class="image-title">Data Ingestion Sub-Pipeline (Acquisition and Storage Stages)</p>
-    
-    <hr>
-    
+    <p class="detail-description" style="font-size:0.9em; color:#555;"><em>Note: this diagram matches the text well. Minor fix needed at the image source: "WARIEHOUSE" should read "WAREHOUSE".</em></p>
+
+    <hr class="section-divider">
+
     <h2>The Data Engineering Sub-Pipeline for ML/DL</h2>
-    <p class="detail-description">The Data Engineering pipeline is responsible for transforming raw, disparate data into the clean, reliable, and accessible features required for model training and inference. It generally follows a structured ETL or ELT pattern.</p>  
-    
-    <h3>Stage 1: Data Acquisition & Ingestion (The "Extract" Phase)</h3>
+    <p class="detail-description">The Data Engineering pipeline is responsible for transforming raw, disparate data into the clean, reliable, and accessible features required for model training and inference. It generally follows a structured ETL or ELT pattern.</p>
+
+    <h3>Stage 1: Data Acquisition &amp; Ingestion (The "Extract" Phase)</h3>
     <p class="detail-description">This initial stage focuses on finding, collecting, and moving raw data from various sources into a central landing zone.</p>
-   
+
     <h4>1. Finding Data Sources</h4>
     <ul>
         <li>Internal Sources: Databases (OLTP), logs, Sensor data, CRM systems.</li>
@@ -71,18 +147,34 @@
         <li>Specific Data Types: Sources for unstructured data like images/video (e.g., ImageNet, COCO) or proprietary camera feeds.</li>
     </ul>
 
+    <h4 class="mt-20">How LLM Engines Gather Data</h4>
+    <p class="detail-description">
+        Large Language Models present a distinct data acquisition problem: instead of a bounded, labeled dataset for one task, they need an enormous, broad-coverage sample of text (and increasingly images, audio, and code) to learn general language and reasoning patterns from. Typical sources include:
+    </p>
+    <ul>
+        <li><strong>Web Crawls:</strong> Large-scale scrapes of the public internet (e.g., Common Crawl) form the bulk of pre-training data, filtered and deduplicated to remove low-quality or repeated pages.</li>
+        <li><strong>Curated Corpora:</strong> Higher-quality, structured sources such as Wikipedia, digitized books, academic papers, and reference sites, which are over-represented relative to their size on the web because of their quality.</li>
+        <li><strong>Code Repositories:</strong> Public code hosting platforms (e.g., GitHub), used to train coding ability and often filtered by license type.</li>
+        <li><strong>Licensed &amp; Partnered Data:</strong> Content obtained through direct licensing agreements with publishers, news organizations, or platforms, rather than open scraping.</li>
+        <li><strong>Human-Generated Data:</strong> Instruction–response pairs, conversations, and preference judgments collected from human annotators, used to fine-tune the base model's behavior (e.g., for instruction-following or safety).</li>
+        <li><strong>Synthetic Data:</strong> Text generated by existing models, used to augment coverage of specific skills (e.g., math reasoning, tool use) that are underrepresented in naturally occurring text.</li>
+    </ul>
+    <p class="detail-description">
+        Because of the scale and provenance involved, LLM data pipelines place heavy emphasis on filtering (removing toxic, low-quality, or duplicate content), deduplication, and licensing/copyright review — concerns that are far less central when gathering a small, task-specific structured dataset.
+    </p>
+
     <h4>2. Ingestion Modes</h4>
     <ul>
         <li>Batch Ingestion: Processing large volumes at scheduled intervals (e.g., nightly jobs).</li>
         <li>Streaming Ingestion: Continuous, real-time processing (e.g., Kafka).</li>
     </ul>
 
-    <h4>3. Validation & Schema Check</h4>
+    <h4>3. Validation &amp; Schema Check</h4>
     <p class="detail-description">As data enters the pipeline, basic validation ensures the data type and format conform to the expected schema.</p>
-   
-    <h3>Stage 2: Data Storage & Governance (The "Load" Phase)</h3>
+
+    <h3>Stage 2: Data Storage &amp; Governance (The "Load" Phase)</h3>
     <p class="detail-description">This stage determines where the raw and processed data resides, optimized for both cost and query performance.</p>
-   
+
     <h4>1. Storage Solutions</h4>
     <ul>
         <li>Data Lake: Stores raw, uncleaned, unstructured data (S3, GCS).</li>
@@ -92,13 +184,46 @@
 
     <h4>2. Data Governance and Security</h4>
     <p class="detail-description">Implementing access controls, encryption, and tracking data lineage.</p>
-    
-    <hr>
-    
+
+    <hr class="section-divider">
+
     <h2>Data Pre-processing</h2>
     <p class="detail-description">Data pre-processing is the critical stage that cleans, transforms, and prepares the raw data. It consists of Data cleaning, Data Transformation, and Data Reduction. These steps are iterative and dependent on the learning application.</p>
 
-    <img src="DataPreProcessing.jpg" alt="Data Pre-Processing" class="pipeline-image">
+    <img src="DataPreProcessing.jpg" alt="Data Pre-Processing" class="pipeline-image" loading="lazy" decoding="async">
+    <p class="image-title">Data Pre-Processing Cycle (Extract, Merge, Remove Inconsistent, Rebuild Missing, Normalize, Verify)</p>
+    <p class="detail-description" style="font-size:0.9em; color:#555;"><em>Note: the diagram above frames pre-processing as a 6-step operational cycle, which emphasizes different steps (e.g. Extract/Merge Data) than the four categories below and doesn't show Data Reduction or Imbalanced Data handling. The two views are complementary — the cycle above is closer to a step-by-step workflow, while the categories below group those same kinds of tasks conceptually. Roughly: Remove Inconsistent Data + Rebuild Missing Data → Data Cleaning; Normalize Data → Data Transformation.</em></p>
+
+    <div class="flowchart-wrap" role="img" aria-label="Diagram of the four Data Pre-processing categories described in the text: Data Cleaning, Data Transformation, Data Reduction, Handling Imbalanced Data">
+        <svg viewBox="0 0 980 130" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrowhead2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#555"/>
+                </marker>
+            </defs>
+            <g>
+                <rect class="flow-box" x="10"  y="30" width="220" height="60" rx="8"/>
+                <text class="flow-num"  x="120" y="50">1</text>
+                <text class="flow-text" x="120" y="72">Data Cleaning</text>
+
+                <rect class="flow-box" x="260" y="30" width="220" height="60" rx="8"/>
+                <text class="flow-num"  x="370" y="50">2</text>
+                <text class="flow-text" x="370" y="72">Data Transformation</text>
+
+                <rect class="flow-box" x="510" y="30" width="220" height="60" rx="8"/>
+                <text class="flow-num"  x="620" y="50">3</text>
+                <text class="flow-text" x="620" y="72">Data Reduction</text>
+
+                <rect class="flow-box" x="760" y="30" width="210" height="60" rx="8"/>
+                <text class="flow-num"  x="865" y="50">4</text>
+                <text class="flow-text" x="865" y="72">Handling Imbalanced</text>
+                <text class="flow-text" x="865" y="86">Data</text>
+            </g>
+            <path stroke="#555" stroke-width="2" fill="none" marker-end="url(#arrowhead2)" d="M230,60 L258,60"/>
+            <path stroke="#555" stroke-width="2" fill="none" marker-end="url(#arrowhead2)" d="M480,60 L508,60"/>
+            <path stroke="#555" stroke-width="2" fill="none" marker-end="url(#arrowhead2)" d="M730,60 L758,60"/>
+        </svg>
+    </div>
 
     <h3>1. Data Cleaning 🧹</h3>
     <p class="detail-description">Focuses on fixing errors and inconsistencies.</p>
@@ -122,14 +247,12 @@
     <ul>
         <li>Dimensionality Reduction: Feature Selection or Extraction (PCA).</li>
         <li>Data Compression and Numerosity Reduction.</li>
-    </ul>    
+    </ul>
 
-    <h3 style="margin-top: 20px;">4. Handling Imbalanced Data ⚖️</h3>
+    <h3 class="mt-20">4. Handling Imbalanced Data ⚖️</h3>
     <p class="detail-description">
         Whenever you are working on text classification problems, it is a good idea to examine the distribution of examples across the classes. A dataset with a <strong>skewed class distribution</strong> might require a different treatment in terms of the training loss and evaluation metrics than a balanced one.
     </p>
-
-    
 
     <p class="detail-description">There are several ways to deal with imbalanced data, including:</p>
     <ul>
@@ -138,16 +261,25 @@
         <li><strong>Gather more labeled data:</strong> Specifically collecting more data from the underrepresented classes to strengthen the predictive signal.</li>
     </ul>
 
-    <hr>
-    
+    <hr class="section-divider">
+
     <h2>Feature Engineering (FE)</h2>
     <p class="detail-description">
-        Feature Engineering (FE) is the pivotal step defined as the process of transforming raw input data into features that best expose the underlying problem structure to a model. 
+        Feature Engineering (FE) is the pivotal step defined as the process of transforming raw input data into features that best expose the underlying problem structure to a model.
     </p>
 
     <h3>The Primacy of Features in Classical ML</h3>
     <ul>
         <li><strong>Necessity of Manual FE:</strong> In the era of traditional algorithms (SVM, Decision Trees, Naive Bayes), model quality depended entirely on human-engineered features. Because these models are often "shallow," data scientists had to manually construct predictive signals to ensure success.</li>
+    </ul>
+    <p class="detail-description">
+        This manual extraction looked different depending on the field, since each type of data needed its own hand-designed descriptors:
+    </p>
+    <ul>
+        <li><strong>Image Processing:</strong> Before CNNs, images were converted into feature vectors using techniques like <strong>SIFT</strong> (Scale-Invariant Feature Transform) and <strong>HOG</strong> (Histogram of Oriented Gradients) to capture edges and shapes, <strong>color histograms</strong> to summarize color distribution, and hand-crafted <strong>edge/corner detectors</strong> (e.g., Canny, Harris) to locate structurally important points.</li>
+        <li><strong>Natural Language Processing:</strong> Text was converted into numerical features using <strong>Bag-of-Words</strong> and <strong>TF-IDF</strong> (term frequency weighting), <strong>n-grams</strong> (capturing short word sequences), and hand-built lexicons for sentiment or part-of-speech tagging.</li>
+        <li><strong>Audio & Speech:</strong> Raw waveforms were reduced to features like <strong>MFCCs</strong> (Mel-Frequency Cepstral Coefficients) and spectral energy bands, which better represent how humans perceive sound than the raw signal does.</li>
+        <li><strong>Time-Series & Sensor Data:</strong> Signals were summarized with statistical descriptors such as rolling means, variance, peak counts, and frequency-domain features (via Fourier or wavelet transforms).</li>
     </ul>
 
     <h3>The Shift to Automatic Feature Learning</h3>
@@ -163,13 +295,13 @@
         <li><strong>Structured Data:</strong> For tabular data, manual construction (e.g., creating time-series lags like "Days since last login") provides performance boosts that deep networks cannot easily replicate.</li>
         <li><strong>Unstructured Data:</strong> Techniques like TF-IDF are still used for specialized text tasks.</li>
     </ul>
-    
-    <p class="detail-description" style="margin-top:10px;">
+
+    <p class="detail-description mt-20">
         While algorithms provide the machinery for learning, feature engineering provides the refined fuel; it requires a blend of domain expertise and creativity.
     </p>
 
     <h3>Examples of Transformations</h3>
-    
+
     <div class="detail-description">
         <h4>1. Transforming Temporal Data (Time-Series)</h4>
         <ul>
@@ -201,11 +333,22 @@
         </ul>
     </div>
 
-    <hr>
+    <hr class="section-divider">
 
     <h2>Model Training: The Computational Heart</h2>
     <p class="detail-description">
-        Once the features are defined—either manually through traditional feature engineering or automatically via Deep Learning's internal layers—the **Model Training** phase begins. This is the orchestrated interaction between three distinct components: the Model, the Cost Function, and the Optimization.
+        Before looking at how a model is trained, it helps to classify <em>what kind</em> of learning problem it is solving, based on how much labeled data is available:
+    </p>
+    <ul>
+        <li><strong>Supervised Learning:</strong> The model learns from labeled examples—input-output pairs where the correct answer is known (e.g., an email marked "spam" or "not spam"). Most classical algorithms in this tutorial (SVM, Decision Trees, Naive Bayes) and most classification/regression tasks fall here.</li>
+        <li><strong>Unsupervised Learning:</strong> The model works with unlabeled data and must find structure on its own, such as grouping similar customers together (clustering, e.g., K-Means) or reducing dimensionality (e.g., PCA).</li>
+        <li><strong>Semi-Supervised Learning:</strong> A middle ground where a small amount of labeled data is combined with a much larger pool of unlabeled data—useful when labeling is expensive or slow, but unlabeled examples are cheap to collect. The model uses the unlabeled data to learn the general structure of the input space, and the labeled data to anchor that structure to the correct outputs.</li>
+    </ul>
+    <p class="detail-description">
+        A related idea worth noting is <strong>self-supervised learning</strong>, where labels are generated automatically from the data itself (e.g., predicting a masked word from its surrounding context). This is the paradigm underlying most modern LLM pre-training, and blurs the line between "unlabeled" and "labeled" data.
+    </p>
+    <p class="detail-description">
+        Once the features are defined—either manually through traditional feature engineering or automatically via Deep Learning's internal layers—the <strong>Model Training</strong> phase begins. This is the orchestrated interaction between three distinct components: the Model, the Cost Function, and the Optimization.
     </p>
 
     <h3>1. The Model (The Hypothesis Space)</h3>
@@ -227,7 +370,7 @@
 
     <h3>3. The Optimization (The Mechanism of Change)</h3>
     <p class="detail-description">
-        Optimization is the "Learning Engine." It uses the score from the Cost Function to iteratively adjust the model’s internal parameters (weights and biases).
+        Optimization is the "Learning Engine." It uses the score from the Cost Function to iteratively adjust the model's internal parameters (weights and biases).
     </p>
     <ul>
         <li><strong>Gradient Descent:</strong> Most modern models, especially DL and LLMs, use some form of Gradient Descent to "step" toward the minimum error.</li>
@@ -237,26 +380,190 @@
     <h3>The Iterative Loop: From Logic to Generalization</h3>
     <p class="detail-description">
         The training phase is not a single event but a continuous loop. The model makes a guess, the cost function measures the error, and the optimizer applies a correction.
-        The ultimate goal of the Training Phase is to solve for the <strong>optimal parameters (such as weights and biases) of the chosen ML model</strong>. These parameters represent the <strong>'knowledge'</strong> the model has acquired and discovered through optimization strategy. 
+        The ultimate goal of the Training Phase is to solve for the <strong>optimal parameters (such as weights and biases) of the chosen ML model</strong>. These parameters represent the <strong>'knowledge'</strong> the model has acquired and discovered through optimization strategy.
     </p>
-    
+
     <p class="detail-description">
         This cycle continues until the model achieves <strong>Generalization</strong>—the ability to apply its learned patterns to new, unseen data accurately. Whether you are clustering data with K-Means or generating text with a Transformer, this three-part harmony is what transforms raw data into intelligence.
     </p>
-    <h2>Evaluation Phase </h2>
+
+    <h3>4. Underfitting and Overfitting</h3>
+    <p class="detail-description">
+        Not every training run ends in a well-generalizing model. Two common failure modes sit on opposite ends of model complexity:
+    </p>
+    <ul>
+        <li><strong>Underfitting (High Bias):</strong> The model is too simple to capture the underlying pattern in the data—e.g., fitting a straight line to a clearly curved relationship. Both training error and test error remain high, because the model hasn't even learned the pattern in the data it was trained on.</li>
+        <li><strong>Overfitting (High Variance):</strong> The model is too complex relative to the amount or noise of the data, so it starts memorizing individual training examples—including their noise—rather than the general pattern. Training error becomes very low, but test error stays high or gets worse, since none of that memorized noise transfers to new data.</li>
+    </ul>
+
+    <div class="flowchart-wrap" role="img" aria-label="Chart showing training error decreasing and test error forming a U-shape as model complexity increases, with underfitting on the left, the optimal zone in the middle, and overfitting on the right">
+        <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
+            <!-- background zones -->
+            <rect x="60"  y="20" width="180" height="300" fill="#fdeceb"/>
+            <rect x="240" y="20" width="140" height="300" fill="#eaf6ec"/>
+            <rect x="380" y="20" width="260" height="300" fill="#fdeceb"/>
+
+            <!-- axes -->
+            <line x1="60" y1="20" x2="60" y2="320" stroke="#333" stroke-width="2"/>
+            <line x1="60" y1="320" x2="640" y2="320" stroke="#333" stroke-width="2"/>
+            <text x="350" y="355" text-anchor="middle" font-size="14" fill="#333">Model Complexity &#8594;</text>
+            <text x="25" y="170" text-anchor="middle" font-size="14" fill="#333" transform="rotate(-90 25 170)">Error &#8594;</text>
+
+            <!-- training error curve: high complexity => low error -->
+            <path d="M70,60 C 180,140 260,270 630,300" fill="none" stroke="#2c6fbb" stroke-width="3"/>
+            <!-- test error curve: U-shaped -->
+            <path d="M70,120 C 200,300 260,260 320,230 C 400,190 520,80 630,40" fill="none" stroke="#c94f4f" stroke-width="3" stroke-dasharray="8,5"/>
+
+            <!-- optimal point marker -->
+            <line x1="320" y1="20" x2="320" y2="320" stroke="#555" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+            <!-- zone labels -->
+            <text x="150" y="345" text-anchor="middle" font-size="13" fill="#a33" font-weight="bold">Underfitting</text>
+            <text x="310" y="345" text-anchor="middle" font-size="13" fill="#2a7a3b" font-weight="bold">Just Right</text>
+            <text x="510" y="345" text-anchor="middle" font-size="13" fill="#a33" font-weight="bold">Overfitting</text>
+
+            <!-- legend -->
+            <line x1="420" y1="55" x2="450" y2="55" stroke="#2c6fbb" stroke-width="3"/>
+            <text x="455" y="60" font-size="13" fill="#333">Training Error</text>
+            <line x1="420" y1="80" x2="450" y2="80" stroke="#c94f4f" stroke-width="3" stroke-dasharray="8,5"/>
+            <text x="455" y="85" font-size="13" fill="#333">Test Error</text>
+        </svg>
+    </div>
+
+    <p class="detail-description">Common signals and fixes for each:</p>
+    <ul>
+        <li><strong>Underfitting:</strong> Signaled by high error on <em>both</em> the training and test sets. Address it by using a more expressive model, adding or engineering more informative features, reducing regularization, or training for longer.</li>
+        <li><strong>Overfitting:</strong> Signaled by a large gap between low training error and high test error. Address it by adding regularization (L1/L2, dropout), gathering more training data, using early stopping, applying cross-validation, or simplifying the model.</li>
+    </ul>
+
+    <h4 class="mt-20">Overfitting While Training vs. Overfitting Revealed in Testing</h4>
+    <p class="detail-description">
+        Overfitting is a single underlying problem, but it gets caught at two different points in the workflow, using two different plots:
+    </p>
+    <ul>
+        <li><strong>While Training (Validation Curve):</strong> During training, the data is typically split into a training set and a <strong>validation set</strong>. Both losses are tracked epoch by epoch. Training loss keeps falling as the model keeps fitting its own training data, but once the model starts memorizing noise, validation loss stops improving and begins to rise—the exact point where overfitting has begun. This lets you catch it live and stop training early (<strong>early stopping</strong>), before the model gets worse.</li>
+    </ul>
+
+    <p class="detail-description">
+        <strong>What "memorizing noise" actually means:</strong> every training set has two things mixed together—the real, general pattern you want the model to learn, and random quirks specific to those exact examples (a mislabeled row, an unusual outlier, a coincidence that only holds for the data you happened to collect). Early in training, the model learns the real pattern, which also happens to help on the validation set, since that pattern is genuinely shared across both. But if training continues too long, the model runs out of general pattern left to learn and starts using its remaining capacity to fit those leftover quirks too—essentially memorizing the specific answers for the specific training examples, the way a student might memorize the exact answer key to a practice test, typos and all, instead of understanding the topic. That memorized noise is, by definition, specific to the training data—so it doesn't just fail to help on the validation set, it actively pulls the model away from the general pattern, which is why validation loss starts rising even as training loss keeps falling.
+    </p>
+
+    <ul>
+        <li><strong>In Testing (Final Evaluation):</strong> After training and tuning are complete, the model is evaluated once against the <strong>test set</strong>—data it has never influenced any decision on, not even indirectly through validation. This is the one-time, final confirmation of overfitting (or its absence) referenced in the "Generalization Check" step of the Evaluation Phase below, and it's meant to reflect real-world performance, not to guide further tuning.</li>
+    </ul>
+
+    <div class="flowchart-wrap" role="img" aria-label="Chart showing training loss decreasing steadily across epochs while validation loss decreases then rises, with the divergence point marking where overfitting begins during training">
+        <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+            <!-- axes -->
+            <line x1="60" y1="20" x2="60" y2="290" stroke="#333" stroke-width="2"/>
+            <line x1="60" y1="290" x2="640" y2="290" stroke="#333" stroke-width="2"/>
+            <text x="350" y="320" text-anchor="middle" font-size="14" fill="#333">Training Epoch &#8594;</text>
+            <text x="25" y="155" text-anchor="middle" font-size="14" fill="#333" transform="rotate(-90 25 155)">Loss &#8594;</text>
+
+            <!-- training loss: steadily decreasing -->
+            <path d="M70,60 C 200,180 400,240 630,260" fill="none" stroke="#2c6fbb" stroke-width="3"/>
+            <!-- validation loss: decreases then rises -->
+            <path d="M70,90 C 200,210 300,215 360,210 C 450,195 550,140 630,80" fill="none" stroke="#c94f4f" stroke-width="3" stroke-dasharray="8,5"/>
+
+            <!-- divergence marker -->
+            <line x1="360" y1="20" x2="360" y2="290" stroke="#555" stroke-width="1.5" stroke-dasharray="4,4"/>
+            <text x="360" y="305" text-anchor="middle" font-size="12" fill="#555">Overfitting begins</text>
+
+            <!-- legend -->
+            <line x1="420" y1="45" x2="450" y2="45" stroke="#2c6fbb" stroke-width="3"/>
+            <text x="455" y="50" font-size="13" fill="#333">Training Loss</text>
+            <line x1="420" y1="70" x2="450" y2="70" stroke="#c94f4f" stroke-width="3" stroke-dasharray="8,5"/>
+            <text x="455" y="75" font-size="13" fill="#333">Validation Loss</text>
+        </svg>
+    </div>
+
+    <h3>5. Hyperparameter Tuning</h3>
+    <p class="detail-description">
+        Everything discussed so far—weights, biases, split points—falls under <strong>parameters</strong>: values the model learns for itself from data via the Cost Function and Optimization process. <strong>Hyperparameters</strong> are different: they are configuration choices set <em>before</em> training even begins, and they are not learned by gradient descent at all—they control <em>how</em> learning happens rather than being learned themselves. Because these choices directly shape whether a model lands in the underfitting zone, the overfitting zone, or right in between, tuning them well is just as crucial to a successful model as designing good features or writing correct training code. Examples include:
+    </p>
+    <ul>
+        <li><strong>Learning Rate:</strong> How large a step the optimizer takes at each update. Too high and training can overshoot the minimum or diverge entirely; too low and training crawls or gets stuck.</li>
+        <li><strong>Regularization Strength (e.g., the <span class="code-style">C</span> in SVM, or <span class="code-style">λ</span> in Ridge/Lasso):</strong> Controls how heavily the model is penalized for complexity—directly trading off underfitting against overfitting.</li>
+        <li><strong>Tree Depth / Number of Trees:</strong> In Decision Trees and Random Forests, controls how much the model can carve up the data—shallow trees underfit, unbounded-depth trees overfit.</li>
+        <li><strong>Number of Layers / Neurons:</strong> In Deep Learning, controls the network's capacity—too small and it can't capture the pattern, too large and it memorizes noise.</li>
+        <li><strong>K</strong> in K-Nearest Neighbors or K-Means: How many neighbors (or clusters) are considered, which changes how smooth or sensitive the model's decisions are.</li>
+    </ul>
+    <p class="detail-description">
+        Since hyperparameters aren't learned during training, they have to be searched for separately—typically by training multiple versions of the model with different hyperparameter combinations and comparing their performance on the <strong>validation set</strong> (never the test set, to avoid leaking test information into model choices). Common search strategies include <strong>Grid Search</strong> (trying every combination in a predefined range), <strong>Random Search</strong> (sampling combinations at random, which often finds good values faster than grid search), and <strong>Bayesian Optimization</strong> (using past results to intelligently choose which combination to try next).
+    </p>
+
+    <h4 class="mt-20">Hyperparameter Tuning in Deep Learning and LLMs</h4>
+    <p class="detail-description">
+        A common misconception is that Deep Learning models—and LLMs especially—need less hyperparameter tuning. The opposite is closer to true: DL introduces additional hyperparameters beyond the classical ones, and getting them wrong at large scale is far more costly. Examples include:
+    </p>
+    <ul>
+        <li><strong>Learning Rate Schedule &amp; Warmup:</strong> Rather than one fixed learning rate, DL models typically ramp up gradually (warmup) and then decay it over training—the wrong schedule can cause instability or outright divergence.</li>
+        <li><strong>Batch Size:</strong> Interacts tightly with learning rate and affects both training stability and hardware efficiency; for LLMs, batches can span millions of tokens.</li>
+        <li><strong>Architecture Choices:</strong> Number of layers, hidden units, attention heads, embedding dimension, and context length are all set before training and never learned by gradient descent—making them hyperparameters in the same sense as any other.</li>
+        <li><strong>Weight Decay &amp; Gradient Clipping:</strong> Help prevent instability over very long training runs.</li>
+        <li><strong>Inference-Time Settings (LLMs specifically):</strong> Temperature, top-k, and top-p aren't tuned during training at all, but still shape model output and are chosen separately depending on the use case (e.g., lower temperature for factual Q&amp;A, higher for creative writing).</li>
+    </ul>
+    <p class="detail-description">
+        The real difference isn't "no tuning"—it's that classical Grid/Random Search over a full-size model is usually too expensive at DL scale (a single large training run can cost millions of dollars). Instead, teams often tune on smaller proxy models and use <strong>scaling laws</strong> (empirical relationships between model size, data size, and compute) to extrapolate good hyperparameter choices for the full-size run, rather than searching from scratch each time.
+    </p>
+
+    <hr class="section-divider">
+
+    <h2>Evaluation Phase</h2>
     <p class="detail-description">
        In a professional ML pipeline, the Model Evaluation step acts as the final gatekeeper, ensuring that the patterns learned during training are truly predictive and not just the result of memorization <strong>(overfitting)</strong>. This stage is conducted using a <strong>Test Dataset</strong>—a subset of data that was strictly withheld during the training phase to simulate real-world conditions.
     </p>
     <p class="detail-description">The evaluation process typically follows these four critical steps:</p>
-    <h3>1. Quantitative Scoring: </h3>
-    <p class="detail-description">The model generates predictions for the test set, which are compared against the ground truth using specific metrics such as <strong>Accuracy, Precision, and Recall for classification, or Root Mean Square Error (RMSE) for regression</strong>.</p>    
 
-    <h3>2. Generalization check: </h3>
-    <p class="detail-description">Compare the <strong>training error against the test error</strong>; a large gap between the two signals that the model has overfit and requires better <strong>regularization</strong>.</p> 
-    
-    <h3>3. Residual & Error Analysis: </h3>
+    <h3>1. Quantitative Scoring</h3>
+    <p class="detail-description">The model generates predictions for the test set, which are compared against the ground truth using specific metrics such as <strong>Accuracy, Precision, and Recall for classification, or Root Mean Square Error (RMSE) for regression</strong>.</p>
+
+    <h3>2. Generalization Check</h3>
+    <p class="detail-description">Compare the <strong>training error against the test error</strong>; a large gap between the two signals that the model has overfit and requires better <strong>regularization</strong>.</p>
+
+    <h3>3. Residual &amp; Error Analysis</h3>
     <p class="detail-description">Beyond aggregate metrics, this step involves a granular examination of failure cases. By using tools like a <strong>Confusion Matrix</strong>, identification of whether the model consistently fails on specific classes (e.g., mistaking 'dogs' for 'cats') allows for targeted improvements.</p>
-   <h2>Deployment </h2>
-   <p>Shall be covered later</p>
+
+    <h3>4. Deployment Readiness Check</h3>
+    <p class="detail-description">Beyond statistical performance, the model is checked against practical constraints — inference latency, memory footprint, and alignment with the business metric it was built to improve — before it is cleared for release.</p>
+
+    <hr class="section-divider">
+
+    <h2>Deployment</h2>
+    <p class="detail-description">
+        Deployment is the stage where a trained, evaluated model stops being a research artifact and starts generating real predictions for real users or systems. A model that scores well offline is not yet useful — it has to be packaged, served reliably, and watched over time, since data in the real world keeps changing after training ends.
+    </p>
+
+    <h3>1. Serving Patterns</h3>
+    <p class="detail-description">How predictions are delivered depends on the latency and volume requirements of the application:</p>
+    <ul>
+        <li><strong>Batch Inference:</strong> The model runs on a large set of inputs at scheduled intervals (e.g., nightly), and predictions are stored for later use. Suitable when results don't need to be instantaneous, such as generating weekly recommendation lists.</li>
+        <li><strong>Online (Real-Time) Inference:</strong> The model is exposed behind an API and returns a prediction within milliseconds of a request, such as a fraud check during a live transaction.</li>
+        <li><strong>Edge Deployment:</strong> The model runs directly on a local device (phone, sensor, embedded chip) rather than a remote server, trading some accuracy or size for lower latency and offline availability.</li>
+    </ul>
+
+    <h3>2. Packaging &amp; Containerization</h3>
+    <p class="detail-description">
+        Before serving, the trained model and its dependencies (library versions, preprocessing steps, configuration) are bundled so it behaves identically wherever it runs. This is commonly done with a container (e.g., Docker), which also makes it easy to scale the same model across multiple servers.
+    </p>
+
+    <h3>3. Model Versioning &amp; Rollback</h3>
+    <p class="detail-description">
+        Models are updated over time as new data becomes available, so deployments track versions the same way software does. If a newly deployed model underperforms in production, having a previous version ready to roll back to limits the damage. Techniques like <strong>canary releases</strong> (routing a small fraction of traffic to the new model first) and <strong>A/B testing</strong> (comparing two model versions on live traffic) help validate a new version before it fully replaces the old one.
+    </p>
+
+    <h3>4. Monitoring &amp; Model Drift</h3>
+    <p class="detail-description">
+        A deployed model keeps making predictions long after training ends, but the world it was trained on doesn't stand still. Monitoring typically tracks:
+    </p>
+    <ul>
+        <li><strong>Performance Metrics:</strong> Accuracy, latency, and error rates in production, compared against the offline evaluation numbers.</li>
+        <li><strong>Data Drift:</strong> Whether the distribution of incoming data is diverging from the training data (e.g., new user behavior, seasonal shifts).</li>
+        <li><strong>Concept Drift:</strong> Whether the underlying relationship between inputs and the correct output has changed, even if the input distribution looks the same.</li>
+    </ul>
+    <p class="detail-description">
+        When drift is detected, the typical response is to retrain the model on fresh data and repeat the pipeline — which is why the ML pipeline is usually a loop rather than a straight line in practice.
+    </p>
+
 </body>
 </html>
