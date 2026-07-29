@@ -436,12 +436,27 @@
         <li><strong>Overfitting:</strong> Signaled by a large gap between low training error and high test error. Address it by adding regularization (L1/L2, dropout), gathering more training data, using early stopping, applying cross-validation, or simplifying the model.</li>
     </ul>
 
+    <h4 class="mt-20">Regularization: Balancing Underfitting and Overfitting</h4>
+    <p class="detail-description">
+        <strong>Regularization</strong> is the main technique used to control this trade-off directly. It works by adding a penalty term to the Cost Function that discourages the model from becoming unnecessarily complex, so the optimizer is no longer just minimizing training error—it's minimizing training error <em>plus</em> a cost for complexity. Common forms include:
+    </p>
+    <ul>
+        <li><strong>L1 Regularization (Lasso):</strong> Penalizes the absolute size of the weights, which tends to shrink some weights all the way to zero—effectively performing automatic feature selection.</li>
+        <li><strong>L2 Regularization (Ridge):</strong> Penalizes the squared size of the weights, shrinking them smoothly toward zero without necessarily eliminating any, which keeps the model simpler without discarding features entirely.</li>
+        <li><strong>Dropout:</strong> Used in Deep Learning; randomly disables a fraction of neurons during each training step, preventing the network from over-relying on any single pathway to memorize the data.</li>
+        <li><strong>Early Stopping:</strong> Halts training as soon as validation loss stops improving, directly using the divergence point from the validation curve discussed above as the stopping signal.</li>
+        <li><strong>Data Augmentation:</strong> Artificially expands the training set (e.g., rotating or cropping images) so there is more genuine pattern for the model to learn relative to noise.</li>
+    </ul>
+    <p class="detail-description">
+        It's important to treat regularization as a dial rather than a switch: it is itself a hyperparameter, and its strength has to sit in the right range. Too little regularization and overfitting isn't controlled; too much, and the penalty for complexity starts suppressing genuine patterns the model needs to learn, pushing it back toward underfitting. In terms of the earlier diagram, increasing regularization strength moves a model from right to left along the complexity axis—the goal is to land it in the "Just Right" zone, not push it past it.
+    </p>
+
     <h4 class="mt-20">Overfitting While Training vs. Overfitting Revealed in Testing</h4>
     <p class="detail-description">
         Overfitting is a single underlying problem, but it gets caught at two different points in the workflow, using two different plots:
     </p>
     <ul>
-        <li><strong>While Training (Validation Curve):</strong> During training, the data is typically split into a training set and a <strong>validation set</strong>. Both losses are tracked epoch by epoch. Training loss keeps falling as the model keeps fitting its own training data, but once the model starts memorizing noise, validation loss stops improving and begins to rise—the exact point where overfitting has begun. This lets you catch it live and stop training early (<strong>early stopping</strong>), before the model gets worse.</li>
+        <li><strong>While Training (Validation Curve):</strong> During training, the data is typically split into a training set and a <strong>validation set</strong>. <strong>Training loss</strong> is the error computed on the training set, and <strong>validation loss</strong> is the error computed on the validation set—two separate numbers from two separate datasets, tracked epoch by epoch. Training loss keeps falling as the model keeps fitting its own training data, but once the model starts memorizing noise, validation loss stops improving and begins to rise—the exact point where overfitting has begun. This lets you catch it live and stop training early (<strong>early stopping</strong>), before the model gets worse.</li>
     </ul>
 
     <p class="detail-description">
@@ -505,6 +520,157 @@
     </ul>
     <p class="detail-description">
         The real difference isn't "no tuning"—it's that classical Grid/Random Search over a full-size model is usually too expensive at DL scale (a single large training run can cost millions of dollars). Instead, teams often tune on smaller proxy models and use <strong>scaling laws</strong> (empirical relationships between model size, data size, and compute) to extrapolate good hyperparameter choices for the full-size run, rather than searching from scratch each time.
+    </p>
+
+    <h3>6. Ensemble Learning: Combining Multiple Learners</h3>
+    <p class="detail-description">
+        Instead of relying on a single model, <strong>Ensemble Learning</strong> combines several individual models—often called "weak learners"—into one stronger predictor. The intuition is the same as asking a panel of experts instead of just one: individual mistakes tend to cancel out, while the shared signal reinforces itself. Two techniques dominate:
+    </p>
+    <ul>
+        <li><strong>Bagging (Bootstrap Aggregating):</strong> Many copies of the same type of model are trained independently and in parallel, each on a different random sample (with replacement) of the training data. Their predictions are then combined by averaging (regression) or majority vote (classification). Because each model's individual errors tend to be somewhat random and uncorrelated, averaging them reduces <strong>variance</strong>—directly countering overfitting. <strong>Random Forest</strong> (an ensemble of Decision Trees) is the classic example.</li>
+        <li><strong>Boosting:</strong> Models are trained sequentially rather than in parallel—each new model is trained specifically to correct the errors made by the ones before it, and the final prediction is a weighted combination of all of them. Because each stage directly targets what the ensemble is still getting wrong, boosting reduces <strong>bias</strong>—directly countering underfitting. <strong>AdaBoost</strong>, <strong>Gradient Boosting</strong>, and <strong>XGBoost</strong> are common examples.</li>
+        <li><strong>Stacking:</strong> Several different types of models (e.g., an SVM, a Decision Tree, and a Neural Network) are trained on the same data, and a separate "meta-learner" is trained on top of their combined predictions to learn how to weigh each one best.</li>
+    </ul>
+
+    <div class="flowchart-wrap" role="img" aria-label="Diagram comparing Bagging, where multiple models train in parallel on resampled data and their outputs are averaged or voted, versus Boosting, where models train sequentially, each correcting the previous one's errors, combined via a weighted sum">
+        <svg viewBox="0 0 900 340" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrowhead3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#555"/>
+                </marker>
+            </defs>
+
+            <!-- Bagging panel -->
+            <text x="220" y="25" text-anchor="middle" font-size="16" font-weight="bold" fill="#2c6fbb">Bagging</text>
+            <rect class="flow-box" x="20" y="45" width="90" height="40" rx="6"/>
+            <text class="flow-text" x="65" y="70" font-size="12">Data</text>
+
+            <rect class="flow-box" x="180" y="45" width="100" height="35" rx="6"/>
+            <text class="flow-text" x="230" y="68" font-size="12">Model 1</text>
+            <rect class="flow-box" x="180" y="95" width="100" height="35" rx="6"/>
+            <text class="flow-text" x="230" y="118" font-size="12">Model 2</text>
+            <rect class="flow-box" x="180" y="145" width="100" height="35" rx="6"/>
+            <text class="flow-text" x="230" y="168" font-size="12">Model 3</text>
+
+            <rect class="flow-box" x="360" y="90" width="110" height="45" rx="6" style="fill:#eaf6ec; stroke:#2a7a3b;"/>
+            <text class="flow-text" x="415" y="108" font-size="12">Vote /</text>
+            <text class="flow-text" x="415" y="122" font-size="12">Average</text>
+
+            <path class="flow-arrow" marker-end="url(#arrowhead3)" d="M110,65 L178,62"/>
+            <path class="flow-arrow" marker-end="url(#arrowhead3)" d="M110,65 L178,112"/>
+            <path class="flow-arrow" marker-end="url(#arrowhead3)" d="M110,65 L178,162"/>
+            <path class="flow-arrow" marker-end="url(#arrowhead3)" d="M280,62 L358,105"/>
+            <path class="flow-arrow" marker-end="url(#arrowhead3)" d="M280,112 L358,112"/>
+            <path class="flow-arrow" marker-end="url(#arrowhead3)" d="M280,162 L358,120"/>
+
+            <!-- divider -->
+            <line x1="500" y1="10" x2="500" y2="330" stroke="#ccc" stroke-width="1"/>
+
+            <!-- Boosting panel -->
+            <text x="700" y="25" text-anchor="middle" font-size="16" font-weight="bold" fill="#c98a2c">Boosting</text>
+            <rect class="flow-box" x="530" y="90" width="100" height="40" rx="6"/>
+            <text class="flow-text" x="580" y="114" font-size="12">Model 1</text>
+            <rect class="flow-box" x="650" y="90" width="100" height="40" rx="6"/>
+            <text class="flow-text" x="700" y="114" font-size="12">Model 2</text>
+            <rect class="flow-box" x="770" y="90" width="100" height="40" rx="6"/>
+            <text class="flow-text" x="820" y="114" font-size="12">Model 3</text>
+
+            <text x="580" y="150" text-anchor="middle" font-size="10" fill="#a33">errors &#8594;</text>
+            <text x="700" y="150" text-anchor="middle" font-size="10" fill="#a33">errors &#8594;</text>
+
+            <path class="flow-arrow" style="stroke:#c98a2c;" marker-end="url(#arrowhead3)" d="M630,110 L648,110"/>
+            <path class="flow-arrow" style="stroke:#c98a2c;" marker-end="url(#arrowhead3)" d="M750,110 L768,110"/>
+
+            <rect class="flow-box" x="630" y="190" width="140" height="45" rx="6" style="fill:#fdf3e7; stroke:#c98a2c;"/>
+            <text class="flow-text" x="700" y="208" font-size="12" style="fill:#8a5a10;">Weighted</text>
+            <text class="flow-text" x="700" y="222" font-size="12" style="fill:#8a5a10;">Sum</text>
+
+            <path class="flow-arrow" style="stroke:#c98a2c;" marker-end="url(#arrowhead3)" d="M580,130 L660,188"/>
+            <path class="flow-arrow" style="stroke:#c98a2c;" marker-end="url(#arrowhead3)" d="M700,130 L700,188"/>
+            <path class="flow-arrow" style="stroke:#c98a2c;" marker-end="url(#arrowhead3)" d="M820,130 L740,188"/>
+        </svg>
+    </div>
+
+    <p class="detail-description">
+        This connects directly back to the earlier Underfitting/Overfitting discussion: <strong>Bagging reduces variance</strong> (an overfitting fix), while <strong>Boosting reduces bias</strong> (an underfitting fix)—the same two failure modes from the complexity-vs-error diagram, just addressed by combining models instead of adjusting a single one.
+    </p>
+
+    <p class="detail-description">
+        <strong>Core components, more precisely:</strong> a standard MoE layer sits in place of an ordinary feed-forward network (FFN) layer inside a Transformer, and is built from two pieces: <strong>the Experts</strong>—a collection of <em>N</em> separate neural networks (usually the same kind of feed-forward network an FFN layer would normally be), each free to specialize in different kinds of input, patterns, or syntax; and <strong>the Router (Gating Network)</strong>—a lightweight function, typically just a linear layer followed by a softmax, that takes a token's representation and computes a probability across all <em>N</em> experts, deciding which one(s) should handle that token.
+    </p>
+    <p class="detail-description">
+        Models such as DeepSeek-V2/V3 use a <strong>Mixture-of-Experts (MoE)</strong> architecture. Instead of one giant network, it uses many smaller "expert" sub-networks, plus a <strong>router</strong> that decides which few experts should handle each input.
+    </p>
+    <p class="detail-description">
+        The router is not programmed with rules—it's just another small network that learns through training, exactly like the rest of the model. It starts out choosing experts almost randomly. Over time, routing choices that lead to better predictions get reinforced, and choices that lead to worse predictions get discouraged. So the router gradually learns, on its own, which experts work best for which kind of input—for example, sending math problems to experts that turn out to be good at math, and casual conversation to experts that turn out to be good at fluent dialogue.
+    </p>
+    <p class="detail-description">
+        To be precise about what's actually being passed around: both the router and every expert are neural networks in their own right—each expert is a full sub-network with its own weights, not just a label. For each token, the router outputs a <strong>score for every available expert</strong>, indicating how suited each one is to that token; only the handful with the highest scores (e.g., the top 2) are actually used, and the rest are skipped entirely. Each selected expert then processes the token and produces its own output, and the <strong>combined output</strong> is a <strong>weighted sum</strong> of just those selected experts' outputs, using the router's scores as the weights (e.g., 70% Expert 2's output + 30% Expert 4's output). That single blended result is what moves on to the next layer of the model.
+    </p>
+    <p class="detail-description">
+        One more detail matters for how training actually plays out: for any given token, only the experts the router selected receive a weight update from that token—the skipped experts get no gradient at all for it, not just a small one. Left unchecked, this creates a "rich-get-richer" problem: whichever experts the router happens to favor early on get more training and become slightly better, which makes the router favor them even more, until a few experts do all the work and the rest stay undertrained. To prevent this, MoE training adds an extra term to the Cost Function called a <strong>load-balancing (auxiliary) loss</strong>, which penalizes the router whenever tokens are distributed too unevenly across experts—pushing it to spread work across all the experts rather than collapsing onto just a few favorites.
+    </p>
+
+    <div class="flowchart-wrap" role="img" aria-label="Diagram showing an input token going into a learned router, which activates only two out of five available experts (shown highlighted) while the rest stay inactive, and their outputs are then combined into a final result">
+        <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrowhead4" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#555"/>
+                </marker>
+            </defs>
+
+            <!-- input token -->
+            <rect class="flow-box" x="10" y="115" width="110" height="50" rx="8"/>
+            <text class="flow-text" x="65" y="136" font-size="12">Input</text>
+            <text class="flow-text" x="65" y="152" font-size="12">Token</text>
+
+            <!-- router -->
+            <rect x="160" y="105" width="130" height="70" rx="8" fill="#fdf3e7" stroke="#c98a2c" stroke-width="1.5"/>
+            <text x="225" y="135" text-anchor="middle" font-size="13" fill="#8a5a10" font-weight="bold">Learned</text>
+            <text x="225" y="152" text-anchor="middle" font-size="13" fill="#8a5a10" font-weight="bold">Router</text>
+            <path class="flow-arrow" marker-end="url(#arrowhead4)" d="M120,140 L158,140"/>
+
+            <!-- experts -->
+            <rect x="360" y="10"  width="120" height="45" rx="8" fill="#e9e9e9" stroke="#999"/>
+            <text x="420" y="37" text-anchor="middle" font-size="12" fill="#888">Expert 1</text>
+
+            <rect x="360" y="70" width="120" height="45" rx="8" fill="#eaf6ec" stroke="#2a7a3b" stroke-width="2"/>
+            <text x="420" y="97" text-anchor="middle" font-size="12" fill="#2a7a3b" font-weight="bold">Expert 2</text>
+
+            <rect x="360" y="130" width="120" height="45" rx="8" fill="#e9e9e9" stroke="#999"/>
+            <text x="420" y="157" text-anchor="middle" font-size="12" fill="#888">Expert 3</text>
+
+            <rect x="360" y="190" width="120" height="45" rx="8" fill="#eaf6ec" stroke="#2a7a3b" stroke-width="2"/>
+            <text x="420" y="217" text-anchor="middle" font-size="12" fill="#2a7a3b" font-weight="bold">Expert 4</text>
+
+            <rect x="360" y="250" width="120" height="45" rx="8" fill="#e9e9e9" stroke="#999"/>
+            <text x="420" y="277" text-anchor="middle" font-size="12" fill="#888">Expert 5</text>
+
+            <!-- router to experts: active (green) vs inactive (grey dashed) -->
+            <path d="M290,120 L358,33"  stroke="#bbb" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+            <path d="M290,130 L358,92"  stroke="#2a7a3b" stroke-width="2.5" fill="none" marker-end="url(#arrowhead4)"/>
+            <path d="M290,140 L358,152" stroke="#bbb" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+            <path d="M290,150 L358,212" stroke="#2a7a3b" stroke-width="2.5" fill="none" marker-end="url(#arrowhead4)"/>
+            <path d="M290,160 L358,270" stroke="#bbb" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+
+            <!-- combine -->
+            <rect x="620" y="115" width="130" height="50" rx="8" fill="#eef4fb" stroke="#2c6fbb" stroke-width="1.5"/>
+            <text x="685" y="145" text-anchor="middle" font-size="12" fill="#1a1a1a">Combined</text>
+            <text x="685" y="160" text-anchor="middle" font-size="12" fill="#1a1a1a">Output</text>
+
+            <path stroke="#2a7a3b" stroke-width="2.5" fill="none" marker-end="url(#arrowhead4)" d="M480,92  C 560,92  560,135 618,138"/>
+            <path stroke="#2a7a3b" stroke-width="2.5" fill="none" marker-end="url(#arrowhead4)" d="M480,212 C 560,212 560,145 618,142"/>
+
+            <!-- legend -->
+            <rect x="620" y="220" width="16" height="16" fill="#eaf6ec" stroke="#2a7a3b" stroke-width="2"/>
+            <text x="644" y="233" font-size="12" fill="#333">Active expert (used)</text>
+            <rect x="620" y="245" width="16" height="16" fill="#e9e9e9" stroke="#999"/>
+            <text x="644" y="258" font-size="12" fill="#333">Inactive expert (skipped)</text>
+        </svg>
+    </div>
+
+    <p class="detail-description">
+        The key difference from classical ensembles: bagging, boosting, and stacking combine several <em>fully-trained, independent</em> models after the fact (via averaging, voting, or a meta-learner). In MoE, the router and all the experts are trained at the same time, together, using the same backpropagation process—so the router's decisions and each expert's knowledge shape each other during training, rather than being built separately and combined afterward. It also only activates a small subset of experts per input rather than combining outputs from all of them. So MoE shares the "many specialized components instead of one" spirit of ensemble learning, but it's better described as a sparse, modular architecture within one model than an ensemble of separately trained models.
     </p>
 
     <hr class="section-divider">
