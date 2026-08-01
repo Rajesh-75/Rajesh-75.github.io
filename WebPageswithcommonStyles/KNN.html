@@ -366,9 +366,6 @@ window.MathJax = {
 
 <div class="wrap">
 
-  <!-- ============ HERO ============ -->
- 
-
   <!-- ============ SECTION 1: INTRODUCTION ============ -->
   <section id="intro">
     <span class="tag num" data-n="01">Introduction</span>
@@ -376,10 +373,9 @@ window.MathJax = {
 
     <p>Most classifiers you meet first are <strong>parametric</strong>: you assume the data has a particular shape (say, each class is Gaussian), and then fit a small, fixed number of parameters &mdash; a mean and a covariance per class, for instance. Once fitted, the training data itself can be thrown away; only those few numbers are kept, and they're used to answer every future query. The catch is that the whole model lives or dies by that shape assumption. If the real data isn't Gaussian-shaped, a Gaussian classifier will misfit it in a systematic, uncorrectable way, no matter how much data you feed it.</p>
 
-    <p><strong>Non-parametric</strong> models refuse to make that shape assumption up front. Instead of fitting a fixed formula, they let the training data itself stand in for the model &mdash; predictions are made by directly examining the training points near the query, and the effective complexity can grow as more data arrives. K-NN is a non-parametric method in exactly this sense: nothing is "trained" and thrown away; the entire labelled set is kept, and every prediction re-examines it from scratch. The general formula below is the starting point for this whole family of non parametric methods.</p>
+    <strong>Non-parametric models</strong> make no rigid a priori structural or distributional assumptions about the underlying data-generation process, distinguishing them from parametric architectures such as Support Vector Machines or artificial neural networks(ANN). Consequently, they bypass explicit parameter optimization via empirical risk minimization, objective cost functions, and gradient-based optimization algorithms. Instead of fitting a fixed formula, they let the training data itself stand in for the model &mdash; predictions are made by directly examining the training points near the query, and the effective complexity can grow as more data arrives. <strong>K-NN</strong> is a non-parametric method in exactly this sense: nothing is "trained" and thrown away; the entire labelled set is kept, and every prediction re-examines it from scratch. The general formula below is the starting point for this whole family of non parametric methods.</p>
 
-    
-    <p>K-NN (and KDE alongside it) is built on a geometric concept: for a small region of volume &mdash; the sphere shown above &mdash; <span class="mono">V</span> around a point, containing <span class="mono">K</span> of <span class="mono">N</span> total training samples,</p>
+    <p>K-NN (and KDE alongside it) is built on a geometric concept: for a small region of volume &mdash; the sphere shown below &mdash; <span class="mono">V</span> around a point, containing <span class="mono">K</span> of <span class="mono">N</span> total training samples,</p>
     <div class="formula-card">
       <span class="label">the general estimator follows the formula</span>
       \[ p(x) \approx \frac{K}{NV} \]
@@ -394,6 +390,7 @@ window.MathJax = {
 
     <p>Kernel density estimation fixes <span class="mono">V</span> and reads off whatever <span class="mono">K</span> falls inside. But a single fixed window size is a problem: in a dense region it's too coarse and blurs real structure, and in a sparse region it may catch very few or zero points, making the estimate noisy or collapse to zero. This is exactly the shortcoming K-NN density estimation is built to fix: it does the reverse, fixing <span class="mono">K</span> and growing a sphere until it contains exactly that many points, whatever volume <span class="mono">V</span> that takes &mdash; so the window automatically shrinks in dense regions and expands in sparse ones. That's the version we'll build on next, applied once per class within the same sphere, to get an actual classifier.</p>
   </section>
+
    <div class="hero">
     <h2>K-Nearest Neighbour Classification</h2>
     <p class="lede">K-Nearest Neighbours starts from a simple idea: to decide what a new point is, look at the labelled points sitting closest to it and let them vote. Picture the new point as unlabelled &mdash; shown in red just because its class isn't known yet. Grow a sphere around it and see which colour surrounds it most: if most of the nearby points are <span style="color:var(--class-a); font-weight:600;">teal</span>, the new point is likely teal; if most are <span style="color:var(--class-c); font-weight:600;">violet</span>, it's likely violet; if most are <span style="color:var(--class-b); font-weight:600;">gold</span>, it's likely gold. Fig. 0 below shows exactly this &mdash; a sphere grown around a query point <span class="mono">x</span> until it catches its K nearest neighbours, regardless of which class each one belongs to. The rest of this page works out, precisely, how that simple picture turns into an actual estimate of class probability.</p>
@@ -410,11 +407,10 @@ window.MathJax = {
     </div>
     <div class="hero-cap">Fig. 0 &mdash; the sphere is fixed in point-count, not in size. Its radius is whatever the local density demands.</div>
   </div>
-  
 
   <!-- ============ SECTION 2: SCENARIO ============ -->
   <section id="scenario">
-   
+
     <h2>KNN: Real Time classification Problem</h2>
     <p>A clinic has been recording two measurements from every patient it sees &mdash; say, a metabolic marker and an inflammation marker &mdash; alongside the diagnosis that was eventually confirmed for that patient. Over time this produces a labelled set: <span class="mono">N</span> historical patients, each falling into one of three confirmed classes, <span class="mono">C&#8321;</span>, <span class="mono">C&#8322;</span>, <span class="mono">C&#8323;</span>.</p>
 
@@ -427,8 +423,8 @@ window.MathJax = {
       <li>The new patient is assigned to whichever class is most common among those <span class="mono">K</span> neighbours &mdash; <span class="mono">p(C<sub>k</sub> | x) = K<sub>k</sub> / K</span>.</li>
     </ol>
     <p>So the two features never disappear or get replaced by anything &mdash; they're what defines "closeness" at every step. <span class="mono">C<sub>1</sub>, C<sub>2</sub>, C<sub>3</sub></span> is just the output, not another input.</p>
-	
-	<div class="hero-diagram" style="margin: 20px 0;">
+
+    <div class="hero-diagram" style="margin: 20px 0;">
   <svg viewBox="0 0 640 460" xmlns="http://www.w3.org/2000/svg">
     <!-- axes -->
     <line x1="70" y1="30" x2="70" y2="400" stroke="var(--ink)" stroke-width="1.5"/>
@@ -478,10 +474,11 @@ window.MathJax = {
     <text x="365" y="278" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--query)">new patient, class unknown</text>
   </svg>
 </div>
+  </section>
 
   <!-- ============ SECTION 3: PER-CLASS DENSITY ============ -->
   <section id="perclass">
-   
+
     <h2>Probabilistic Aspects of K-NN</h2>
     <p>Suppose the historical set has <span class="mono">N</span> patients in total, with <span class="mono">N<sub>k</sub></span> of them confirmed as class <span class="mono">C<sub>k</sub></span>, so that <span class="mono">&#931;<sub>k</sub> N<sub>k</sub> = N</span>. To classify the new point <span class="mono">x</span>, draw a single sphere centred on <span class="mono">x</span> and let it grow &mdash; ignoring class labels entirely &mdash; until it contains precisely <span class="mono">K</span> points in total. Call the resulting volume <span class="mono">V</span>.</p>
     <p>Now look inside that same sphere and count by class: it contains <span class="mono">K<sub>k</sub></span> points belonging to class <span class="mono">C<sub>k</sub></span>. Three quantities fall out of this one construction:</p>
@@ -506,7 +503,7 @@ window.MathJax = {
 
   <!-- ============ SECTION 4: BAYES ============ -->
   <section id="bayes">
-   
+
     <h2>Bayes' theorem for K-NN</h2>
     <p>Plug the three quantities above into Bayes' theorem and watch what cancels:</p>
     <div class="formula-card">
@@ -521,7 +518,7 @@ window.MathJax = {
 
   <!-- ============ SECTION 5: WIDGET ============ -->
   <section id="tryit">
-    
+
     <h2>Animation showing the KNN Classification</h2>
     <p>Three historical clusters are plotted below, one colour per class. The dashed circle is <span class="mono">x</span>, the new patient &mdash; drag it anywhere. It grows or shrinks only enough to enclose exactly <span class="mono">K</span> historical points, whatever that radius has to be. The panel on the right recomputes <span class="mono">K<sub>k</sub> / K</span> live for every class, and shows which one wins.</p>
 
@@ -561,7 +558,7 @@ window.MathJax = {
 
   <!-- ============ SECTION 6: ALGORITHM ============ -->
   <section id="algorithm">
-    
+
     <h2>Finally the K-NN Algorithm</h2>
     <div class="algorithm-box"><ol class="code-lines">
 <li><span class="cm"># Input: training set D = {(x_i, y_i)}, test point x_q, parameter K</span></li>
@@ -583,12 +580,21 @@ window.MathJax = {
     <p>Two implementation notes worth flagging to anyone coding this up: features should be standardised before computing distance, since an unscaled feature with a larger numeric range will dominate the distance calculation regardless of its actual relevance; and there is no training phase &mdash; the sort over distances happens fresh at every query, which is why K-NN is called <em>lazy</em> learning.</p>
   </section>
 
-  <!-- ============ SECTION 7: CHOOSING K ============ -->
-  <section id="choosingk">
-    <span class="tag num" data-n="07">The knob that matters</span>
-    <h2>K is doing the same job h did in KDE &mdash; just adaptively</h2>
-    <p>The bias&ndash;variance tension hasn't disappeared; it's just been re-parameterised. A small <span class="mono">K</span> makes the sphere tight and the decision boundary highly local &mdash; low bias, but easily swayed by a single mislabelled or noisy neighbour. A large <span class="mono">K</span> forces the sphere to reach further, smoothing the boundary and reducing variance, but at some point it starts pulling in points from the wrong cluster entirely, biasing the posterior estimate toward whichever class is globally more common.</p>
-    <p>Compare this to kernel density estimation's fixed bandwidth <span class="mono">h</span>: there, one global choice had to work everywhere, failing in either dense or sparse regions. Here, <span class="mono">K</span> is fixed but the radius adapts per query point &mdash; which is strictly more flexible, but it does not remove the need to choose <span class="mono">K</span> itself sensibly, typically via cross-validation, with odd values preferred for binary problems to avoid ties.</p>
+  
+
+  <!-- ============ SECTION 8: BEYOND THE CLASSROOM ============ -->
+  <section id="beyond">
+    
+    <h2>K-NN in modern NLP and LLM systems</h2>
+    <p>K-NN is a "classical" method, but the same nearest-neighbour idea shows up directly inside modern language systems &mdash; just with text embeddings standing in for the two clinical markers, and a much larger <span class="mono">N</span>.</p>
+
+    <h3>1. Retrieval-Augmented Generation (RAG)</h3>
+    <p>At its core, the distance-based search engine behind K-NN is the exact same mechanism that powers modern vector retrieval in AI. Text documents and user queries are converted into dense numerical vectors, allowing the system to use Euclidean or cosine distance to find the <span class="mono">K</span> nearest neighbor chunks. Structurally, it shares the familiar K-NN idea of growing a neighborhood around a query point until it catches <span class="mono">K</span> matches; however, because there is no classification label or voting step, these neighbors aren't tallied into a category. Instead, they are retrieved as raw reference text and fed directly into an LLM's context window to ground its response.</p>
+
+    <h3>2. Nearest-neighbour language models (kNN-LM)</h3>
+    <p>K-NN can also directly augment a trained language model. At each generation step, alongside the model's own next-token probabilities, the system performs a K-NN lookup over a huge datastore of (context representation &rarr; next token) pairs built from the training data, and interpolates the model's distribution with the distribution implied by those retrieved neighbours. Notably, this needs no retraining of the underlying model &mdash; a direct illustration of the "lazy learning" property from Section 6: the datastore is just kept and re-examined at inference time, exactly like the training set in ordinary K-NN.</p>
+
+    <p class="hint" style="margin-top: 10px;">References: Lewis et al., <a href="https://arxiv.org/abs/2005.11401" target="_blank" rel="noopener">"Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"</a> (2020) &middot; Khandelwal et al., <a href="https://arxiv.org/abs/1911.00172" target="_blank" rel="noopener">"Generalization through Memorization: Nearest Neighbor Language Models"</a> (2019)</p>
   </section>
 
   <footer>
