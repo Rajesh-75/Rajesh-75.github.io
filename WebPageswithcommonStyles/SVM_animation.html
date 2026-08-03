@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Support Vector Machines — Interactive Playground</title>
+<style>
+  :root{
+    --blue:#0056b3;
+    --blue-light:#eaf2fb;
+    --red:#d9534f;
+    --red-light:#fdecea;
+    --accent:#f39c12;
+    --grid:#dde3ea;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:"Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background:#ffffff;
+    color:#222;
+    margin:0;
+    padding:24px 32px 60px;
+    max-width:1000px;
+    margin-inline:auto;
+  }
+  h1{color:var(--blue); font-size:1.6em; margin-bottom:4px;}
+  h3{color:var(--blue); font-size:1.15em; margin-top:28px;}
+  p{line-height:1.55;}
+  .intuition-box{
+    background:var(--blue-light);
+    border-left:5px solid var(--blue);
+    padding:14px 18px;
+    border-radius:6px;
+    margin:16px 0;
+  }
+  .widget{
+    border:1px solid var(--grid);
+    border-radius:10px;
+    padding:20px 24px 26px;
+    background:#fcfdff;
+    box-shadow:0 2px 10px rgba(0,0,0,0.05);
+  }
+  .row{ display:flex; flex-wrap:wrap; gap:14px 26px; align-items:flex-end; margin-bottom:14px; }
+  .field{ display:flex; flex-direction:column; gap:4px; min-width:150px; }
+  .field label{ font-weight:600; font-size:0.85rem; color:#333; display:flex; justify-content:space-between; }
+  .field .val{ color:var(--blue); font-variant-numeric:tabular-nums; }
+  select, input[type=range]{ width:100%; accent-color:var(--blue); }
+  select{
+    padding:6px 8px; border:1px solid var(--grid); border-radius:6px; background:#fff; font-family:inherit;
+  }
+  .class-toggle{ display:flex; gap:8px; }
+  .class-btn{
+    border:2px solid transparent;
+    border-radius:6px;
+    padding:7px 14px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:0.85rem;
+    color:#fff;
+  }
+  .class-btn.plus{ background:var(--blue); }
+  .class-btn.minus{ background:var(--red); }
+  .class-btn.inactive{ opacity:0.35; }
+  .class-btn.active{ border-color:#222; }
+  .presets{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .btn{
+    background:#fff; color:var(--blue); border:1px solid var(--blue);
+    padding:7px 14px; border-radius:6px; font-size:0.85rem; cursor:pointer; font-family:inherit;
+  }
+  .btn:hover{ background:var(--blue-light); }
+  .btn.primary{ background:var(--blue); color:#fff; }
+  .btn.primary:hover{ background:#00408a; }
+  .btn.warn{ border-color:var(--red); color:var(--red); }
+  .btn.warn:hover{ background:var(--red-light); }
+  .canvas-wrap{ position:relative; width:100%; max-width:700px; margin:0 auto; }
+  canvas, svg.overlay{
+    position:absolute; top:0; left:0; width:100%; height:auto;
+    border:1px solid var(--grid); border-radius:6px;
+  }
+  svg.overlay{ pointer-events: none; }
+  #svmCanvas{ position:relative; display:block; width:100%; height:auto; border:1px solid var(--grid); border-radius:6px; cursor:crosshair; }
+  .stats-bar{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  .stat-chip{
+    background:var(--blue-light); color:var(--blue);
+    padding:5px 12px; border-radius:20px; font-size:0.82rem; font-weight:600;
+    font-variant-numeric:tabular-nums;
+  }
+  .stat-chip.warn-chip{ background:#fff8f0; color:#b9770e; }
+  .legend{ display:flex; gap:18px; margin-top:10px; font-size:0.82rem; color:#555; align-items:center; flex-wrap:wrap; }
+  .legend .dot{ display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+  .legend .ring{ display:inline-block; width:13px; height:13px; border-radius:50%; border:2px solid #222; margin-right:5px; vertical-align:middle; }
+  .caption{ font-size:0.85em; color:#666; margin-top:12px; }
+  .count-note{ font-size:0.82rem; color:#666; }
+</style>
+</head>
+<body>
+
+<h1>Support Vector Machines — Interactive Playground</h1>
+<p>Click the plot to add training points, choose a kernel and a value of <b>C</b>, then hit <b>Train SVM</b>. The background shading shows the learned decision surface; points circled in black are the <b>support vectors</b> — the only points that actually determine the hyperplane.</p>
+
+<div class="widget">
+
+  <div class="presets">
+    <button class="btn" id="presetLinear">Load: Linearly Separable</button>
+    <button class="btn" id="presetCircular">Load: Circular (needs a kernel)</button>
+    <button class="btn" id="presetOverlap">Load: Overlapping (needs soft margin)</button>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label>Kernel</label>
+      <select id="kernelSelect">
+        <option value="linear">Linear</option>
+        <option value="poly">Polynomial</option>
+        <option value="rbf" selected>RBF (Gaussian)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>C (regularization) <span class="val" id="cVal">1.0</span></label>
+      <input type="range" id="cSlider" min="0.1" max="20" step="0.1" value="1">
+    </div>
+    <div class="field" id="polyField" style="display:none;">
+      <label>Degree <span class="val" id="degVal">3</span></label>
+      <input type="range" id="degSlider" min="2" max="5" step="1" value="3">
+    </div>
+    <div class="field" id="rbfField">
+      <label>&gamma; (gamma) <span class="val" id="gammaVal">0.50</span></label>
+      <input type="range" id="gammaSlider" min="0.05" max="3" step="0.05" value="0.5">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="field" style="min-width:auto;">
+      <label style="margin-bottom:6px;">Add points as</label>
+      <div class="class-toggle">
+        <button class="class-btn plus active" id="classPlusBtn">+1 (blue)</button>
+        <button class="class-btn minus inactive" id="classMinusBtn">−1 (red)</button>
+      </div>
+    </div>
+    <button class="btn primary" id="trainBtn">Train SVM</button>
+    <button class="btn warn" id="clearBtn">Clear All Points</button>
+    <span class="count-note" id="pointCount">0 / 80 points</span>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="svmCanvas" width="700" height="500"></canvas>
+    <svg id="svmOverlay" class="overlay" viewBox="0 0 700 500"></svg>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:#0056b3;"></span>Class +1</span>
+    <span><span class="dot" style="background:#d9534f;"></span>Class −1</span>
+    <span><span class="ring"></span>Support vector</span>
+  </div>
+
+  <div class="stats-bar" id="statsBar"></div>
+
+  <p class="caption" id="captionText">Click the plot above to place your first points, then click "Train SVM".</p>
+</div>
+
+<h3>What to try</h3>
+<div class="intuition-box">
+  <p><b>Kernel trick:</b> load the "Circular" preset and train with a <b>Linear</b> kernel first — notice it can't separate the classes at all, since no straight line works. Switch to <b>RBF</b> and retrain: the boundary curves around the inner cluster. The RBF kernel implicitly maps points into a higher-dimensional space where a straight hyperplane <i>can</i> separate them — you never compute that mapping directly, only the kernel similarity $K(x_i, x_j)$.</p>
+  <p><b>C parameter:</b> load "Overlapping," train with a small C (e.g. 0.2) and then a large C (e.g. 15). Small C allows more margin violations (a wider, softer margin, more tolerant of noise); large C penalizes violations heavily (a narrower margin that tries hard to classify every point correctly, risking overfitting to noisy points).</p>
+  <p><b>Support vectors:</b> only the circled points influence the boundary — try dragging the idea further by clearing everything except the support vectors after training (the boundary should stay the same); every other point could move around freely without changing the hyperplane at all.</p>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('svmCanvas');
+  const ctx = canvas.getContext('2d');
+  const overlay = document.getElementById('svmOverlay');
+  const svgNS = "http://www.w3.org/2000/svg";
+  const W = 700, H = 500;
+  const xMin=-6, xMax=6, yMin=-4.5, yMax=4.5;
+  const MAX_POINTS = 80;
+
+  function dataToPx(x,y){ return [ (x-xMin)/(xMax-xMin)*W, H - (y-yMin)/(yMax-yMin)*H ]; }
+  function pxToData(px,py){ return [ xMin + px/W*(xMax-xMin), yMin + (H-py)/H*(yMax-yMin) ]; }
+
+  let points = []; // {x,y,label}
+  let currentClass = 1;
+  let model = null; // {alpha, b, X, Y, kernelFn}
+
+  function kernelFactory(){
+    const type = document.getElementById('kernelSelect').value;
+    if(type === 'linear'){
+      return (a,b)=> a.x*b.x + a.y*b.y;
+    } else if(type === 'poly'){
+      const deg = parseInt(document.getElementById('degSlider').value);
+      return (a,b)=> Math.pow(a.x*b.x + a.y*b.y + 1, deg);
+    } else {
+      const gamma = parseFloat(document.getElementById('gammaSlider').value);
+      return (a,b)=>{
+        const dx=a.x-b.x, dy=a.y-b.y;
+        return Math.exp(-gamma*(dx*dx+dy*dy));
+      };
+    }
+  }
+
+  function trainSVM(pts, C, kernelFn, tol, maxPasses){
+    const m = pts.length;
+    const X = pts.map(p=>({x:p.x,y:p.y}));
+    const Y = pts.map(p=>p.label);
+    const K = [];
+    for(let i=0;i<m;i++){
+      K.push(new Float64Array(m));
+      for(let j=0;j<m;j++) K[i][j] = kernelFn(X[i], X[j]);
+    }
+    let alpha = new Float64Array(m);
+    let b = 0;
+    function f(i){
+      let s=0;
+      for(let k=0;k<m;k++) if(alpha[k]!==0) s += alpha[k]*Y[k]*K[k][i];
+      return s+b;
+    }
+    let passes=0;
+    let iterGuard = 0;
+    while(passes < maxPasses && iterGuard < 4000){
+      let numChanged=0;
+      for(let i=0;i<m;i++){
+        iterGuard++;
+        const Ei = f(i)-Y[i];
+        if((Y[i]*Ei < -tol && alpha[i]<C) || (Y[i]*Ei>tol && alpha[i]>0)){
+          let j=i;
+          while(j===i) j = Math.floor(Math.random()*m);
+          const Ej = f(j)-Y[j];
+          const aiOld=alpha[i], ajOld=alpha[j];
+          let L,H;
+          if(Y[i]!==Y[j]){ L=Math.max(0, alpha[j]-alpha[i]); H=Math.min(C, C+alpha[j]-alpha[i]); }
+          else { L=Math.max(0, alpha[i]+alpha[j]-C); H=Math.min(C, alpha[i]+alpha[j]); }
+          if(L===H) continue;
+          const eta = 2*K[i][j]-K[i][i]-K[j][j];
+          if(eta>=0) continue;
+          alpha[j] -= Y[j]*(Ei-Ej)/eta;
+          alpha[j] = Math.min(H, Math.max(L, alpha[j]));
+          if(Math.abs(alpha[j]-ajOld)<1e-7) continue;
+          alpha[i] += Y[i]*Y[j]*(ajOld-alpha[j]);
+          const b1 = b - Ei - Y[i]*(alpha[i]-aiOld)*K[i][i] - Y[j]*(alpha[j]-ajOld)*K[i][j];
+          const b2 = b - Ej - Y[i]*(alpha[i]-aiOld)*K[i][j] - Y[j]*(alpha[j]-ajOld)*K[j][j];
+          if(alpha[i]>0 && alpha[i]<C) b=b1;
+          else if(alpha[j]>0 && alpha[j]<C) b=b2;
+          else b=(b1+b2)/2;
+          numChanged++;
+        }
+      }
+      if(numChanged===0) passes++; else passes=0;
+    }
+    return { alpha, b, X, Y };
+  }
+
+  function decisionValue(m, kernelFn, x, y){
+    let s = 0;
+    for(let k=0;k<m.X.length;k++){
+      if(m.alpha[k] > 1e-6) s += m.alpha[k]*m.Y[k]*kernelFn(m.X[k], {x,y});
+    }
+    return s + m.b;
+  }
+
+  function colorFor(t){
+    // t in [-1,1] roughly; diverging white -> blue / white -> red
+    t = Math.max(-1, Math.min(1, t));
+    if(t >= 0){
+      const r = Math.round(255 + t*(0-255));
+      const g = Math.round(255 + t*(86-255));
+      const bl = Math.round(255 + t*(179-255));
+      return [r,g,bl];
+    } else {
+      const s = -t;
+      const r = Math.round(255 + s*(217-255));
+      const g = Math.round(255 + s*(83-255));
+      const bl = Math.round(255 + s*(79-255));
+      return [r,g,bl];
+    }
+  }
+
+  function renderHeatmap(m, kernelFn){
+    const block = 5;
+    const cols = Math.ceil(W/block), rows = Math.ceil(H/block);
+    const grid = new Float64Array((cols+1)*(rows+1));
+    for(let j=0;j<=rows;j++){
+      for(let i=0;i<=cols;i++){
+        const px = i*block, py = j*block;
+        const [dx,dy] = pxToData(px,py);
+        grid[j*(cols+1)+i] = decisionValue(m, kernelFn, dx, dy);
+      }
+    }
+    ctx.clearRect(0,0,W,H);
+    for(let j=0;j<rows;j++){
+      for(let i=0;i<cols;i++){
+        const v = grid[j*(cols+1)+i];
+        const t = v/2.2;
+        const [r,g,b] = colorFor(t);
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.fillRect(i*block, j*block, block, block);
+      }
+    }
+    // cheap boundary/margin stippling: mark sign-change edges for levels 0, +1, -1
+    ctx.fillStyle = '#333';
+    const levels = [0];
+    for(let j=0;j<rows;j++){
+      for(let i=0;i<cols;i++){
+        const v = grid[j*(cols+1)+i];
+        const vr = grid[j*(cols+1)+i+1];
+        const vd = grid[(j+1)*(cols+1)+i];
+        levels.forEach(L=>{
+          if((v-L)*(vr-L) < 0 || (v-L)*(vd-L) < 0){
+            ctx.fillRect(i*block, j*block, block, block);
+          }
+        });
+      }
+    }
+    ctx.fillStyle = 'rgba(120,120,120,0.55)';
+    [1,-1].forEach(L=>{
+      for(let j=0;j<rows;j++){
+        for(let i=0;i<cols;i++){
+          const v = grid[j*(cols+1)+i];
+          const vr = grid[j*(cols+1)+i+1];
+          const vd = grid[(j+1)*(cols+1)+i];
+          if((v-L)*(vr-L) < 0 || (v-L)*(vd-L) < 0){
+            ctx.fillRect(i*block, j*block, block-1, block-1);
+          }
+        }
+      }
+    });
+  }
+
+  function renderPoints(){
+    while(overlay.firstChild) overlay.removeChild(overlay.firstChild);
+    points.forEach((p, idx)=>{
+      const [px,py] = dataToPx(p.x, p.y);
+      let isSV = false, isBound = false;
+      if(model){
+        const a = model.alpha[idx];
+        if(a > 1e-4){ isSV = true; }
+        if(a > (currentC()-1e-4)){ isBound = true; }
+      }
+      if(isSV){
+        const ring = document.createElementNS(svgNS,'circle');
+        ring.setAttribute('cx', px); ring.setAttribute('cy', py);
+        ring.setAttribute('r', 9);
+        ring.setAttribute('fill', 'none');
+        ring.setAttribute('stroke', isBound ? '#f39c12' : '#222');
+        ring.setAttribute('stroke-width', 2);
+        overlay.appendChild(ring);
+      }
+      const dot = document.createElementNS(svgNS,'circle');
+      dot.setAttribute('cx', px); dot.setAttribute('cy', py);
+      dot.setAttribute('r', 5.5);
+      dot.setAttribute('fill', p.label===1 ? '#0056b3' : '#d9534f');
+      dot.setAttribute('stroke', '#fff');
+      dot.setAttribute('stroke-width', 1.2);
+      overlay.appendChild(dot);
+    });
+  }
+
+  function currentC(){ return parseFloat(document.getElementById('cSlider').value); }
+
+  function updateStats(){
+    const bar = document.getElementById('statsBar');
+    const kernel = document.getElementById('kernelSelect').value;
+    let chips = [];
+    chips.push(`<span class="stat-chip">kernel = ${kernel}</span>`);
+    chips.push(`<span class="stat-chip">C = ${currentC().toFixed(2)}</span>`);
+    if(kernel==='poly') chips.push(`<span class="stat-chip">degree = ${document.getElementById('degSlider').value}</span>`);
+    if(kernel==='rbf') chips.push(`<span class="stat-chip">&gamma; = ${document.getElementById('gammaSlider').value}</span>`);
+    if(model){
+      let sv=0, bound=0;
+      model.alpha.forEach(a=>{ if(a>1e-4) sv++; if(a>currentC()-1e-4) bound++; });
+      chips.push(`<span class="stat-chip">support vectors = ${sv}</span>`);
+      chips.push(`<span class="stat-chip warn-chip">margin-violating (&alpha;=C) = ${bound}</span>`);
+    }
+    bar.innerHTML = chips.join(' ');
+    document.getElementById('pointCount').textContent = `${points.length} / ${MAX_POINTS} points`;
+  }
+
+  function drawGridOnly(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#fbfcfe';
+    ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle = '#eef1f5';
+    for(let gx=xMin; gx<=xMax; gx+=1){
+      const [px] = dataToPx(gx,0);
+      ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,H); ctx.stroke();
+    }
+    for(let gy=yMin; gy<=yMax; gy+=1){
+      const [,py] = dataToPx(0,gy);
+      ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(W,py); ctx.stroke();
+    }
+  }
+
+  function render(){
+    if(model){
+      renderHeatmap(model, kernelFactory());
+    } else {
+      drawGridOnly();
+    }
+    renderPoints();
+    updateStats();
+  }
+
+  function train(){
+    if(points.length < 2){
+      document.getElementById('captionText').textContent = 'Add at least a couple of points from each class before training.';
+      return;
+    }
+    const classes = new Set(points.map(p=>p.label));
+    if(classes.size < 2){
+      document.getElementById('captionText').textContent = 'Add points from both classes (+1 and −1) before training.';
+      return;
+    }
+    const C = currentC();
+    const kernelFn = kernelFactory();
+    model = trainSVM(points, C, kernelFn, 1e-3, 30);
+    document.getElementById('captionText').textContent = 'Trained. Circled points are support vectors — orange rings mark margin-violating ones (α = C).';
+    render();
+  }
+
+  canvas.addEventListener('click', function(evt){
+    if(points.length >= MAX_POINTS) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = W/rect.width, scaleY = H/rect.height;
+    const px = (evt.clientX-rect.left)*scaleX;
+    const py = (evt.clientY-rect.top)*scaleY;
+    const [x,y] = pxToData(px,py);
+    points.push({x,y,label:currentClass});
+    model = null;
+    render();
+  });
+
+  document.getElementById('classPlusBtn').addEventListener('click', ()=>{
+    currentClass = 1;
+    document.getElementById('classPlusBtn').classList.add('active');
+    document.getElementById('classPlusBtn').classList.remove('inactive');
+    document.getElementById('classMinusBtn').classList.remove('active');
+    document.getElementById('classMinusBtn').classList.add('inactive');
+  });
+  document.getElementById('classMinusBtn').addEventListener('click', ()=>{
+    currentClass = -1;
+    document.getElementById('classMinusBtn').classList.add('active');
+    document.getElementById('classMinusBtn').classList.remove('inactive');
+    document.getElementById('classPlusBtn').classList.remove('active');
+    document.getElementById('classPlusBtn').classList.add('inactive');
+  });
+
+  document.getElementById('trainBtn').addEventListener('click', train);
+  document.getElementById('clearBtn').addEventListener('click', ()=>{
+    points = []; model = null; render();
+    document.getElementById('captionText').textContent = 'Click the plot above to place your first points, then click "Train SVM".';
+  });
+
+  document.getElementById('kernelSelect').addEventListener('change', ()=>{
+    const type = document.getElementById('kernelSelect').value;
+    document.getElementById('polyField').style.display = (type==='poly') ? 'flex' : 'none';
+    document.getElementById('rbfField').style.display = (type==='rbf') ? 'flex' : 'none';
+    model = null; render();
+  });
+  document.getElementById('cSlider').addEventListener('input', ()=>{
+    document.getElementById('cVal').textContent = currentC().toFixed(2);
+  });
+  document.getElementById('cSlider').addEventListener('change', ()=>{ model=null; render(); });
+  document.getElementById('degSlider').addEventListener('input', ()=>{
+    document.getElementById('degVal').textContent = document.getElementById('degSlider').value;
+  });
+  document.getElementById('degSlider').addEventListener('change', ()=>{ model=null; render(); });
+  document.getElementById('gammaSlider').addEventListener('input', ()=>{
+    document.getElementById('gammaVal').textContent = parseFloat(document.getElementById('gammaSlider').value).toFixed(2);
+  });
+  document.getElementById('gammaSlider').addEventListener('change', ()=>{ model=null; render(); });
+
+  function loadPreset(name){
+    points = []; model = null;
+    if(name==='linear'){
+      for(let i=0;i<18;i++){
+        points.push({x: -4 + Math.random()*2.5 - 1, y: -3 + Math.random()*7, label:-1});
+        points.push({x:  4 - Math.random()*2.5 + 1, y: -3 + Math.random()*7, label: 1});
+      }
+      // reposition to be clearly linearly separable
+      points = [];
+      for(let i=0;i<16;i++) points.push({x:-4 + Math.random()*2.2 - (Math.random()*1.5), y:-4+Math.random()*8, label:-1});
+      for(let i=0;i<16;i++) points.push({x: 4 - Math.random()*2.2 + (Math.random()*1.5), y:-4+Math.random()*8, label: 1});
+      document.getElementById('kernelSelect').value='linear';
+      document.getElementById('kernelSelect').dispatchEvent(new Event('change'));
+    } else if(name==='circular'){
+      for(let i=0;i<24;i++){
+        const ang = Math.random()*2*Math.PI;
+        const r = Math.random()*1.3;
+        points.push({x:r*Math.cos(ang), y:r*Math.sin(ang), label:1});
+      }
+      for(let i=0;i<24;i++){
+        const ang = Math.random()*2*Math.PI;
+        const r = 3 + Math.random()*1.5;
+        points.push({x:r*Math.cos(ang), y:r*Math.sin(ang), label:-1});
+      }
+      document.getElementById('kernelSelect').value='rbf';
+      document.getElementById('kernelSelect').dispatchEvent(new Event('change'));
+    } else if(name==='overlap'){
+      for(let i=0;i<20;i++) points.push({x:-1.5+Math.random()*4, y:-3+Math.random()*7, label:-1});
+      for(let i=0;i<20;i++) points.push({x:-2.5+Math.random()*4, y:-3+Math.random()*7, label:1});
+      document.getElementById('kernelSelect').value='linear';
+      document.getElementById('kernelSelect').dispatchEvent(new Event('change'));
+    }
+    render();
+    document.getElementById('captionText').textContent = 'Preset loaded — click "Train SVM" to see the boundary.';
+  }
+  document.getElementById('presetLinear').addEventListener('click', ()=>loadPreset('linear'));
+  document.getElementById('presetCircular').addEventListener('click', ()=>loadPreset('circular'));
+  document.getElementById('presetOverlap').addEventListener('click', ()=>loadPreset('overlap'));
+
+  render();
+})();
+</script>
+
+</body>
+</html>
