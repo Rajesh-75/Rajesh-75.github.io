@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
     <title>Machine Learning Tutorial</title>
-    <script type="text/javascript" async
-        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-    </script>
     <script>
         window.MathJax = {
             tex: {
-                inlineMath: [['$', '$'], ['\(', '\)']],
-                displayMath: [['$$', '$$'], ['\[', '\]']]
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
             }
         };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
 </head>
 <body>
@@ -21,6 +21,76 @@
 <div class="container">
     <h1>Support Vector Machine (SVM)</h1>
 
+    <h2>📖 Introduction</h2>
+
+    <p>
+        Support Vector Machines were, for roughly a decade and a half spanning the late 1990s through the 2000s, the dominant algorithm for classification problems &mdash; competing with and often outperforming the neural networks of that era. At its core, SVM is a <strong>linear model</strong>: it looks for a straight hyperplane
+    </p>
+    <div class="formula">
+        $$\mathbf{w}\cdot\mathbf{x}+b=0$$
+    </div>
+    <p>
+        that separates two classes, and discrimination itself is done geometrically: a new point $\mathbf{x}$ is classified purely by which side of that hyperplane it falls on,
+    </p>
+    <div class="formula">
+        $$f(\mathbf{x}) = \text{sign}(\mathbf{w}\cdot\mathbf{x}+b)$$
+    </div>
+    <p>
+        During training, this splitting requirement is written as two per-class constraints &mdash; every positive example must land on the $+1$ side, every negative example on the $-1$ side, each with a margin of at least 1:
+    </p>
+    <div class="formula">
+        $$\mathbf{w}\cdot\mathbf{x}_i+b \ge +1 \quad \text{for } y_i=+1, \qquad \mathbf{w}\cdot\mathbf{x}_i+b \le -1 \quad \text{for } y_i=-1$$
+    </div>
+    <p>
+        Because $y_i \in \{-1,+1\}$ exactly flips sign along with the class, both constraints collapse into the single unified inequality used throughout this page, $y_i(\mathbf{w}\cdot\mathbf{x}_i+b)\ge 1$.
+    </p>
+    <p>
+        This is where SVM fundamentally departs from a <strong>generative, Bayes'-theorem-based</strong> classifier such as Linear Discriminant Analysis or Naive Bayes. Those methods first estimate a class-conditional density $p(\mathbf{x}\mid y)$ and a prior $p(y)$ for every class, then use Bayes' theorem to compute a posterior,
+    </p>
+    <div class="formula">
+        $$p(y \mid \mathbf{x}) = \frac{p(y)\,p(\mathbf{x}\mid y)}{p(\mathbf{x})}$$
+    </div>
+    <p>
+        and classify by comparing posteriors across classes (e.g. predicting whichever $y$ maximizes $p(y\mid\mathbf{x})$). The decision boundary here is a <em>byproduct</em> &mdash; it only exists implicitly, at whatever $\mathbf{x}$ makes two posteriors equal. SVM never estimates $p(\mathbf{x}\mid y)$, $p(y)$, or $p(\mathbf{x})$ at all: it is a <strong>discriminant method</strong>, meaning the boundary $\mathbf{w},b$ is itself the object being solved for directly, via the margin-maximizing constraints above, with no probability distribution computed as an intermediate step.
+    </p>
+
+    <p>
+        But the constraint $y_i(\mathbf{w}\cdot\mathbf{x}_i+b)\ge 1$ alone doesn't pin down a unique hyperplane &mdash; infinitely many $(\mathbf{w},b)$ pairs can satisfy it for a separable dataset, sitting anywhere between the two classes. SVM breaks that tie with an explicit geometric objective: among all hyperplanes that satisfy the constraint, choose the one that maximizes the <strong>margin</strong> &mdash; the distance from the hyperplane to the nearest training point of either class. That distance works out to $\frac{2}{||\mathbf{w}||}$, so maximizing it is equivalent to minimizing $||\mathbf{w}||$, or more conveniently its square. This gives the full training objective, combining the geometric goal with the per-point constraints derived above into one constrained optimization problem:
+    </p>
+    <div class="formula">
+        $$\text{Minimize } \frac{1}{2}||\mathbf{w}||^2 \quad \text{subject to} \quad y_i(\mathbf{w}\cdot\mathbf{x}_i+b)\ge 1 \ \text{ for all } i$$
+    </div>
+    <p>
+        The intuition for <em>why</em> a wide margin is the right thing to maximize, rather than just any separating hyperplane, is that the points nearest the boundary are the least confidently classified &mdash; a boundary squeezed right up against them is fragile, easily flipped by a slightly different sample of noisy data. Pushing the boundary as far as possible from every point makes the classifier maximally robust to exactly that kind of perturbation.
+    </p>
+
+    <p>
+        This design choice traces back to what is often called <strong>Vapnik's principle</strong>, after Vladimir Vapnik, SVM's co-inventor and the architect of Statistical Learning Theory: when solving a problem, don't solve a more general problem as an intermediate step if it isn't necessary. Estimating a full probability distribution is a strictly harder problem than classification requires. SVM's margin-maximizing objective also comes from the same theory's <strong>structural risk minimization</strong> principle &mdash; controlling generalization error not just by fitting the training data well, but by explicitly bounding a model's capacity (formalized as VC dimension). A wider margin provably corresponds to a lower-capacity, better-generalizing classifier.
+    </p>
+
+    <p>
+        Once the linear SVM is trained, something elegant falls out of the optimization itself: the weight vector can be written entirely in terms of a small subset of the training data &mdash; the <strong>support vectors</strong>:
+    </p>
+    <div class="formula">
+        $$\mathbf{w} = \sum_{i \in \text{SV}} \alpha_i y_i \mathbf{x}_i$$
+    </div>
+    <p>
+        These are precisely the training points that sit closest to the decision boundary &mdash; on the margin, or violating it. Every other point, however far from the boundary, contributes nothing to $\mathbf{w}$ at all; its Lagrange multiplier $\alpha_i$ is exactly zero. This sparsity isn't a minor implementation detail &mdash; it's the property that makes the <strong>kernel trick</strong> possible. Because both training (the dual objective) and prediction, $f(\mathbf{x})=\text{sign}(\sum_i \alpha_i y_i\, \mathbf{x}_i\cdot\mathbf{x}+b)$, touch the data only through pairwise dot products, that dot product can be replaced everywhere by a kernel function $K(\mathbf{x}_i,\mathbf{x}_j)$ &mdash; implicitly computing an inner product in a much higher, even infinite, dimensional feature space, without ever constructing that space explicitly. A linear algorithm becomes a non-linear one, and its generalization guarantees carry over largely intact because the underlying optimization problem hasn't fundamentally changed &mdash; only the notion of "dot product" has.
+    </p>
+
+    <p>
+        A kernel function is best understood as a <strong>similarity measure</strong>. The linear kernel measures raw dot-product alignment; the RBF kernel measures similarity that decays smoothly with Euclidean distance; the polynomial kernel captures similarity through higher-order feature interactions. Once trained, a new point is classified by how strongly it resembles each support vector &mdash; the support vectors act as the small set of "landmark" examples the entire decision rule is built from, and the kernel defines what "resembles" even means geometrically.
+    </p>
+
+    <p>
+        Crucially, the optimization problem that produces the $\alpha_i$'s, whether linear or kernelized, is a <strong>convex quadratic program</strong>: a convex objective over a convex, linearly-constrained feasible region. This guarantees that any local optimum found is automatically the global optimum, and specialized algorithms like SMO converge reliably to that exact solution. This stands in sharp contrast to <strong>non-convex optimization</strong>, which is what neural network training actually is: the loss landscape has many local minima and saddle points, no optimality guarantee exists, and results depend on initialization, learning-rate schedules, and a fair amount of trial and error. SVM's convexity was, for a long time, considered a decisive theoretical advantage &mdash; a trained SVM is exactly reproducible and provably optimal for its stated objective, something a neural network still cannot promise.
+    </p>
+
+    <p>
+        So why did SVM lose ground to neural networks and deep learning? Mainly scale. The kernel (Gram) matrix that SVM training relies on grows as $O(N^2)$ in memory and roughly $O(N^2)$ to $O(N^3)$ in computation, which becomes infeasible once datasets reach millions of examples &mdash; exactly the regime deep learning thrives in. Classical SVM also depends on hand-engineered features or a hand-chosen kernel to work well on complex, high-dimensional data like images, audio, or text; deep networks instead learn hierarchical feature representations directly from raw data, and once GPUs and large labeled datasets made this practical (the ImageNet/AlexNet moment of 2012 is the usual marker), deep learning's ability to keep improving with more data and compute overtook SVM's rigid, convex-but-not-infinitely-scalable framework. Even so, the mathematics behind SVM &mdash; margin theory, VC-dimension generalization bounds, convex duality, and the kernel trick itself &mdash; remains genuinely important: it still outperforms deep learning on small-to-medium tabular datasets, offers interpretability and theoretical guarantees deep learning doesn't, and, as covered later on this page, its kernel theory is one of the main lenses researchers now use to understand why deep learning works at all.
+    </p>
+
+    <hr>
     <h2>🚀 1. Linear SVM Training (Hard Margin and Soft Margin)</h2>
     <p>The goal is to find the optimal hyperplane that maximizes the margin between the two classes.</p>
 
@@ -40,7 +110,7 @@
         </li>
         <li><strong>Choose Hyperparameters ($C$):</strong> Select the regularization parameter $C$ (for the Soft Margin case). A smaller $C$ allows for a wider margin and more misclassifications; a larger $C$ enforces a narrower margin and fewer misclassifications.</li>
         <li><strong>Solve the Dual Problem:</strong> Convert the primal optimization problem into its dual form using the Lagrange Multipliers ($\alpha_i$). This dual problem is a easier-to-solve Quadratic Programming (QP) problem.</li>
-        <li><strong>Identify Support Vectors:</strong> After solving the QP problem, the data points corresponding to non-zero Lagrange multipliers ($\alpha_i > 0$) are identified as the **Support Vectors (SVs)**. These are the critical points that define the margin/hyperplane.</li>
+        <li><strong>Identify Support Vectors:</strong> After solving the QP problem, the data points corresponding to non-zero Lagrange multipliers ($\alpha_i > 0$) are identified as the <strong>Support Vectors (SVs)</strong>. These are the critical points that define the margin/hyperplane.</li>
         <li><strong>Calculate Parameters:</strong> Use the determined $\alpha_i$ values and the Support Vectors to calculate the optimal weight vector $\mathbf{w}$ and the bias term $b$.</li>
         <li><strong>Return:</strong> The final parameters $(\mathbf{w}, b)$ that define the optimal linear hyperplane.</li>
     </ol>
@@ -64,7 +134,7 @@
                 <li>Choose the regularization parameter $C$ (same as the linear case).</li>
             </ul>
         </li>
-        <li><strong>Solve the Kernelized Dual Problem:</strong> Solve the same Quadratic Programming (QP) dual problem as the linear case, but replace every dot product $\mathbf{x}_i \cdot \mathbf{x}_j$ with the chosen **Kernel function** $K(\mathbf{x}_i, \mathbf{x}_j)$. This is the **Kernel Trick**.</li>
+        <li><strong>Solve the Kernelized Dual Problem:</strong> Solve the same Quadratic Programming (QP) dual problem as the linear case, but replace every dot product $\mathbf{x}_i \cdot \mathbf{x}_j$ with the chosen <strong>Kernel function</strong> $K(\mathbf{x}_i, \mathbf{x}_j)$. This is the <strong>Kernel Trick</strong>.</li>
         <li><strong>Identify Support Vectors:</strong> Identify the Support Vectors ($\alpha_i > 0$). These points are now critical in the kernel feature space.</li>
         <li><strong>Calculate Bias ($b$):</strong> Calculate the bias term $b$ using the SVs and the kernel function. The weight vector $\mathbf{w}$ in the high-dimensional space is typically not explicitly calculated.</li>
         <li><strong>Return:</strong> The Lagrange Multipliers ($\alpha_i$), the bias term ($b$), the Support Vectors (SVs), and the chosen Kernel function.</li>
@@ -73,13 +143,13 @@
     <hr>
     
     <h2>💡 The Power of the Kernel Trick (The Mathematical Shortcut)</h2>
-    <p>The main advantage of the **Kernel Trick** is that it allows us to work in a high-dimensional feature space ($\mathcal{F}$) where the data is linearly separable, **without ever explicitly calculating the coordinates** in that space. This avoids the huge computational cost associated with high dimensionality.</p>
+    <p>The main advantage of the <strong>Kernel Trick</strong> is that it allows us to work in a high-dimensional feature space ($\mathcal{F}$) where the data is linearly separable, <strong>without ever explicitly calculating the coordinates</strong> in that space. This avoids the huge computational cost associated with high dimensionality.</p>
     
     <h3>The Transformation:</h3>
     <p>Instead of performing the complex two-step process:</p>
     <ol>
-        <li>**Explicit Mapping:** Compute the high-dimensional vector $\Phi(\mathbf{x}_i)$ for every data point.</li>
-        <li>**Dot Product:** Compute the dot product $\Phi(\mathbf{x}_i) \cdot \Phi(\mathbf{x}_j)$.</li>
+        <li><strong>Explicit Mapping:</strong> Compute the high-dimensional vector $\Phi(\mathbf{x}_i)$ for every data point.</li>
+        <li><strong>Dot Product:</strong> Compute the dot product $\Phi(\mathbf{x}_i) \cdot \Phi(\mathbf{x}_j)$.</li>
     </ol>
     <p>The Kernel Trick replaces the entire sequence with a simple function call:</p>
     
@@ -87,10 +157,10 @@
         $$K(\mathbf{x}_i, \mathbf{x}_j) = \Phi(\mathbf{x}_i) \cdot \Phi(\mathbf{x}_j)$$
     </div>
     
-    <p>For example, using the **Polynomial Kernel** $K(\mathbf{x}_i, \mathbf{x}_j) = (\mathbf{x}_i \cdot \mathbf{x}_j + 1)^d$ effectively computes the dot product of data mapped to an implied feature space of dimension $\binom{n+d}{d}$ (where $n$ is the original dimension), all through one fast calculation in the original space.</p>
+    <p>For example, using the <strong>Polynomial Kernel</strong> $K(\mathbf{x}_i, \mathbf{x}_j) = (\mathbf{x}_i \cdot \mathbf{x}_j + 1)^d$ effectively computes the dot product of data mapped to an implied feature space of dimension $\binom{n+d}{d}$ (where $n$ is the original dimension), all through one fast calculation in the original space.</p>
     
     <h3>Key Benefit: Computationally Cheap</h3>
-    <p>The Kernel function takes only the original low-dimensional input vectors $\mathbf{x}_i$ and $\mathbf{x}_j$ and returns the scalar value of their dot product in the high-dimensional space. This makes it **computationally feasible** to find a non-linear boundary in the original input space.</p>
+    <p>The Kernel function takes only the original low-dimensional input vectors $\mathbf{x}_i$ and $\mathbf{x}_j$ and returns the scalar value of their dot product in the high-dimensional space. This makes it <strong>computationally feasible</strong> to find a non-linear boundary in the original input space.</p>
 
     <hr>
 
@@ -106,6 +176,493 @@
     <div class="formula">
         $$\text{sign}\left(\sum_{i \in \text{SV}} \alpha_i y_i K(\mathbf{x}_i, \mathbf{x}_{\text{new}}) + b\right)$$
     </div>
+
+    <hr>
+
+    <h2>🎮 Interactive Playground: Try It Yourself</h2>
+    <p>Everything above is the theory. Click points on the plot below, choose a kernel and a value of C, and train a real SVM (solved live in your browser) to see the hyperplane, margin, and support vectors respond exactly as the equations predict.</p>
+
+        <div class="svm-playground">
+    <style>
+      .svm-playground{
+        --sp-blue:#0056b3;
+        --sp-blue-light:#eaf2fb;
+        --sp-red:#d9534f;
+        --sp-red-light:#fdecea;
+        --sp-accent:#f39c12;
+        --sp-grid:#dde3ea;
+        font-family: inherit;
+      }
+      .svm-playground .widget{
+        border:1px solid var(--sp-grid);
+        border-radius:10px;
+        padding:20px 24px 26px;
+        background:#fcfdff;
+        box-shadow:0 2px 10px rgba(0,0,0,0.05);
+      }
+      .svm-playground .row{ display:flex; flex-wrap:wrap; gap:14px 26px; align-items:flex-end; margin-bottom:14px; }
+      .svm-playground .field{ display:flex; flex-direction:column; gap:4px; min-width:150px; }
+      .svm-playground .field label{ font-weight:600; font-size:0.85rem; color:#333; display:flex; justify-content:space-between; }
+      .svm-playground .field .val{ color:var(--sp-blue); font-variant-numeric:tabular-nums; }
+      .svm-playground select, .svm-playground input[type=range]{ width:100%; accent-color:var(--sp-blue); }
+      .svm-playground select{
+        padding:6px 8px; border:1px solid var(--sp-grid); border-radius:6px; background:#fff; font-family:inherit;
+      }
+      .svm-playground .class-toggle{ display:flex; gap:8px; }
+      .svm-playground .class-btn{
+        border:2px solid transparent;
+        border-radius:6px;
+        padding:7px 14px;
+        cursor:pointer;
+        font-weight:600;
+        font-size:0.85rem;
+        color:#fff;
+      }
+      .svm-playground .class-btn.plus{ background:var(--sp-blue); }
+      .svm-playground .class-btn.minus{ background:var(--sp-red); }
+      .svm-playground .class-btn.inactive{ opacity:0.35; }
+      .svm-playground .class-btn.active{ border-color:#222; }
+      .svm-playground .presets{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+      .svm-playground .btn{
+        background:#fff; color:var(--sp-blue); border:1px solid var(--sp-blue);
+        padding:7px 14px; border-radius:6px; font-size:0.85rem; cursor:pointer; font-family:inherit;
+      }
+      .svm-playground .btn:hover{ background:var(--sp-blue-light); }
+      .svm-playground .btn.primary{ background:var(--sp-blue); color:#fff; }
+      .svm-playground .btn.primary:hover{ background:#00408a; }
+      .svm-playground .btn.warn{ border-color:var(--sp-red); color:var(--sp-red); }
+      .svm-playground .btn.warn:hover{ background:var(--sp-red-light); }
+      .svm-playground .canvas-wrap{ position:relative; width:100%; max-width:700px; margin:0 auto; }
+      .svm-playground canvas, .svm-playground svg.overlay{
+        position:absolute; top:0; left:0; width:100%; height:auto;
+        border:1px solid var(--sp-grid); border-radius:6px;
+      }
+      .svm-playground svg.overlay{ pointer-events:none; }
+      .svm-playground #svmCanvas{ position:relative; display:block; width:100%; height:auto; border:1px solid var(--sp-grid); border-radius:6px; cursor:crosshair; }
+      .svm-playground .stats-bar{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+      .svm-playground .stat-chip{
+        background:var(--sp-blue-light); color:var(--sp-blue);
+        padding:5px 12px; border-radius:20px; font-size:0.82rem; font-weight:600;
+        font-variant-numeric:tabular-nums;
+      }
+      .svm-playground .stat-chip.warn-chip{ background:#fff8f0; color:#b9770e; }
+      .svm-playground .legend{ display:flex; gap:18px; margin-top:10px; font-size:0.82rem; color:#555; align-items:center; flex-wrap:wrap; }
+      .svm-playground .legend .dot{ display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+      .svm-playground .legend .ring{ display:inline-block; width:13px; height:13px; border-radius:50%; border:2px solid #222; margin-right:5px; vertical-align:middle; }
+      .svm-playground .caption{ font-size:0.85em; color:#666; margin-top:12px; }
+      .svm-playground .count-note{ font-size:0.82rem; color:#666; }
+      .svm-playground .svm-tips{
+        background:var(--sp-blue-light);
+        border-left:5px solid var(--sp-blue);
+        padding:14px 18px;
+        border-radius:6px;
+        margin:16px 0;
+      }
+    </style>
+
+    <div class="widget">
+
+      <div class="presets">
+        <button class="btn" id="presetLinear">Load: Linearly Separable</button>
+        <button class="btn" id="presetCircular">Load: Circular (needs a kernel)</button>
+        <button class="btn" id="presetOverlap">Load: Overlapping (needs soft margin)</button>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Kernel</label>
+          <select id="kernelSelect">
+            <option value="linear">Linear</option>
+            <option value="poly">Polynomial</option>
+            <option value="rbf" selected>RBF (Gaussian)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>C (regularization) <span class="val" id="cVal">1.0</span></label>
+          <input type="range" id="cSlider" min="0.1" max="20" step="0.1" value="1">
+        </div>
+        <div class="field" id="polyField" style="display:none;">
+          <label>Degree <span class="val" id="degVal">3</span></label>
+          <input type="range" id="degSlider" min="2" max="5" step="1" value="3">
+        </div>
+        <div class="field" id="rbfField">
+          <label>&gamma; (gamma) <span class="val" id="gammaVal">0.50</span></label>
+          <input type="range" id="gammaSlider" min="0.05" max="3" step="0.05" value="0.5">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field" style="min-width:auto;">
+          <label style="margin-bottom:6px;">Add points as</label>
+          <div class="class-toggle">
+            <button class="class-btn plus active" id="classPlusBtn">+1 (blue)</button>
+            <button class="class-btn minus inactive" id="classMinusBtn">−1 (red)</button>
+          </div>
+        </div>
+        <button class="btn primary" id="trainBtn">Train SVM</button>
+        <button class="btn warn" id="clearBtn">Clear All Points</button>
+        <span class="count-note" id="pointCount">0 / 80 points</span>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="svmCanvas" width="700" height="500"></canvas>
+        <svg id="svmOverlay" class="overlay" viewBox="0 0 700 500"></svg>
+      </div>
+
+      <div class="legend">
+        <span><span class="dot" style="background:#0056b3;"></span>Class +1</span>
+        <span><span class="dot" style="background:#d9534f;"></span>Class −1</span>
+        <span><span class="ring"></span>Support vector</span>
+      </div>
+
+      <div class="stats-bar" id="statsBar"></div>
+
+      <p class="caption" id="captionText">Click the plot above to place your first points, then click "Train SVM".</p>
+    </div>
+
+    <div class="svm-tips">
+      <p><b>Kernel trick:</b> load the "Circular" preset and train with a <b>Linear</b> kernel first — notice it can't separate the classes at all, since no straight line works. Switch to <b>RBF</b> and retrain: the boundary curves around the inner cluster.</p>
+      <p><b>C parameter:</b> load "Overlapping," train with a small C (e.g. 0.2) and then a large C (e.g. 15) to see the margin tighten.</p>
+      <p><b>Support vectors:</b> only the circled points influence the boundary — every other point could move around freely without changing the hyperplane at all.</p>
+    </div>
+    </div>
+
+    <script>
+    (function(){
+      const canvas = document.getElementById('svmCanvas');
+      const ctx = canvas.getContext('2d');
+      const overlay = document.getElementById('svmOverlay');
+      const svgNS = "http://www.w3.org/2000/svg";
+      const W = 700, H = 500;
+      const xMin=-6, xMax=6, yMin=-4.5, yMax=4.5;
+      const MAX_POINTS = 80;
+
+      function dataToPx(x,y){ return [ (x-xMin)/(xMax-xMin)*W, H - (y-yMin)/(yMax-yMin)*H ]; }
+      function pxToData(px,py){ return [ xMin + px/W*(xMax-xMin), yMin + (H-py)/H*(yMax-yMin) ]; }
+
+      let points = [];
+      let currentClass = 1;
+      let model = null;
+
+      function kernelFactory(){
+        const type = document.getElementById('kernelSelect').value;
+        if(type === 'linear'){
+          return (a,b)=> a.x*b.x + a.y*b.y;
+        } else if(type === 'poly'){
+          const deg = parseInt(document.getElementById('degSlider').value);
+          return (a,b)=> Math.pow(a.x*b.x + a.y*b.y + 1, deg);
+        } else {
+          const gamma = parseFloat(document.getElementById('gammaSlider').value);
+          return (a,b)=>{
+            const dx=a.x-b.x, dy=a.y-b.y;
+            return Math.exp(-gamma*(dx*dx+dy*dy));
+          };
+        }
+      }
+
+      function trainSVM(pts, C, kernelFn, tol, maxPasses){
+        const m = pts.length;
+        const X = pts.map(p=>({x:p.x,y:p.y}));
+        const Y = pts.map(p=>p.label);
+        const K = [];
+        for(let i=0;i<m;i++){
+          K.push(new Float64Array(m));
+          for(let j=0;j<m;j++) K[i][j] = kernelFn(X[i], X[j]);
+        }
+        let alpha = new Float64Array(m);
+        let b = 0;
+        function f(i){
+          let s=0;
+          for(let k=0;k<m;k++) if(alpha[k]!==0) s += alpha[k]*Y[k]*K[k][i];
+          return s+b;
+        }
+        let passes=0;
+        let iterGuard = 0;
+        while(passes < maxPasses && iterGuard < 4000){
+          let numChanged=0;
+          for(let i=0;i<m;i++){
+            iterGuard++;
+            const Ei = f(i)-Y[i];
+            if((Y[i]*Ei < -tol && alpha[i]<C) || (Y[i]*Ei>tol && alpha[i]>0)){
+              let j=i;
+              while(j===i) j = Math.floor(Math.random()*m);
+              const Ej = f(j)-Y[j];
+              const aiOld=alpha[i], ajOld=alpha[j];
+              let L,H;
+              if(Y[i]!==Y[j]){ L=Math.max(0, alpha[j]-alpha[i]); H=Math.min(C, C+alpha[j]-alpha[i]); }
+              else { L=Math.max(0, alpha[i]+alpha[j]-C); H=Math.min(C, alpha[i]+alpha[j]); }
+              if(L===H) continue;
+              const eta = 2*K[i][j]-K[i][i]-K[j][j];
+              if(eta>=0) continue;
+              alpha[j] -= Y[j]*(Ei-Ej)/eta;
+              alpha[j] = Math.min(H, Math.max(L, alpha[j]));
+              if(Math.abs(alpha[j]-ajOld)<1e-7) continue;
+              alpha[i] += Y[i]*Y[j]*(ajOld-alpha[j]);
+              const b1 = b - Ei - Y[i]*(alpha[i]-aiOld)*K[i][i] - Y[j]*(alpha[j]-ajOld)*K[i][j];
+              const b2 = b - Ej - Y[i]*(alpha[i]-aiOld)*K[i][j] - Y[j]*(alpha[j]-ajOld)*K[j][j];
+              if(alpha[i]>0 && alpha[i]<C) b=b1;
+              else if(alpha[j]>0 && alpha[j]<C) b=b2;
+              else b=(b1+b2)/2;
+              numChanged++;
+            }
+          }
+          if(numChanged===0) passes++; else passes=0;
+        }
+        return { alpha, b, X, Y };
+      }
+
+      function decisionValue(m, kernelFn, x, y){
+        let s = 0;
+        for(let k=0;k<m.X.length;k++){
+          if(m.alpha[k] > 1e-6) s += m.alpha[k]*m.Y[k]*kernelFn(m.X[k], {x,y});
+        }
+        return s + m.b;
+      }
+
+      function colorFor(t){
+        t = Math.max(-1, Math.min(1, t));
+        if(t >= 0){
+          const r = Math.round(255 + t*(0-255));
+          const g = Math.round(255 + t*(86-255));
+          const bl = Math.round(255 + t*(179-255));
+          return [r,g,bl];
+        } else {
+          const s = -t;
+          const r = Math.round(255 + s*(217-255));
+          const g = Math.round(255 + s*(83-255));
+          const bl = Math.round(255 + s*(79-255));
+          return [r,g,bl];
+        }
+      }
+
+      function renderHeatmap(m, kernelFn){
+        const block = 5;
+        const cols = Math.ceil(W/block), rows = Math.ceil(H/block);
+        const grid = new Float64Array((cols+1)*(rows+1));
+        for(let j=0;j<=rows;j++){
+          for(let i=0;i<=cols;i++){
+            const px = i*block, py = j*block;
+            const [dx,dy] = pxToData(px,py);
+            grid[j*(cols+1)+i] = decisionValue(m, kernelFn, dx, dy);
+          }
+        }
+        ctx.clearRect(0,0,W,H);
+        for(let j=0;j<rows;j++){
+          for(let i=0;i<cols;i++){
+            const v = grid[j*(cols+1)+i];
+            const t = v/2.2;
+            const [r,g,b] = colorFor(t);
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+            ctx.fillRect(i*block, j*block, block, block);
+          }
+        }
+        ctx.fillStyle = '#333';
+        for(let j=0;j<rows;j++){
+          for(let i=0;i<cols;i++){
+            const v = grid[j*(cols+1)+i];
+            const vr = grid[j*(cols+1)+i+1];
+            const vd = grid[(j+1)*(cols+1)+i];
+            if((v-0)*(vr-0) < 0 || (v-0)*(vd-0) < 0){
+              ctx.fillRect(i*block, j*block, block, block);
+            }
+          }
+        }
+        ctx.fillStyle = 'rgba(120,120,120,0.55)';
+        [1,-1].forEach(L=>{
+          for(let j=0;j<rows;j++){
+            for(let i=0;i<cols;i++){
+              const v = grid[j*(cols+1)+i];
+              const vr = grid[j*(cols+1)+i+1];
+              const vd = grid[(j+1)*(cols+1)+i];
+              if((v-L)*(vr-L) < 0 || (v-L)*(vd-L) < 0){
+                ctx.fillRect(i*block, j*block, block-1, block-1);
+              }
+            }
+          }
+        });
+      }
+
+      function renderPoints(){
+        while(overlay.firstChild) overlay.removeChild(overlay.firstChild);
+        points.forEach((p, idx)=>{
+          const [px,py] = dataToPx(p.x, p.y);
+          let isSV = false, isBound = false;
+          if(model){
+            const a = model.alpha[idx];
+            if(a > 1e-4){ isSV = true; }
+            if(a > (currentC()-1e-4)){ isBound = true; }
+          }
+          if(isSV){
+            const ring = document.createElementNS(svgNS,'circle');
+            ring.setAttribute('cx', px); ring.setAttribute('cy', py);
+            ring.setAttribute('r', 9);
+            ring.setAttribute('fill', 'none');
+            ring.setAttribute('stroke', isBound ? '#f39c12' : '#222');
+            ring.setAttribute('stroke-width', 2);
+            overlay.appendChild(ring);
+          }
+          const dot = document.createElementNS(svgNS,'circle');
+          dot.setAttribute('cx', px); dot.setAttribute('cy', py);
+          dot.setAttribute('r', 5.5);
+          dot.setAttribute('fill', p.label===1 ? '#0056b3' : '#d9534f');
+          dot.setAttribute('stroke', '#fff');
+          dot.setAttribute('stroke-width', 1.2);
+          overlay.appendChild(dot);
+        });
+      }
+
+      function currentC(){ return parseFloat(document.getElementById('cSlider').value); }
+
+      function updateStats(){
+        const bar = document.getElementById('statsBar');
+        const kernel = document.getElementById('kernelSelect').value;
+        let chips = [];
+        chips.push(`<span class="stat-chip">kernel = ${kernel}</span>`);
+        chips.push(`<span class="stat-chip">C = ${currentC().toFixed(2)}</span>`);
+        if(kernel==='poly') chips.push(`<span class="stat-chip">degree = ${document.getElementById('degSlider').value}</span>`);
+        if(kernel==='rbf') chips.push(`<span class="stat-chip">&gamma; = ${document.getElementById('gammaSlider').value}</span>`);
+        if(model){
+          let sv=0, bound=0;
+          model.alpha.forEach(a=>{ if(a>1e-4) sv++; if(a>currentC()-1e-4) bound++; });
+          chips.push(`<span class="stat-chip">support vectors = ${sv}</span>`);
+          chips.push(`<span class="stat-chip warn-chip">margin-violating (&alpha;=C) = ${bound}</span>`);
+        }
+        bar.innerHTML = chips.join(' ');
+        document.getElementById('pointCount').textContent = `${points.length} / ${MAX_POINTS} points`;
+      }
+
+      function drawGridOnly(){
+        ctx.clearRect(0,0,W,H);
+        ctx.fillStyle = '#fbfcfe';
+        ctx.fillRect(0,0,W,H);
+        ctx.strokeStyle = '#eef1f5';
+        for(let gx=xMin; gx<=xMax; gx+=1){
+          const [px] = dataToPx(gx,0);
+          ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,H); ctx.stroke();
+        }
+        for(let gy=yMin; gy<=yMax; gy+=1){
+          const [,py] = dataToPx(0,gy);
+          ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(W,py); ctx.stroke();
+        }
+      }
+
+      function render(){
+        if(model){
+          renderHeatmap(model, kernelFactory());
+        } else {
+          drawGridOnly();
+        }
+        renderPoints();
+        updateStats();
+      }
+
+      function train(){
+        if(points.length < 2){
+          document.getElementById('captionText').textContent = 'Add at least a couple of points from each class before training.';
+          return;
+        }
+        const classes = new Set(points.map(p=>p.label));
+        if(classes.size < 2){
+          document.getElementById('captionText').textContent = 'Add points from both classes (+1 and −1) before training.';
+          return;
+        }
+        const C = currentC();
+        const kernelFn = kernelFactory();
+        model = trainSVM(points, C, kernelFn, 1e-3, 30);
+        document.getElementById('captionText').textContent = 'Trained. Circled points are support vectors — orange rings mark margin-violating ones (α = C).';
+        render();
+      }
+
+      canvas.addEventListener('click', function(evt){
+        if(points.length >= MAX_POINTS) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = W/rect.width, scaleY = H/rect.height;
+        const px = (evt.clientX-rect.left)*scaleX;
+        const py = (evt.clientY-rect.top)*scaleY;
+        const [x,y] = pxToData(px,py);
+        points.push({x,y,label:currentClass});
+        model = null;
+        render();
+      });
+
+      document.getElementById('classPlusBtn').addEventListener('click', ()=>{
+        currentClass = 1;
+        document.getElementById('classPlusBtn').classList.add('active');
+        document.getElementById('classPlusBtn').classList.remove('inactive');
+        document.getElementById('classMinusBtn').classList.remove('active');
+        document.getElementById('classMinusBtn').classList.add('inactive');
+      });
+      document.getElementById('classMinusBtn').addEventListener('click', ()=>{
+        currentClass = -1;
+        document.getElementById('classMinusBtn').classList.add('active');
+        document.getElementById('classMinusBtn').classList.remove('inactive');
+        document.getElementById('classPlusBtn').classList.remove('active');
+        document.getElementById('classPlusBtn').classList.add('inactive');
+      });
+
+      document.getElementById('trainBtn').addEventListener('click', train);
+      document.getElementById('clearBtn').addEventListener('click', ()=>{
+        points = []; model = null; render();
+        document.getElementById('captionText').textContent = 'Click the plot above to place your first points, then click "Train SVM".';
+      });
+
+      document.getElementById('kernelSelect').addEventListener('change', ()=>{
+        const type = document.getElementById('kernelSelect').value;
+        document.getElementById('polyField').style.display = (type==='poly') ? 'flex' : 'none';
+        document.getElementById('rbfField').style.display = (type==='rbf') ? 'flex' : 'none';
+        model = null; render();
+      });
+      document.getElementById('cSlider').addEventListener('input', ()=>{
+        document.getElementById('cVal').textContent = currentC().toFixed(2);
+      });
+      document.getElementById('cSlider').addEventListener('change', ()=>{ model=null; render(); });
+      document.getElementById('degSlider').addEventListener('input', ()=>{
+        document.getElementById('degVal').textContent = document.getElementById('degSlider').value;
+      });
+      document.getElementById('degSlider').addEventListener('change', ()=>{ model=null; render(); });
+      document.getElementById('gammaSlider').addEventListener('input', ()=>{
+        document.getElementById('gammaVal').textContent = parseFloat(document.getElementById('gammaSlider').value).toFixed(2);
+      });
+      document.getElementById('gammaSlider').addEventListener('change', ()=>{ model=null; render(); });
+
+      function loadPreset(name){
+        points = []; model = null;
+        if(name==='linear'){
+          points = [];
+          for(let i=0;i<16;i++) points.push({x:-4 + Math.random()*2.2 - (Math.random()*1.5), y:-4+Math.random()*8, label:-1});
+          for(let i=0;i<16;i++) points.push({x: 4 - Math.random()*2.2 + (Math.random()*1.5), y:-4+Math.random()*8, label: 1});
+          document.getElementById('kernelSelect').value='linear';
+          document.getElementById('kernelSelect').dispatchEvent(new Event('change'));
+        } else if(name==='circular'){
+          for(let i=0;i<24;i++){
+            const ang = Math.random()*2*Math.PI;
+            const r = Math.random()*1.3;
+            points.push({x:r*Math.cos(ang), y:r*Math.sin(ang), label:1});
+          }
+          for(let i=0;i<24;i++){
+            const ang = Math.random()*2*Math.PI;
+            const r = 3 + Math.random()*1.5;
+            points.push({x:r*Math.cos(ang), y:r*Math.sin(ang), label:-1});
+          }
+          document.getElementById('kernelSelect').value='rbf';
+          document.getElementById('kernelSelect').dispatchEvent(new Event('change'));
+        } else if(name==='overlap'){
+          for(let i=0;i<20;i++) points.push({x:-1.5+Math.random()*4, y:-3+Math.random()*7, label:-1});
+          for(let i=0;i<20;i++) points.push({x:-2.5+Math.random()*4, y:-3+Math.random()*7, label:1});
+          document.getElementById('kernelSelect').value='linear';
+          document.getElementById('kernelSelect').dispatchEvent(new Event('change'));
+        }
+        render();
+        document.getElementById('captionText').textContent = 'Preset loaded — click "Train SVM" to see the boundary.';
+      }
+      document.getElementById('presetLinear').addEventListener('click', ()=>loadPreset('linear'));
+      document.getElementById('presetCircular').addEventListener('click', ()=>loadPreset('circular'));
+      document.getElementById('presetOverlap').addEventListener('click', ()=>loadPreset('overlap'));
+
+      render();
+    })();
+    </script>
+
 
     <hr>
     <h2>🔬 SVM Optimization Comparison</h2>
@@ -153,35 +710,35 @@
     <h3>Role of the Lagrange Multiplier ($\alpha_i^*$)</h3>
     <p>The value of $\alpha_i^*$ determines the role of the corresponding data point $\mathbf{x}_i$ in defining the decision boundary, based on the Karush-Kuhn-Tucker (KKT) conditions:</p>
     <ul>
-        <li>**If $\alpha_i^* = 0$:** The data point $\mathbf{x}_i$ is far away from the margin and has **no influence** on the decision boundary. It is **not** a Support Vector.</li>
-        <li>**If $0 < \alpha_i^* < C$:** The data point $\mathbf{x}_i$ lies **exactly on the margin** (i.e., $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) = 1$). It is a Support Vector (SVs on the margin). These points are **crucial** for defining the optimal hyperplane.</li>
-        <li>**If $\alpha_i^* = C$:** The data point $\mathbf{x}_i$ is a **margin violator** (it is misclassified or inside the margin, i.e., $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) < 1$). It is a Support Vector (error SVs). The model exerts **maximum penalty** $C$ to try and correct it.</li>
+        <li><strong>If $\alpha_i^* = 0$:</strong> The data point $\mathbf{x}_i$ is far away from the margin and has <strong>no influence</strong> on the decision boundary. It is <strong>not</strong> a Support Vector.</li>
+        <li><strong>If $0 < \alpha_i^* < C$:</strong> The data point $\mathbf{x}_i$ lies <strong>exactly on the margin</strong> (i.e., $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) = 1$). It is a Support Vector (SVs on the margin). These points are <strong>crucial</strong> for defining the optimal hyperplane.</li>
+        <li><strong>If $\alpha_i^* = C$:</strong> The data point $\mathbf{x}_i$ is a <strong>margin violator</strong> (it is misclassified or inside the margin, i.e., $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) < 1$). It is a Support Vector (error SVs). The model exerts <strong>maximum penalty</strong> $C$ to try and correct it.</li>
     </ul>
 
     <h3>G. Compute Weight Vector ($\mathbf{w}$) (Implicit)</h3>
-    <p>The optimal weight vector $\mathbf{w}$ is implicitly defined **only by the Support Vectors** (those with $\alpha_i^* > 0$):</p>
+    <p>The optimal weight vector $\mathbf{w}$ is implicitly defined <strong>only by the Support Vectors</strong> (those with $\alpha_i^* > 0$):</p>
     <div class="formula">
         $$\mathbf{w} = \sum_{i \in \text{SV}} \alpha_i y_i \Phi(\mathbf{x}_i)$$
     </div>
-    <p>*(In the linear case, $\Phi(\mathbf{x}_i)$ is simply $\mathbf{x}_i$).*</p>
+    <p><em>(In the linear case, $\Phi(\mathbf{x}_i)$ is simply $\mathbf{x}_i$).</em></p>
 
     <h3>H. Compute Bias ($b$)</h3>
-    <p>The bias term ($b$) is calculated using any of the Support Vectors that lie **exactly on the margin** ($0 < \alpha_i^* < C$).</p>
+    <p>The bias term ($b$) is calculated using any of the Support Vectors that lie <strong>exactly on the margin</strong> ($0 < \alpha_i^* < C$).</p>
 
     <hr>
     <h2>📐 The SVM Optimization: Lagrangian Duality (Detailed Derivation)</h2>
     <p>
-        We don't directly solve inequalities to get $\alpha_i$ and $\mathbf{w}$. Instead, we solve a **constrained optimization problem** using the method of **Lagrange multipliers**, which transforms the problem into finding the optimal $\alpha_i$ values. Once we have the $\alpha_i$ values, we can then compute $\mathbf{w}$ and $b$.
+        We don't directly solve inequalities to get $\alpha_i$ and $\mathbf{w}$. Instead, we solve a <strong>constrained optimization problem</strong> using the method of <strong>Lagrange multipliers</strong>, which transforms the problem into finding the optimal $\alpha_i$ values. Once we have the $\alpha_i$ values, we can then compute $\mathbf{w}$ and $b$.
     </p>
 
     <h3>1. The Primal Problem (The Original Optimization Problem)</h3>
     <p>For a soft-margin SVM, the goal is to find a hyperplane defined by $\mathbf{w} \cdot \mathbf{x} + b = 0$ that maximizes the margin while allowing some classification errors. This is formulated as:</p>
     <p>
-        **Minimize:**
+        <strong>Minimize:</strong>
         $$P(\mathbf{w}, b, \xi) = \frac{1}{2}||\mathbf{w}||^2 + C\sum_{i=1}^{N}\xi_i$$
     </p>
     <p>
-        **Subject to the constraints:**
+        <strong>Subject to the constraints:</strong>
         $$\begin{align*} y_i(\mathbf{w} \cdot \mathbf{x}_i + b) &\ge 1 - \xi_i \quad &\text{(Correct classification or margin violation)} \\ \xi_i &\ge 0 \quad &\text{(Slack variables must be non-negative)}\end{align*}$$
     </p>
     <p>
@@ -197,58 +754,102 @@
     <h3>3. Deriving the Dual Problem (The Optimization Problem We Actually Solve)</h3>
     <p>The key idea is to find the saddle point of the Lagrangian by minimizing $L$ with respect to the primal variables ($\mathbf{w}, b, \xi$). We take partial derivatives and set them to zero:</p>
     <p>
-        **Derivative w.r.t. $\mathbf{w}$:**
+        <strong>Derivative w.r.t. $\mathbf{w}$:</strong>
         $$\frac{\partial L}{\partial \mathbf{w}} = \mathbf{w} - \sum_{i=1}^{N}\alpha_i y_i \mathbf{x}_i = 0 \quad \Rightarrow \quad \mathbf{w} = \sum_{i=1}^{N}\alpha_i y_i \mathbf{x}_i$$
-        <p class="note" style="margin-top: 5px; font-size: 0.9em; background-color: #e2f0ff;">
-            This is how we compute $\mathbf{w}$! Once we have the $\alpha_i$ values, we can directly calculate $\mathbf{w}$.
-        </p>
+    </p>
+    <p class="note" style="margin-top: 5px; font-size: 0.9em; background-color: #e2f0ff;">
+        This is how we compute $\mathbf{w}$! Once we have the $\alpha_i$ values, we can directly calculate $\mathbf{w}$.
     </p>
     <p>
-        **Derivative w.r.t. $b$:**
+        <strong>Derivative w.r.t. $b$:</strong>
         $$\frac{\partial L}{\partial b} = - \sum_{i=1}^{N}\alpha_i y_i = 0 \quad \Rightarrow \quad \sum_{i=1}^{N}\alpha_i y_i = 0$$
-        <p class="note" style="margin-top: 5px; font-size: 0.9em; background-color: #e2f0ff;">
-            This is a crucial equality constraint that the $\alpha_i$ values must satisfy.
-        </p>
+    </p>
+    <p class="note" style="margin-top: 5px; font-size: 0.9em; background-color: #e2f0ff;">
+        This is a crucial equality constraint that the $\alpha_i$ values must satisfy.
     </p>
     <p>
-        **Derivative w.r.t. $\xi_i$:**
+        <strong>Derivative w.r.t. $\xi_i$:</strong>
         $$\frac{\partial L}{\partial \xi_i} = C - \alpha_i - \mu_i = 0 \quad \Rightarrow \quad \alpha_i + \mu_i = C$$
-        <p class="note" style="margin-top: 5px; font-size: 0.9em; background-color: #e2f0ff;">
-            Since $\mu_i \ge 0$, this implies $\alpha_i \le C$. Combined with $\alpha_i \ge 0$, this yields the bound: $\mathbf{0 \le \alpha_i \le C}$.
-        </p>
+    </p>
+    <p class="note" style="margin-top: 5px; font-size: 0.9em; background-color: #e2f0ff;">
+        Since $\mu_i \ge 0$, this implies $\alpha_i \le C$. Combined with $\alpha_i \ge 0$, this yields the bound: $0 \le \alpha_i \le C$.
     </p>
     <p>
-        **Substituting back:** Substituting these relationships back into the Lagrangian eliminates $\mathbf{w}$, $b$, and $\xi_i$, resulting in the **Dual Problem** solely in terms of the Lagrange multipliers $\alpha_i$.
+        <strong>Substituting back:</strong> Substituting these relationships back into the Lagrangian eliminates $\mathbf{w}$, $b$, and $\xi_i$, resulting in the <strong>Dual Problem</strong> solely in terms of the Lagrange multipliers $\alpha_i$.
     </p>
 
     <p>
-        **Maximize** (with respect to $\alpha_i$):
+        <strong>Maximize</strong> (with respect to $\alpha_i$):
     </p>
     <div class="formula">
         $$D(\alpha) = \sum_{i=1}^{N}\alpha_i - \frac{1}{2}\sum_{i=1}^{N}\sum_{j=1}^{N}\alpha_i \alpha_j y_i y_j (\mathbf{x}_i \cdot \mathbf{x}_j)$$
     </div>
     <p>
-        **Subject to the constraints:**
+        <strong>Subject to the constraints:</strong>
         $$\begin{align*} 0 &\le \alpha_i \le C \quad &\text{for all } i=1, \dots, N \\ \sum_{i=1}^{N}\alpha_i y_i &= 0 \end{align*}$$
     </p>
 
     <h3>4. Solving the Dual Problem to Get $\alpha_i$</h3>
     <p>
-        The dual problem is a **Quadratic Programming (QP) problem**. It involves maximizing a quadratic function subject to linear inequality and equality constraints. Specialized numerical optimization algorithms (like Sequential Minimal Optimization, or **SMO**) are used to iteratively adjust the $\alpha_i$ values until they converge to the optimal solution. **This is the main computational step for the SVM.**
+        The dual problem is a <strong>Quadratic Programming (QP) problem</strong>. It involves maximizing a quadratic function subject to linear inequality and equality constraints. Specialized numerical optimization algorithms (like Sequential Minimal Optimization, or <strong>SMO</strong>) are used to iteratively adjust the $\alpha_i$ values until they converge to the optimal solution. <strong>This is the main computational step for the SVM.</strong>
     </p>
 
     <h3>5. Computing $\mathbf{w}$ and $b$ from $\alpha_i$</h3>
     <p>Once we have the optimal $\alpha_i$ values from solving the dual problem:</p>
     <ul>
-        <li>**Compute $\mathbf{w}$:** We use the relationship derived from the partial derivative w.r.t. $\mathbf{w}$:
+        <li><strong>Compute $\mathbf{w}$:</strong> We use the relationship derived from the partial derivative w.r.t. $\mathbf{w}$:
             $$\mathbf{w} = \sum_{i=1}^{N}\alpha_i y_i \mathbf{x}_i$$
-            Notice that only data points with $\alpha_i > 0$ (**the Support Vectors**) contribute to $\mathbf{w}$.
+            Notice that only data points with $\alpha_i > 0$ (<strong>the Support Vectors</strong>) contribute to $\mathbf{w}$.
         </li>
-        <li>**Compute $b$:** The intercept $b$ is determined using the KKT conditions for any Support Vector $\mathbf{x}_k$ that lies **exactly on the margin** (i.e., $0 < \alpha_k < C$). For such a point, the constraint $y_k(\mathbf{w} \cdot \mathbf{x}_k + b) = 1$ is active. Rearranging for $b$:
+        <li><strong>Compute $b$:</strong> The intercept $b$ is determined using the KKT conditions for any Support Vector $\mathbf{x}_k$ that lies <strong>exactly on the margin</strong> (i.e., $0 < \alpha_k < C$). For such a point, the constraint $y_k(\mathbf{w} \cdot \mathbf{x}_k + b) = 1$ is active. Rearranging for $b$:
             $$b = y_k - \mathbf{w} \cdot \mathbf{x}_k$$
             In practice, $b$ is often averaged over all such Support Vectors to improve numerical stability.
         </li>
     </ul>
+
+<h2 class="detail-title" style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">Relevance of SVM in the Deep Learning / Transformer Era</h2>
+    <p class="detail-description">
+        SVM was the dominant algorithm of the early 2000s, before deep learning displaced it for most large-scale tasks. A natural question is why it's still worth studying seriously today. The reasons go beyond history:
+    </p>
+
+    <div class="grid-list">
+        <div class="grid-item">
+            <span class="tag">1. Shared Mathematical Foundation</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                Lagrangian duality and KKT conditions aren't SVM trivia — they're the same machinery behind variational inference (ELBO optimization), GAN minimax duality, and regularized regression. Students who skip straight to Transformers often lack the vocabulary to read papers that lean on this.
+            </p>
+        </div>
+        <div class="grid-item">
+            <span class="tag">2. Kernel Trick &rarr; Attention</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                $K(x_i, x_j)$ relates points via a similarity score without explicit feature vectors. Transformer attention, $\text{softmax}(QK^T)V$, is also a learned similarity-weighted combination. One is fixed and hand-designed, the other learned end-to-end — but the underlying idea is the same lineage.
+            </p>
+        </div>
+        <div class="grid-item">
+            <span class="tag">3. Neural Tangent Kernel (NTK)</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                This is a direct connection, not just an analogy: infinitely-wide neural networks trained with gradient descent provably behave like kernel methods. Kernel/SVM theory is currently one of the main lenses researchers use to explain <em>why</em> deep learning works at all.
+            </p>
+        </div>
+        <div class="grid-item">
+            <span class="tag">4. Cleanest Case for Generalization Theory</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                Margin-based generalization bounds, VC dimension, and structural risk minimization are far easier to state and prove for SVMs than for a 100-layer network. Deep learning famously violates these classical bounds and still generalizes — a mystery you can't appreciate without first seeing the theory it breaks.
+            </p>
+        </div>
+        <div class="grid-item">
+            <span class="tag">5. Convex vs. Non-Convex Optimization</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                SVM training has one guaranteed global optimum. DL training is a messy non-convex landscape needing SGD variants, learning-rate schedules, initialization tricks, and batch norm. Seeing the "easy" optimization case first makes the DL optimization chapter easier to appreciate, not harder.
+            </p>
+        </div>
+        <div class="grid-item">
+            <span class="tag">6. Still the Right Tool, Sometimes</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                Small or tabular datasets, limited compute, or a need for interpretability and theoretical guarantees — SVMs still win in these settings. A useful reminder that deep learning isn't always the answer.
+            </p>
+        </div>
+    </div>
 
 </div>
 
