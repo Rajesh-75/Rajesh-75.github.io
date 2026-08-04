@@ -763,11 +763,18 @@
     </div>
 
     <div style="background: #fff8f0; padding: 20px; border-radius: 4px; border-left: 4px solid #f39c12; margin: 15px 0;">
-        <strong>Deep Dive: Gaussian Mixture Models (GMM)</strong>
+        <strong>Deep Dive: The EM (Expectation-Maximization) Algorithm, via Gaussian Mixture Models</strong>
+        <p class="detail-description">
+            You've likely already seen <strong>K-means</strong>: pick $K$ centroids, assign each point to its nearest centroid (a hard, all-or-nothing assignment), recompute each centroid as the mean of its assigned points, and repeat. It's simple and fast, but has two real limits: every cluster is forced to be round and roughly the same size (since it only uses Euclidean distance to a centroid), and every point must commit 100% to exactly one cluster, even when it genuinely sits between two.However,K-Means makes an arbitrary choice, which can lead to poor results in noisy datasets.
+        </p>
+        <p class="detail-description">
+            <strong>EM generalizes exactly these two limits.</strong> Each cluster stops being a single point (a centroid) and becomes a full Gaussian &mdash; a mean <em>and</em> a covariance, so it can be circular, elongated, or tilted. And each data point no longer gets one hard label; it gets a <em>soft(soft means You have a 70% chance of belonging to Group A, a 25% chance of Group B, and a 5% chance of Group C." (Probabilistic degrees of membership.In contrast,hard means you belong entirely to Group A. End of story." (Binary: Yes or No, 1 or 0). )</em>, probabilistic degree of membership across every cluster. This generalized model &mdash; a weighted mixture of Gaussians instead of a set of centroids &mdash; is called a <strong>Gaussian Mixture Model (GMM)</strong>, and EM is the algorithm that fits it, alternating between updating the soft memberships and updating the Gaussians until both settle down.By modeling data as a mixture of Gaussians, GMMs provide "soft" assignments. For every point, the model calculates the probability that it belongs to cluster A, cluster B, etc. This is far more realistic for data that has overlapping boundaries.For example,Point $i$ is assigned to cluster $k$ because cluster $k$ gives it the highest responsibility (or posterior probability), while the other clusters give it low responsibilities.
+			By adjusting the covariance, the model can "stretch" to fit clusters that are elliptical or oriented diagonally, capturing structural patterns that K-Means would ignore.
+        </p>
         <p class="detail-description">
             A GMM models the data density as a weighted sum of $K$ Gaussians:
         </p>
-        <p style="text-align:center;">$$p(\mathbf{x}) = \sum_{k=1}^{K} \pi_k \, N(\mathbf{x}; \boldsymbol{\mu}_k, \Sigma_k), \qquad \sum_k \pi_k = 1$$</p>
+        <p style="text-align:center;">$$p(\mathbf{x}) = \sum_{k=1}^{K} \pi_k \, N(\mathbf{x}; \boldsymbol{\mu}_k, \Sigma_k), \qquad \sum_k \pi_k = 1$$.</p>
         <p class="detail-description" style="margin-bottom:4px;">Notation used above and in the E-step / M-step below:</p>
         <ul>
             <li>$K$: the number of Gaussian components you choose to fit (e.g., the number of clusters you expect in the data).</li>
@@ -778,17 +785,63 @@
             <li>$N_k$: the <strong>effective (soft) count</strong> of points assigned to component $k$ &mdash; the sum of $\mathbf{x}_i$'s responsibilities $\gamma_{ik}$ across every data point. Unlike a hard count, this is usually not a whole number.</li>
             <li>$N$: the total number of data points, used in $\pi_k = N_k/N$ to turn the soft count back into a proportion.</li>
             <li>$T$ (in $(\mathbf{x}_i-\boldsymbol{\mu}_k)(\mathbf{x}_i-\boldsymbol{\mu}_k)^T$): matrix transpose &mdash; this outer product of a vector with itself is what builds up the covariance matrix, exactly as in the Multivariate section's $\Sigma$.</li>
+			<p></p>
         </ul>
+
+        <div class="plot-container" style="background:#fff; margin:16px 0;">
+            <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+                <rect x="20" y="105" width="160" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+                <text x="100" y="130" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">Initialize</text>
+                <text x="100" y="147" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">&pi;_k, &mu;_k, &Sigma;_k</text>
+                <text x="100" y="161" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">(e.g. from K-means)</text>
+
+                <path d="M 180 140 L 225 140" stroke="#0056b3" stroke-width="2" fill="none" marker-end="url(#emArrow)"/>
+
+                <rect x="230" y="105" width="160" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+                <text x="310" y="130" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">E-step</text>
+                <text x="310" y="147" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">compute &gamma;_ik</text>
+                <text x="310" y="161" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">(soft assignment)</text>
+
+                <path d="M 390 140 L 435 140" stroke="#0056b3" stroke-width="2" fill="none" marker-end="url(#emArrow)"/>
+
+                <rect x="440" y="105" width="160" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+                <text x="520" y="130" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">M-step</text>
+                <text x="520" y="147" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">update &pi;_k, &mu;_k, &Sigma;_k</text>
+                <text x="520" y="161" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">(responsibility-weighted)</text>
+
+                <path d="M 460 105 C 440 60, 360 60, 340 103" stroke="#c0392b" stroke-width="2" fill="none" stroke-dasharray="5,3" marker-end="url(#emArrowRed)"/>
+                <text x="400" y="55" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#c0392b">repeat until log-likelihood converges</text>
+
+                <path d="M 520 175 L 520 210" stroke="#449d44" stroke-width="2" fill="none" marker-end="url(#emArrowGreen)"/>
+
+                <rect x="400" y="215" width="240" height="60" rx="8" fill="#eefaee" stroke="#449d44" stroke-width="2"/>
+                <text x="520" y="240" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#2d6a2e">Converged</text>
+                <text x="520" y="257" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#2d6a2e">final GMM + soft cluster assignments</text>
+
+                <defs>
+                    <marker id="emArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                        <path d="M0,0 L8,4 L0,8 Z" fill="#0056b3"/>
+                    </marker>
+                    <marker id="emArrowRed" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                        <path d="M0,0 L8,4 L0,8 Z" fill="#c0392b"/>
+                    </marker>
+                    <marker id="emArrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                        <path d="M0,0 L8,4 L0,8 Z" fill="#449d44"/>
+                    </marker>
+                </defs>
+            </svg>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">
+                <em>Figure: EM alternates between the E-step and M-step. Each pass is guaranteed to never decrease the data log-likelihood, so the loop provably settles down rather than oscillating forever.</em>
+            </p>
+        </div>
+
         <p class="detail-description">
-            <strong>Purpose of EM:</strong> the equation above has $K$ unknown Gaussians, but we don't know which Gaussian generated which point &mdash; that assignment is hidden. EM is a general algorithm for fitting a model when there's a "chicken-and-egg" hidden variable: if you knew the assignments, estimating each Gaussian's $\boldsymbol{\mu}_k, \Sigma_k$ would be easy (just average the points assigned to it); if you knew the Gaussians, assigning points would be easy too. EM breaks the deadlock by alternating between the two, using a <em>soft</em>, probabilistic assignment instead of a hard either/or guess.
-        </p>
-        <p class="detail-description">
-            <strong>Input:</strong> the raw data points $\mathbf{x}_1, \ldots, \mathbf{x}_N$ (unlabeled &mdash; no class information) and a chosen number of components $K$, plus some initial guess for $\pi_k, \boldsymbol{\mu}_k, \Sigma_k$ (often from a quick K-means run).
+            <strong>Input:</strong> the raw data points $\mathbf{x}_1, \ldots, \mathbf{x}_N$ (unlabeled &mdash; no class information) and a chosen number of components $K$, plus some initial guess for $\pi_k, \boldsymbol{\mu}_k, \Sigma_k$ (often from a quick K-means run, as in the diagram above).
         </p>
         <p class="detail-description">
             <strong>Output:</strong> the fitted parameters $\pi_k, \boldsymbol{\mu}_k, \Sigma_k$ for every component, and the responsibilities $\gamma_{ik}$ &mdash; a soft, probabilistic cluster assignment for every point, rather than one hard label per point.
         </p>
-        <p class="detail-description">Parameters are fit with the <strong>Expectation-Maximization (EM)</strong> algorithm:</p>
+        <p class="detail-description">The two steps in the diagram, written out:</p>
         <p class="detail-description" style="margin-bottom:4px;"><strong>E-step</strong> &mdash; compute the responsibility of component $k$ for point $\mathbf{x}_i$, which is just Bayes' theorem again:</p>
         <p style="text-align:center;">$$\gamma_{ik} = \frac{\pi_k \, N(\mathbf{x}_i;\boldsymbol{\mu}_k,\Sigma_k)}{\sum_j \pi_j \, N(\mathbf{x}_i;\boldsymbol{\mu}_j,\Sigma_j)}$$</p>
         <p class="detail-description" style="margin-bottom:4px;">
@@ -826,7 +879,25 @@
             $$N_k = \sum_i \gamma_{ik}, \quad \boldsymbol{\mu}_k = \frac{1}{N_k}\sum_i \gamma_{ik}\mathbf{x}_i, \quad \Sigma_k = \frac{1}{N_k}\sum_i \gamma_{ik}(\mathbf{x}_i-\boldsymbol{\mu}_k)(\mathbf{x}_i-\boldsymbol{\mu}_k)^T, \quad \pi_k = \frac{N_k}{N}$$
         </p>
         <p class="detail-description">
-            E and M steps alternate until the log-likelihood converges. <strong>K-means is the limiting case</strong> of this EM procedure as every $\Sigma_k \to$ a shared, vanishing isotropic covariance: the soft responsibilities $\gamma_{ik}$ collapse to hard 0/1 nearest-centroid assignments, and the M-step update becomes the K-means centroid update.
+            This is where the K-means connection from the top of this box becomes exact, not just a loose analogy: <strong>K-means is the limiting case</strong> of this same EM procedure as every $\Sigma_k \to$ a shared, vanishing isotropic covariance. In that limit, the soft responsibilities $\gamma_{ik}$ collapse to hard 0/1 nearest-centroid assignments, and the M-step update above becomes exactly the K-means centroid update. GMM/EM is the strictly more general algorithm; K-means is what you get by throwing away the covariance and the soft assignment.
+        </p>
+
+        <p class="detail-description" style="margin-top:14px;">
+            <strong>From fitted parameters to an actual clustering:</strong> notice EM's output above is $\pi_k, \boldsymbol{\mu}_k, \Sigma_k$ and the responsibility matrix $\gamma_{ik}$ &mdash; not a single cluster label per point. Getting from there to clusters takes one more step, and there are two ways to take it:
+        </p>
+        <ul>
+            <li>
+                <strong>Hard assignment (the usual choice):</strong> assign each point $\mathbf{x}_i$ to whichever component has the highest responsibility, $\underset{k}{\arg\max}\ \gamma_{ik}$. This is called the <strong>MAP (Maximum a Posteriori) assignment</strong> &mdash; you're picking the single most probable component instead of keeping the full probability spread. This is what you'd use to produce a K-means-style cluster label per point.
+            </li>
+            <li>
+                <strong>Keep the soft assignment:</strong> for points near a cluster boundary, forcing a single label throws away real information &mdash; a point with $\gamma_{i1}=0.51,\ \gamma_{i2}=0.49$ is genuinely ambiguous, and collapsing it to "cluster 1" hides that. Many downstream uses (e.g. flagging uncertain points, or feeding soft memberships into another model) keep the full $\gamma_{ik}$ vector instead of a hard label.
+            </li>
+            <li>
+                <strong>Assigning a brand-new point:</strong> for a point that wasn't in the training data, no retraining is needed &mdash; just plug it into the E-step formula above with the already-fitted $\pi_k, \boldsymbol{\mu}_k, \Sigma_k$ to get its responsibilities, then take the argmax if a hard label is required. This is exactly how a fitted GMM makes predictions on new data.
+            </li>
+        </ul>
+        <p class="detail-description">
+            One more thing EM does <em>not</em> decide for you: the value of $K$ itself. Since adding more components can never decrease the training log-likelihood, picking $K$ by likelihood alone always favors more clusters &mdash; overfitting, in the limit, all the way to one Gaussian per point. In practice $K$ is chosen with a penalized criterion like <strong>BIC</strong> or <strong>AIC</strong> (which subtract a complexity penalty for extra parameters), or by held-out log-likelihood on validation data.
         </p>
     </div>
 
@@ -836,6 +907,8 @@
             <span class="tag">Weight Initialization</span>
             <p style="font-size: 0.9rem; margin-top:5px;">
                 Xavier/Glorot initialization draws weights from $N\!\left(0, \frac{2}{\text{fan\_in}+\text{fan\_out}}\right)$; He initialization (for ReLU networks) uses $N\!\left(0, \frac{2}{\text{fan\_in}}\right)$. Both choose the variance to keep activation and gradient magnitudes roughly stable across layers, preventing vanishing/exploding signals.
+                <br><br>
+                <strong>fan_in</strong> = number of input connections into the layer (forward-pass activation variance depends on this); <strong>fan_out</strong> = number of output connections leaving it (backward-pass gradient variance depends on this). Xavier averages both since it balances forward and backward signal; He uses only fan_in, with an extra factor of 2 to offset ReLU zeroing out roughly half of all activations.
             </p>
         </div>
         <div class="grid-item">
