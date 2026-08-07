@@ -64,6 +64,211 @@
         The intuition for <em>why</em> a wide margin is the right thing to maximize, rather than just any separating hyperplane, is that the points nearest the boundary are the least confidently classified &mdash; a boundary squeezed right up against them is fragile, easily flipped by a slightly different sample of noisy data. Pushing the boundary as far as possible from every point makes the classifier maximally robust to exactly that kind of perturbation.
     </p>
 
+    <div style="display:flex; flex-wrap:wrap; gap:16px; margin:20px 0;">
+    <div style="flex:1 1 420px; text-align:center; background:#fff; padding:15px 10px; border:1px solid #e1e8ed; border-radius:6px;">
+        <svg viewBox="0 0 600 420" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+            <defs>
+                <marker id="svmArrowHead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#333" />
+                </marker>
+            </defs>
+
+            <!-- Decision boundary: w.x + b = 0 -->
+            <line x1="100" y1="330" x2="500" y2="90" stroke="#333" stroke-width="2.5" />
+
+            <!-- Margin +1 (blue side) -->
+            <line x1="79" y1="296" x2="479" y2="56" stroke="#0056b3" stroke-width="1.5" stroke-dasharray="6,4" />
+
+            <!-- Margin -1 (red side) -->
+            <line x1="121" y1="364" x2="521" y2="124" stroke="#d9534f" stroke-width="1.5" stroke-dasharray="6,4" />
+
+            <!-- Margin width double-arrow -->
+            <line x1="279" y1="176" x2="321" y2="244" stroke="#333" stroke-width="1.5"
+                  marker-start="url(#svmArrowHead)" marker-end="url(#svmArrowHead)" />
+            <text x="332" y="202" font-family="Arial" font-size="13" font-weight="bold" fill="#333">2 / ||w||</text>
+            <text x="332" y="217" font-family="Arial" font-size="10" fill="#666">(margin width)</text>
+
+            <!-- Extra Class +1 points (blue, not support vectors) -->
+            <circle cx="150" cy="150" r="6" fill="#0056b3" />
+            <circle cx="250" cy="90" r="6" fill="#0056b3" />
+            <circle cx="130" cy="200" r="6" fill="#0056b3" />
+            <circle cx="350" cy="60" r="6" fill="#0056b3" />
+
+            <!-- Extra Class -1 points (red, not support vectors) -->
+            <circle cx="300" cy="340" r="6" fill="#d9534f" />
+            <circle cx="400" cy="300" r="6" fill="#d9534f" />
+            <circle cx="470" cy="250" r="6" fill="#d9534f" />
+            <circle cx="200" cy="380" r="6" fill="#d9534f" />
+
+            <!-- Margin violator (blue class, alpha = C): correctly classified but inside the margin -->
+            <circle cx="250" cy="215" r="6" fill="#0056b3" />
+            <circle cx="250" cy="215" r="10" fill="none" stroke="#f39c12" stroke-width="2" />
+
+            <!-- Support vectors on the +1 margin -->
+            <circle cx="199" cy="224" r="6" fill="#0056b3" />
+            <circle cx="199" cy="224" r="10" fill="none" stroke="#222" stroke-width="2" />
+            <circle cx="359" cy="128" r="6" fill="#0056b3" />
+            <circle cx="359" cy="128" r="10" fill="none" stroke="#222" stroke-width="2" />
+
+            <!-- Support vectors on the -1 margin -->
+            <circle cx="261" cy="280" r="6" fill="#d9534f" />
+            <circle cx="261" cy="280" r="10" fill="none" stroke="#222" stroke-width="2" />
+            <circle cx="421" cy="184" r="6" fill="#d9534f" />
+            <circle cx="421" cy="184" r="10" fill="none" stroke="#222" stroke-width="2" />
+
+            <!-- Callout: Hyperplane -->
+            <line x1="400" y1="150" x2="440" y2="65" stroke="#666" stroke-width="1" />
+            <circle cx="400" cy="150" r="2.5" fill="#333" />
+            <text x="443" y="60" font-family="Arial" font-size="13" font-weight="bold" fill="#333">Hyperplane</text>
+            <text x="443" y="76" font-family="Arial" font-size="12" fill="#333">w&#183;x + b = 0</text>
+
+            <!-- Callout: +1 margin -->
+            <line x1="419" y1="92" x2="475" y2="30" stroke="#666" stroke-width="1" />
+            <circle cx="419" cy="92" r="2.5" fill="#0056b3" />
+            <text x="478" y="25" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">Margin (+1 side)</text>
+            <text x="478" y="41" font-family="Arial" font-size="12" fill="#0056b3">w&#183;x + b = +1</text>
+
+            <!-- Callout: -1 margin -->
+            <line x1="181" y1="328" x2="95" y2="372" stroke="#666" stroke-width="1" />
+            <circle cx="181" cy="328" r="2.5" fill="#d9534f" />
+            <text x="15" y="380" font-family="Arial" font-size="12" font-weight="bold" fill="#d9534f">Margin (&minus;1 side)</text>
+            <text x="15" y="396" font-family="Arial" font-size="12" fill="#d9534f">w&#183;x + b = &minus;1</text>
+
+            <!-- Callout: Support Vector (blue) -->
+            <line x1="199" y1="224" x2="110" y2="182" stroke="#666" stroke-width="1" />
+            <text x="8" y="178" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">Support Vector</text>
+            <text x="8" y="194" font-family="Arial" font-size="11" fill="#0056b3">(0 &lt; &#945;<tspan baseline-shift="sub" font-size="8">i</tspan> &lt; C)</text>
+
+            <!-- Callout: Support Vector (red) -->
+            <line x1="421" y1="184" x2="505" y2="150" stroke="#666" stroke-width="1" />
+            <text x="508" y="146" font-family="Arial" font-size="12" font-weight="bold" fill="#d9534f">Support Vector</text>
+            <text x="508" y="162" font-family="Arial" font-size="11" fill="#d9534f">(0 &lt; &#945;<tspan baseline-shift="sub" font-size="8">i</tspan> &lt; C)</text>
+
+            <!-- Callout: Class +1 -->
+            <line x1="150" y1="150" x2="85" y2="98" stroke="#666" stroke-width="1" />
+            <text x="10" y="93" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">Class +1 (y = +1)</text>
+
+            <!-- Callout: Class -1 -->
+            <line x1="400" y1="300" x2="465" y2="350" stroke="#666" stroke-width="1" />
+            <text x="435" y="368" font-family="Arial" font-size="12" font-weight="bold" fill="#d9534f">Class &minus;1 (y = &minus;1)</text>
+
+            <!-- Callout: Margin violator -->
+            <line x1="250" y1="215" x2="150" y2="255" stroke="#666" stroke-width="1" />
+            <text x="70" y="252" font-family="Arial" font-size="12" font-weight="bold" fill="#b9770e">Margin Violator</text>
+            <text x="70" y="268" font-family="Arial" font-size="11" fill="#b9770e">(&#945;<tspan baseline-shift="sub" font-size="8">i</tspan> = C, inside margin)</text>
+
+            <!-- Callout: Far from margin -->
+            <line x1="350" y1="60" x2="405" y2="18" stroke="#666" stroke-width="1" />
+            <text x="408" y="14" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">Far from margin</text>
+            <text x="408" y="30" font-family="Arial" font-size="11" fill="#0056b3">(&#945;<tspan baseline-shift="sub" font-size="8">i</tspan> = 0, no influence)</text>
+        </svg>
+        <p style="font-size:0.85rem; color:#666; margin-top:8px;">
+            <em>Figure A: the decision boundary sits exactly midway between the two dashed margin lines. Black-ringed points are support vectors (exactly on a margin); the orange-ringed point is a margin violator &mdash; correctly classified but still inside the margin, so it also has non-zero $\alpha_i$. Points far from the boundary contribute nothing at all.</em>
+        </p>
+    </div>
+
+    <div style="flex:1 1 420px; text-align:center; background:#fff; padding:15px 10px; border:1px solid #e1e8ed; border-radius:6px;">
+        <svg viewBox="0 0 600 420" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+            <defs>
+                <marker id="svmArrowHead2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#333" />
+                </marker>
+            </defs>
+
+            <!-- Decision boundary: w.x + b = 0 (different orientation/dataset) -->
+            <line x1="120" y1="80" x2="480" y2="360" stroke="#333" stroke-width="2.5" />
+
+            <!-- Margin +1 (blue side) -->
+            <line x1="142" y1="52" x2="502" y2="332" stroke="#0056b3" stroke-width="1.5" stroke-dasharray="6,4" />
+
+            <!-- Margin -1 (red side) -->
+            <line x1="98" y1="108" x2="458" y2="388" stroke="#d9534f" stroke-width="1.5" stroke-dasharray="6,4" />
+
+            <!-- Margin width double-arrow -->
+            <line x1="322" y1="192" x2="278" y2="248" stroke="#333" stroke-width="1.5"
+                  marker-start="url(#svmArrowHead2)" marker-end="url(#svmArrowHead2)" />
+            <text x="330" y="212" font-family="Arial" font-size="13" font-weight="bold" fill="#333">2 / ||w||</text>
+            <text x="330" y="227" font-family="Arial" font-size="10" fill="#666">(margin width)</text>
+
+            <!-- Extra Class +1 points (blue, not support vectors) -->
+            <circle cx="450" cy="120" r="6" fill="#0056b3" />
+            <circle cx="480" cy="200" r="6" fill="#0056b3" />
+            <circle cx="350" cy="60" r="6" fill="#0056b3" />
+            <circle cx="250" cy="40" r="6" fill="#0056b3" />
+
+            <!-- Extra Class -1 points (red, not support vectors) -->
+            <circle cx="150" cy="300" r="6" fill="#d9534f" />
+            <circle cx="250" cy="380" r="6" fill="#d9534f" />
+            <circle cx="80" cy="200" r="6" fill="#d9534f" />
+            <circle cx="330" cy="400" r="6" fill="#d9534f" />
+
+            <!-- Margin violator (blue class, alpha = C): correctly classified but inside the margin -->
+            <circle cx="340" cy="235" r="6" fill="#0056b3" />
+            <circle cx="340" cy="235" r="10" fill="none" stroke="#f39c12" stroke-width="2" />
+
+            <!-- Support vectors on the +1 margin (three this time) -->
+            <circle cx="214" cy="108" r="6" fill="#0056b3" />
+            <circle cx="214" cy="108" r="10" fill="none" stroke="#222" stroke-width="2" />
+            <circle cx="322" cy="192" r="6" fill="#0056b3" />
+            <circle cx="322" cy="192" r="10" fill="none" stroke="#222" stroke-width="2" />
+            <circle cx="430" cy="276" r="6" fill="#0056b3" />
+            <circle cx="430" cy="276" r="10" fill="none" stroke="#222" stroke-width="2" />
+
+            <!-- Support vector on the -1 margin (just one this time) -->
+            <circle cx="278" cy="248" r="6" fill="#d9534f" />
+            <circle cx="278" cy="248" r="10" fill="none" stroke="#222" stroke-width="2" />
+
+            <!-- Callout: +1 margin -->
+            <line x1="178" y1="80" x2="60" y2="35" stroke="#666" stroke-width="1" />
+            <circle cx="178" cy="80" r="2.5" fill="#0056b3" />
+            <text x="10" y="25" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">Margin (+1 side)</text>
+            <text x="10" y="41" font-family="Arial" font-size="12" fill="#0056b3">w&#183;x + b = +1</text>
+
+            <!-- Callout: -1 margin -->
+            <line x1="422" y1="360" x2="500" y2="400" stroke="#666" stroke-width="1" />
+            <circle cx="422" cy="360" r="2.5" fill="#d9534f" />
+            <text x="440" y="410" font-family="Arial" font-size="12" font-weight="bold" fill="#d9534f">Margin (&minus;1 side)</text>
+
+            <!-- Callout: Hyperplane -->
+            <line x1="372" y1="276" x2="440" y2="200" stroke="#666" stroke-width="1" />
+            <circle cx="372" cy="276" r="2.5" fill="#333" />
+            <text x="443" y="185" font-family="Arial" font-size="13" font-weight="bold" fill="#333">Hyperplane</text>
+            <text x="443" y="201" font-family="Arial" font-size="12" fill="#333">w&#183;x + b = 0</text>
+
+            <!-- Callout: Support Vector (blue) -->
+            <line x1="322" y1="192" x2="245" y2="130" stroke="#666" stroke-width="1" />
+            <text x="150" y="126" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">Support Vector</text>
+            <text x="150" y="142" font-family="Arial" font-size="11" fill="#0056b3">(0 &lt; &#945;<tspan baseline-shift="sub" font-size="8">i</tspan> &lt; C)</text>
+
+            <!-- Callout: Support Vector (red) -->
+            <line x1="278" y1="248" x2="185" y2="310" stroke="#666" stroke-width="1" />
+            <text x="95" y="325" font-family="Arial" font-size="12" font-weight="bold" fill="#d9534f">Support Vector</text>
+            <text x="95" y="341" font-family="Arial" font-size="11" fill="#d9534f">(0 &lt; &#945;<tspan baseline-shift="sub" font-size="8">i</tspan> &lt; C)</text>
+
+            <!-- Callout: Class +1 -->
+            <line x1="450" y1="120" x2="510" y2="80" stroke="#666" stroke-width="1" />
+            <text x="480" y="70" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">Class +1 (y = +1)</text>
+
+            <!-- Callout: Class -1 -->
+            <line x1="80" y1="200" x2="20" y2="240" stroke="#666" stroke-width="1" />
+            <text x="8" y="258" font-family="Arial" font-size="12" font-weight="bold" fill="#d9534f">Class &minus;1 (y = &minus;1)</text>
+
+            <!-- Callout: Margin violator -->
+            <line x1="340" y1="235" x2="395" y2="290" stroke="#666" stroke-width="1" />
+            <text x="398" y="286" font-family="Arial" font-size="12" font-weight="bold" fill="#b9770e">Margin Violator</text>
+            <text x="398" y="302" font-family="Arial" font-size="11" fill="#b9770e">(&#945;<tspan baseline-shift="sub" font-size="8">i</tspan> = C, inside margin)</text>
+
+            <!-- Callout: Far from margin -->
+            <line x1="480" y1="200" x2="545" y2="230" stroke="#666" stroke-width="1" />
+            <text x="460" y="226" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">Far from margin</text>
+            <text x="460" y="242" font-family="Arial" font-size="11" fill="#0056b3">(&#945;<tspan baseline-shift="sub" font-size="8">i</tspan> = 0, no influence)</text>
+        </svg>
+        <p style="font-size:0.85rem; color:#666; margin-top:8px;">
+            <em>Figure B: same relationships, a different dataset and orientation. Note the class sizes don't need to be symmetric &mdash; here three points support the $+1$ margin but only one supports the $-1$ margin, yet the boundary is still exactly equidistant from both margins. The orange-ringed point is a margin violator; the labeled far point contributes nothing to $\mathbf{w}$.</em>
+        </p>
+    </div>
+    </div>
+
     <p>
         This design choice traces back to what is often called <strong>Vapnik's principle</strong>, after Vladimir Vapnik, SVM's co-inventor and the architect of Statistical Learning Theory: when solving a problem, don't solve a more general problem as an intermediate step if it isn't necessary. Estimating a full probability distribution is a strictly harder problem than classification requires. SVM's margin-maximizing objective also comes from the same theory's <strong>structural risk minimization</strong> principle &mdash; controlling generalization error not just by fitting the training data well, but by explicitly bounding a model's capacity (formalized as VC dimension). A wider margin provably corresponds to a lower-capacity, better-generalizing classifier.
     </p>
@@ -706,6 +911,12 @@
 
     <hr>
     <h2>🔍 How Support Vectors (SVs) are Chosen (Updated Insight)</h2>
+
+    <div class="note">
+        <p>
+            <strong>A common point of confusion:</strong> support vectors are not computed before training, nor as a separate step after it &mdash; they are a <em>byproduct</em> of training itself. Solving the dual QP problem finds the Lagrange multiplier $\alpha_i$ for <strong>every</strong> training point in one single optimization pass; that one solve <em>is</em> the training. Support vectors simply turn out to be whichever points end up with $\alpha_i > 0$ once that solve finishes &mdash; most points get $\alpha_i = 0$ automatically, for free, as part of the same solution. What comes after is not further training, just two cheap, direct calculations from the now-known $\alpha_i$'s: computing $\mathbf{w}$ (step G below) and $b$ (step H below) &mdash; both summing or referencing only the support vectors, since every other point's $\alpha_i=0$ contributes nothing.
+        </p>
+    </div>
 
     <h3>Role of the Lagrange Multiplier ($\alpha_i^*$)</h3>
     <p>The value of $\alpha_i^*$ determines the role of the corresponding data point $\mathbf{x}_i$ in defining the decision boundary, based on the Karush-Kuhn-Tucker (KKT) conditions:</p>
