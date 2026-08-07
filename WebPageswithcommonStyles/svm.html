@@ -320,6 +320,103 @@
         <li><strong>Return:</strong> The final parameters $(\mathbf{w}, b)$ that define the optimal linear hyperplane.</li>
     </ol>
 
+    <hr>
+    <h2>📝 Linear SVM: Summarized Pseudocode</h2>
+    <p>
+        The step-by-step process above, condensed into pseudocode &mdash; training (via a simplified
+        Sequential Minimal Optimization loop over the training set) and testing, for the <strong>linear</strong>
+        case only. This is a summary of the same procedure derived in full further down this page in
+        <em>"The SVM Optimization: Lagrangian Duality"</em>, and it's exactly what the SVM Playground above
+        is running live in your browser.
+    </p>
+
+    <style>
+        .pseudo-code{
+            background:#f7f9fc;
+            border:1px solid var(--border, #d8e2ec);
+            border-radius:6px;
+            padding:14px 18px;
+            overflow-x:auto;
+            font-family:"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size:0.87rem;
+            line-height:1.65;
+            color:#24292e;
+        }
+        .pseudo-code .kw{ color:#0056b3; font-weight:600; }      /* keywords: for, while, if, else, continue, return, in, function */
+        .pseudo-code .cm{ color:#6a7683; font-style:italic; }     /* comments */
+        .pseudo-code .nm{ color:#b9770e; }                        /* numbers */
+        .pseudo-code .op{ color:#d9534f; }                        /* assignment / comparison operators */
+        .pseudo-code .fn{ color:#8250df; }                        /* function / procedure names */
+    </style>
+
+    <div class="intuition-box">
+        <strong class="label">Pseudocode: Linear SVM — Train and Test</strong>
+        <p style="margin-top:0;">
+            Written as code rather than as numbered steps, with keywords picked out in
+            <span style="color:#0056b3; font-weight:600;">blue</span>, comments in
+            <span style="color:#6a7683; font-style:italic;">grey italic</span>, and function names in
+            <span style="color:#8250df;">purple</span> &mdash; the same shape as the actual training loop running
+            in the SVM Playground above, just without the kernel generalization.
+        </p>
+
+<pre class="pseudo-code"><code><span class="cm"># --- Training (simplified SMO, linear kernel) ---</span>
+<span class="fn">train_linear_svm</span>(training_set, C, tol, max_passes):
+    alpha[i] <span class="op">=</span> <span class="nm">0</span>  <span class="kw">for</span> every (x_i, y_i) <span class="kw">in</span> training_set
+    b <span class="op">=</span> <span class="nm">0</span>
+    passes <span class="op">=</span> <span class="nm">0</span>
+
+    <span class="kw">while</span> passes <span class="op">&lt;</span> max_passes:
+        num_changed <span class="op">=</span> <span class="nm">0</span>
+
+        <span class="kw">for</span> (x_i, y_i) <span class="kw">in</span> training_set:
+            E_i <span class="op">=</span> <span class="fn">f</span>(x_i) <span class="op">-</span> y_i     <span class="cm"># f(x_i) = w&middot;x_i + b</span>
+
+            <span class="kw">if</span> (y_i<span class="op">*</span>E_i <span class="op">&lt;</span> <span class="op">-</span>tol <span class="kw">and</span> alpha[i] <span class="op">&lt;</span> C)
+               <span class="kw">or</span> (y_i<span class="op">*</span>E_i <span class="op">&gt;</span> tol <span class="kw">and</span> alpha[i] <span class="op">&gt;</span> <span class="nm">0</span>):
+
+                j <span class="op">=</span> <span class="fn">random_index</span>(training_set, exclude<span class="op">=</span>i)
+                E_j <span class="op">=</span> <span class="fn">f</span>(x_j) <span class="op">-</span> y_j
+
+                L, H <span class="op">=</span> <span class="fn">clip_bounds</span>(y_i, y_j, alpha[i], alpha[j], C)
+                <span class="kw">if</span> L <span class="op">==</span> H:
+                    <span class="kw">continue</span>
+
+                eta <span class="op">=</span> <span class="nm">2</span><span class="op">*</span><span class="fn">dot</span>(x_i, x_j) <span class="op">-</span> <span class="fn">dot</span>(x_i, x_i) <span class="op">-</span> <span class="fn">dot</span>(x_j, x_j)
+                <span class="kw">if</span> eta <span class="op">&gt;=</span> <span class="nm">0</span>:
+                    <span class="kw">continue</span>
+
+                alpha[j] <span class="op">=</span> <span class="fn">clip</span>(alpha[j] <span class="op">-</span> y_j<span class="op">*</span>(E_i <span class="op">-</span> E_j)<span class="op">/</span>eta,  L, H)
+                alpha[i] <span class="op">=</span> alpha[i] <span class="op">+</span> y_i<span class="op">*</span>y_j<span class="op">*</span>(old_alpha_j <span class="op">-</span> alpha[j])
+                b <span class="op">=</span> <span class="fn">update_bias</span>(alpha[i], alpha[j], E_i, E_j, C)
+                num_changed <span class="op">+=</span> <span class="nm">1</span>
+
+        passes <span class="op">=</span> <span class="nm">0</span> <span class="kw">if</span> num_changed <span class="op">&gt;</span> <span class="nm">0</span> <span class="kw">else</span> passes <span class="op">+</span> <span class="nm">1</span>
+
+    w <span class="op">=</span> <span class="fn">sum</span>(alpha[i]<span class="op">*</span>y_i<span class="op">*</span>x_i <span class="kw">for</span> i <span class="kw">in</span> training_set <span class="kw">if</span> alpha[i] <span class="op">&gt;</span> <span class="nm">0</span>)
+    <span class="kw">return</span> w, b   <span class="cm"># alpha[i] &gt; 0 &rArr; x_i is a support vector</span>
+
+
+<span class="cm"># --- Testing / Prediction (linear) ---</span>
+<span class="fn">predict</span>(w, b, x_new):
+    score <span class="op">=</span> <span class="fn">dot</span>(w, x_new) <span class="op">+</span> b
+    <span class="kw">return</span> <span class="op">+</span><span class="nm">1</span> <span class="kw">if</span> score <span class="op">&gt;=</span> <span class="nm">0</span> <span class="kw">else</span> <span class="op">-</span><span class="nm">1</span></code></pre>
+
+        <p style="font-size:0.88rem; color:#555; margin-top:12px; margin-bottom:0;">
+            Every point still gets an $\alpha_i$ out of the training loop &mdash; most just converge to exactly $0$.
+            The points where $\alpha_i > 0$ are, by definition, the support vectors; nothing further needs to be
+            "found" afterward. Prediction never revisits the training set at all &mdash; $w$ already encodes
+            everything the support vectors contributed, so testing is a single dot product regardless of how
+            large the original training set was.
+        </p>
+        <p style="font-size:0.88rem; color:#555; margin-top:10px; margin-bottom:0;">
+            <strong>Where the optimization happens:</strong> the entire <code>while</code>/<code>for</code> block
+            above &mdash; everything between initializing $\alpha$ and returning $w, b$ &mdash; <em>is</em> the
+            optimization step. It's a simplified SMO solve of the dual QP problem (Step 4, "Solve the Dual
+            Problem," in the numbered process earlier on this page); what it's actually optimizing is derived
+            in full in <em>"The SVM Optimization: Lagrangian Duality"</em> further down.
+        </p>
+    </div>
+
     <h2>🚀 2. Non-Linear SVM Training (Kernel Trick)</h2>
     <p>The goal is to implicitly map the data into a higher-dimensional feature space where it is linearly separable, without explicitly calculating the coordinates in that space.</p>
 
