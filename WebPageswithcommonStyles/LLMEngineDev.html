@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building an LLM Engine — Introduction</title>
+
+<!-- MathJax: renders all $...$ / $$...$$ LaTeX on this page (Chinchilla scaling law,
+     DPO loss, SFT loss masking formulas). Loaded from CDN — swap for a local copy
+     if the site needs to work offline. -->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$']],
+      displayMath: [['$$', '$$']]
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+
+<!-- NOTE TO SELF: this page currently ships its own <style> block below so it's
+     viewable standalone. Once the shared master style.css is finalized (planned
+     for the September launch pass), delete the block and link style.css instead,
+     the way the other pages in the series do. Class names below (.intuition-box,
+     .algorithm-box, .data-table, .nav-bar) already match that stylesheet's
+     conventions so the swap should be a no-op. -->
+<style>
+  :root {
+    --heading-blue: #0056b3;
+    --heading-blue-dark: #003d82;
+    --text: #222;
+    --border: #d8e2ec;
+    --box-bg: #f4f8fc;
+    --algo-bg: #fbf7ef;
+    --algo-border: #e0d3ab;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text);
+    background: #ffffff;
+    line-height: 1.65;
+    margin: 0;
+    padding: 0;
+  }
+  .nav-bar {
+    background: var(--heading-blue);
+    color: #fff;
+    padding: 14px 32px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: center;
+    font-size: 0.92rem;
+  }
+  .nav-bar a {
+    color: #eaf2fb;
+    text-decoration: none;
+    opacity: 0.88;
+  }
+  .nav-bar a:hover { opacity: 1; text-decoration: underline; }
+  .nav-bar .nav-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-right: 12px;
+    opacity: 1;
+  }
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 40px 28px 80px;
+  }
+  h1 {
+    color: var(--heading-blue);
+    font-size: 2.1rem;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: #5a6b7a;
+    font-size: 1.05rem;
+    margin-top: 0;
+    margin-bottom: 32px;
+  }
+  h2 {
+    color: var(--heading-blue);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 6px;
+    margin-top: 46px;
+  }
+  h3 {
+    color: var(--heading-blue-dark);
+    margin-top: 28px;
+  }
+  .intuition-box {
+    background: var(--box-bg);
+    border-left: 4px solid var(--heading-blue);
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .intuition-box strong.label {
+    color: var(--heading-blue);
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .algorithm-box {
+    background: var(--algo-bg);
+    border: 1px solid var(--algo-border);
+    border-radius: 6px;
+    padding: 18px 22px;
+    margin: 20px 0;
+  }
+  .algorithm-box strong.label {
+    color: #8a6d1d;
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .algorithm-box ol, .algorithm-box ul { margin: 6px 0 0 0; padding-left: 22px; }
+  .algorithm-box li { margin-bottom: 6px; }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.95rem;
+  }
+  .data-table th, .data-table td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .data-table th {
+    background: var(--heading-blue);
+    color: #fff;
+    font-weight: 600;
+  }
+  .data-table tr:nth-child(even) td { background: #f7fafd; }
+  .roadmap-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 14px 0;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .roadmap-num {
+    background: var(--heading-blue);
+    color: #fff;
+    font-weight: 700;
+    min-width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .roadmap-card h4 {
+    margin: 0 0 4px 0;
+    color: var(--heading-blue-dark);
+  }
+  .roadmap-card p { margin: 0; color: #444; font-size: 0.95rem; }
+  .status-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 2px 9px;
+    border-radius: 10px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .status-upcoming { background: #eef1f5; color: #667; }
+  .status-current { background: #fff0d6; color: #93650a; }
+  .status-done { background: #e2f4e6; color: #206a37; }
+  .diagram-frame {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    background: #fbfdff;
+    margin: 24px 0;
+    text-align: center;
+  }
+  .diagram-caption {
+    font-size: 0.85rem;
+    color: #667;
+    margin-top: 8px;
+  }
+  .callout-todo {
+    border: 1px dashed #b9c4cf;
+    border-radius: 6px;
+    padding: 12px 16px;
+    color: #6a7683;
+    font-size: 0.88rem;
+    margin: 24px 0;
+    background: #fafcfe;
+  }
+  code {
+    background: #f1f3f5;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+  .legend-row {
+    display: flex;
+    gap: 22px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #445;
+  }
+  .legend-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <span class="nav-title">Deep Learning Tutorial Series</span>
+  <a href="knn_classification.html">← K-NN Classification</a>
+  <a href="transformer_architectures.html">Transformer Architectures</a>
+  <a href="encoder_decoder_transformer.html">Encoder–Decoder Transformer</a>
+  <a href="#roadmap">This page: LLM Engine (Intro)</a>
+</div>
+
+<div class="wrap">
+
+  <h1>Building an LLM Engine</h1>
+  <p class="subtitle">From a Transformer on paper to a model that can be trained, aligned, and served — an
+    engineering roadmap for what sits underneath a working LLM.</p>
+
+  <h2>Where We Are</h2>
+  <p>
+    The previous pages in this series built the Transformer up from first principles: self-attention,
+    the Encoder-only / Decoder-only / Encoder–Decoder architecture family, and a full worked
+    Encoder–Decoder deep dive. That gave us the <em>model</em> — the function that maps a sequence
+    of tokens to a distribution over the next token. It does not, by itself, give us an LLM.
+  </p>
+  <p>
+    An LLM, in the form people actually use, is that architecture wrapped in a much larger system:
+    a way to turn raw text into tokens at scale, a training loop that can run across many GPUs for
+    weeks, a second training stage that turns a raw next-token predictor into something that follows
+    instructions, and finally an inference engine that can serve that model to many users at once
+    without recomputing work it has already done. This page is the map for that system — the "engine"
+    around the model.
+  </p>
+
+  <div class="intuition-box">
+    <strong class="label">Intuition</strong>
+    Think of the Transformer architecture as the engine block of a car — it's the part with all the
+    interesting physics. But an engine block alone doesn't drive anywhere. You still need fuel
+    (data pipelines), an ignition and drivetrain (the training loop), a way to tune it for a specific
+    driver (alignment), and a chassis that can actually carry passengers on a real road at speed
+    (the serving/inference engine). Most of what makes ChatGPT-style systems feel instant and
+    coherent lives in that second set of pieces, not in the attention equation itself.
+  </div>
+
+  <h2>The LLM Engine, End to End</h2>
+  <div class="diagram-frame">
+    <svg viewBox="0 0 860 300" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#0056b3"/>
+        </marker>
+      </defs>
+
+      <!-- Stage boxes -->
+      <g font-family="Segoe UI, sans-serif" font-size="13">
+        <rect x="10" y="40" width="130" height="60" rx="8" fill="#eaf2fb" stroke="#0056b3"/>
+        <text x="75" y="65" text-anchor="middle" fill="#003d82" font-weight="600">Raw Text</text>
+        <text x="75" y="82" text-anchor="middle" fill="#445">Corpus</text>
+
+        <rect x="180" y="40" width="140" height="60" rx="8" fill="#eaf2fb" stroke="#0056b3"/>
+        <text x="250" y="60" text-anchor="middle" fill="#003d82" font-weight="600">Tokenizer</text>
+        <text x="250" y="78" text-anchor="middle" fill="#445" font-size="11">BPE / Unigram</text>
+
+        <rect x="360" y="40" width="150" height="60" rx="8" fill="#eaf2fb" stroke="#0056b3"/>
+        <text x="435" y="60" text-anchor="middle" fill="#003d82" font-weight="600">Pretraining</text>
+        <text x="435" y="78" text-anchor="middle" fill="#445" font-size="11">Transformer + loop</text>
+
+        <rect x="550" y="40" width="140" height="60" rx="8" fill="#eaf2fb" stroke="#0056b3"/>
+        <text x="620" y="60" text-anchor="middle" fill="#003d82" font-weight="600">Base Model</text>
+        <text x="620" y="78" text-anchor="middle" fill="#445" font-size="11">Next-token predictor</text>
+
+        <rect x="720" y="40" width="130" height="60" rx="8" fill="#eaf2fb" stroke="#0056b3"/>
+        <text x="785" y="60" text-anchor="middle" fill="#003d82" font-weight="600">SFT + RLHF</text>
+        <text x="785" y="78" text-anchor="middle" fill="#445" font-size="11">/ DPO alignment</text>
+
+        <rect x="360" y="190" width="150" height="60" rx="8" fill="#fff0d6" stroke="#93650a"/>
+        <text x="435" y="212" text-anchor="middle" fill="#7a4e05" font-weight="600">Inference Engine</text>
+        <text x="435" y="230" text-anchor="middle" fill="#5a3d05" font-size="11">KV cache, batching</text>
+
+        <rect x="180" y="190" width="140" height="60" rx="8" fill="#fff0d6" stroke="#93650a"/>
+        <text x="250" y="212" text-anchor="middle" fill="#7a4e05" font-weight="600">Quantization</text>
+        <text x="250" y="230" text-anchor="middle" fill="#5a3d05" font-size="11">weight compression</text>
+
+        <rect x="550" y="190" width="140" height="60" rx="8" fill="#fff0d6" stroke="#93650a"/>
+        <text x="620" y="212" text-anchor="middle" fill="#7a4e05" font-weight="600">Serving API</text>
+        <text x="620" y="230" text-anchor="middle" fill="#5a3d05" font-size="11">requests → tokens</text>
+      </g>
+
+      <!-- top row arrows -->
+      <line x1="140" y1="70" x2="176" y2="70" stroke="#0056b3" stroke-width="2" marker-end="url(#arrow)"/>
+      <line x1="320" y1="70" x2="356" y2="70" stroke="#0056b3" stroke-width="2" marker-end="url(#arrow)"/>
+      <line x1="510" y1="70" x2="546" y2="70" stroke="#0056b3" stroke-width="2" marker-end="url(#arrow)"/>
+      <line x1="690" y1="70" x2="716" y2="70" stroke="#0056b3" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- down to inference row -->
+      <line x1="785" y1="100" x2="785" y2="140" stroke="#0056b3" stroke-width="2"/>
+      <polyline points="785,140 435,140 435,186" fill="none" stroke="#0056b3" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="610" y="132" text-anchor="middle" fill="#0056b3" font-size="11" font-family="Segoe UI, sans-serif">aligned weights</text>
+
+      <!-- bottom row arrows -->
+      <line x1="320" y1="220" x2="356" y2="220" stroke="#93650a" stroke-width="2" marker-end="url(#arrow)"/>
+      <line x1="510" y1="220" x2="546" y2="220" stroke="#93650a" stroke-width="2" marker-end="url(#arrow)"/>
+      <line x1="176" y1="220" x2="140" y2="220" stroke="#93650a" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="250" y="270" text-anchor="middle" fill="#93650a" font-size="11" font-family="Segoe UI, sans-serif">weights →</text>
+    </svg>
+    <p class="diagram-caption">Two loops: a <strong>training</strong> loop (top) that turns raw text
+      into an aligned model, and an <strong>inference</strong> loop (bottom) that turns that model
+      into a low-latency service. Everything in blue we've touched already; everything below is
+      what this section of the series builds out.</p>
+  </div>
+
+  <h2 id="roadmap">Roadmap for This Section</h2>
+  <p>Each numbered item below will become its own tutorial page, in roughly this order:</p>
+
+  <div class="roadmap-card">
+    <div class="roadmap-num">1</div>
+    <div>
+      <h4>Tokenization at Scale <span class="status-tag status-upcoming">Upcoming</span></h4>
+      <p>Byte-Pair Encoding and Unigram/SentencePiece tokenizers, vocabulary construction, and why
+      tokenization choices ripple into everything downstream (context length, multilingual behavior,
+      arithmetic errors).</p>
+    </div>
+  </div>
+
+  <div class="roadmap-card">
+    <div class="roadmap-num">2</div>
+    <div>
+      <h4>Embeddings and Positional Encoding, Revisited <span class="status-tag status-upcoming">Upcoming</span></h4>
+      <p>A short bridge page connecting the attention-level treatment from the Transformer pages to
+      how embedding tables and positional schemes (learned, sinusoidal, RoPE) are actually
+      implemented and sized in a real model.</p>
+    </div>
+  </div>
+
+  <div class="roadmap-card">
+    <div class="roadmap-num">3</div>
+    <div>
+      <h4>The Pretraining Loop <span class="status-tag status-upcoming">Upcoming</span></h4>
+      <p>Data pipelines and mixture ratios, the next-token cross-entropy objective, optimizer choices
+      (AdamW, learning-rate schedules), mixed-precision training, and the basics of distributing
+      training across multiple GPUs.</p>
+    </div>
+  </div>
+
+  <div class="roadmap-card">
+    <div class="roadmap-num">4</div>
+    <div>
+      <h4>Scaling Laws and Model Sizing <span class="status-tag status-upcoming">Upcoming</span></h4>
+      <p>Why parameter count, data size, and compute trade off the way they do; a walk through the
+      Chinchilla-style scaling relationships and what they mean for choosing a model size.</p>
+    </div>
+  </div>
+
+  <h2>The Chinchilla Shift: Balancing Parameters and Data</h2>
+  <p>
+    For a long time, the prevailing wisdom in large language model development (led by OpenAI's 2020 GPT-3 scaling laws)
+    was that models should be massively over-parameterized while trained on a relatively fixed budget of tokens.
+    This changed in early 2022 when DeepMind published the <em>Chinchilla scaling laws</em>, completely altering
+    how engineers approach model sizing.
+  </p>
+
+  <div class="intuition-box">
+    <strong class="label">Intuition</strong>
+    Imagine you have a fixed computing budget (say, $10,000 worth of GPU hours). Should you build a
+    <strong>massive model</strong> and train it on a small amount of text, or a
+    <strong>smaller model</strong> and train it on a vast ocean of text? Before Chinchilla, labs built the
+    massive model. Chinchilla proved they were starving the model of data—both parameters and tokens
+    need to scale at an equal rate.
+  </div>
+
+  <p>
+    Mathematically, training loss $L$ as a function of parameters $N$ and tokens $D$ under a fixed compute budget follows a power law:
+  </p>
+
+  <div class="diagram-frame" style="font-family: monospace; font-size: 0.95rem; color: var(--heading-blue-dark);">
+    $$L(N, D) = E + \frac{A}{N^\alpha} + \frac{B}{D^\beta}$$
+  </div>
+
+  <p>
+    Through rigorous experimentation, DeepMind found that $\alpha \approx \beta \approx 0.5$. Because the exponents are roughly equal,
+    <strong>if you double your compute budget, you should double your parameter count ($N$) and double your token count ($D$) simultaneously</strong>.
+  </p>
+
+  <table class="data-table">
+    <tr>
+      <th>Metric</th>
+      <th>The Old Assumption (GPT-3 Era)</th>
+      <th>The Chinchilla Optimal Rule</th>
+    </tr>
+    <tr>
+      <td>Token-to-Parameter Ratio</td>
+      <td>~6 tokens per parameter (e.g., 175B model on 300B tokens)</td>
+      <td>~20 tokens per parameter (e.g., 70B model on 1.4T tokens)</td>
+    </tr>
+    <tr>
+      <td>Inference Cost Impact</td>
+      <td>Terrible: Oversized models waste memory bandwidth during serving</td>
+      <td>Optimized: Smaller models trained longer achieve the same accuracy and run much faster</td>
+    </tr>
+  </table>
+
+  <p>
+    This realization is why modern open-weights models (like Llama or Mistral) routinely train on
+    <strong>tens of trillions of tokens</strong> for models with only 7B to 70B parameters—they are strictly
+    "Chinchilla-optimal" or even "over-trained" (trained past the optimal token threshold) so they can run faster and cheaper at inference time.
+  </p>
+
+  <div class="roadmap-card">
+    <div class="roadmap-num">5</div>
+    <div>
+      <h4>From Base Model to Assistant: SFT and Alignment <span class="status-tag status-upcoming">Upcoming</span></h4>
+      <p>Supervised fine-tuning on instruction data, then preference-based alignment — RLHF (reward
+      model + PPO) and the more recent DPO-style approaches that skip the explicit reward model.</p>
+    </div>
+  </div>
+
+  <h2>From Base Model to Assistant: SFT and Alignment</h2>
+  <p>
+    When a pretraining loop finishes, you have a <strong>Base Model</strong>. If you prompt a base model with
+    <code>"What is the capital of France?"</code>, it won't answer the question. Instead, because it is a pure
+    next-token predictor, it will autocomplete the prompt into an internet-style quiz:
+    <code>"What is the capital of France? What is the capital of Germany? What is the capital of Spain?"</code>.
+  </p>
+  <p>
+    Turning that raw text-completer into a conversational assistant requires two distinct post-training stages:
+    <strong>Supervised Fine-Tuning (SFT)</strong> and <strong>Alignment</strong>.
+  </p>
+
+  <div class="intuition-box">
+    <strong class="label">Intuition</strong>
+    Pretraining teaches the model the <em>structure of human language and facts about the world</em> (reading every book in the library).
+    SFT teaches it the <em>format of a conversation</em> (how to act like a helpful responder rather than an autocomplete engine).
+    Alignment teaches it <em>human values and safety</em> (how to be harmless, honest, and helpful instead of toxic or easily jailbroken).
+  </div>
+
+  <h3>Stage 1: Supervised Fine-Tuning (SFT)</h3>
+  <p>
+    SFT takes the base model and fine-tunes its weights using standard cross-entropy loss on a
+    <strong>tightly curated dataset of prompt-response pairs written by humans or distilled from larger models</strong>.
+    While pretraining relies on raw scale (trillions of web tokens), SFT relies heavily on <em>craftsmanship and quality</em> over sheer volume.
+  </p>
+
+  <div class="algorithm-box">
+    <strong class="label">Anatomy of a "Tightly Curated" SFT Dataset</strong>
+    <p>A high-performing SFT dataset is not just a random scrape of chat logs; it is meticulously engineered across four dimensions:</p>
+    <ul>
+      <li><strong>Human-Authored Craftsmanship:</strong> High-purity prompts written by domain experts, educators, and professional annotators. These responses model ideal tone, multi-step reasoning, markdown formatting, and explicit edge-case handling (e.g., how to politely decline unsafe requests).</li>
+      <li><strong>Teacher-Model Distillation (Synthetic Data):</strong> Leveraging frontier models (like GPT-4 or Claude) to generate ideal answers for complex programmatic, math, or creative prompts. The open-source community relies heavily on distilled datasets (like LMSYS Chatbot Arena dumps or OpenAssistant exports) to bridge the data gap.</li>
+      <li><strong>Rigorous Diversity & Coverage:</strong> Ensuring the dataset spans a wide domain taxonomy—coding, logical reasoning, creative writing, roleplay, summarization, and instruction-following constraints (e.g., <em>"Write a response in under 50 words without using the letter 'e'"</em>).</li>
+      <li><strong>Deduplication and Quality Filtering:</strong> Stripping out repetitive phrasing, sycophantic filler (e.g., excessive apologies or robotic intros like <em>"Sure, I can help with that!"</em>), and factual errors to prevent the model from learning bad conversational habits.</li>
+    </ul>
+  </div>
+
+  <p>
+    During SFT training itself, a crucial technique called <strong>Loss Masking</strong> is applied:
+  </p>
+  <div class="algorithm-box" style="background: #f4f8fc; border-color: var(--border);">
+    <strong class="label" style="color: var(--heading-blue);">The Mechanics of SFT Training</strong>
+    <ul>
+      <li><strong>Data format:</strong> <code>User: [Instruction] \n Assistant: [Ideal Response]</code></li>
+      <li><strong>Masking:</strong> Unlike pretraining where the model computes loss on every single token, in SFT the loss is
+      <em>masked</em> on the user prompt tokens. The model's error gradients are only calculated on the <strong>Assistant's response</strong>,
+      teaching it to focus purely on generating optimal completions rather than memorizing how to rewrite user prompts.</li>
+    </ul>
+    <p>So in loss masking you typically only compute loss on the response tokens, not the prompt tokens. The prompt is context the model conditions on; you don't want to train it to predict the prompt itself. In SFT, forward pass, backward pass, optimizer — identical to pretraining. What changes is what you show the model and which tokens count toward the loss.</p>
+  </div>
+
+  <h3>A Closer Look: Loss Masking</h3>
+  <p>
+    This is the single detail students trip on most, and usually for the same reason: "masking" is used in
+    three different, unrelated senses in Transformer literature, and it's easy to assume they're all the
+    same mechanism.
+  </p>
+
+  <div class="intuition-box">
+    <strong class="label">Three different "maskings" — don't conflate them</strong>
+    <ul>
+      <li><strong>Causal (attention) masking</strong> — controls <em>which tokens a given position is allowed to look at</em>
+      inside self-attention. In a Decoder-only model this is always lower-triangular: token $t$ can attend to tokens
+      $1 \dots t$, never to the future. This is present in <em>every</em> forward pass — pretraining, SFT, and
+      inference alike. It never changes.</li>
+      <li><strong>Padding masking</strong> — a batching implementation detail. When you pack sequences of different
+      lengths into one batch, shorter ones are padded; padding-masking just tells attention (and the loss) to ignore
+      those pad positions. Unrelated to prompts vs. responses.</li>
+      <li><strong>Loss masking</strong> — the one that's specific to SFT. It doesn't touch attention at all. It only
+      decides <em>which token positions contribute to the loss you back-propagate</em>. Every token, prompt included,
+      still passes through the full forward computation; masked tokens are simply excluded from the sum that produces
+      the scalar loss.</li>
+    </ul>
+    Students often assume loss-masked prompt tokens are "hidden" from the model the way padding or future tokens are.
+    They aren't. The model still reads every prompt token as context — attention still flows over them normally.
+    Loss masking changes the <em>gradient signal</em>, not what the model can see.
+  </div>
+
+  <div class="diagram-frame">
+    <svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+      <defs>
+        <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#206a37"/>
+        </marker>
+      </defs>
+
+      <g font-family="Segoe UI, sans-serif" font-size="12">
+        <!-- token row -->
+        <!-- prompt tokens: grey, masked -->
+        <rect x="10"  y="110" width="80" height="46" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
+        <text x="50" y="138" text-anchor="middle" fill="#556">User:</text>
+
+        <rect x="100" y="110" width="80" height="46" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
+        <text x="140" y="138" text-anchor="middle" fill="#556">What</text>
+
+        <rect x="190" y="110" width="80" height="46" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
+        <text x="230" y="138" text-anchor="middle" fill="#556">is</text>
+
+        <rect x="280" y="110" width="80" height="46" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
+        <text x="320" y="138" text-anchor="middle" fill="#556">2+2?</text>
+
+        <rect x="370" y="110" width="110" height="46" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
+        <text x="425" y="138" text-anchor="middle" fill="#556">Assistant:</text>
+
+        <!-- response tokens: green, contribute to loss -->
+        <rect x="500" y="110" width="80" height="46" rx="6" fill="#e2f4e6" stroke="#206a37"/>
+        <text x="540" y="138" text-anchor="middle" fill="#1c5c30" font-weight="600">"4"</text>
+
+        <rect x="590" y="110" width="90" height="46" rx="6" fill="#e2f4e6" stroke="#206a37"/>
+        <text x="635" y="138" text-anchor="middle" fill="#1c5c30" font-weight="600">&lt;eos&gt;</text>
+
+        <!-- role labels above -->
+        <text x="230" y="95" text-anchor="middle" fill="#8a97a3" font-size="11" font-style="italic">prompt tokens — input only, no loss</text>
+        <text x="590" y="95" text-anchor="middle" fill="#206a37" font-size="11" font-style="italic">response tokens — loss computed here</text>
+
+        <!-- attention still flows: dashed curved arrows from response tokens back to prompt -->
+        <path d="M540,108 C 480,60 260,55 55,105" fill="none" stroke="#0056b3" stroke-width="1.4" stroke-dasharray="4,3" marker-end="url(#arrow2)"/>
+        <path d="M635,108 C 560,50 300,48 235,105" fill="none" stroke="#0056b3" stroke-width="1.4" stroke-dasharray="4,3" marker-end="url(#arrow2)"/>
+        <text x="410" y="45" text-anchor="middle" fill="#0056b3" font-size="11">full causal attention still reaches every earlier token, prompt included</text>
+
+        <!-- loss arrows down, only from green boxes -->
+        <line x1="540" y1="156" x2="540" y2="200" stroke="#206a37" stroke-width="2" marker-end="url(#arrow2)"/>
+        <line x1="635" y1="156" x2="635" y2="200" stroke="#206a37" stroke-width="2" marker-end="url(#arrow2)"/>
+
+        <rect x="470" y="205" width="240" height="50" rx="8" fill="#fbf7ef" stroke="#e0d3ab"/>
+        <text x="590" y="226" text-anchor="middle" fill="#8a6d1d" font-weight="600" font-size="12">Loss</text>
+        <text x="590" y="244" text-anchor="middle" fill="#8a6d1d" font-size="11">Σ over response positions only</text>
+
+        <!-- explicit "no arrow" note for prompt tokens -->
+        <text x="230" y="180" text-anchor="middle" fill="#98a2ae" font-size="11" font-style="italic">(no gradient contribution from these positions)</text>
+      </g>
+    </svg>
+    <div class="legend-row">
+      <span><span class="legend-swatch" style="background:#eef1f5;border:1px solid #98a2ae;"></span>prompt token — masked out of the loss</span>
+      <span><span class="legend-swatch" style="background:#e2f4e6;border:1px solid #206a37;"></span>response token — counted in the loss</span>
+    </div>
+    <p class="diagram-caption">Every token — grey and green — still takes part in the forward pass and in
+      attention. Loss masking only decides which positions' prediction errors get summed into the training loss.</p>
+  </div>
+
+  <div class="algorithm-box">
+    <strong class="label">Worked Example, With Numbers</strong>
+    <p>Tokenize <code>"User: What is 2+2?\nAssistant: 4&lt;eos&gt;"</code> into a single sequence of 7 tokens
+    (simplified — a real BPE tokenizer would split these further):</p>
+    <table class="data-table">
+      <tr>
+        <th>Position</th>
+        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
+      </tr>
+      <tr>
+        <td>Token</td>
+        <td>User:</td><td>What</td><td>is</td><td>2+2?</td><td>Assistant:</td><td>4</td><td>&lt;eos&gt;</td>
+      </tr>
+      <tr>
+        <td>Loss mask $m_t$</td>
+        <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td>
+      </tr>
+    </table>
+    <p>The model still computes a next-token prediction at <em>every</em> position (that's how a Transformer
+    forward pass works — it's parallel across positions). But the loss only sums the masked-in positions:</p>
+    <div class="diagram-frame" style="font-family: monospace; font-size: 0.92rem; color: var(--heading-blue-dark);">
+      $$\mathcal{L}_{SFT} = -\frac{1}{\sum_t m_t}\sum_{t=1}^{T} m_t \cdot \log P_\theta(x_t \mid x_{<t})$$
+    </div>
+    <p>
+	
+      Here that's just two terms: $-\log P(\text{"4"} \mid \text{"User: What is 2+2?}\backslash\text{nAssistant:"})$
+      and $-\log P(\langle\text{eos}\rangle \mid \dots, \text{"4"})$, averaged over 2 (not 7).
+      Compare this to the plain <strong>pretraining</strong> loss, which would sum all 7 positions
+      (predicting "What" from "User:", "is" from "User: What", and so on) — i.e. $m_t = 1$ everywhere.
+    </p>
+    <p><strong>Implementation detail that trips people up:</strong> the denominator matters. If you sum the
+    masked losses but divide by the full sequence length $T$ instead of $\sum_t m_t$ (the actual count of
+    response tokens), short responses get artificially small gradients and long responses get artificially
+    large ones — a subtle bug that shows up as inconsistent SFT quality across examples of different response
+    length, not as an error or a crash.</p>
+  </div>
+
+  <div class="intuition-box">
+    <strong class="label">For mathematically mature readers: mathematical definition of SFT</strong>
+    <p>
+      In supervised fine-tuning (SFT) of autoregressive language models, the training sequence consists of
+      a concatenated tokenized prompt $X = (x_1, x_2, \dots, x_m)$ and a target response
+      $Y = (y_1, y_2, \dots, y_n)$, forming a complete sequence $S = (s_1, s_2, \dots, s_{m+n})$. We introduce
+      a binary indicator mask $m_t \in \{0, 1\}$ for each token position $t$, restricting gradient
+      backpropagation exclusively to the response tokens. Formally, the masked cross-entropy loss
+      $\mathcal{L}_{\text{SFT}}$ is defined as:
+    </p>
+    <div class="diagram-frame" style="font-family: monospace; font-size: 0.92rem; color: var(--heading-blue-dark); background: #fff;">
+      $$\mathcal{L}_{\text{SFT}}(\theta) = -\frac{1}{\sum_{t=1}^{m+n} m_t} \sum_{t=1}^{m+n} m_t \log P_\theta(s_t \mid s_{<t})$$
+    </div>
+    <p>
+      where $m_t = 0$ for all prompt tokens ($t \le m$) and $m_t = 1$ for all response tokens ($t > m$).
+      Operationally, this masking process is implemented through the following steps:
+    </p>
+    <ol>
+      <li><strong>Logit Generation:</strong> The model processes the full sequence $S$ through its layers to produce raw output logits for each token position $t$.</li>
+      <li><strong>Probability Normalization:</strong> The softmax function is applied across the vocabulary dimension at every position $t$ to compute the predictive probability distribution $P_\theta(s_t \mid s_{<t})$.</li>
+      <li><strong>Pointwise Cross-Entropy:</strong> We calculate the log-probability of the ground-truth token at every position, yielding a vector of losses $\ell_t = -\log P_\theta(s_t \mid s_{<t})$ for the entire sequence.</li>
+      <li><strong>Mask Application:</strong> We apply the mask $m_t$ element-wise to the loss vector, effectively setting $\ell_t = 0$ for all prompt tokens ($t \le m$). This ensures that prompt tokens contribute null gradients to the model parameters $\theta$, i.e., $\nabla_\theta \ell_t = 0$ for $t \le m$.</li>
+      <li><strong>Gradient Normalization:</strong> The total scalar loss is calculated by averaging only over the valid response tokens ($\sum m_t$). This normalization is critical to ensure that gradient updates maintain a consistent scale regardless of variations in prompt length across different training examples.</li>
+    </ol>
+  </div>
+
+  <h3>Stage 2: Preference Alignment (RLHF vs. DPO)</h3>
+  <p>
+    Even after meticulous SFT, a model can hallucinate, produce toxic language, or write sycophantic answers. Alignment forces the model
+    to prefer high-quality, safe responses over low-quality ones. There are two primary paradigms for this:
+  </p>
+
+  <table class="data-table">
+    <tr>
+      <th>Paradigm</th>
+      <th>How It Works</th>
+      <th>Engineering Trade-offs</th>
+    </tr>
+    <tr>
+      <td><strong>RLHF (Reinforcement Learning from Human Feedback)</strong></td>
+      <td>
+        1. Train a separate <strong>Reward Model</strong> to score responses.<br>
+        2. Use <strong>PPO (Proximal Policy Optimization)</strong> to update the LLM policy based on reward scores while penalizing drift from the SFT model.
+      </td>
+      <td>
+        Highly complex to run stable distributed training; requires managing 3 to 4 massive models simultaneously in GPU memory (Policy, Reference, Value, Reward).
+      </td>
+    </tr>
+    <tr>
+      <td><strong>DPO (Direct Preference Optimization)</strong></td>
+      <td>
+        Skips the reward model entirely. It mathematically reformulates the RL objective so you can optimize the LLM
+        <strong>directly on pairs of preferred vs. dispreferred text</strong> using a standard cross-entropy loss.
+      </td>
+      <td>
+        Much simpler implementation and stable training loop; has largely replaced PPO for open-weights community alignment.
+      </td>
+    </tr>
+  </table>
+
+  <p>
+    Mathematically, the DPO loss function optimizes the policy $\pi_\theta$ directly using data pairs $(y_w, y_l)$ representing
+    winning (preferred) and losing (dispreferred) responses:
+  </p>
+
+  <div class="diagram-frame" style="font-family: monospace; font-size: 0.9rem; color: var(--heading-blue-dark);">
+    $$\mathcal{L}_{DPO}(\theta) = -\mathbb{E}_{(x, y_w, y_l)} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w|x)}{\pi_{ref}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{ref}(y_l|x)} \right) \right]$$
+  </div>
+
+  <div class="roadmap-card">
+    <div class="roadmap-num">6</div>
+    <div>
+      <h4>The Inference Engine <span class="status-tag status-upcoming">Upcoming</span></h4>
+      <p>Why generation is inherently sequential, the KV cache and why it exists, continuous batching,
+      speculative decoding, and quantization for deployment (INT8/INT4, GPTQ/AWQ-style methods).</p>
+    </div>
+  </div>
+
+  <div class="roadmap-card">
+    <div class="roadmap-num">7</div>
+    <div>
+      <h4>Retrieval and Tool Use in Practice <span class="status-tag status-upcoming">Upcoming</span></h4>
+      <p>Connecting back to the RAG / kNN-LM material from the K-NN page — how retrieval augments a
+      served model, and how tool-calling fits into the inference loop.</p>
+    </div>
+  </div>
+
+  <h2>Training Engine vs. Inference Engine</h2>
+  <p>
+    It's worth being explicit early on that "training" and "inference" are optimized for almost
+    opposite things, which is why they end up as two separate engineering problems rather than one:
+  </p>
+  <table class="data-table">
+    <tr>
+      <th>Dimension</th>
+      <th>Training Engine</th>
+      <th>Inference Engine</th>
+    </tr>
+    <tr>
+      <td>Primary goal</td>
+      <td>Maximize throughput across a fixed, known dataset</td>
+      <td>Minimize latency per request, for requests it hasn't seen</td>
+    </tr>
+    <tr>
+      <td>Batch structure</td>
+      <td>Large, static batches; padding is cheap</td>
+      <td>Dynamic, continuously arriving requests of varying length</td>
+    </tr>
+    <tr>
+      <td>Memory pressure</td>
+      <td>Activations + gradients + optimizer state</td>
+      <td>KV cache growing per token, per active request</td>
+    </tr>
+    <tr>
+      <td>Precision</td>
+      <td>Mixed precision (fp16/bf16) for stable gradients</td>
+      <td>Aggressively quantized (int8/int4) where quality allows</td>
+    </tr>
+    <tr>
+      <td>Typical bottleneck</td>
+      <td>Compute (FLOPs) and inter-GPU communication</td>
+      <td>Memory bandwidth, not compute</td>
+    </tr>
+  </table>
+
+  <div class="algorithm-box">
+    <strong class="label">Working Definition</strong>
+    An <strong>LLM engine</strong>, for the purposes of this series, is the full pipeline that:
+    <ol>
+      <li>Converts raw text into a fixed vocabulary of tokens (tokenizer).</li>
+      <li>Trains a Transformer to predict the next token over a large corpus (pretraining loop).</li>
+      <li>Adapts that base model to follow instructions and match human preferences (SFT + alignment).</li>
+      <li>Serves the resulting weights efficiently to many concurrent users (inference engine).</li>
+    </ol>
+    Everything we build from here is one of these four stages.
+  </div>
+
+  <h2>Prerequisites</h2>
+  <p>
+    This section assumes the Transformer material is solid — in particular self-attention, multi-head
+    attention, and the difference between the Encoder-only, Decoder-only, and Encoder–Decoder variants
+    covered on the previous two pages. If any of that feels shaky, that's the right place to go back to
+    before continuing here; everything below builds on the Decoder-only architecture specifically, since
+    that's what nearly all modern LLMs use.
+  </p>
+
+  <div class="callout-todo">
+    <strong>Open for this page:</strong> decide whether to keep this as a pure roadmap/overview page,
+    or fold in a short "why Decoder-only won" comparison before moving to Tokenization. Also need to
+    pick whether code companions for this section will be pure NumPy (as with earlier pages) or
+    introduce a minimal PyTorch training loop, given the compute involved in even a toy pretraining run.
+  </div>
+
+</div>
+</body>
+</html>
