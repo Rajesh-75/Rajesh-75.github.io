@@ -1,12 +1,3 @@
-Introduction (The problem with RNNs).Input Preparation (The Foundation):Tokenization: Slicing the text.
-
-Embeddings: 
-Translating text to vectors.Positional Encoding: 
-Adding the order information.Self-Attention (The Engine):
-$Q, K, V$ derivation.Scaled Dot-Product Attention math.
-Encoder-Decoder Architecture
- (The Vehicle):The structure of the stacks.Cross-Attention (The bridge).Autoregressive generation.
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -93,28 +84,114 @@ Encoder-Decoder Architecture
 <h2>Transformer Architecture </h2>
 <p>the Transformer model is solely based on attention mechanisms without any convolutional or recurrent layer (Vaswani et al., 2017). Though originally proposed for sequence-to-sequencelearning ontextdata, Transformershavebeen pervasive in a wide range of modern deep learning applications, such as in areas to do with language, vision, speech, and reinforcement learning. </p>
             <h3>Key Structural Components Pipeline</h3>
-            <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div style="display: flex; flex-direction: column; align-items: center; font-family: monospace;">
-                    <div style="background: #e2e8f0; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center;">Input Sentence</div>
-                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
-                    <div style="background: #bae6fd; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #0284c7;">Tokenization</div>
-                    <p style="font-family: sans-serif; font-size: 0.9rem; color: #64748b; margin: 4px 0 12px 0;">Words are sliced into sub-word token elements</p>
-                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
-                    <div style="background: #c7d2fe; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #4f46e5;">Embeddings</div>
-                    <p style="font-family: sans-serif; font-size: 0.9rem; color: #64748b; margin: 4px 0 12px 0;">Tokens projected into continuous high-dimensional vector spaces</p>
-                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
-                    <div style="background: #fed7aa; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #ea580c;">Positional Encoding</div>
-                    <p style="font-family: sans-serif; font-size: 0.9rem; color: #64748b; margin: 4px 0 12px 0;">Injects geometric coordinate signals to maintain sequence order</p>
-                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
-                    <div style="background: #bbf7d0; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #16a34a;">Self-Attention Block</div>
-                    <p style="font-family: sans-serif; font-size: 0.9rem; color: #64748b; margin: 4px 0 12px 0;">Tokens look at every other token to compute dynamic relevance matrix</p>
-                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
-                    <div style="background: #fbcfe8; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #db2777;">Feed Forward Networks</div>
-                    <p style="font-family: sans-serif; font-size: 0.9rem; color: #64748b; margin: 4px 0 12px 0;">Applies non-linear projections separately to each token representation</p>
-                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
-                    <div style="border: 2px dashed #cbd5e1; padding: 8px 16px; border-radius: 4px; font-style: italic; color: #64748b;">Repeat Stacked Iteratively Across N Layers</div>
-                    <div style="color: #94a3b8; margin: 8px 0;">&darr;</div>
-                    <div style="background: #f1f5f9; padding: 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border: 1px solid #cbd5e1;">Output Projections</div>
+                    <div style="background: #e2e8f0; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; font-size: 0.92rem;">Input Sentence</div>
+                    <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
+                    <div style="background: #bae6fd; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #0284c7; font-size: 0.92rem;">Tokenization</div>
+                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Words are sliced into sub-word token elements</p>
+                    <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
+                    <div style="background: #c7d2fe; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #4f46e5; font-size: 0.92rem;">Embeddings</div>
+                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Tokens projected into continuous high-dimensional vector spaces</p>
+                    <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
+                    <div style="background: #fed7aa; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #ea580c; font-size: 0.92rem;">Positional Encoding</div>
+                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Injects geometric coordinate signals to maintain sequence order</p>
+                    <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
+                    <div style="background: #bbf7d0; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #16a34a; font-size: 0.92rem;">Self-Attention Block</div>
+                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Tokens look at every other token to compute dynamic relevance matrix</p>
+                    <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
+                    <div style="background: #fbcfe8; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #db2777; font-size: 0.92rem;">Feed Forward Networks</div>
+                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Applies non-linear projections separately to each token representation</p>
+                    <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
+                    <div style="border: 2px dashed #cbd5e1; padding: 5px 14px; border-radius: 4px; font-style: italic; color: #64748b; font-size: 0.85rem;">Repeat Stacked Iteratively Across N Layers</div>
+                    <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
+                    <div style="background: #f1f5f9; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border: 1px solid #cbd5e1; font-size: 0.92rem;">Output Projections</div>
+                </div>
+            </div>
+        </section>
+		<!-- SECTION: INPUT PREPARATION (TOKENIZATION & EMBEDDINGS) -->
+        <section id="input-preparation" style="margin-bottom: 40px;">
+            <h2 style="color: #0284c7; border-bottom: 2px solid #0284c7; padding-bottom: 5px;">Input Preparation: Tokenization, Embeddings, and Positional Encoding</h2>
+            <p>
+                Before raw text can be processed by neural networks, it must undergo a foundational pipeline that converts human-readable strings into structured numerical vectors.
+            </p>
+
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; margin-top: 20px;">
+                <h3 style="margin-top: 0; color: #0369a1;">1. Tokenization (Slicing the Text)</h3>
+                <p>
+                    Neural networks cannot process raw strings directly; text must be sliced into smaller foundational units called <strong>tokens</strong>. Modern architectures (like Byte-Pair Encoding or WordPiece sub-word tokenizers) break rare words down into sub-word components to handle out-of-vocabulary terms efficiently, while keeping common whole words as single tokens.
+                </p>
+
+                <p><strong>How the vocabulary itself is learned — Byte-Pair Encoding (BPE):</strong> the sub-word vocabulary isn't designed by hand; it's <em>learned</em> from a training corpus by repeatedly merging the most frequent adjacent pair of symbols.</p>
+
+                <div class="algorithm-box" style="margin: 16px 0;">
+                    <strong class="label">BPE Algorithm (Vocabulary Construction)</strong>
+                    <ol>
+                        <li>Start with a base vocabulary of every individual character (or byte) in the corpus.</li>
+                        <li>Represent each word as a sequence of these characters, plus an end-of-word marker.</li>
+                        <li>Count the frequency of every adjacent symbol pair $(a, b)$ across the corpus, and identify the most frequent one:
+                            $$ (a^{*}, b^{*}) = \underset{(a,\,b)}{\arg\max}\;\; \text{count}(a, b) $$
+                        </li>
+                        <li>Merge $a^{*}$ and $b^{*}$ into a single new symbol $a^{*}b^{*}$, and add it to the vocabulary.</li>
+                        <li>Repeat steps 3–4 for a fixed number of merges (a hyperparameter, typically tens of thousands) or until a target vocabulary size $V$ is reached.</li>
+                    </ol>
+                </div>
+
+                <p style="font-size: 0.92rem; color:#475569;">
+                    <strong>Compact worked example:</strong> a toy corpus with <code>low</code> (&times;5), <code>lower</code> (&times;2), <code>newest</code> (&times;6), <code>widest</code> (&times;3), each first written as characters plus an end-of-word marker <code>·</code>
+                    (<code>l o w ·</code>, <code>l o w e r ·</code>, <code>n e w e s t ·</code>, <code>w i d e s t ·</code>). The most frequent pair is <code>(e, s)</code> — appearing $6+3=9$ times across <code>newest</code> and <code>widest</code> — so <code>e</code>+<code>s</code> merges first into <code>es</code>. The next most frequent pair, <code>(es, t)</code>, also occurs $9$ times and merges into <code>est</code>. That suffix is now its own reusable token, shared by both words (and any future word like <code>fastest</code>, never seen during training) — this is the core mechanism that lets sub-word tokenization generalize beyond its training vocabulary.
+                </p>
+
+                <p><strong>Applying the learned vocabulary to new text:</strong></p>
+                <ul style="padding-left: 20px;">
+                    <li>Input Sentence: <code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">"Transformers are brilliant!"</code></li>
+                    <li>Tokenized Array: <code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">["Transform", "ers", " are", " brilliant", "!"]</code></li>
+                    <li>Mapped Integer IDs: <code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">[7942, 2108, 389, 8642, 0]</code></li>
+                </ul>
+                <p style="font-size: 0.92rem; color:#475569;">
+                    This creates a genuine trade-off: a larger vocabulary $V$ gives shorter token sequences for the same text (good for compute and context length), but also enlarges the embedding table below and gives rarer tokens less training signal each. Production vocabularies typically run ~30K–50K tokens (GPT-2, BERT) up to 100K+ for the largest current models.
+                </p>
+
+                <h3 style="margin-top: 30px; color: #4f46e5;">2. Embeddings (Translating Text to Vectors)</h3>
+                <p>
+                    Once tokens are mapped to integer IDs, they pass through an <strong>Embedding Layer</strong> (a lookup table of learned parameters). This algorithm projects each discrete token ID into a continuous high-dimensional vector space of size $d_{\text{model}}$ (e.g., 512 or 4096 dimensions) — a space where the rest of the network can do ordinary linear algebra instead of operating on raw integers.
+                </p>
+                <p>
+                    <strong>Basic Algorithm & Steps:</strong>
+                </p>
+                <div class="algorithm-box" style="margin: 16px 0;">
+                    <ol>
+                        <li><strong>Initialize</strong> a weight matrix $W_{\text{embed}} \in \mathbb{R}^{V \times d_{\text{model}}}$, where $V$ is vocabulary size — one row per token, filled with small random values before training begins.</li>
+                        <li><strong>Represent</strong> a token index $i$ as a one-hot vector $e_i \in \{0,1\}^{V}$: all zeros except a single $1$ at position $i$.</li>
+                        <li><strong>Look up</strong> the embedding by projecting the one-hot vector through the weight matrix:
+                            $$ v_i = e_i^{T} W_{\text{embed}} \in \mathbb{R}^{d_{\text{model}}} $$
+                            Because $e_i$ only selects one row, this is mathematically a matrix multiply but computationally just a direct row lookup, $v_i = W_{\text{embed}}[i]$ — no multiplication is actually carried out in practice.</li>
+                        <li><strong>Stack</strong> the embeddings for every token in the sequence, in order, into a matrix $X \in \mathbb{R}^{n \times d_{\text{model}}}$ ($n$ = sequence length). This is exactly the $X$ matrix used to seed $Q, K, V$ in the Self-Attention derivation further down this page.</li>
+                        <li><strong>Train</strong> $W_{\text{embed}}$ like any other weight matrix, via backpropagation from the training loss. Tokens that play similar roles in similar contexts drift toward similar vectors as training proceeds — the vectors carry no meaning at initialization; they earn it through gradient descent.</li>
+                    </ol>
+                </div>
+
+                <p style="font-size: 0.92rem; color:#475569;">
+                    <strong>Tiny worked example:</strong> a 3-word vocabulary (<code>Cat</code> = id 0, <code>sat</code> = id 1, <code>mat</code> = id 2) with $d_{\text{model}}=4$:
+                </p>
+                <div class="math-block">
+                    $$W_{\text{embed}} = \begin{bmatrix} 
+                    0.2 & 0.8 & 0.1 & 0.5 \\ 
+                    0.9 & 0.1 & 0.7 & 0.3 \\ 
+                    0.4 & 0.6 & 0.2 & 0.8 
+                    \end{bmatrix} \begin{matrix} \leftarrow \text{id 0: "Cat"} \\ \leftarrow \text{id 1: "sat"} \\ \leftarrow \text{id 2: "mat"} \end{matrix}$$
+                </div>
+                <p style="font-size: 0.92rem; color:#475569;">
+                    Tokenizing <code>"Cat sat mat"</code> gives IDs <code>[0, 1, 2]</code>; looking each up and stacking the rows gives exactly the $X$ matrix that opens the Self-Attention Mathematical Derivation below — this step is where that matrix actually comes from. With a realistic vocabulary of $V=50{,}000$ and $d_{\text{model}}=768$, this one table already holds $V \times d_{\text{model}} \approx 38.4$ million parameters, before a single Transformer layer is added. Many production models <strong>tie</strong> this same matrix to the output layer that projects back to vocabulary-sized logits, to avoid paying that parameter cost twice.
+                </p>
+
+                <h3 style="margin-top: 30px; color: #ea580c;">3. Positional Encoding (Adding Order Information)</h3>
+                <p>
+                    Because Transformers process all tokens simultaneously (losing the sequential order inherent to RNNs), they have no built-in awareness of word positions. To fix this, <strong>Positional Encodings</strong> are injected directly into the input embeddings by adding deterministic sinusoidal signals:
+                </p>
+                <div class="math-block" style="background: #fff; padding: 10px; border: 1px solid #e2e8f0; border-radius: 4px; text-align: center;">
+                    $$PE_{(pos, 2i)} = \sin\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)$$
+                    $$PE_{(pos, 2i+1)} = \cos\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)$$
                 </div>
             </div>
         </section>
@@ -233,6 +310,156 @@ Encoder-Decoder Architecture
             </div>
         </section>
 
+        <section id="ffn-output-deep-dive" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px;">
+            <h2 style="color: #db2777; border-bottom: 2px solid #db2777; padding-bottom: 5px;">Feed-Forward Networks: Processing Each Token Independently</h2>
+
+            <p>
+                <strong>Definition:</strong> Self-attention is where tokens "talk" to each other — each token's vector is rebuilt as a weighted mix of every other token's Value vector. The <strong>Feed-Forward Network (FFN)</strong> is the opposite: a small two-layer neural network applied <em>independently and identically</em> to every token position, with zero interaction between positions. If attention is where information moves <em>between</em> tokens, the FFN is where each token's own representation gets extra non-linear processing capacity.
+            </p>
+
+            <div class="algorithm-box" style="margin: 16px 0;">
+                <strong class="label">Feed-Forward Network Algorithm (Applied per Token)</strong>
+                <ol>
+                    <li>Take a single token's vector $x \in \mathbb{R}^{d_{\text{model}}}$ — the output of self-attention, after the residual connection and layer normalization.</li>
+                    <li><strong>Expand:</strong> project up into a wider hidden space, $h = \text{Activation}(xW_1 + b_1)$, where $W_1 \in \mathbb{R}^{d_{\text{model}} \times d_{ff}}$. The inner dimension $d_{ff}$ is typically <strong>4&times;</strong> $d_{\text{model}}$ (e.g. $d_{ff}=3072$ when $d_{\text{model}}=768$).</li>
+                    <li><strong>Apply a non-linearity</strong> — ReLU in the original Transformer, GELU in most modern architectures — so the network can represent more than a linear transformation.</li>
+                    <li><strong>Project back down</strong> to the original size: $y = hW_2 + b_2$, where $W_2 \in \mathbb{R}^{d_{ff} \times d_{\text{model}}}$, restoring shape $d_{\text{model}}$ so the vector can flow into the next layer.</li>
+                    <li>This exact same $W_1, W_2$ pair is reused for every token position in the sequence — hence "position-wise" — but each layer of the Transformer has its own separate FFN weights.</li>
+                </ol>
+            </div>
+
+            <div class="math-block" style="background: #f8fafc; padding: 16px 20px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                $$\text{FFN}(x) = \text{Activation}(xW_1 + b_1)\,W_2 + b_2$$
+            </div>
+
+            <div class="intuition-box" style="border-left-color: #db2777;">
+                <strong class="label" style="color:#db2777;">Where the Parameters Actually Live</strong>
+                It's easy to think of attention ($W^Q, W^K, W^V, W^O$) as the "main event" of a Transformer, but the FFN typically holds the majority of a layer's parameters. With $d_{ff}=4d_{\text{model}}$, $W_1$ and $W_2$ together contain $2 \times d_{\text{model}} \times d_{ff} = 8\,d_{\text{model}}^2$ parameters per layer — roughly double the $\sim4d_{\text{model}}^2$ used by $W^Q, W^K, W^V, W^O$ combined. Most of a large model's total parameter count is FFN weight, not attention weight.
+            </div>
+
+            <h2 style="color: #0e7490; border-bottom: 2px solid #0e7490; padding-bottom: 5px; margin-top: 40px;">Repeat Stacked Iteratively Across N Layers</h2>
+
+            <p>
+                <strong>Definition:</strong> Multi-Head Attention (above) is about <em>width</em> — several attention "views" computed in parallel <em>within</em> one layer. Stacking is about <em>depth</em> — taking the entire block you've just seen (Self-Attention &rarr; Add &amp; Norm &rarr; FFN &rarr; Add &amp; Norm) and repeating it $N$ times in sequence, each repetition with its own separate, independently-learned weights. This is the actual "Transformer" in the architecture diagrams you'll see elsewhere — one <strong>Transformer block</strong>, stacked $N$ deep.
+            </p>
+
+            <div class="algorithm-box" style="margin: 16px 0;">
+                <strong class="label">Layer-Stacking Algorithm</strong>
+                <ol>
+                    <li>Let $h^{(0)} = X$ — the embeddings plus positional encoding, the same matrix that opened the Self-Attention derivation above.</li>
+                    <li>For each layer $l = 1, 2, \dots, N$, feed the <em>previous</em> layer's output through one full Transformer block:
+                        $$ h^{(l)} = \text{TransformerBlock}_l\big(h^{(l-1)}\big) $$
+                        where $\text{TransformerBlock}_l$ is exactly the Self-Attention + FFN pipeline covered above, using layer $l$'s own $W^Q, W^K, W^V, W^O, W_1, W_2$ — no weights are shared between layers.</li>
+                    <li>The output of layer $l$ becomes the input to layer $l+1$; nothing about the sequence length or $d_{\text{model}}$ changes between layers, only the content of the vectors.</li>
+                    <li>After $N$ repetitions, $h^{(N)}$ is the final, deeply context-enriched representation — this is what feeds into Output Projections, covered next.</li>
+                </ol>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+                <svg viewBox="0 0 660 520" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+                    <defs>
+                        <marker id="stackArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                            <path d="M0,0 L8,4 L0,8 Z" fill="#0e7490" />
+                        </marker>
+                    </defs>
+
+                    <!-- h(0) input pill -->
+                    <rect x="140" y="8" width="360" height="30" rx="15" fill="#f1f5f9" stroke="#64748b" stroke-width="1.2"/>
+                    <text x="320" y="27" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#334155">h&#8317;&#8304;&#8318; = X  (Embeddings + Positional Encoding)</text>
+
+                    <line x1="320" y1="38" x2="320" y2="62" stroke="#0e7490" stroke-width="2" marker-end="url(#stackArrow)"/>
+
+                    <!-- dashed xN bracket around the whole repeated stack -->
+                    <rect x="70" y="60" width="500" height="378" rx="14" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4"/>
+                    <text x="600" y="240" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="26" font-weight="bold" fill="#94a3b8">&times;N</text>
+                    <text x="600" y="260" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#94a3b8">layers</text>
+
+                    <!-- Block 1 -->
+                    <rect x="100" y="66" width="440" height="76" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+                    <text x="320" y="90" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="bold" fill="#0e7490">Transformer Block 1</text>
+                    <text x="320" y="108" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Multi-Head Self-Attention &rarr; Add &amp; Norm</text>
+                    <text x="320" y="124" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Feed-Forward Network &rarr; Add &amp; Norm</text>
+                    <text x="320" y="138" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#64748b">own W&#7809;&#8321;, W&#7488;&#8321;, W&#7483;&#8321;, W&#7431;&#8321;, W&#8321;,&#8321;, W&#8322;,&#8321;</text>
+
+                    <line x1="320" y1="142" x2="320" y2="166" stroke="#0e7490" stroke-width="2" marker-end="url(#stackArrow)"/>
+                    <text x="345" y="157" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="11" fill="#0e7490">h&#8317;&#185;&#8318;</text>
+
+                    <!-- Block 2 -->
+                    <rect x="100" y="170" width="440" height="76" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+                    <text x="320" y="194" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="bold" fill="#0e7490">Transformer Block 2</text>
+                    <text x="320" y="212" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Multi-Head Self-Attention &rarr; Add &amp; Norm</text>
+                    <text x="320" y="228" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Feed-Forward Network &rarr; Add &amp; Norm</text>
+                    <text x="320" y="242" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#64748b">own W&#7809;&#8322;, W&#7488;&#8322;, W&#7483;&#8322;, W&#7431;&#8322;, W&#8321;,&#8322;, W&#8322;,&#8322;</text>
+
+                    <line x1="320" y1="246" x2="320" y2="270" stroke="#0e7490" stroke-width="2" marker-end="url(#stackArrow)"/>
+                    <text x="345" y="261" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="11" fill="#0e7490">h&#8317;&#178;&#8318;</text>
+
+                    <!-- ellipsis for the rest of the stack -->
+                    <text x="320" y="300" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="26" fill="#94a3b8">&#8942;</text>
+                    <text x="320" y="320" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#64748b">(N&minus;2 more identical-structure blocks, each with its own independent weights)</text>
+
+                    <line x1="320" y1="328" x2="320" y2="352" stroke="#0e7490" stroke-width="2" marker-end="url(#stackArrow)"/>
+                    <text x="345" y="343" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="11" fill="#0e7490">h&#8317;&#7503;&#8315;&#185;&#8318;</text>
+
+                    <!-- Block N -->
+                    <rect x="100" y="356" width="440" height="76" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+                    <text x="320" y="380" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="bold" fill="#0e7490">Transformer Block N</text>
+                    <text x="320" y="398" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Multi-Head Self-Attention &rarr; Add &amp; Norm</text>
+                    <text x="320" y="414" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Feed-Forward Network &rarr; Add &amp; Norm</text>
+                    <text x="320" y="428" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#64748b">own W&#7809;&#7503;, W&#7488;&#7503;, W&#7483;&#7503;, W&#7431;&#7503;, W&#8321;,&#7503;, W&#8322;,&#7503;</text>
+
+                    <line x1="320" y1="432" x2="320" y2="456" stroke="#7c3aed" stroke-width="2" marker-end="url(#stackArrow)"/>
+                    <text x="345" y="447" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="11" fill="#7c3aed">h&#8317;&#7503;&#8318; (final)</text>
+
+                    <!-- final output pill -->
+                    <rect x="120" y="460" width="400" height="32" rx="16" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
+                    <text x="320" y="481" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed">h&#8317;&#7503;&#8318;  &rarr;  feeds Output Projections</text>
+                </svg>
+                <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+                    <em>The dashed bracket is the classic "&times;N" notation from the original Transformer diagram: everything inside it is the <strong>same block structure</strong>, repeated $N$ times — but each repetition trains its own separate weights, so layer 1 and layer 50 are not computing the same function.</em>
+                </p>
+            </div>
+
+            <div class="intuition-box" style="border-left-color: #0e7490;">
+                <strong class="label" style="color:#0e7490;">What Does Each $h^{(l)}$ Actually Represent?</strong>
+                <p style="margin-top:0;">
+                    Every $h^{(l)}$ has the <em>same shape</em> as the input — $n$ vectors, one per token, each still in $\mathbb{R}^{d_{\text{model}}}$. What changes across layers isn't the shape; it's how much context each token's vector has absorbed. $h^{(0)}=X$ carries almost no awareness of the other tokens — just a token's identity plus its position. $h^{(1)}$ has mixed in one round of attention: typically fairly local, surface-level patterns (adjacent-word relationships, rough syntax). Each further layer lets information propagate further, since a token can now attend to another token that itself already attended to something several tokens away — so deeper layers tend to pick up progressively longer-range and more abstract relationships, up to $h^{(N)}$, the fully context-enriched representation that Output Projections consumes.
+                </p>
+                <p style="margin-bottom:0;">
+                    Two things worth being precise about: first, "layer 3 = syntax, layer 8 = semantics" is an empirical <em>tendency</em> seen in probing-classifier research on trained models, not an architectural guarantee — there's no rule forcing any particular layer to learn any particular concept. Second, because every block ends in a residual connection ($h^{(l)} = h^{(l-1)} + \text{Block}(h^{(l-1)})$, as covered in <a href="#between-layers" style="color:#0e7490; text-decoration:underline;">The Mechanics Inside a Single Transformer Layer</a>), each layer doesn't <em>replace</em> the previous representation — it adds an incremental refinement on top of it. So $h^{(l)}$ is best read as "everything token $i$ knew after $l-1$ layers, plus whatever this layer's attention and FFN decided to add" — a running total often called the <strong>residual stream</strong> in interpretability work.
+                </p>
+            </div>
+
+            <p style="font-size: 0.92rem; color:#475569;">
+                For a concrete, worked walkthrough of what actually changes in each layer's output (grammar in Layer 1, subject-action pairing in Layer 2, and so on) — see the token-by-token execution map in <a href="#llm-anatomy" style="color:#0e7490; text-decoration:underline;">The Internal Anatomy of a Modern LLM</a>, further down this page. $N$ itself is just another hyperparameter, chosen at design time: 12 for GPT-2, 96 for GPT-3, 80 for LLaMA 3 (see the reference table at the end of this page) — more layers generally means more representational depth, at the direct cost of more parameters and slower inference.
+            </p>
+
+            <h2 style="color: #7c3aed; border-bottom: 2px solid #7c3aed; padding-bottom: 5px; margin-top: 40px;">Output Projections: From Vectors Back to Tokens</h2>
+
+            <p>
+                <strong>Definition:</strong> After $N$ layers of self-attention + FFN, every token position holds a final, deeply context-enriched vector in $\mathbb{R}^{d_{\text{model}}}$ — but that's still just a vector, not a prediction. The <strong>Output Projection</strong> (often called the "LM head" or "unembedding layer") converts that vector back into a probability distribution over the vocabulary — the exact reverse operation of the Embeddings step that opened the pipeline.
+            </p>
+
+            <div class="algorithm-box" style="margin: 16px 0;">
+                <strong class="label">Output Projection Algorithm</strong>
+                <ol>
+                    <li>Take the final-layer vector $h_{\text{final}} \in \mathbb{R}^{d_{\text{model}}}$ for a token position. During generation, only the <em>last</em> position's vector is needed (to predict the next token); during training, every position's vector is projected in parallel so a loss can be computed everywhere at once.</li>
+                    <li><strong>Project up to vocabulary size</strong> with a linear layer:
+                        $$ \text{logits} = h_{\text{final}}\,W_{\text{unembed}} + b, \qquad W_{\text{unembed}} \in \mathbb{R}^{d_{\text{model}} \times V} $$
+                        This produces one raw score ("logit") per token in the vocabulary.</li>
+                    <li><strong>Apply softmax</strong> to turn the logits into a valid probability distribution over the $V$ vocabulary tokens:
+                        $$ P(\text{token}=k) = \frac{e^{\text{logit}_k}}{\sum_{j=1}^{V} e^{\text{logit}_j}} $$
+                    </li>
+                    <li><strong>Select the next token</strong> — greedily (highest-probability token), or by sampling from the distribution (temperature, top-k, or top-p / nucleus sampling, which is what gives generated text controllable randomness).</li>
+                </ol>
+            </div>
+
+            <div class="intuition-box">
+                <strong class="label">Closing the Loop with Embeddings</strong>
+                Notice the shapes: Embeddings mapped a token <em>id</em> ($V$-dimensional, one-hot) to a vector ($d_{\text{model}}$-dimensional) using $W_{\text{embed}} \in \mathbb{R}^{V \times d_{\text{model}}}$. Output Projection does the reverse — vector back to a $V$-dimensional distribution — using $W_{\text{unembed}} \in \mathbb{R}^{d_{\text{model}} \times V}$. Because these two matrices have exactly transposed shapes, many production models set $W_{\text{unembed}} = W_{\text{embed}}^{T}$ directly — a technique called <strong>weight tying</strong> — reusing one learned matrix for both directions instead of paying its $\sim V \times d_{\text{model}}$ parameter cost twice.
+            </div>
+        </section>
+
         <section id="llm-anatomy" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px;">
             <h2>The Internal Anatomy of a Modern LLM (e.g., Claude)</h2>
             <p>
@@ -305,7 +532,7 @@ Encoder-Decoder Architecture
                         <em>Why? This preserves early features and prevents structural information from getting lost in deep networks.</em>
                     </li>
                     <li><strong>Layer Normalization:</strong> Standardizes the values across the vector dimensions to maintain a stable mean of 0 and variance of 1. This prevents numbers from exploding or vanishing.</li>
-                    <li><strong>Feed-Forward Network (FFN):</strong> Passes the normalized vector through dense neural network layers for non-linear feature processing.</li>
+                    <li><strong>Feed-Forward Network (FFN):</strong> Passes the normalized vector through dense neural network layers for non-linear feature processing (full algorithm and math in the dedicated Feed-Forward Networks section above).</li>
                     <li><strong>Second Residual &amp; Layer Norm:</strong> The FFN input is added back to its output and normalized one more time before entering the next layer.</li>
                 </ol>
             </div>
