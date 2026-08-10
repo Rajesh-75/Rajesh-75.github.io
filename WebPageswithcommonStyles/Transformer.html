@@ -41,12 +41,12 @@
 
     <p>To handle this, researchers designed the <strong>Encoder-Decoder framework</strong>, which cleanly splits the work into two dedicated roles:</p>
     <ul style="padding-left: 20px;">
-        <li><strong>The Encoder:</strong> Reads the entire input sequence word-by-word and compresses its complete meaning into a single hidden vector (the "context" vector).</li>
+        <li><strong>The Encoder:</strong> Reads the entire input sequence word-by-word and compresses its complete meaning into a single hidden vector (the <strong>"context" vector</strong>).</li>
         <li><strong>The Decoder:</strong> Takes this single vector and generates the new output sequence, one token at a time.</li>
     </ul>
 
     <div style="background-color: #fff8e1; border-left: 4px solid #ffca28; padding: 15px; margin: 20px 0; border-radius: 4px;">
-        <strong style="color: #bf360c;">💡 The Analogy:</strong> Think of the Encoder as a translator who reads and digests a foreign document, and the Decoder as a writer who recreates that document in a new language using only the translator's summary notes.
+        <strong style="color: #bf360c;">💡 The Analogy:</strong> Think of the Encoder as a translator who reads and digests a foreign document, and the Decoder as a writer who recreates that document in a new language using only the translator's summary notes -here summary notes means the fixed-length context vector, which can't go back and re-check the source text for a detail it needs..
 		
 	A complete walkthrough of the Encoder–Decoder Transformer is available
 <a href="encoder_decoder_transformer.html" style="color:#2563eb; text-decoration:underline;">here</a>.
@@ -56,7 +56,7 @@
 
     <h2 style="color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 5px; margin-top: 40px;">From RNNs to Attention: The Engineering Bottleneck</h2>
     <p>
-        Before the Transformer was introduced in the landmark 2017 paper <em>"Attention Is All You Need"</em>, Seq2Seq architectures relied entirely on recurrent networks like RNNs and LSTMs. However, these recurrent systems suffer from massive architectural limitations:
+        Before the Transformer was introduced in the landmark 2017 paper <em>"Attention Is All You Need"</em>, Seq2Seq architectures relied entirely on recurrent networks like <a href="RNN.html"style="color:#2563eb; text-decoration:underline;"> RNNs and LSTMs </a>. However, these recurrent systems suffer from massive architectural limitations:
     </p>
 
     <ul style="padding-left: 20px;">
@@ -69,7 +69,7 @@
 
     <h2 style="color: #c62828; border-bottom: 2px solid #c62828; padding-bottom: 5px; margin-top: 40px;">The Solution: Transformers</h2>
     <p>
-        The Transformer eliminates recurrence entirely. By replacing sequential loops with <strong>Self-Attention mechanisms</strong>, it allows the network to look at an entire sequence simultaneously. This structural shift resolves the information bottleneck, captures long-range context perfectly, and allows training to be fully parallelized across GPUs.
+        The algorithm Transformer eliminates recurrence entirely. By replacing sequential loops with <strong>Self-Attention mechanisms</strong>, it allows the network to look at an entire sequence simultaneously. This structural shift resolves the information bottleneck, captures long-range context perfectly, and allows training to be fully parallelized across GPUs.
     </p>
 
 </section>
@@ -82,11 +82,12 @@
                 </p>
             </div>
 <h2>Transformer Architecture </h2>
-<p>the Transformer model is solely based on attention mechanisms without any convolutional or recurrent layer (Vaswani et al., 2017). Though originally proposed for sequence-to-sequencelearning ontextdata, Transformershavebeen pervasive in a wide range of modern deep learning applications, such as in areas to do with language, vision, speech, and reinforcement learning. </p>
-            <h3>Key Structural Components Pipeline</h3>
+<p>The Transformer model is solely based on attention mechanisms without any convolutional or recurrent layer (Vaswani et al., 2017). Though originally proposed for sequence-to-sequence learning on text data, Transformers have been pervasive in a wide range of modern deep learning applications, such as in areas to do with language, vision, speech, and reinforcement learning. The Transformer is a deep neural network architecture that can process variable-length text and perform a wide range of NLP tasks using a mechanism called Attention, discussed below.</p>
+            <h3>Key Structural Components of the Transformer Algorithm Pipeline</h3>
             <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div style="display: flex; flex-direction: column; align-items: center; font-family: monospace;">
                     <div style="background: #e2e8f0; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; font-size: 0.92rem;">Input Sentence</div>
+					<p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">For example: The cat sat on a mat</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #bae6fd; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #0284c7; font-size: 0.92rem;">Tokenization</div>
                     <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Words are sliced into sub-word token elements</p>
@@ -105,7 +106,8 @@
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="border: 2px dashed #cbd5e1; padding: 5px 14px; border-radius: 4px; font-style: italic; color: #64748b; font-size: 0.85rem;">Repeat Stacked Iteratively Across N Layers</div>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
-                    <div style="background: #f1f5f9; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border: 1px solid #cbd5e1; font-size: 0.92rem;">Output Projections</div>
+                    <div style="background: #f1f5f9; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border: 1px solid #cbd5e1; font-size: 0.92rem;">Output Projections and Softmax</div>
+					<p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Projects final vectors back to vocabulary size and applies softmax probabiltiy estimation to predict the next token</p>
                 </div>
             </div>
         </section>
@@ -141,6 +143,23 @@
                     <strong>Compact worked example:</strong> a toy corpus with <code>low</code> (&times;5), <code>lower</code> (&times;2), <code>newest</code> (&times;6), <code>widest</code> (&times;3), each first written as characters plus an end-of-word marker <code>·</code>
                     (<code>l o w ·</code>, <code>l o w e r ·</code>, <code>n e w e s t ·</code>, <code>w i d e s t ·</code>). The most frequent pair is <code>(e, s)</code> — appearing $6+3=9$ times across <code>newest</code> and <code>widest</code> — so <code>e</code>+<code>s</code> merges first into <code>es</code>. The next most frequent pair, <code>(es, t)</code>, also occurs $9$ times and merges into <code>est</code>. That suffix is now its own reusable token, shared by both words (and any future word like <code>fastest</code>, never seen during training) — this is the core mechanism that lets sub-word tokenization generalize beyond its training vocabulary.
                 </p>
+				<div class="intuition-box" style="border-left-color: #0891b2;">
+    <strong class="label" style="color:#0891b2;">Why Start From Characters, Not Whole Words?</strong>
+    <p style="margin-top:0;">
+        This seems backwards at first — why build <em>up</em> from single letters instead of just starting with the words already sitting in the corpus? Because starting from whole words would just recreate the exact problem this section opened with: a whole-word vocabulary can never cover every word that might show up later — a typo, a rare name, a brand-new slang term — so anything missing has no token at all. And there's no natural stopping point either: new words keep getting coined, so a "complete" word-level vocabulary can never really be finished.
+    </p>
+    <p style="margin-bottom:0;">
+        Characters (or bytes) don't have that problem — they're a small, <em>closed</em> set that can be fully listed on day one. English has ~26 letters plus punctuation and digits; byte-level tokenizers cap out at exactly 256 possible values. Nothing can ever fall outside that set, because any string, in any language, with any typo, is still just a sequence of characters. So the algorithm's real strategy is: start from the level that's guaranteed to cover everything, then earn your way up to bigger, more useful units through the merge steps — and if something genuinely novel ever shows up (like <code>flibbertigibbet</code>), the tokenizer can still fall all the way back to spelling it out letter by letter instead of hitting a dead end.
+    </p>
+</div>
+
+<p style="font-size: 0.92rem; color:#475569;">
+    <strong>A couple of examples make this concrete:</strong>
+</p>
+<ul style="padding-left: 20px; font-size: 0.92rem; color:#475569;">
+    <li style="margin-bottom: 8px;"><strong>A brand-new word:</strong> Suppose <code>"chatbotting"</code> never appeared in the training corpus. A whole-word tokenizer has no token for it — dead end. A character-based BPE tokenizer can still spell it out via whatever merges it does have, e.g. <code>["chat", "bot", "t", "ing"]</code> — degraded, but never broken.</li>
+    <li style="margin-bottom: 8px;"><strong>A typo:</strong> <code>"recieve"</code> (misspelled) has no whole-word token either. Character-level BPE just falls back further, e.g. <code>["rec", "iev", "e"]</code> — clunky, but still fully representable, one character at a time if it has to.</li>
+</ul>
 
                 <p><strong>Applying the learned vocabulary to new text:</strong></p>
                 <ul style="padding-left: 20px;">
@@ -170,7 +189,52 @@
                         <li><strong>Train</strong> $W_{\text{embed}}$ like any other weight matrix, via backpropagation from the training loss. Tokens that play similar roles in similar contexts drift toward similar vectors as training proceeds — the vectors carry no meaning at initialization; they earn it through gradient descent.</li>
                     </ol>
                 </div>
+<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+    <svg viewBox="0 0 1000 200" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+        <defs>
+            <marker id="embedArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#4338ca" />
+            </marker>
+        </defs>
 
+        <!-- Box 1: Token ID -->
+        <rect x="10" y="70" width="120" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="70" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Token ID</text>
+        <text x="70" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">i (scalar)</text>
+
+        <line x1="130" y1="102" x2="166" y2="102" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
+
+        <!-- Box 2: One-Hot Vector -->
+        <rect x="170" y="70" width="170" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="255" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">One-Hot Vector</text>
+        <text x="255" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">e<tspan baseline-shift="sub" font-size="8">i</tspan> &#8712; {0,1}<tspan baseline-shift="super" font-size="8">V</tspan></text>
+
+        <line x1="340" y1="102" x2="376" y2="102" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
+
+        <!-- Box 3: Lookup via W_embed -->
+        <rect x="380" y="70" width="180" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="470" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">&times; W<tspan baseline-shift="sub" font-size="9">embed</tspan></text>
+        <text x="470" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">(V &times; d<tspan baseline-shift="sub" font-size="8">model</tspan>)</text>
+
+        <line x1="560" y1="102" x2="596" y2="102" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
+
+        <!-- Box 4: Embedding Vector -->
+        <rect x="600" y="70" width="180" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="690" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Embedding Vector</text>
+        <text x="690" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">v<tspan baseline-shift="sub" font-size="8">i</tspan> &#8712; &#8477;<tspan baseline-shift="super" font-size="8">d_model</tspan></text>
+
+        <line x1="780" y1="102" x2="816" y2="102" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
+
+        <!-- Box 5: Stack across sequence -->
+        <rect x="820" y="60" width="170" height="84" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+        <text x="905" y="90" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#7c3aed">Stack over</text>
+        <text x="905" y="106" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#7c3aed">Sequence &#8594; X</text>
+        <text x="905" y="124" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">(n &times; d<tspan baseline-shift="sub" font-size="8">model</tspan>)</text>
+    </svg>
+    <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em>One token's ID becomes one row of the embedding table; the same lookup repeats for every token in the sequence, and the results stack into $X$ &mdash; the matrix that opens the Self-Attention derivation.</em>
+    </p>
+</div>
                 <p style="font-size: 0.92rem; color:#475569;">
                     <strong>Tiny worked example:</strong> a 3-word vocabulary (<code>Cat</code> = id 0, <code>sat</code> = id 1, <code>mat</code> = id 2) with $d_{\text{model}}=4$:
                 </p>
@@ -184,6 +248,9 @@
                 <p style="font-size: 0.92rem; color:#475569;">
                     Tokenizing <code>"Cat sat mat"</code> gives IDs <code>[0, 1, 2]</code>; looking each up and stacking the rows gives exactly the $X$ matrix that opens the Self-Attention Mathematical Derivation below — this step is where that matrix actually comes from. With a realistic vocabulary of $V=50{,}000$ and $d_{\text{model}}=768$, this one table already holds $V \times d_{\text{model}} \approx 38.4$ million parameters, before a single Transformer layer is added. Many production models <strong>tie</strong> this same matrix to the output layer that projects back to vocabulary-sized logits, to avoid paying that parameter cost twice.
                 </p>
+				<p style="font-size: 0.92rem; color:#475569;">
+				Both tokenization and embedding output numbers, but they serve entirely different roles in an AI pipeline. Tokenization converts text into a sequence of simple integer IDs, meaning its output size fluctuates based on the length of your input text. <strong>For example, the word "I" will always receive the exact same static ID, like 10, regardless of the sentence it appears in</strong>. 
+				Embedding then takes those IDs and transforms each one into a fixed-length list of decimals, called a vector, whose size is hardcoded by the model's architecture (such as 768 or 1536 dimensions). In modern transformer models, these embedding numbers dynamically shift to capture context, meaning <strong>the ID 10 for "I" will generate a different final vector in "I bank at Chase" than in "I sit on the river bank"</strong> </p>
 
                 <h3 style="margin-top: 30px; color: #ea580c;">3. Positional Encoding (Adding Order Information)</h3>
                 <p>
@@ -307,6 +374,29 @@
             </ul>
             <div class="math-block">
                 $$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{Head}_1, \text{Head}_2, \dots, \text{Head}_H) \times W^O$$
+				<h4 style="margin-top: 30px; color: #0f172a;">What Does the Multi-Head Attention Output Look Like?</h4>
+<p>
+    The key fact: Multi-Head Attention's final output has <strong>exactly the same shape</strong> as the input $X$ it started from — $n \times d_{\text{model}}$ (one vector per token, same dimensionality as before). Here's how it gets there:
+</p>
+
+<div class="algorithm-box" style="margin: 16px 0;">
+    <ol>
+        <li><strong>Each head works in a smaller slice.</strong> With $H$ heads, each head doesn't get the full $d_{\text{model}}$ dimensions — it works in $d_k = d_{\text{model}}/H$. Each head has its own $W^Q_i, W^K_i, W^V_i$ projecting down to size $d_k$, and produces its own attention output of shape $n \times d_k$.</li>
+        <li><strong>Concatenate the heads side by side</strong> along the feature dimension:
+            $$ \text{Concat}(\text{Head}_1, \dots, \text{Head}_H) \in \mathbb{R}^{n \times (H \cdot d_k)} = \mathbb{R}^{n \times d_{\text{model}}} $$
+            Since $H \times d_k = d_{\text{model}}$ by construction, this lands right back at the original width — split into $H$ parallel "views," then glued back together.</li>
+        <li><strong>Mix the heads together with $W^O$.</strong> Right now each chunk of the concatenated vector is still "owned" by one head — nothing has combined what Head 1 learned with what Head 2 learned. The final projection $W^O \in \mathbb{R}^{d_{\text{model}} \times d_{\text{model}}}$ does that mixing, producing the final output — still $n \times d_{\text{model}}$.</li>
+    </ol>
+</div>
+
+<p style="font-size: 0.92rem; color:#475569;">
+    <strong>Concretely, extending the <code>"Cat sat mat"</code> example</strong> ($d_{\text{model}}=4$, $n=3$): with $H=2$ heads, each head produces a $3\times2$ output; concatenating gives $3\times4$; multiplying by $W^O$ ($4\times4$) gives a final $3\times4$ output — the same shape as the original $X$ matrix.
+</p>
+
+<div class="intuition-box">
+    <strong class="label">Why the Shape Has to Match Exactly</strong>
+    The very next step is the residual connection — $\text{Output}_{\text{residual}} = X + \text{Attention}(X)$ — which is just element-wise addition. That's only possible if $\text{Attention}(X)$ comes out the same shape as $X$. So the concat-then-project design isn't arbitrary — it's what guarantees attention's output can be added back to its own input before heading into Add &amp; Norm, then the Feed-Forward Network.
+</div>
             </div>
         </section>
 
@@ -433,6 +523,51 @@
             <p style="font-size: 0.92rem; color:#475569;">
                 For a concrete, worked walkthrough of what actually changes in each layer's output (grammar in Layer 1, subject-action pairing in Layer 2, and so on) — see the token-by-token execution map in <a href="#llm-anatomy" style="color:#0e7490; text-decoration:underline;">The Internal Anatomy of a Modern LLM</a>, further down this page. $N$ itself is just another hyperparameter, chosen at design time: 12 for GPT-2, 96 for GPT-3, 80 for LLaMA 3 (see the reference table at the end of this page) — more layers generally means more representational depth, at the direct cost of more parameters and slower inference.
             </p>
+			<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+    <svg viewBox="0 0 1000 200" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+        <defs>
+            <marker id="ffnArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#db2777" />
+            </marker>
+        </defs>
+
+        <!-- Box 1: Input x -->
+        <rect x="10" y="70" width="120" height="64" rx="10" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
+        <text x="70" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Input x</text>
+        <text x="70" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">(d<tspan baseline-shift="sub" font-size="7">model</tspan>,)</text>
+
+        <line x1="130" y1="102" x2="166" y2="102" stroke="#db2777" stroke-width="2" marker-end="url(#ffnArrow)"/>
+
+        <!-- Box 2: Linear 1 (Expand) -->
+        <rect x="170" y="70" width="190" height="64" rx="10" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
+        <text x="265" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Linear 1 (Expand)</text>
+        <text x="265" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">xW<tspan baseline-shift="sub" font-size="8">1</tspan>+b<tspan baseline-shift="sub" font-size="8">1</tspan> &#8594; (d<tspan baseline-shift="sub" font-size="7">ff</tspan>,)</text>
+
+        <line x1="360" y1="102" x2="396" y2="102" stroke="#db2777" stroke-width="2" marker-end="url(#ffnArrow)"/>
+
+        <!-- Box 3: Activation -->
+        <rect x="400" y="70" width="190" height="64" rx="10" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
+        <text x="495" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Activation</text>
+        <text x="495" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">ReLU or GELU</text>
+
+        <line x1="590" y1="102" x2="626" y2="102" stroke="#db2777" stroke-width="2" marker-end="url(#ffnArrow)"/>
+
+        <!-- Box 4: Linear 2 (Project Down) -->
+        <rect x="630" y="70" width="190" height="64" rx="10" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
+        <text x="725" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Linear 2 (Project Down)</text>
+        <text x="725" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">hW<tspan baseline-shift="sub" font-size="8">2</tspan>+b<tspan baseline-shift="sub" font-size="8">2</tspan> &#8594; (d<tspan baseline-shift="sub" font-size="7">model</tspan>,)</text>
+
+        <line x1="820" y1="102" x2="856" y2="102" stroke="#db2777" stroke-width="2" marker-end="url(#ffnArrow)"/>
+
+        <!-- Box 5: Output y -->
+        <rect x="860" y="60" width="130" height="84" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+        <text x="925" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#7c3aed">Output y</text>
+        <text x="925" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">(d<tspan baseline-shift="sub" font-size="7">model</tspan>,)</text>
+    </svg>
+    <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em>Same shape in, same shape out ($d_{\text{model}}$) &mdash; the expansion to $d_{ff}$ and back happens entirely inside the block, giving the network extra non-linear capacity without changing what the next layer receives.</em>
+    </p>
+</div>
 
             <h2 style="color: #7c3aed; border-bottom: 2px solid #7c3aed; padding-bottom: 5px; margin-top: 40px;">Output Projections: From Vectors Back to Tokens</h2>
 
