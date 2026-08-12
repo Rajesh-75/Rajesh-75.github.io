@@ -190,47 +190,71 @@
                     </ol>
                 </div>
 <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
-    <svg viewBox="0 0 1000 200" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+    <svg viewBox="0 0 1000 220" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
         <defs>
             <marker id="embedArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
                 <path d="M0,0 L8,4 L0,8 Z" fill="#4338ca" />
             </marker>
+            <marker id="initArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#b45309" />
+            </marker>
+            <marker id="gradArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#e11d48" />
+            </marker>
         </defs>
 
-        <!-- Box 1: Token ID -->
-        <rect x="10" y="70" width="120" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-        <text x="70" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Token ID</text>
-        <text x="70" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">i (scalar)</text>
+        <!-- W_embed parameter store: Step 1, initialization -->
+        <rect x="380" y="14" width="180" height="46" rx="8" fill="#fff7ed" stroke="#b45309" stroke-width="2"/>
+        <text x="470" y="32" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#b45309">W<tspan baseline-shift="sub" font-size="8">embed</tspan> &mdash; Step 1: Init</text>
+        <text x="470" y="48" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">(V &times; d<tspan baseline-shift="sub" font-size="7">model</tspan>), random values</text>
 
-        <line x1="130" y1="102" x2="166" y2="102" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
+        <line x1="470" y1="60" x2="470" y2="106" stroke="#b45309" stroke-width="2" marker-end="url(#initArrow)"/>
+
+        <!-- Box 1: Token ID -->
+        <rect x="10" y="110" width="120" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="70" y="136" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Token ID</text>
+        <text x="70" y="156" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">i (scalar)</text>
+
+        <line x1="130" y1="142" x2="166" y2="142" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
 
         <!-- Box 2: One-Hot Vector -->
-        <rect x="170" y="70" width="170" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-        <text x="255" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">One-Hot Vector</text>
-        <text x="255" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">e<tspan baseline-shift="sub" font-size="8">i</tspan> &#8712; {0,1}<tspan baseline-shift="super" font-size="8">V</tspan></text>
+        <rect x="170" y="110" width="170" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="255" y="136" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">One-Hot Vector</text>
+        <text x="255" y="156" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">e<tspan baseline-shift="sub" font-size="8">i</tspan> &#8712; {0,1}<tspan baseline-shift="super" font-size="8">V</tspan></text>
 
-        <line x1="340" y1="102" x2="376" y2="102" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
+        <line x1="340" y1="142" x2="376" y2="142" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
 
-        <!-- Box 3: Lookup via W_embed -->
-        <rect x="380" y="70" width="180" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-        <text x="470" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">&times; W<tspan baseline-shift="sub" font-size="9">embed</tspan></text>
-        <text x="470" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">(V &times; d<tspan baseline-shift="sub" font-size="8">model</tspan>)</text>
+        <!-- Box 3: Lookup Row i -->
+        <rect x="380" y="110" width="180" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="470" y="136" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Lookup Row i</text>
+        <text x="470" y="156" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">v<tspan baseline-shift="sub" font-size="7">i</tspan> = e<tspan baseline-shift="sub" font-size="7">i</tspan><tspan baseline-shift="super" font-size="7">T</tspan> W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
 
-        <line x1="560" y1="102" x2="596" y2="102" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
+        <line x1="560" y1="142" x2="596" y2="142" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
 
         <!-- Box 4: Embedding Vector -->
-        <rect x="600" y="70" width="180" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-        <text x="690" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Embedding Vector</text>
-        <text x="690" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">v<tspan baseline-shift="sub" font-size="8">i</tspan> &#8712; &#8477;<tspan baseline-shift="super" font-size="8">d_model</tspan></text>
+        <rect x="600" y="110" width="180" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="690" y="136" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Embedding Vector</text>
+        <text x="690" y="156" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">v<tspan baseline-shift="sub" font-size="8">i</tspan> &#8712; &#8477;<tspan baseline-shift="super" font-size="8">d_model</tspan></text>
 
-        <line x1="780" y1="102" x2="816" y2="102" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
+        <line x1="780" y1="142" x2="816" y2="142" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
 
-        <!-- Box 5: Stack across sequence -->
-        <rect x="820" y="60" width="170" height="84" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
-        <text x="905" y="90" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#7c3aed">Stack over</text>
-        <text x="905" y="106" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#7c3aed">Sequence &#8594; X</text>
-        <text x="905" y="124" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">(n &times; d<tspan baseline-shift="sub" font-size="8">model</tspan>)</text>
+        <!-- Box 5: Line up every token's vector -->
+        <rect x="820" y="100" width="170" height="84" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+        <text x="905" y="128" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed">Line Up the</text>
+        <text x="905" y="144" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed">Vectors &#8594; X</text>
+        <text x="905" y="162" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">one row per token</text>
+
+        <!-- Dashed backprop feedback loop: Step 5, training -->
+        <path d="M905,100 L905,74 L550,74 L550,60" fill="none" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#gradArrow)"/>
+        <text x="728" y="70" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#e11d48">Step 5 (training only): compare guess to answer &#8594; nudge W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
     </svg>
+    <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em><strong>"Line up the vectors" means this:</strong> if the sentence is "Cat sat mat," Box 3&ndash;4 runs three times, once per word, producing three separate vectors &mdash; one for "Cat," one for "sat," one for "mat." Box 5 just writes those three vectors down one under the other, like three rows in a table. That table (3 rows here, $n$ rows in general, one per token) is $X$ &mdash; nothing is combined or changed, they're simply placed side by side as rows.</em>
+    </p>
+    <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em><strong>What the dashed red "training loop" actually means, step by step:</strong> (1) the model uses $X$ to make a guess &mdash; e.g. guessing the next word; (2) we compare that guess to the correct answer and get one number describing how wrong it was &mdash; that number is the <strong>loss</strong>; (3) for every single number inside the network, including every number inside $W_{\text{embed}}$, we ask "if this one number were slightly bigger or smaller, would the loss go up or down, and by how much?" &mdash; that answer is called a <strong>gradient</strong>, and computing it for every number at once, working backward from the loss, is called <strong>backpropagation</strong>; (4) every number then gets nudged a tiny step in whichever direction makes the loss smaller &mdash; that's the <strong>update</strong>. This whole four-step process is what "training" means, and it repeats millions of times. It only happens while the model is being trained &mdash; once training is done and the model is just generating text, steps 2&ndash;4 never run again; only the solid indigo forward path (Boxes 1&ndash;5) keeps running, reading $W_{\text{embed}}$ but never changing it.</em>
+    </p>
+</div>
     <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
         <em>One token's ID becomes one row of the embedding table; the same lookup repeats for every token in the sequence, and the results stack into $X$ &mdash; the matrix that opens the Self-Attention derivation.</em>
     </p>
@@ -446,65 +470,61 @@
             </div>
 
             <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
-                <svg viewBox="0 0 660 520" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
-                    <defs>
-                        <marker id="stackArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                            <path d="M0,0 L8,4 L0,8 Z" fill="#0e7490" />
-                        </marker>
-                    </defs>
+              <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+    <svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+        <defs>
+            <marker id="unifiedFwdArrow2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#334155" />
+            </marker>
+            <marker id="unifiedBwdArrow2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#e11d48" />
+            </marker>
+        </defs>
 
-                    <!-- h(0) input pill -->
-                    <rect x="140" y="8" width="360" height="30" rx="15" fill="#f1f5f9" stroke="#64748b" stroke-width="1.2"/>
-                    <text x="320" y="27" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#334155">h&#8317;&#8304;&#8318; = X  (Embeddings + Positional Encoding)</text>
+        <text x="450" y="22" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Unified Training: One Loss &#8594; One Backward Pass &#8594; Every Parameter Updated</text>
 
-                    <line x1="320" y1="38" x2="320" y2="62" stroke="#0e7490" stroke-width="2" marker-end="url(#stackArrow)"/>
+        <!-- Box A: Embeddings -->
+        <rect x="10" y="50" width="140" height="70" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="80" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#4338ca">Embeddings</text>
+        <text x="80" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
 
-                    <!-- dashed xN bracket around the whole repeated stack -->
-                    <rect x="70" y="60" width="500" height="378" rx="14" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4"/>
-                    <text x="600" y="240" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="26" font-weight="bold" fill="#94a3b8">&times;N</text>
-                    <text x="600" y="260" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#94a3b8">layers</text>
+        <line x1="150" y1="85" x2="186" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow2)"/>
 
-                    <!-- Block 1 -->
-                    <rect x="100" y="66" width="440" height="76" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
-                    <text x="320" y="90" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="bold" fill="#0e7490">Transformer Block 1</text>
-                    <text x="320" y="108" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Multi-Head Self-Attention &rarr; Add &amp; Norm</text>
-                    <text x="320" y="124" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Feed-Forward Network &rarr; Add &amp; Norm</text>
-                    <text x="320" y="138" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#64748b">own W&#7809;&#8321;, W&#7488;&#8321;, W&#7483;&#8321;, W&#7431;&#8321;, W&#8321;,&#8321;, W&#8322;,&#8321;</text>
+        <!-- Box B: the whole xN stack, collapsed -->
+        <rect x="190" y="50" width="340" height="70" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2" stroke-dasharray="7,4"/>
+        <text x="360" y="76" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#0e7490">&times;N Transformer Blocks</text>
+        <text x="360" y="94" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">Self-Attn + FFN per layer, own weights each</text>
+        <text x="360" y="110" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#94a3b8">(full detail: see the stacking diagram above)</text>
 
-                    <line x1="320" y1="142" x2="320" y2="166" stroke="#0e7490" stroke-width="2" marker-end="url(#stackArrow)"/>
-                    <text x="345" y="157" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="11" fill="#0e7490">h&#8317;&#185;&#8318;</text>
+        <line x1="530" y1="85" x2="566" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow2)"/>
 
-                    <!-- Block 2 -->
-                    <rect x="100" y="170" width="440" height="76" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
-                    <text x="320" y="194" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="bold" fill="#0e7490">Transformer Block 2</text>
-                    <text x="320" y="212" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Multi-Head Self-Attention &rarr; Add &amp; Norm</text>
-                    <text x="320" y="228" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Feed-Forward Network &rarr; Add &amp; Norm</text>
-                    <text x="320" y="242" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#64748b">own W&#7809;&#8322;, W&#7488;&#8322;, W&#7483;&#8322;, W&#7431;&#8322;, W&#8321;,&#8322;, W&#8322;,&#8322;</text>
+        <!-- Box C: Output Projection -->
+        <rect x="570" y="50" width="160" height="70" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+        <text x="650" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed">Output Proj.</text>
+        <text x="650" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">Linear + Softmax</text>
 
-                    <line x1="320" y1="246" x2="320" y2="270" stroke="#0e7490" stroke-width="2" marker-end="url(#stackArrow)"/>
-                    <text x="345" y="261" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="11" fill="#0e7490">h&#8317;&#178;&#8318;</text>
+        <line x1="730" y1="85" x2="766" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow2)"/>
 
-                    <!-- ellipsis for the rest of the stack -->
-                    <text x="320" y="300" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="26" fill="#94a3b8">&#8942;</text>
-                    <text x="320" y="320" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#64748b">(N&minus;2 more identical-structure blocks, each with its own independent weights)</text>
+        <!-- Box D: Loss -->
+        <rect x="770" y="50" width="120" height="70" rx="10" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+        <text x="830" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#e11d48">Loss L</text>
+        <text x="830" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">(scalar)</text>
 
-                    <line x1="320" y1="328" x2="320" y2="352" stroke="#0e7490" stroke-width="2" marker-end="url(#stackArrow)"/>
-                    <text x="345" y="343" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="11" fill="#0e7490">h&#8317;&#7503;&#8315;&#185;&#8318;</text>
+        <!-- Single backward pass: drop from Loss, one shared bus, taps into every component -->
+        <line x1="830" y1="120" x2="830" y2="180" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4"/>
+        <line x1="830" y1="180" x2="80" y2="180" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4"/>
 
-                    <!-- Block N -->
-                    <rect x="100" y="356" width="440" height="76" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
-                    <text x="320" y="380" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="bold" fill="#0e7490">Transformer Block N</text>
-                    <text x="320" y="398" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Multi-Head Self-Attention &rarr; Add &amp; Norm</text>
-                    <text x="320" y="414" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Feed-Forward Network &rarr; Add &amp; Norm</text>
-                    <text x="320" y="428" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#64748b">own W&#7809;&#7503;, W&#7488;&#7503;, W&#7483;&#7503;, W&#7431;&#7503;, W&#8321;,&#7503;, W&#8322;,&#7503;</text>
+        <line x1="80" y1="180" x2="80" y2="122" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow2)"/>
+        <line x1="360" y1="180" x2="360" y2="122" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow2)"/>
+        <line x1="650" y1="180" x2="650" y2="122" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow2)"/>
 
-                    <line x1="320" y1="432" x2="320" y2="456" stroke="#7c3aed" stroke-width="2" marker-end="url(#stackArrow)"/>
-                    <text x="345" y="447" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="11" fill="#7c3aed">h&#8317;&#7503;&#8318; (final)</text>
-
-                    <!-- final output pill -->
-                    <rect x="120" y="460" width="400" height="32" rx="16" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
-                    <text x="320" y="481" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed">h&#8317;&#7503;&#8318;  &rarr;  feeds Output Projections</text>
-                </svg>
+        <text x="450" y="202" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#e11d48">ONE backward pass computes &#8706;L/&#8706;&#952; for every parameter &#952;</text>
+        <text x="450" y="218" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#e11d48">(embeddings, all N blocks' weights, output projection) &mdash; together, in one shared chain-rule sweep</text>
+    </svg>
+    <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em>This diagram is deliberately a level "zoomed out" from the stacking diagram above &mdash; the $\times N$ box here <strong>is</strong> that entire diagram, collapsed to one box, so this view can show what that one doesn't: that Embeddings and Output Projection are trained by the exact same backward pass as every layer inside the stack, not by separate training loops.</em>
+    </p>
+</div>
                 <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
                     <em>The dashed bracket is the classic "&times;N" notation from the original Transformer diagram: everything inside it is the <strong>same block structure</strong>, repeated $N$ times — but each repetition trains its own separate weights, so layer 1 and layer 50 are not computing the same function.</em>
                 </p>
@@ -672,6 +692,78 @@
                 </ol>
             </div>
         </section>
+		<h3>Complete Training loop of Transformer</h3>
+		<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+    <svg viewBox="0 0 1000 270" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+        <defs>
+            <marker id="unifiedFwdArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#334155" />
+            </marker>
+            <marker id="unifiedBwdArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#e11d48" />
+            </marker>
+        </defs>
+
+        <text x="500" y="22" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Unified Training: One Loss &#8594; One Backward Pass &#8594; Every Parameter Updated</text>
+
+        <!-- Forward pass row -->
+        <!-- Box A: Embeddings -->
+        <rect x="10" y="50" width="120" height="70" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+        <text x="70" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#4338ca">Embeddings</text>
+        <text x="70" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
+
+        <line x1="130" y1="85" x2="166" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow)"/>
+
+        <!-- Box B: Layer 1 -->
+        <rect x="170" y="50" width="150" height="70" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+        <text x="245" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#0e7490">Layer 1</text>
+        <text x="245" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">Self-Attn + FFN</text>
+
+        <line x1="320" y1="85" x2="356" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow)"/>
+
+        <!-- Dots: remaining layers -->
+        <rect x="360" y="58" width="70" height="54" rx="8" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <text x="395" y="84" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="18" fill="#94a3b8">&#8942;</text>
+        <text x="395" y="102" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8" font-style="italic" fill="#94a3b8">(N&minus;2 more)</text>
+
+        <line x1="430" y1="85" x2="466" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow)"/>
+
+        <!-- Box C: Layer N -->
+        <rect x="470" y="50" width="150" height="70" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+        <text x="545" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#0e7490">Layer N</text>
+        <text x="545" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">Self-Attn + FFN</text>
+
+        <line x1="620" y1="85" x2="656" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow)"/>
+
+        <!-- Box D: Output Projection -->
+        <rect x="660" y="50" width="150" height="70" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+        <text x="735" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed">Output Proj.</text>
+        <text x="735" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">Linear + Softmax</text>
+
+        <line x1="810" y1="85" x2="846" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow)"/>
+
+        <!-- Box E: Loss -->
+        <rect x="850" y="50" width="110" height="70" rx="10" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+        <text x="905" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#e11d48">Loss L</text>
+        <text x="905" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">(scalar)</text>
+
+        <!-- Single backward pass: drop from Loss, one shared bus line, taps into every component -->
+        <line x1="905" y1="120" x2="905" y2="200" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4"/>
+        <line x1="905" y1="200" x2="70" y2="200" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4"/>
+
+        <line x1="70" y1="200" x2="70" y2="122" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow)"/>
+        <line x1="245" y1="200" x2="245" y2="122" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow)"/>
+        <line x1="395" y1="200" x2="395" y2="114" stroke="#e11d48" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow)"/>
+        <line x1="545" y1="200" x2="545" y2="122" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow)"/>
+        <line x1="735" y1="200" x2="735" y2="122" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow)"/>
+
+        <text x="500" y="222" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#e11d48">ONE backward pass computes &#8706;L/&#8706;&#952; for every parameter &#952;</text>
+        <text x="500" y="238" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#e11d48">(embeddings, every layer's attention &amp; FFN weights, output projection) &mdash; together, in one shared chain-rule sweep</text>
+    </svg>
+    <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em>The solid slate arrows are one forward pass, run once. The dashed red path is <strong>one</strong> backward pass &mdash; not three separate ones. There is only one loss $L$, computed once, and the chain rule computes $\partial L/\partial\theta$ for every parameter $\theta$ in the network in that single sweep. So it's not "train Embeddings, then train Attention, then train FFN" &mdash; every parameter, in every component, is updated together, in the same optimizer step, every single training iteration.</em>
+    </p>
+</div>
 
         <section id="training-stages" style="margin-bottom: 40px;">
             <h3>How Large Language Models are Trained</h3>
