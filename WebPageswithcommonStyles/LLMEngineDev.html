@@ -468,6 +468,120 @@
     While pretraining relies on raw scale (trillions of web tokens), SFT relies heavily on <em>craftsmanship and quality</em> over sheer volume.
   </p>
 
+  <p>Here is the block diagram for SFT training:</p>
+
+  <div class="diagram-frame">
+    <svg viewBox="-60 0 850 620" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+      <defs>
+        <marker id="sftArrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#0056b3"/>
+        </marker>
+        <marker id="sftLoopArrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#206a37"/>
+        </marker>
+        <marker id="sftExitArrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#003d82"/>
+        </marker>
+      </defs>
+
+      <g font-family="Segoe UI, sans-serif" font-size="15">
+
+        <!-- Row A: Current Model, centered above Forward Pass -->
+        <rect x="510" y="10" width="210" height="70" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="615" y="40" text-anchor="middle" fill="#003d82" font-weight="700">Current Model</text>
+        <text x="615" y="62" text-anchor="middle" fill="#445" font-size="13">(weights &#952;)</text>
+
+        <line x1="615" y1="80" x2="615" y2="106" stroke="#0056b3" stroke-width="2.5" marker-end="url(#sftArrow2)"/>
+
+        <!-- Row B: Curated Example -> Tokenize -> Forward Pass -->
+        <rect x="10" y="110" width="210" height="80" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="115" y="145" text-anchor="middle" fill="#003d82" font-weight="700">Curated Example</text>
+        <text x="115" y="167" text-anchor="middle" fill="#445" font-size="13">(prompt + response pair)</text>
+
+        <line x1="220" y1="150" x2="256" y2="150" stroke="#0056b3" stroke-width="2.5" marker-end="url(#sftArrow2)"/>
+
+        <rect x="260" y="110" width="210" height="80" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="365" y="140" text-anchor="middle" fill="#003d82" font-weight="700">Tokenize +</text>
+        <text x="365" y="160" text-anchor="middle" fill="#003d82" font-weight="700">Build Mask</text>
+        <text x="365" y="180" text-anchor="middle" fill="#445" font-size="12">m&#7524;: 0=prompt, 1=response</text>
+
+        <line x1="470" y1="150" x2="506" y2="150" stroke="#0056b3" stroke-width="2.5" marker-end="url(#sftArrow2)"/>
+
+        <rect x="510" y="110" width="210" height="80" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2.5"/>
+        <text x="615" y="145" text-anchor="middle" fill="#003d82" font-weight="700">Forward Pass</text>
+        <text x="615" y="167" text-anchor="middle" fill="#445" font-size="13">logits at every position</text>
+
+        <!-- elbow: Row B (Forward Pass) down to Row C (Softmax) -->
+        <path d="M615,190 L615,222 L115,222 L115,246" fill="none" stroke="#0056b3" stroke-width="2.5" marker-end="url(#sftArrow2)"/>
+
+        <!-- Row C: Softmax -> Apply Loss Mask -> Compute Loss -->
+        <rect x="10" y="250" width="210" height="90" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="115" y="288" text-anchor="middle" fill="#003d82" font-weight="700">Softmax</text>
+        <text x="115" y="312" text-anchor="middle" fill="#445" font-size="13">P&#952;(s&#7524; | s&lt;&#7524;)</text>
+
+        <line x1="220" y1="295" x2="256" y2="295" stroke="#0056b3" stroke-width="2.5" marker-end="url(#sftArrow2)"/>
+
+        <rect x="260" y="250" width="210" height="90" rx="10" fill="#fbf7ef" stroke="#e0d3ab" stroke-width="2"/>
+        <text x="365" y="288" text-anchor="middle" fill="#8a6d1d" font-weight="700">Apply Loss Mask</text>
+        <text x="365" y="312" text-anchor="middle" fill="#6b5716" font-size="13">zero out prompt positions</text>
+
+        <line x1="470" y1="295" x2="506" y2="295" stroke="#0056b3" stroke-width="2.5" marker-end="url(#sftArrow2)"/>
+
+        <rect x="510" y="250" width="220" height="90" rx="10" fill="#fbf7ef" stroke="#e0d3ab" stroke-width="2"/>
+        <text x="620" y="288" text-anchor="middle" fill="#8a6d1d" font-weight="700">Compute L&#8347;&#7476;&#7488;</text>
+        <text x="620" y="312" text-anchor="middle" fill="#6b5716" font-size="13">avg over response tokens</text>
+
+        <!-- elbow: Row C (Compute Loss) down to Row D (Backward) -->
+        <path d="M620,340 L620,372 L125,372 L125,396" fill="none" stroke="#0056b3" stroke-width="2.5" marker-end="url(#sftArrow2)"/>
+
+        <!-- Row D: Backward + Optimizer -> Fine-Tuned Model -->
+        <rect x="10" y="400" width="230" height="80" rx="10" fill="#e2f4e6" stroke="#206a37" stroke-width="2"/>
+        <text x="125" y="435" text-anchor="middle" fill="#1c5c30" font-weight="700">Backward +</text>
+        <text x="125" y="457" text-anchor="middle" fill="#1c5c30" font-weight="700">Optimizer</text>
+
+        <line x1="240" y1="440" x2="276" y2="440" stroke="#003d82" stroke-width="2.5" marker-end="url(#sftExitArrow2)"/>
+        <text x="258" y="428" text-anchor="middle" fill="#003d82" font-size="11" font-style="italic">after many steps</text>
+
+        <rect x="280" y="400" width="250" height="80" rx="10" fill="#eaf2fb" stroke="#003d82" stroke-width="3"/>
+        <text x="405" y="432" text-anchor="middle" fill="#003d82" font-weight="700">Fine-Tuned</text>
+        <text x="405" y="454" text-anchor="middle" fill="#003d82" font-weight="700">"Instruct" Model</text>
+        <text x="405" y="474" text-anchor="middle" fill="#445" font-size="12">ready for Stage 2: Alignment</text>
+
+        <!-- loop-back: Backward+Optimizer returns to Current Model, routed around the outside-left -->
+        <path d="M125,480 L125,560 L-30,560 L-30,45 L510,45" fill="none" stroke="#206a37" stroke-width="2.5" stroke-dasharray="7,5" marker-end="url(#sftLoopArrow2)"/>
+        <text x="240" y="580" text-anchor="middle" fill="#206a37" font-size="13" font-style="italic">repeat for many batches / epochs</text>
+        <text x="240" y="598" text-anchor="middle" fill="#206a37" font-size="13" font-style="italic">(thousands&ndash;millions of steps)</text>
+
+      </g>
+    </svg>
+    <div class="legend-row">
+      <span><span class="legend-swatch" style="background:#eaf2fb;border:1px solid #0056b3;"></span>data / weights / forward pass</span>
+      <span><span class="legend-swatch" style="background:#fbf7ef;border:1px solid #e0d3ab;"></span>masking / loss</span>
+      <span><span class="legend-swatch" style="background:#e2f4e6;border:1px solid #206a37;"></span>backward / update</span>
+      <span><span class="legend-swatch" style="background:#eaf2fb;border:2px solid #003d82;"></span>final model</span>
+    </div>
+    <p class="diagram-caption">Notice Forward Pass has two separate arrows feeding into it, not one chain: the current weights &#952; (from above) and the tokenized example (from the left) are independent inputs that only combine at that step. The dashed green loop returns to <strong>Current Model</strong> specifically &mdash; not to Curated Example &mdash; because it's the weights that persist and accumulate across iterations, while a fresh example is drawn from the dataset every single step.</p>
+  </div>
+
+  <div class="intuition-box">
+    <strong class="label">Reading the Boxes</strong>
+    <p style="margin-top:0;">
+        <strong>"Current Model"</strong> is exactly the original pretrained model on the very first iteration &mdash; nothing has changed it yet. After that first trip through Backward + Optimizer, its weights $\theta$ get updated, and those <em>updated</em> weights loop back into this same box for the next iteration &mdash; they accumulate rather than reset. So by iteration 1,000, "Current Model" means the base model plus everything SFT has already taught it so far, not the original pretrained model in isolation.
+    </p>
+    <p>
+        <strong>"Curated Example"</strong> and <strong>"Tokenize + Build Mask"</strong> are separate from the weights. Each iteration, a new prompt-response pair is picked from the SFT dataset and tokenized fresh. <strong>"Forward Pass"</strong> (the same thing as <em>Forward Propagation</em>) is where these two independent streams actually meet: it runs the tokenized example through the current weights $\theta$ to produce <strong>logits</strong> &mdash; raw, unnormalized scores, one per vocabulary token, at every position. It does <em>not</em> produce probabilities yet; that's the very next box, <strong>"Softmax"</strong>, which is the separate step that converts those logits into an actual probability distribution summing to 1 over the vocabulary.
+    </p>
+    <p style="margin-bottom:0;">
+        <strong>"Response tokens"</strong> means the Assistant's answer &mdash; the tokens after <code>"Assistant:"</code>, tagged $m_t=1$. Everything before that (the User's prompt) is tagged $m_t=0$ and is left out of the loss.
+    </p>
+    <p>
+        Concretely, here is what "$\mathcal{L}_{SFT}$" and "averaged" mean, step by step. At every position, the model outputs a probability for what the correct next token should be. We only keep the probabilities at the response positions &mdash; in the worked example on this page (<code>"User: What is 2+2?\nAssistant: 4&lt;eos&gt;"</code>), that's 2 positions: <code>"4"</code> and <code>&lt;eos&gt;</code>. For each of those 2 positions, take $-\log$ of its probability (this turns "high probability" into "low number," and "low probability" into "high number" &mdash; so it behaves like a penalty for being wrong). Add those 2 numbers together, then divide by 2. That single resulting number is $\mathcal{L}_{SFT}$ for this example &mdash; the 5 prompt positions are not part of this calculation at all, not even in the denominator:
+    </p>
+    <div class="diagram-frame" style="font-family: monospace; font-size: 0.92rem; color: var(--heading-blue-dark);">
+      $$\mathcal{L}_{SFT} = -\frac{1}{\sum_t m_t}\sum_{t=1}^{T} m_t \cdot \log P_\theta(x_t \mid x_{<t})$$
+    </div>
+  </div>
+
   <div class="algorithm-box">
     <strong class="label">Anatomy of a "Tightly Curated" SFT Dataset</strong>
     <p>A high-performing SFT dataset is not just a random scrape of chat logs; it is meticulously engineered across four dimensions:</p>
@@ -482,6 +596,7 @@
   <p>
     During SFT training itself, a crucial technique called <strong>Loss Masking</strong> is applied:
   </p>
+
   <div class="algorithm-box" style="background: #f4f8fc; border-color: var(--border);">
     <strong class="label" style="color: var(--heading-blue);">The Mechanics of SFT Training</strong>
     <ul>
@@ -489,8 +604,9 @@
       <li><strong>Masking:</strong> Unlike pretraining where the model computes loss on every single token, in SFT the loss is
       <em>masked</em> on the user prompt tokens. The model's error gradients are only calculated on the <strong>Assistant's response</strong>,
       teaching it to focus purely on generating optimal completions rather than memorizing how to rewrite user prompts.</li>
+      <li>So in loss masking you typically only compute loss on the response tokens, not the prompt tokens. The prompt is context the model conditions on; you don't want to train it to predict the prompt itself.</li>
+      <li>In SFT, forward pass, backward pass, optimizer — identical to pretraining. What changes is what you show the model and which tokens count toward the loss.</li>
     </ul>
-    <p>So in loss masking you typically only compute loss on the response tokens, not the prompt tokens. The prompt is context the model conditions on; you don't want to train it to predict the prompt itself. In SFT, forward pass, backward pass, optimizer — identical to pretraining. What changes is what you show the model and which tokens count toward the loss.</p>
   </div>
 
   <h3>A Closer Look: Loss Masking</h3>
@@ -501,7 +617,7 @@
   </p>
 
   <div class="intuition-box">
-    <strong class="label">Three different "maskings" — don't conflate them</strong>
+    <strong class="label">Three different "maskings"</strong>
     <ul>
       <li><strong>Causal (attention) masking</strong> — controls <em>which tokens a given position is allowed to look at</em>
       inside self-attention. In a Decoder-only model this is always lower-triangular: token $t$ can attend to tokens
