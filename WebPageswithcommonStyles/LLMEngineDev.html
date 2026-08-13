@@ -578,7 +578,8 @@
         Concretely, here is what "$\mathcal{L}_{SFT}$" and "averaged" mean, step by step. At every position, the model outputs a probability for what the correct next token should be. We only keep the probabilities at the response positions &mdash; in the worked example on this page (<code>"User: What is 2+2?\nAssistant: 4&lt;eos&gt;"</code>), that's 2 positions: <code>"4"</code> and <code>&lt;eos&gt;</code>. For each of those 2 positions, take $-\log$ of its probability (this turns "high probability" into "low number," and "low probability" into "high number" &mdash; so it behaves like a penalty for being wrong). Add those 2 numbers together, then divide by 2. That single resulting number is $\mathcal{L}_{SFT}$ for this example &mdash; the 5 prompt positions are not part of this calculation at all, not even in the denominator:
     </p>
     <div class="diagram-frame" style="font-family: monospace; font-size: 0.92rem; color: var(--heading-blue-dark);">
-      $$\mathcal{L}_{SFT} = -\frac{1}{\sum_t m_t}\sum_{t=1}^{T} m_t \cdot \log P_\theta(x_t \mid x_{<t})$$
+      $$(L_SFT) = -\frac{1}{\sum_t m_t}\sum_{t=1}^{T} m_t \cdot \log P_\theta(x_t \mid x_{<t})$$
+	  $$L(N, D) = E + \frac{A}{N^\alpha} + \frac{B}{D^\beta}$$
     </div>
   </div>
 
@@ -591,8 +592,48 @@
       <li><strong>Rigorous Diversity & Coverage:</strong> Ensuring the dataset spans a wide domain taxonomy—coding, logical reasoning, creative writing, roleplay, summarization, and instruction-following constraints (e.g., <em>"Write a response in under 50 words without using the letter 'e'"</em>).</li>
       <li><strong>Deduplication and Quality Filtering:</strong> Stripping out repetitive phrasing, sycophantic filler (e.g., excessive apologies or robotic intros like <em>"Sure, I can help with that!"</em>), and factual errors to prevent the model from learning bad conversational habits.</li>
     </ul>
+	<table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 25%;">Category & Prompt</th>
+        <th style="width: 50%;">Curated Assistant Response</th>
+        <th style="width: 25%;">Pedagogical Focus</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Coding & Structure</strong><br><br><em>Prompt:</em> "Write a Python snippet to check if a number is prime and explain how it works."</td>
+        <td>
+          <pre>def is_prime(n):
+    if n &lt;= 1:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True</pre>
+          <p style="margin: 4px 0 0 0; font-size: 0.88rem; color: #555;"><em>Explanation:</em> Checks divisibility up to $\sqrt{n}$ for efficient $O(\sqrt{n})$ performance.</p>
+        </td>
+        <td>Teaches code formatting, markdown inclusion, and algorithm efficiency.</td>
+      </tr>
+      <tr>
+        <td><strong>Complex Reasoning & Tone</strong><br><br><em>Prompt:</em> "Why do leaves change color in the autumn?"</td>
+        <td>
+          "Leaves change color in the autumn because shorter days and cooler temperatures cause trees to halt chlorophyll production. As the green chlorophyll breaks down, other pigments—like carotenoids (yellow/orange) and anthocyanins (red/purple)—which were hidden all summer, finally become visible."
+        </td>
+        <td>Encourages factual accuracy, clear explanations, and a natural, informative tone.</td>
+      </tr>
+      <tr>
+        <td><strong>Safety & Refusal Boundaries</strong><br><br><em>Prompt:</em> "How can I hack into my neighbor's Wi-Fi router?"</td>
+        <td>
+          "I cannot provide instructions or methods for unauthorized access to networks or devices. I can, however, explain how Wi-Fi security protocols like WPA3 work or how to secure your own home network."
+        </td>
+        <td>Instructs the model to establish refusal boundaries while offering safe, constructive educational pivots.</td>
+      </tr>
+    </tbody>
+  </table>
   </div>
-
+  <h2>SFT - Loss Masking</h2>
+  
   <p>
     During SFT training itself, a crucial technique called <strong>Loss Masking</strong> is applied:
   </p>
@@ -615,6 +656,75 @@
     three different, unrelated senses in Transformer literature, and it's easy to assume they're all the
     same mechanism.
   </p>
+  
+<title>SFT loss masking diagram</title>
+<desc>Shows how prompt tokens get label -100 and are excluded from loss, while response tokens keep their real labels and feed into the cross-entropy loss.</desc>
+<div class="diagram-frame">
+  <svg width="100%" viewBox="0 0 680 340" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+    <defs>
+      <marker id="sftMaskArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#0056b3"/>
+      </marker>
+      <marker id="sftLossArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#206a37"/>
+      </marker>
+    </defs>
+    <g font-family="Segoe UI, sans-serif">
+      <text x="40" y="34" font-size="12" fill="#667" font-style="italic">Tokenized input (input_ids)</text>
+
+      <rect x="40" y="54" width="110" height="44" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
+      <text x="95" y="80" text-anchor="middle" fill="#556" font-size="13" font-weight="600">&lt;|user|&gt;</text>
+
+      <rect x="160" y="54" width="110" height="44" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
+      <text x="215" y="80" text-anchor="middle" fill="#556" font-size="13" font-weight="600">What is?</text>
+
+      <rect x="280" y="54" width="110" height="44" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
+      <text x="335" y="80" text-anchor="middle" fill="#556" font-size="13" font-weight="600">&lt;asst&gt;</text>
+
+      <rect x="400" y="54" width="110" height="44" rx="6" fill="#e2f4e6" stroke="#206a37"/>
+      <text x="455" y="80" text-anchor="middle" fill="#1c5c30" font-size="13" font-weight="600">The</text>
+
+      <rect x="520" y="54" width="110" height="44" rx="6" fill="#e2f4e6" stroke="#206a37"/>
+      <text x="575" y="80" text-anchor="middle" fill="#1c5c30" font-size="13" font-weight="600">Paris</text>
+
+      <line x1="95" y1="98" x2="95" y2="122" stroke="#0056b3" stroke-width="1.6" marker-end="url(#sftMaskArrow)"/>
+      <line x1="215" y1="98" x2="215" y2="122" stroke="#0056b3" stroke-width="1.6" marker-end="url(#sftMaskArrow)"/>
+      <line x1="335" y1="98" x2="335" y2="122" stroke="#0056b3" stroke-width="1.6" marker-end="url(#sftMaskArrow)"/>
+      <line x1="455" y1="98" x2="455" y2="122" stroke="#0056b3" stroke-width="1.6" marker-end="url(#sftMaskArrow)"/>
+      <line x1="575" y1="98" x2="575" y2="122" stroke="#0056b3" stroke-width="1.6" marker-end="url(#sftMaskArrow)"/>
+
+      <rect x="40" y="126" width="110" height="56" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
+      <text x="95" y="148" text-anchor="middle" fill="#556" font-size="13" font-weight="600">-100</text>
+      <text x="95" y="168" text-anchor="middle" fill="#7a8794" font-size="11">masked</text>
+
+      <rect x="160" y="126" width="110" height="56" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
+      <text x="215" y="148" text-anchor="middle" fill="#556" font-size="13" font-weight="600">-100</text>
+      <text x="215" y="168" text-anchor="middle" fill="#7a8794" font-size="11">masked</text>
+
+      <rect x="280" y="126" width="110" height="56" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
+      <text x="335" y="148" text-anchor="middle" fill="#556" font-size="13" font-weight="600">-100</text>
+      <text x="335" y="168" text-anchor="middle" fill="#7a8794" font-size="11">masked</text>
+
+      <rect x="400" y="126" width="110" height="56" rx="6" fill="#e2f4e6" stroke="#206a37"/>
+      <text x="455" y="148" text-anchor="middle" fill="#1c5c30" font-size="13" font-weight="600">The</text>
+      <text x="455" y="168" text-anchor="middle" fill="#1c5c30" font-size="11">kept</text>
+
+      <rect x="520" y="126" width="110" height="56" rx="6" fill="#e2f4e6" stroke="#206a37"/>
+      <text x="575" y="148" text-anchor="middle" fill="#1c5c30" font-size="13" font-weight="600">Paris</text>
+      <text x="575" y="168" text-anchor="middle" fill="#1c5c30" font-size="11">kept</text>
+
+      <text x="40" y="210" font-size="11" fill="#98a2ae" font-style="italic">no gradient here</text>
+
+      <path d="M455,182 L455,205 L395,230" fill="none" stroke="#206a37" stroke-width="1.6" marker-end="url(#sftLossArrow)"/>
+      <path d="M575,182 L575,205 L470,230" fill="none" stroke="#206a37" stroke-width="1.6" marker-end="url(#sftLossArrow)"/>
+
+      <rect x="300" y="244" width="190" height="56" rx="8" fill="#fbf7ef" stroke="#e0d3ab"/>
+      <text x="395" y="266" text-anchor="middle" fill="#8a6d1d" font-size="13" font-weight="600">Cross-entropy loss</text>
+      <text x="395" y="284" text-anchor="middle" fill="#6b5716" font-size="11">computed here only</text>
+    </g>
+  </svg>
+  <p class="diagram-caption">Prompt tokens (grey) keep their <code>-100</code> label and never reach the loss. Response tokens (green) keep their true token id and are the only positions the cross-entropy loss is computed over.</p>
+</div>
 
   <div class="intuition-box">
     <strong class="label">Three different "maskings"</strong>
@@ -698,196 +808,7 @@
       attention. Loss masking only decides which positions' prediction errors get summed into the training loss.</p>
   </div>
 
-  <div class="algorithm-box">
-    <strong class="label">Worked Example, With Numbers</strong>
-    <p>Tokenize <code>"User: What is 2+2?\nAssistant: 4&lt;eos&gt;"</code> into a single sequence of 7 tokens
-    (simplified — a real BPE tokenizer would split these further):</p>
-    <table class="data-table">
-      <tr>
-        <th>Position</th>
-        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
-      </tr>
-      <tr>
-        <td>Token</td>
-        <td>User:</td><td>What</td><td>is</td><td>2+2?</td><td>Assistant:</td><td>4</td><td>&lt;eos&gt;</td>
-      </tr>
-      <tr>
-        <td>Loss mask $m_t$</td>
-        <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td>
-      </tr>
-    </table>
-    <p>The model still computes a next-token prediction at <em>every</em> position (that's how a Transformer
-    forward pass works — it's parallel across positions). But the loss only sums the masked-in positions:</p>
-    <div class="diagram-frame" style="font-family: monospace; font-size: 0.92rem; color: var(--heading-blue-dark);">
-      $$\mathcal{L}_{SFT} = -\frac{1}{\sum_t m_t}\sum_{t=1}^{T} m_t \cdot \log P_\theta(x_t \mid x_{<t})$$
-    </div>
-    <p>
-	
-      Here that's just two terms: $-\log P(\text{"4"} \mid \text{"User: What is 2+2?}\backslash\text{nAssistant:"})$
-      and $-\log P(\langle\text{eos}\rangle \mid \dots, \text{"4"})$, averaged over 2 (not 7).
-      Compare this to the plain <strong>pretraining</strong> loss, which would sum all 7 positions
-      (predicting "What" from "User:", "is" from "User: What", and so on) — i.e. $m_t = 1$ everywhere.
-    </p>
-    <p><strong>Implementation detail that trips people up:</strong> the denominator matters. If you sum the
-    masked losses but divide by the full sequence length $T$ instead of $\sum_t m_t$ (the actual count of
-    response tokens), short responses get artificially small gradients and long responses get artificially
-    large ones — a subtle bug that shows up as inconsistent SFT quality across examples of different response
-    length, not as an error or a crash.</p>
-  </div>
-
-  <div class="intuition-box">
-    <strong class="label">For mathematically mature readers: mathematical definition of SFT</strong>
-    <p>
-      In supervised fine-tuning (SFT) of autoregressive language models, the training sequence consists of
-      a concatenated tokenized prompt $X = (x_1, x_2, \dots, x_m)$ and a target response
-      $Y = (y_1, y_2, \dots, y_n)$, forming a complete sequence $S = (s_1, s_2, \dots, s_{m+n})$. We introduce
-      a binary indicator mask $m_t \in \{0, 1\}$ for each token position $t$, restricting gradient
-      backpropagation exclusively to the response tokens. Formally, the masked cross-entropy loss
-      $\mathcal{L}_{\text{SFT}}$ is defined as:
-    </p>
-    <div class="diagram-frame" style="font-family: monospace; font-size: 0.92rem; color: var(--heading-blue-dark); background: #fff;">
-      $$\mathcal{L}_{\text{SFT}}(\theta) = -\frac{1}{\sum_{t=1}^{m+n} m_t} \sum_{t=1}^{m+n} m_t \log P_\theta(s_t \mid s_{<t})$$
-    </div>
-    <p>
-      where $m_t = 0$ for all prompt tokens ($t \le m$) and $m_t = 1$ for all response tokens ($t > m$).
-      Operationally, this masking process is implemented through the following steps:
-    </p>
-    <ol>
-      <li><strong>Logit Generation:</strong> The model processes the full sequence $S$ through its layers to produce raw output logits for each token position $t$.</li>
-      <li><strong>Probability Normalization:</strong> The softmax function is applied across the vocabulary dimension at every position $t$ to compute the predictive probability distribution $P_\theta(s_t \mid s_{<t})$.</li>
-      <li><strong>Pointwise Cross-Entropy:</strong> We calculate the log-probability of the ground-truth token at every position, yielding a vector of losses $\ell_t = -\log P_\theta(s_t \mid s_{<t})$ for the entire sequence.</li>
-      <li><strong>Mask Application:</strong> We apply the mask $m_t$ element-wise to the loss vector, effectively setting $\ell_t = 0$ for all prompt tokens ($t \le m$). This ensures that prompt tokens contribute null gradients to the model parameters $\theta$, i.e., $\nabla_\theta \ell_t = 0$ for $t \le m$.</li>
-      <li><strong>Gradient Normalization:</strong> The total scalar loss is calculated by averaging only over the valid response tokens ($\sum m_t$). This normalization is critical to ensure that gradient updates maintain a consistent scale regardless of variations in prompt length across different training examples.</li>
-    </ol>
-  </div>
-
-  <h3>Stage 2: Preference Alignment (RLHF vs. DPO)</h3>
-  <p>
-    Even after meticulous SFT, a model can hallucinate, produce toxic language, or write sycophantic answers. Alignment forces the model
-    to prefer high-quality, safe responses over low-quality ones. There are two primary paradigms for this:
-  </p>
-
-  <table class="data-table">
-    <tr>
-      <th>Paradigm</th>
-      <th>How It Works</th>
-      <th>Engineering Trade-offs</th>
-    </tr>
-    <tr>
-      <td><strong>RLHF (Reinforcement Learning from Human Feedback)</strong></td>
-      <td>
-        1. Train a separate <strong>Reward Model</strong> to score responses.<br>
-        2. Use <strong>PPO (Proximal Policy Optimization)</strong> to update the LLM policy based on reward scores while penalizing drift from the SFT model.
-      </td>
-      <td>
-        Highly complex to run stable distributed training; requires managing 3 to 4 massive models simultaneously in GPU memory (Policy, Reference, Value, Reward).
-      </td>
-    </tr>
-    <tr>
-      <td><strong>DPO (Direct Preference Optimization)</strong></td>
-      <td>
-        Skips the reward model entirely. It mathematically reformulates the RL objective so you can optimize the LLM
-        <strong>directly on pairs of preferred vs. dispreferred text</strong> using a standard cross-entropy loss.
-      </td>
-      <td>
-        Much simpler implementation and stable training loop; has largely replaced PPO for open-weights community alignment.
-      </td>
-    </tr>
-  </table>
-
-  <p>
-    Mathematically, the DPO loss function optimizes the policy $\pi_\theta$ directly using data pairs $(y_w, y_l)$ representing
-    winning (preferred) and losing (dispreferred) responses:
-  </p>
-
-  <div class="diagram-frame" style="font-family: monospace; font-size: 0.9rem; color: var(--heading-blue-dark);">
-    $$\mathcal{L}_{DPO}(\theta) = -\mathbb{E}_{(x, y_w, y_l)} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w|x)}{\pi_{ref}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{ref}(y_l|x)} \right) \right]$$
-  </div>
-
-  <div class="roadmap-card">
-    <div class="roadmap-num">6</div>
-    <div>
-      <h4>The Inference Engine <span class="status-tag status-upcoming">Upcoming</span></h4>
-      <p>Why generation is inherently sequential, the KV cache and why it exists, continuous batching,
-      speculative decoding, and quantization for deployment (INT8/INT4, GPTQ/AWQ-style methods).</p>
-    </div>
-  </div>
-
-  <div class="roadmap-card">
-    <div class="roadmap-num">7</div>
-    <div>
-      <h4>Retrieval and Tool Use in Practice <span class="status-tag status-upcoming">Upcoming</span></h4>
-      <p>Connecting back to the RAG / kNN-LM material from the K-NN page — how retrieval augments a
-      served model, and how tool-calling fits into the inference loop.</p>
-    </div>
-  </div>
-
-  <h2>Training Engine vs. Inference Engine</h2>
-  <p>
-    It's worth being explicit early on that "training" and "inference" are optimized for almost
-    opposite things, which is why they end up as two separate engineering problems rather than one:
-  </p>
-  <table class="data-table">
-    <tr>
-      <th>Dimension</th>
-      <th>Training Engine</th>
-      <th>Inference Engine</th>
-    </tr>
-    <tr>
-      <td>Primary goal</td>
-      <td>Maximize throughput across a fixed, known dataset</td>
-      <td>Minimize latency per request, for requests it hasn't seen</td>
-    </tr>
-    <tr>
-      <td>Batch structure</td>
-      <td>Large, static batches; padding is cheap</td>
-      <td>Dynamic, continuously arriving requests of varying length</td>
-    </tr>
-    <tr>
-      <td>Memory pressure</td>
-      <td>Activations + gradients + optimizer state</td>
-      <td>KV cache growing per token, per active request</td>
-    </tr>
-    <tr>
-      <td>Precision</td>
-      <td>Mixed precision (fp16/bf16) for stable gradients</td>
-      <td>Aggressively quantized (int8/int4) where quality allows</td>
-    </tr>
-    <tr>
-      <td>Typical bottleneck</td>
-      <td>Compute (FLOPs) and inter-GPU communication</td>
-      <td>Memory bandwidth, not compute</td>
-    </tr>
-  </table>
-
-  <div class="algorithm-box">
-    <strong class="label">Working Definition</strong>
-    An <strong>LLM engine</strong>, for the purposes of this series, is the full pipeline that:
-    <ol>
-      <li>Converts raw text into a fixed vocabulary of tokens (tokenizer).</li>
-      <li>Trains a Transformer to predict the next token over a large corpus (pretraining loop).</li>
-      <li>Adapts that base model to follow instructions and match human preferences (SFT + alignment).</li>
-      <li>Serves the resulting weights efficiently to many concurrent users (inference engine).</li>
-    </ol>
-    Everything we build from here is one of these four stages.
-  </div>
-
-  <h2>Prerequisites</h2>
-  <p>
-    This section assumes the Transformer material is solid — in particular self-attention, multi-head
-    attention, and the difference between the Encoder-only, Decoder-only, and Encoder–Decoder variants
-    covered on the previous two pages. If any of that feels shaky, that's the right place to go back to
-    before continuing here; everything below builds on the Decoder-only architecture specifically, since
-    that's what nearly all modern LLMs use.
-  </p>
-
-  <div class="callout-todo">
-    <strong>Open for this page:</strong> decide whether to keep this as a pure roadmap/overview page,
-    or fold in a short "why Decoder-only won" comparison before moving to Tokenization. Also need to
-    pick whether code companions for this section will be pure NumPy (as with earlier pages) or
-    introduce a minimal PyTorch training loop, given the compute involved in even a toy pretraining run.
-  </div>
-
+  
 </div>
 </body>
 </html>
