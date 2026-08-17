@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LLM Training Pipeline — Flowcharts</title>
+<style>
+  :root{
+    --bg:#ffffff; --text:#1a1a1a; --muted:#555555; --card:#fafaf8; --border:#e0ddd3;
+  }
+  body{
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    max-width: 900px; margin: 0 auto; padding: 40px 24px 80px;
+    line-height: 1.6;
+  }
+  h1{ font-size: 26px; font-weight: 600; color:#0056b3; margin-bottom: 4px; }
+  .subtitle{ color: var(--muted); margin-top:0; margin-bottom: 40px; }
+  h2{ font-size: 19px; font-weight: 600; margin-top: 56px; margin-bottom: 8px; border-bottom: 2px solid #0056b3; padding-bottom: 6px; }
+  .desc{ color: var(--text); margin: 0 0 14px 0; max-width: 760px; }
+  .io-box{ background: #f4f4f0; border-left: 3px solid #0056b3; padding: 10px 14px; margin-bottom: 18px; font-size: 13.5px; border-radius: 0 6px 6px 0; }
+  .io-box strong{ color: #0056b3; }
+  .card{
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; overflow-x: auto;
+  }
+  svg{ display:block; width:100%; height:auto; }
+  svg text{ font-family: "Segoe UI", Arial, sans-serif; }
+  .title{ font-size:14px; font-weight:600; }
+  .subtitle-txt{ font-size:12px; }
+  .caption{ font-size:12px; fill:#555555; }
+  .arrow{ stroke:#666666; stroke-width:1.5; fill:none; }
+  rect.box{ stroke-width:1; }
+  hr.sep{ border:none; border-top:1px solid var(--border); margin:56px 0 0; }
+  footer{ margin-top:48px; color:var(--muted); font-size:13px; }
+  
+  /* Added styles for code layout blocks in Section 8 */
+  .code-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
+  @media (max-width: 768px) { .code-grid { grid-template-columns: 1fr; } }
+  .code-box { background: #1e1e1e; color: #d4d4d4; padding: 14px; border-radius: 8px; font-family: Consolas, Monaco, monospace; font-size: 12.5px; overflow-x: auto; line-height: 1.4; margin: 0; }
+  .code-title { font-weight: 600; color: #0056b3; margin-bottom: 6px; font-size: 14px; }
+  .file-tree { background: #f4f4f0; padding: 14px; border-radius: 8px; font-family: Consolas, Monaco, monospace; font-size: 13px; line-height: 1.5; border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<h1>LLM training pipeline — flowcharts</h1>
+<p class="subtitle">Two pipeline-level data-flow diagrams, followed by the internal algorithm of each stage: BPE tokenizer, pretraining, SFT, reward model, and PPO/RLHF.</p>
+
+<!-- ================= 1. PHASE 1 DATA FLOW ================= -->
+<h2>1. Phase 1 — foundation model, data flow</h2>
+<p class="desc">A raw text corpus is used to learn a byte-pair-encoding vocabulary (merges), and separately to pretrain a causal language model on next-token prediction. Pretraining's raw checkpoint is then converted into a HuggingFace-loadable directory. In the actual code, pretraining loads its tokenizer via <code>AutoTokenizer.from_pretrained</code>, not from the custom BPE script — the tokenizer here is a standalone, swappable teaching implementation, not literally wired into the pipeline.</p>
+<div class="io-box">
+  <strong>Data Flow Summary:</strong><br>
+  • <strong>Input:</strong> Raw multi-gigabyte text corpus.<br>
+  • <strong>Intermediate Outputs:</strong> Vocabulary & merge rules (from BPE), raw PyTorch `.pt` model weights checkpoint.<br>
+  • <strong>Final Output:</strong> Standardized HuggingFace-compatible directory (`config.json`, `model.safetensors`/`pytorch_model.bin`, tokenizer configs).
+</div>
+<div class="card">
+<svg viewBox="0 0 680 190" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#666666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<text class="caption" x="126.5" y="26" text-anchor="middle">Text corpus</text>
+<line x1="126.5" y1="34" x2="126.5" y2="68" class="arrow" marker-end="url(#a1)"/>
+
+<rect class="box" x="40" y="70" width="173" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56"/>
+<text class="title" x="126.5" y="88" text-anchor="middle" fill="#04342C">BPE tokenizer</text>
+<text class="subtitle-txt" x="126.5" y="108" text-anchor="middle" fill="#0F6E56">Learn merges from corpus</text>
+
+<text class="caption" x="233" y="55" text-anchor="middle">vocab + merges</text>
+<line x1="213" y1="98" x2="253" y2="98" class="arrow" marker-end="url(#a1)"/>
+
+<rect class="box" x="253" y="70" width="173" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5"/>
+<text class="title" x="339.5" y="88" text-anchor="middle" fill="#042C53">Pretraining</text>
+<text class="subtitle-txt" x="339.5" y="108" text-anchor="middle" fill="#185FA5">Causal next-token loss</text>
+
+<text class="caption" x="446" y="55" text-anchor="middle">raw ckpt (.pt)</text>
+<line x1="426" y1="98" x2="466" y2="98" class="arrow" marker-end="url(#a1)"/>
+
+<rect class="box" x="466" y="70" width="173" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A"/>
+<text class="title" x="552.5" y="88" text-anchor="middle" fill="#2C2C2A">Convert to HF format</text>
+<text class="subtitle-txt" x="552.5" y="108" text-anchor="middle" fill="#5F5E5A">Raw ckpt to loadable dir</text>
+
+<line x1="552.5" y1="126" x2="552.5" y2="150" class="arrow" marker-end="url(#a1)"/>
+<text class="caption" x="552.5" y="166" text-anchor="middle">HF-format model dir</text>
+</svg>
+</div>
+
+<!-- ================= 2. PHASE 2 DATA FLOW ================= -->
+<h2>2. Phase 2 — alignment, data flow</h2>
+<p class="desc">The pretrained model is completely finished as a raw next-token predictor. It already knows grammar, facts, and language structure.The output being the 
+<ul>
+<li><strong>config.json</strong>(containing details of attention heads, hiddent layers,position encoding. Actual size depends on the NN Transformer model being used).</li>
+<li>The Weights - (<strong>model.safetensors</strong>): The file contains the weights for the  layers</li>
+</ul>
+The <strong>SFT model</strong> starts as an exact copy of the pretrained model.
+It is not a different architecture or a half-done model; it has the exact same weights right before SFT begins. SFT is simply a phase shift in the training objective:
+SFT Objective: Predict the next word specifically in a conversational turn, acting as a helpful assistant.
+So in short.
+
+<ul>
+<li>Pretraining Objective: Predict the very next word on indiscriminate internet text.</li>
+
+<li>SFT Objective: Predict the next word specifically in a conversational turn, acting as a helpful assistant.</li>
+</ul>
+<ul>
+<li>
+kindly note that The <strong>prompt/Assitant response from SFT dataset</strong> is concatenated  into a single continuous sequence for Attention Context and training is performed while masking the prompt token.</li>
+<li>
+[Prompt Tokens] + [Response Tokens] is fed into the model. The self-attention layers compute attention across both parts so the model fully understands the question being asked.</li>
+</ul>
+<div class="io-box">
+<ul>
+  <li><strong>Why concatenate (The Attention Context):</strong>
+Transformers use self-attention, meaning every token looks at all preceding tokens. For the model to generate a smart response, it must read and understand the prompt first. By putting [User Prompt] + [Assistant Response] in the same sequence, the assistant's tokens can mathematically "attend to" the user's prompt tokens and understand what question is being asked.</li>
+
+<li><strong>Why mask the prompt (The Loss Control):</strong>
+If we calculated loss on the user's prompt, the model would waste gradient steps learning how to mimic how users ask questions, rather than learning how to answer them. By setting prompt token labels to -100, PyTorch tells the optimizer: "Let the model read the prompt to gather context, but do not update any weights based on how well it predicts the prompt's words. Only update weights based on how accurately it generates the response.</li>
+</ul>
+</div>
+
+
+</ul>
+<p> In <strong> Reward Modeling</strong> <ul> <li>the preference pairs  (chosen vs. rejected responses) alongside our SFT checkpoint, we train a separate model to act as a judge.</li>
+
+<li>Result: A <strong>frozen reward model</strong> that can score how good any given response is.</li> </ul>
+
+and Finally in the <strong>PPO / RLHF (Final Alignment)</strong><ul>
+
+<li>What happens: We feed raw prompts only into the process. The SFT checkpoint acts as our starting policy, and the frozen reward model grades its answers. </ui>
+<li>Using reinforcement learning, we adjust the model so it learns to generate high-scoring, safe responses.</li> </ul>
+
+Result: The final aligned policy checkpoint (your production-ready chat model).
+</p>
+
+</p>
+<div class="io-box">
+  <strong>Data Flow Summary:</strong><br>
+  • <strong>Inputs:</strong> Supervised instruction datasets (Prompt + Response pairs), Preference datasets (Chosen vs. Rejected response pairs), and standalone prompts.<br>
+  • <strong>Intermediate Outputs:</strong> SFT Policy checkpoint, frozen Bradley-Terry Reward Model weights.<br>
+  • <strong>Final Output:</strong> Fully aligned chatbot policy checkpoint optimized via reinforcement learning.
+</div>
+<div class="card">
+<svg viewBox="0 0 680 195" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#666666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<text class="caption" x="126.5" y="26" text-anchor="middle">Prompt+response pairs</text>
+<line x1="126.5" y1="34" x2="126.5" y2="88" class="arrow" marker-end="url(#a2)"/>
+<text class="caption" x="339.5" y="26" text-anchor="middle">Preference pairs</text>
+<line x1="339.5" y1="34" x2="339.5" y2="88" class="arrow" marker-end="url(#a2)"/>
+<text class="caption" x="552.5" y="26" text-anchor="middle">Prompts only</text>
+<line x1="552.5" y1="34" x2="552.5" y2="88" class="arrow" marker-end="url(#a2)"/>
+
+<rect class="box" x="40" y="90" width="173" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5"/>
+<text class="title" x="126.5" y="108" text-anchor="middle" fill="#042C53">SFT</text>
+<text class="subtitle-txt" x="126.5" y="128" text-anchor="middle" fill="#185FA5">Loss masked to response</text>
+
+<text class="caption" x="233" y="80" text-anchor="middle">SFT checkpoint</text>
+<line x1="213" y1="118" x2="253" y2="118" class="arrow" marker-end="url(#a2)"/>
+
+<rect class="box" x="253" y="90" width="173" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7"/>
+<text class="title" x="339.5" y="108" text-anchor="middle" fill="#26215C">Reward model</text>
+<text class="subtitle-txt" x="339.5" y="128" text-anchor="middle" fill="#534AB7">Bradley-Terry pairwise loss</text>
+
+<text class="caption" x="446" y="80" text-anchor="middle">frozen RM</text>
+<line x1="426" y1="118" x2="466" y2="118" class="arrow" marker-end="url(#a2)"/>
+
+<rect class="box" x="466" y="90" width="173" height="56" rx="8" fill="#FAECE7" stroke="#993C1D"/>
+<text class="title" x="552.5" y="108" text-anchor="middle" fill="#4A1B0C">PPO / RLHF</text>
+<text class="subtitle-txt" x="552.5" y="128" text-anchor="middle" fill="#993C1D">Rollout, score, clip update</text>
+
+<line x1="552.5" y1="146" x2="552.5" y2="170" class="arrow" marker-end="url(#a2)"/>
+<text class="caption" x="552.5" y="186" text-anchor="middle">Aligned policy checkpoint</text>
+</svg>
+</div>
+
+<hr class="sep">
+
+<!-- ================= 3. BPE TOKENIZER INTERNALS ================= -->
+<h2>3. BPE tokenizer — internals</h2>
+<p class="desc">The corpus is split into characters with an end-of-word marker and word frequencies are counted. A loop then repeatedly counts adjacent symbol-pair frequencies and merges the single most frequent pair into a new symbol, until <code>vocab_size</code> is reached. The result is the final vocabulary plus the ordered list of merges, used later to encode/decode new text.</p>
+<div class="io-box">
+  <strong>Data Flow Summary:</strong><br>
+  • <strong>Input:</strong> Raw training corpus strings.<br>
+  • <strong>Intermediate Output:</strong> Frequency tables of adjacent character and subword pairs updated iteratively.<br>
+  • <strong>Final Output:</strong> Token dictionary mapping integer IDs to subword strings, plus sequential merge rules.
+</div>
+<div class="card">
+<svg viewBox="0 0 680 170" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#666666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<rect class="box" x="40" y="60" width="173" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A"/>
+<text class="title" x="126.5" y="78" text-anchor="middle" fill="#2C2C2A">Corpus</text>
+<text class="subtitle-txt" x="126.5" y="98" text-anchor="middle" fill="#5F5E5A">Split into chars</text>
+
+<line x1="213" y1="88" x2="253" y2="88" class="arrow" marker-end="url(#a3)"/>
+
+<rect class="box" x="253" y="60" width="173" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56"/>
+<text class="title" x="339.5" y="78" text-anchor="middle" fill="#04342C">Merge loop</text>
+<text class="subtitle-txt" x="339.5" y="98" text-anchor="middle" fill="#0F6E56">Count + merge pairs</text>
+
+<line x1="426" y1="88" x2="466" y2="88" class="arrow" marker-end="url(#a3)"/>
+
+<rect class="box" x="466" y="60" width="173" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A"/>
+<text class="title" x="552.5" y="78" text-anchor="middle" fill="#2C2C2A">Vocabulary</text>
+<text class="subtitle-txt" x="552.5" y="98" text-anchor="middle" fill="#5F5E5A">Merges + token ids</text>
+
+<text class="caption" x="339.5" y="140" text-anchor="middle">↻ repeat until vocab_size</text>
+</svg>
+</div>
+
+<!-- ================= 4. PRETRAINING INTERNALS ================= -->
+<h2>4. Pretraining — internals</h2>
+<p class="desc">Streaming corpus data and the tokenizer feed a training step: forward pass computes next-token loss, then backward pass and an AdamW step (with gradient clipping and a cosine schedule) update the model. This repeats until <code>max_steps</code>, with checkpoints written periodically as a raw <code>torch.save</code> state dict.</p>
+<div class="io-box">
+  <strong>Data Flow Summary:</strong><br>
+  • <strong>Inputs:</strong> Tokenized text chunks represented as integer tensor batches.<br>
+  • <strong>Intermediate Output:</strong> Scalar cross-entropy loss values computed across predicted token probabilities.<br>
+  • <strong>Final Output:</strong> Raw PyTorch state-dictionary checkpoint files containing trained transformer weights (`.pt`).
+</div>
+<div class="card">
+<svg viewBox="0 0 680 170" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#666666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<rect class="box" x="40" y="60" width="173" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A"/>
+<text class="title" x="126.5" y="78" text-anchor="middle" fill="#2C2C2A">Data + tokenizer</text>
+<text class="subtitle-txt" x="126.5" y="98" text-anchor="middle" fill="#5F5E5A">Streaming corpus</text>
+
+<line x1="213" y1="88" x2="253" y2="88" class="arrow" marker-end="url(#a4)"/>
+
+<rect class="box" x="253" y="60" width="173" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5"/>
+<text class="title" x="339.5" y="78" text-anchor="middle" fill="#042C53">Training step</text>
+<text class="subtitle-txt" x="339.5" y="98" text-anchor="middle" fill="#185FA5">Loss, backward, step</text>
+
+<line x1="426" y1="88" x2="466" y2="88" class="arrow" marker-end="url(#a4)"/>
+
+<rect class="box" x="466" y="60" width="173" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A"/>
+<text class="title" x="552.5" y="78" text-anchor="middle" fill="#2C2C2A">Checkpoint</text>
+<text class="subtitle-txt" x="552.5" y="98" text-anchor="middle" fill="#5F5E5A">Raw .pt state dict</text>
+
+<text class="caption" x="339.5" y="140" text-anchor="middle">↻ repeat until max_steps</text>
+</svg>
+</div>
+
+<!-- ================= 5. SFT INTERNALS ================= -->
+<h2>5. SFT — internals</h2>
+<p class="desc">Prompt-response JSONL pairs are tokenized into a single sequence, with prompt tokens masked to <code>IGNORE_INDEX</code> in the labels. A training step then computes loss only on the response tokens and updates weights, repeating each epoch, producing a final SFT checkpoint in HF format.</p>
+<div class="io-box">
+  <strong>Data Flow Summary:</strong><br>
+  • <strong>Inputs:</strong> Structured instruction pairs (User Prompt + Assistant Response text formatting).<br>
+  • <strong>Intermediate Output:</strong> Masked token tensors where prompt gradients are ignored ($\text{label} = -100$).<br>
+  • <strong>Final Output:</strong> HuggingFace-compatible SFT model directory.
+</div>
+<div class="card">
+<svg viewBox="0 0 680 170" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#666666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<rect class="box" x="40" y="60" width="173" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A"/>
+<text class="title" x="126.5" y="78" text-anchor="middle" fill="#2C2C2A">Prompt+response</text>
+<text class="subtitle-txt" x="126.5" y="98" text-anchor="middle" fill="#5F5E5A">JSONL pairs</text>
+
+<line x1="213" y1="88" x2="253" y2="88" class="arrow" marker-end="url(#a5)"/>
+
+<rect class="box" x="253" y="60" width="173" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5"/>
+<text class="title" x="339.5" y="78" text-anchor="middle" fill="#042C53">Masked SFT step</text>
+<text class="subtitle-txt" x="339.5" y="98" text-anchor="middle" fill="#185FA5">Loss on response</text>
+
+<line x1="426" y1="88" x2="466" y2="88" class="arrow" marker-end="url(#a5)"/>
+
+<rect class="box" x="466" y="60" width="173" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A"/>
+<text class="title" x="552.5" y="78" text-anchor="middle" fill="#2C2C2A">SFT checkpoint</text>
+<text class="subtitle-txt" x="552.5" y="98" text-anchor="middle" fill="#5F5E5A">HF-format directory</text>
+
+<text class="caption" x="339.5" y="140" text-anchor="middle">↻ repeat per epoch</text>
+</svg>
+</div>
+
+<!-- ================= 6. REWARD MODEL INTERNALS ================= -->
+<h2>6. Reward model — internals</h2>
+<p class="desc">Each preference pair (chosen, rejected) is scored by a shared transformer backbone plus a linear reward head, reading the scalar at the last non-padding token. The Bradley-Terry pairwise loss, <code>-log(sigmoid(r_chosen - r_rejected))</code>, is backpropagated, repeating over all pairs, to produce a frozen reward-model checkpoint.</p>
+<div class="io-box">
+  <strong>Data Flow Summary:</strong><br>
+  • <strong>Inputs:</strong> Human preference datasets containing a prompt paired with two competing responses (Chosen vs. Rejected).<br>
+  • <strong>Intermediate Output:</strong> Scalar reward scores ($r_{\text{chosen}}$ and $r_{\text{rejected}}$) evaluated through the Bradley-Terry log-sigmoid loss function.<br>
+  • <strong>Final Output:</strong> Frozen reward model checkpoint file (`reward_model.pt`).
+</div>
+<div class="card">
+<svg viewBox="0 0 680 170" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a6" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#666666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<rect class="box" x="40" y="60" width="173" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A"/>
+<text class="title" x="126.5" y="78" text-anchor="middle" fill="#2C2C2A">Preference pairs</text>
+<text class="subtitle-txt" x="126.5" y="98" text-anchor="middle" fill="#5F5E5A">chosen vs rejected</text>
+
+<line x1="213" y1="88" x2="253" y2="88" class="arrow" marker-end="url(#a6)"/>
+
+<rect class="box" x="253" y="60" width="173" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7"/>
+<text class="title" x="339.5" y="78" text-anchor="middle" fill="#26215C">Score + loss</text>
+<text class="subtitle-txt" x="339.5" y="98" text-anchor="middle" fill="#534AB7">Bradley-Terry loss</text>
+
+<line x1="426" y1="88" x2="466" y2="88" class="arrow" marker-end="url(#a6)"/>
+
+<rect class="box" x="466" y="60" width="173" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A"/>
+<text class="title" x="552.5" y="78" text-anchor="middle" fill="#2C2C2A">RM checkpoint</text>
+<text class="subtitle-txt" x="552.5" y="98" text-anchor="middle" fill="#5F5E5A">reward_model.pt</text>
+
+<text class="caption" x="339.5" y="140" text-anchor="middle">↻ repeat over pairs</text>
+</svg>
+</div>
+
+<!-- ================= 7. PPO / RLHF INTERNALS ================= -->
+<h2>7. PPO / RLHF — internals</h2>
+<p class="desc">For each batch of prompts: the policy generates a rollout response, the frozen reward model scores it, a per-token KL penalty against the reference (SFT) model is subtracted so the policy can't drift too far, a value head estimates an advantage baseline (GAE) to reduce gradient variance, and a clipped PPO surrogate objective updates the policy. This repeats for the next batch of prompts.</p>
+<div class="io-box">
+  <strong>Data Flow Summary:</strong><br>
+  • <strong>Inputs:</strong> Unlabeled prompt text batches, initial SFT reference model, and frozen Reward Model.<br>
+  • <strong>Intermediate Outputs:</strong> Generated model rollouts, scalar reward ratings, token-level KL divergence metrics, and Generalized Advantage Estimations (GAE).<br>
+  • <strong>Final Output:</strong> Final fine-tuned PPO Aligned Policy Checkpoint.
+</div>
+<div class="card">
+<svg viewBox="0 0 680 270" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a7" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#666666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<rect class="box" x="40" y="60" width="186" height="56" rx="8" fill="#FAECE7" stroke="#993C1D"/>
+<text class="title" x="133" y="78" text-anchor="middle" fill="#4A1B0C">Rollout</text>
+<text class="subtitle-txt" x="133" y="98" text-anchor="middle" fill="#993C1D">Policy generates text</text>
+
+<line x1="226" y1="88" x2="246" y2="88" class="arrow" marker-end="url(#a7)"/>
+
+<rect class="box" x="246" y="60" width="186" height="56" rx="8" fill="#FAECE7" stroke="#993C1D"/>
+<text class="title" x="339" y="78" text-anchor="middle" fill="#4A1B0C">Score</text>
+<text class="subtitle-txt" x="339" y="98" text-anchor="middle" fill="#993C1D">Frozen RM rates output</text>
+
+<line x1="432" y1="88" x2="452" y2="88" class="arrow" marker-end="url(#a7)"/>
+
+<rect class="box" x="452" y="60" width="186" height="56" rx="8" fill="#FAECE7" stroke="#993C1D"/>
+<text class="title" x="545" y="78" text-anchor="middle" fill="#4A1B0C">KL penalty</text>
+<text class="subtitle-txt" x="545" y="98" text-anchor="middle" fill="#993C1D">Vs reference SFT model</text>
+
+<path d="M545 116 V145 H200 V170" fill="none" stroke="#666666" stroke-width="1" marker-end="url(#a7)"/>
+
+<rect class="box" x="70" y="170" width="260" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7"/>
+<text class="title" x="200" y="188" text-anchor="middle" fill="#26215C">Advantage</text>
+<text class="subtitle-txt" x="200" y="208" text-anchor="middle" fill="#534AB7">Value head baseline (GAE)</text>
+
+<line x1="330" y1="198" x2="350" y2="198" class="arrow" marker-end="url(#a7)"/>
+
+<rect class="box" x="350" y="170" width="260" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7"/>
+<text class="title" x="480" y="188" text-anchor="middle" fill="#26215C">PPO update</text>
+<text class="subtitle-txt" x="480" y="208" text-anchor="middle" fill="#534AB7">Clipped surrogate objective</text>
+
+<text class="caption" x="480" y="250" text-anchor="middle">↻ next batch of prompts</text>
+</svg>
+</div>
+
+<!-- ================= 8. HF FORMAT DIRECTORY & SAMPLES ================= -->
+<h2>8. HF Format — Directory Structure & Sample Files</h2>
+<p class="desc">The Hugging Face format functions as a standardized directory bundling architecture definitions, tokenizer instructions, and secure memory-mapped binary weights (`.safetensors`).</p>
+
+<div class="io-box">
+  <strong>Standard Directory Tree:</strong>
+  <div class="file-tree" style="margin-top: 8px;">
+/model-directory/
+├── config.json            # Architecture parameters & structural blueprint
+├── tokenizer_config.json  # Tokenizer parameters and special token mappings
+├── tokenizer.json         # Subword vocabulary & BPE merge rules
+├── vocab.json             # Human-readable integer-to-string token mappings
+└── model.safetensors      # Memory-mapped secure binary weight tensors
+  </div>
+</div>
+
+<div class="code-grid">
+  <div>
+    <div class="code-title">Sample: config.json</div>
+    <pre class="code-box"><code>{
+  "architectures": ["LlamaForCausalLM"],
+  "model_type": "llama",
+  "hidden_size": 2048,
+  "intermediate_size": 8192,
+  "num_attention_heads": 32,
+  "num_hidden_layers": 22,
+  "vocab_size": 128256,
+  "rms_norm_eps": 1e-05,
+  "rope_theta": 500000.0,
+  "torch_dtype": "bfloat16"
+}</code></pre>
+  </div>
+  <div>
+    <div class="code-title">Sample: tokenizer_config.json</div>
+    <pre class="code-box"><code>{
+  "added_tokens_decoder": {
+    "128000": {
+      "content": "&lt;|begin_of_text|>",
+      "special": true
+    }
+  },
+  "bos_token": "&lt;|begin_of_text|>",
+  "eos_token": "&lt;|end_of_text|>",
+  "model_max_length": 131072,
+  "pad_token": "&lt;|end_of_text|>",
+  "tokenizer_class": "PreTrainedTokenizerFast"
+}</code></pre>
+  </div>
+</div>
+
+<!-- ================= 9. VOCAB + MERGES ================= -->
+<h2>9. Vocab & Merges — The Tokenizer Foundation</h2>
+<p class="desc">These files define the translation layer between human language and the integer vectors the model processes. They are the primary output of the BPE Training stage.</p>
+<div class="io-box">
+  <strong>The Components:</strong><br>
+  • <strong><code>vocab.json</code></strong>: A master map assigning every unique subword token to a unique integer ID (e.g., <code>"hello": 4512</code>).<br>
+  • <strong><code>merges.txt</code></strong>: The sequential "rulebook" of merges performed during BPE training. It tells the tokenizer how to combine individual characters into frequent subwords (e.g., <code>h e</code> -> <code>he</code>).
+</div>
+<div class="code-grid">
+  <div>
+    <div class="code-title">Sample: vocab.json (Simplified)</div>
+    <pre class="code-box"><code>{
+  "&lt;|end_of_text|>": 0,
+  "the": 1,
+  "ing": 2,
+  "hello": 3,
+  "world": 4
+}</code></pre>
+  </div>
+  <div>
+    <div class="code-title">Sample: merges.txt (Rulebook)</div>
+    <pre class="code-box"><code>#version: 0.2
+h e
+t h
+i n
+g ^
+e d</code></pre>
+  </div>
+</div>
+
+<!-- ================= 10. SFT MECHANICS & ARCHITECTURE MAPPING ================= -->
+<h2>10. SFT Mechanics & Architecture Mapping</h2>
+<p class="desc">Core architectural and methodological details regarding how Supervised Fine-Tuning interacts with pretrained models, configuration files, and sequence gradient masking.</p>
+<div class="io-box">
+  <strong>Key Architectural Principles:</strong><br>
+  • <strong>Exact Model Architecture (<code>config.json</code>)</strong>: Pretrained binary weights (`.safetensors`) are meaningless raw numbers on their own. The config file supplies the precise neural network blueprint (layers, dimensions, attention heads) required for PyTorch to instantiate the architecture correctly.<br>
+  • <strong>Model State at SFT Start</strong>: An SFT model is not half-done or structurally different; it begins as an exact clone of the fully pretrained foundation model. Only the training objective changes (shifting from indiscriminate next-token continuation to instruction response modeling).<br>
+  • <strong>Prompt + Response Concatenation</strong>: Sequences are concatenated into `[User Prompt] + [Assistant Response]` so the model can read the prompt and build contextual self-attention over it before generating text.<br>
+  • <strong>Gradient Masking (<code>IGNORE_INDEX = -100</code>)</strong>: While the prompt is fed in for attention context, its label IDs are set to <code>-100</code>. This instructs the cross-entropy loss function to completely ignore prompt tokens, ensuring weight updates focus exclusively on training the model to answer correctly.
+</div>
+
+<footer>Generated from LLM_Pre_training.py, BPE_Tokenizer.py, SFT_CS.py, Reward_model.py, PPO_RLHF.py, convert_pre_trained.py, and LLM_Pipeline.py.</footer>
+
+</body>
+</html>
