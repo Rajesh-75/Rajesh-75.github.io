@@ -19,6 +19,27 @@
     };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+      /* Algorithm box styling matching your tutorial's theme */
+      .algorithm-box {
+        background: #fbf7ef;
+        border: 1px solid #e0d3ab;
+        border-radius: 6px;
+        padding: 18px 22px;
+        margin: 20px 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .algorithm-box strong.label {
+        color: #8a6d1d;
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .algorithm-box ul { margin: 6px 0 0 0; padding-left: 22px; color: #444; }
+      .algorithm-box li { margin-bottom: 6px; line-height: 1.6; }
+    </style>
 </head>
 <body>
 
@@ -87,7 +108,7 @@
         <li class="section-item">
             <span class="section-title">4. The Activation Function: The Non-Linear Step</span>
             <p>
-     The Linear Regression step calculation step 3 is transformed using Activation. By using functions like <strong>ReLU</strong> or <strong>Sigmoid</strong> (denoted by $h$), 
+      The Linear Regression step calculation step 3 is transformed using Activation. By using functions like <strong>ReLU</strong> or <strong>Sigmoid</strong> (denoted by $h$), 
     the activation is represented as:
     $$a_j^{(l)} = h(z_j^{(l)}) \dots (2)$$.
 </p>
@@ -111,7 +132,7 @@
 			<div class="formula-box" style="text-align: center; margin: 20px 0; background: #f8fafc; padding: 15px; border-radius: 8px;">
 			
 			
-        
+		
 		The entire layer processing is given as 
     </div>
         <strong>The "Linear Collapse" Rule:</strong> 
@@ -128,6 +149,7 @@
     <span class="section-title" style="font-size: 1.4rem; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db;">
         5. Final Layer (L4) & Loss Evaluation
     </span>
+    
     
     <p style="line-height: 1.6; color: #333; margin-top: 15px;">
         Before the final output is emitted, the weighted sums (<strong>Logits or $Z$ values</strong>) are passed through a non-linear activation function $f(\mathbf{z})$. This function "interprets" the raw scores to match the mathematical requirements of the specific task:
@@ -210,7 +232,28 @@
     Neural Network training is finding these points. A minimum corresponds to a point where 
     <strong>$$\nabla L(w) = 0 ...(5)$$.</strong> 
     where $\nabla L(w)$ is the gradient of the Loss Function.Rather than using a single equation to solve (5) for weights, a repetitive, step-by-step method locates the lowest point of error, much like walking down a hill This gradient is computed 
-    by differentiating $L(w)$ with respect to weights ($w$).The most straightforward way to use gradient information is to update weights by taking a small step in the opposite direction of the gradient. This is calculated using the formula:$$w(\tau) = w(\tau-1) - \eta \nabla L(w(\tau-1))....(6)$$In this equation, the positive value $\eta$ is called the learning rate.The symbol $\tau$ represents a discrete time index, representing the specific iteration count within the sequence of weight updates. After each update, the gradient is calculated again for the new weights, and the process repeats. Because the weights constantly move toward the sharpest possible drop in error, this method is known as <strong>gradient descent or steapest descent</strong>. More about the Gradient Descent is covered in <a href = "BP2.html">BackPropogation</a>. For various parameters used by Neural Network Learning algorithm,please refer <a href = "BP2.html">Parameters</a>
+    by differentiating $L(w)$ with respect to weights ($w$).The most straightforward way to use gradient information is to update weights by taking a small step in the opposite direction of the gradient. This is calculated using the formula:$$w(\tau) = w(\tau-1) - \eta \nabla L(w(\tau-1))....(6)$$.In this equation, the positive value $\eta$ is called the learning rate.The symbol $\tau$ represents a discrete time index, representing the specific iteration count within the sequence of weight updates. After each update, the gradient is calculated again for the new weights, and the process repeats. Because the weights constantly move toward the sharpest possible drop in error, this method is known as <a href="BP2.html"><strong>gradient descent or steepest descent</strong></a>. 
+
+    <!-- Advanced Optimizers Extension: Adam & AdamW as part of Gradient Descent -->
+    <p style="margin-top: 15px;">While standard Gradient Descent uses a fixed learning rate uniformly across all parameters, advanced adaptive variants like <strong>Adam (Adaptive Moment Estimation)</strong> enhance gradient descent by combining momentum (tracking exponential moving averages of past gradients to smooth trajectories) with adaptive scaling (adjusting step sizes per parameter based on historical variances). The update rule incorporates first ($m_t$) and second ($v_t$) moment estimates:</p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$m_t = \beta_1 m_{t-1} + (1 - \beta_1) \nabla L(w), \quad v_t = \beta_2 v_{t-1} + (1 - \beta_2) (\nabla L(w))^2$$
+    </div>
+
+    <div class="algorithm-box">
+        <strong class="label">Advanced Gradient Descent: Adam and AdamW Optimization</strong>
+        <ul>
+            <li><strong>The Role of Adam in Gradient Descent:</strong> Adam builds upon standard gradient descent by addressing noisy gradients and varying scales across parameters. By computing biased-corrected moment estimates, it dynamically scales the effective learning rate for each weight, enabling rapid convergence through ravines and plateaus in the loss landscape.</li>
+            <li><strong>The Limitation with Standard Weight Decay in Adam:</strong> When trying to apply L2 regularization (weight decay) to prevent overfitting within standard Adam, the penalty term is coupled directly into the gradient calculation. Because Adam divides updates by $\sqrt{v_t}$, parameters with large historical gradients receive disproportionately smaller regularization penalties compared to infrequently updated parameters.</li>
+            <li><strong>AdamW (Decoupled Weight Decay):</strong> AdamW fixes this discrepancy by decoupling the weight decay step entirely from the adaptive gradient calculations. It computes the momentum and scaling steps strictly using the loss gradients, and then applies a direct weight decay penalty ($\lambda w$) independently at the final update phase:
+                <div class="math-display" style="text-align: center; margin: 8px 0;">
+                    $$w_t = w_{t-1} - \eta \left( \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon} + \lambda w_{t-1} \right)$$
+                </div>
+            This clean separation ensures consistent regularization across all network parameters, making AdamW the standard optimization engine for training robust deep neural networks and large language models.</li>
+        </ul>
+    </div>
+
+    More about the Gradient Descent is covered in <a href = "BP2.html">BackPropogation</a>. For various parameters used by Neural Network Learning algorithm,please refer <a href = "BP2.html">Parameters</a>
     <p style="color: #444; line-height: 1.5;"><h3>About Initialization of weight values</h3> <ul>
         <li>When we use an algorithm like Gradient Descent to train a model, we have to pick a starting value for all the weights (parameters). Think of this as the "starting position" of your hiker on the 3D loss mountain we discussed.</li>
 		<li>Why it matters: Where you start has a huge impact. It determines how fast the model learns and how accurate it will be on new, unseen data.</li>
