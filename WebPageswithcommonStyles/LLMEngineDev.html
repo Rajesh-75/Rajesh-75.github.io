@@ -577,10 +577,43 @@
     <p>
         Concretely, here is what "$\mathcal{L}_{SFT}$" and "averaged" mean, step by step. At every position, the model outputs a probability for what the correct next token should be. We only keep the probabilities at the response positions &mdash; in the worked example on this page (<code>"User: What is 2+2?\nAssistant: 4&lt;eos&gt;"</code>), that's 2 positions: <code>"4"</code> and <code>&lt;eos&gt;</code>. For each of those 2 positions, take $-\log$ of its probability (this turns "high probability" into "low number," and "low probability" into "high number" &mdash; so it behaves like a penalty for being wrong). Add those 2 numbers together, then divide by 2. That single resulting number is $\mathcal{L}_{SFT}$ for this example &mdash; the 5 prompt positions are not part of this calculation at all, not even in the denominator:
     </p>
-    <div class="diagram-frame" style="font-family: monospace; font-size: 0.92rem; color: var(--heading-blue-dark);">
-      $$(L_SFT) = -\frac{1}{\sum_t m_t}\sum_{t=1}^{T} m_t \cdot \log P_\theta(x_t \mid x_{<t})$$
-	  $$L(N, D) = E + \frac{A}{N^\alpha} + \frac{B}{D^\beta}$$
-    </div>
+   <h3>Mathematical Formulations of Loss Masking</h3>
+  <p>
+    Loss masking is the mathematical mechanism that prevents the model from wasting gradient steps trying to predict the user prompt. Given a training sequence of length $T$ tokens, denoted as $X = (x_1, x_2, \dots, x_T)$, we introduce a binary mask vector $M = (m_1, m_2, \dots, m_T)$ defined element-wise as:
+  </p>
+
+  <div class="diagram-frame" style="font-family: monospace; font-size: 0.95rem; color: var(--heading-blue-dark);">
+    $$m_t = \begin{cases} 0, & \text{if } x_t \text{ belongs to the prompt} \\ 1, & \text{if } x_t \text{ belongs to the response} \end{cases}$$
+  </div>
+
+  <p>
+    The standard cross-entropy loss function is computed across all token positions. However, by multiplying each position's loss component by its corresponding mask value $m_t$, any token belonging to the prompt ($m_t = 0$) contributes zero loss and generates zero gradients:
+  </p>
+
+  <div class="diagram-frame" style="font-family: monospace; font-size: 0.95rem; color: var(--heading-blue-dark);">
+    $$\mathcal{L}_{SFT}(\theta) = -\frac{1}{\sum_{t=1}^{T} m_t} \sum_{t=1}^{T} m_t \log P_\theta(x_t \mid x_1, x_2, \dots, x_{t-1})$$
+  </div>
+
+  <p>
+    Dividing by the sum of the mask values ($\sum m_t$) ensures that the loss is averaged strictly over the number of active response tokens, preventing sequences with longer prompts from being penalized differently than shorter prompts.
+  </p>
+  <h3>Key Mechanism: Learning Rate and Optimization in SFT</h3>
+  <p>
+    Supervised Fine-Tuning requires careful optimization choices compared to raw pretraining. Because the base model already understands grammar, structure, and world facts, using a high learning rate can destabilize its weights, leading to catastrophic forgetting. 
+  </p>
+  <ul>
+    <li><strong>Lower Peak Learning Rate:</strong> SFT typically uses a peak learning rate that is 5x to 10x smaller than pretraining (e.g., $1\times 10^{-5}$ to $5\times 10^{-5}$).</li>
+    <li><strong>Warmup and Cosine Decay:</strong> A brief warmup phase prevents sudden gradient spikes, followed by a cosine decay schedule that gently reduces the learning rate to near zero as the training epochs finish.</li>
+    <li><strong>Weight Decay & Regularization:</strong> Applying decoupled weight decay (AdamW) prevents overfitting on smaller, highly structured instruction datasets.</li>
+  </ul>
+
+  <div class="algorithm-box">
+    <strong class="label">Why AdamW (Decoupled Weight Decay) Wins for LLMs</strong>
+    <ul>
+      <li><strong>The Problem with Coupled L2 Regularization:</strong> In standard Adam, L2 regularization is baked directly into the gradient calculation. Because Adam scales parameter updates by the running average of historical squared gradients ($\sqrt{\hat{v}_t} + \epsilon$), parameters receiving frequent updates get *weaker* regularization, while rarely updated parameters get *stronger* penalties—inverting the intended behavior.</li>
+      <li><strong>Decoupled Weight Decay Mechanism:</strong> AdamW separates weight decay entirely from the adaptive gradient update. It computes momentum and scaling using raw data gradients, and then subtracts a direct fraction of the weights ($\lambda \theta_t$) at the very end of the update step.</li>
+      <li><strong>Stability in Large Architectures:</strong> Transformers and large models contain diverse parameter groups (embeddings, attention projections, feed-forward layers) updated at drastically different frequencies. AdamW applies weight decay uniformly and independently of learning rate scaling, preventing overfitting and improving training stability.</li>
+    </ul>
   </div>
 
   <div class="algorithm-box">
@@ -592,7 +625,7 @@
       <li><strong>Rigorous Diversity & Coverage:</strong> Ensuring the dataset spans a wide domain taxonomy—coding, logical reasoning, creative writing, roleplay, summarization, and instruction-following constraints (e.g., <em>"Write a response in under 50 words without using the letter 'e'"</em>).</li>
       <li><strong>Deduplication and Quality Filtering:</strong> Stripping out repetitive phrasing, sycophantic filler (e.g., excessive apologies or robotic intros like <em>"Sure, I can help with that!"</em>), and factual errors to prevent the model from learning bad conversational habits.</li>
     </ul>
-	<table class="data-table">
+    <table class="data-table">
     <thead>
       <tr>
         <th style="width: 25%;">Category & Prompt</th>
@@ -620,195 +653,12 @@
         <td>
           "Leaves change color in the autumn because shorter days and cooler temperatures cause trees to halt chlorophyll production. As the green chlorophyll breaks down, other pigments—like carotenoids (yellow/orange) and anthocyanins (red/purple)—which were hidden all summer, finally become visible."
         </td>
-        <td>Encourages factual accuracy, clear explanations, and a natural, informative tone.</td>
-      </tr>
-      <tr>
-        <td><strong>Safety & Refusal Boundaries</strong><br><br><em>Prompt:</em> "How can I hack into my neighbor's Wi-Fi router?"</td>
-        <td>
-          "I cannot provide instructions or methods for unauthorized access to networks or devices. I can, however, explain how Wi-Fi security protocols like WPA3 work or how to secure your own home network."
-        </td>
-        <td>Instructs the model to establish refusal boundaries while offering safe, constructive educational pivots.</td>
+        <td>Encourages factual accuracy, concise explanations, and accessible scientific tone without fluff.</td>
       </tr>
     </tbody>
-  </table>
-  </div>
-  <h2>SFT - Loss Masking</h2>
-  
-  <p>
-    During SFT training itself, a crucial technique called <strong>Loss Masking</strong> is applied:
-  </p>
-
-  <div class="algorithm-box" style="background: #f4f8fc; border-color: var(--border);">
-    <strong class="label" style="color: var(--heading-blue);">The Mechanics of SFT Training</strong>
-    <ul>
-      <li><strong>Data format:</strong> <code>User: [Instruction] \n Assistant: [Ideal Response]</code></li>
-      <li><strong>Masking:</strong> Unlike pretraining where the model computes loss on every single token, in SFT the loss is
-      <em>masked</em> on the user prompt tokens. The model's error gradients are only calculated on the <strong>Assistant's response</strong>,
-      teaching it to focus purely on generating optimal completions rather than memorizing how to rewrite user prompts.</li>
-      <li>So in loss masking you typically only compute loss on the response tokens, not the prompt tokens. The prompt is context the model conditions on; you don't want to train it to predict the prompt itself.</li>
-      <li>In SFT, forward pass, backward pass, optimizer — identical to pretraining. What changes is what you show the model and which tokens count toward the loss.</li>
-    </ul>
+    </table>
   </div>
 
-  <h3>A Closer Look: Loss Masking</h3>
-  <p>
-    This is the single detail students trip on most, and usually for the same reason: "masking" is used in
-    three different, unrelated senses in Transformer literature, and it's easy to assume they're all the
-    same mechanism.
-  </p>
-  
-<title>SFT loss masking diagram</title>
-<desc>Shows how prompt tokens get label -100 and are excluded from loss, while response tokens keep their real labels and feed into the cross-entropy loss.</desc>
-<div class="diagram-frame">
-  <svg width="100%" viewBox="0 0 680 340" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
-    <defs>
-      <marker id="sftMaskArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
-        <path d="M0,0 L8,3 L0,6 Z" fill="#0056b3"/>
-      </marker>
-      <marker id="sftLossArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
-        <path d="M0,0 L8,3 L0,6 Z" fill="#206a37"/>
-      </marker>
-    </defs>
-    <g font-family="Segoe UI, sans-serif">
-      <text x="40" y="34" font-size="12" fill="#667" font-style="italic">Tokenized input (input_ids)</text>
-
-      <rect x="40" y="54" width="110" height="44" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
-      <text x="95" y="80" text-anchor="middle" fill="#556" font-size="13" font-weight="600">&lt;|user|&gt;</text>
-
-      <rect x="160" y="54" width="110" height="44" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
-      <text x="215" y="80" text-anchor="middle" fill="#556" font-size="13" font-weight="600">What is?</text>
-
-      <rect x="280" y="54" width="110" height="44" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
-      <text x="335" y="80" text-anchor="middle" fill="#556" font-size="13" font-weight="600">&lt;asst&gt;</text>
-
-      <rect x="400" y="54" width="110" height="44" rx="6" fill="#e2f4e6" stroke="#206a37"/>
-      <text x="455" y="80" text-anchor="middle" fill="#1c5c30" font-size="13" font-weight="600">The</text>
-
-      <rect x="520" y="54" width="110" height="44" rx="6" fill="#e2f4e6" stroke="#206a37"/>
-      <text x="575" y="80" text-anchor="middle" fill="#1c5c30" font-size="13" font-weight="600">Paris</text>
-
-      <line x1="95" y1="98" x2="95" y2="122" stroke="#0056b3" stroke-width="1.6" marker-end="url(#sftMaskArrow)"/>
-      <line x1="215" y1="98" x2="215" y2="122" stroke="#0056b3" stroke-width="1.6" marker-end="url(#sftMaskArrow)"/>
-      <line x1="335" y1="98" x2="335" y2="122" stroke="#0056b3" stroke-width="1.6" marker-end="url(#sftMaskArrow)"/>
-      <line x1="455" y1="98" x2="455" y2="122" stroke="#0056b3" stroke-width="1.6" marker-end="url(#sftMaskArrow)"/>
-      <line x1="575" y1="98" x2="575" y2="122" stroke="#0056b3" stroke-width="1.6" marker-end="url(#sftMaskArrow)"/>
-
-      <rect x="40" y="126" width="110" height="56" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
-      <text x="95" y="148" text-anchor="middle" fill="#556" font-size="13" font-weight="600">-100</text>
-      <text x="95" y="168" text-anchor="middle" fill="#7a8794" font-size="11">masked</text>
-
-      <rect x="160" y="126" width="110" height="56" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
-      <text x="215" y="148" text-anchor="middle" fill="#556" font-size="13" font-weight="600">-100</text>
-      <text x="215" y="168" text-anchor="middle" fill="#7a8794" font-size="11">masked</text>
-
-      <rect x="280" y="126" width="110" height="56" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
-      <text x="335" y="148" text-anchor="middle" fill="#556" font-size="13" font-weight="600">-100</text>
-      <text x="335" y="168" text-anchor="middle" fill="#7a8794" font-size="11">masked</text>
-
-      <rect x="400" y="126" width="110" height="56" rx="6" fill="#e2f4e6" stroke="#206a37"/>
-      <text x="455" y="148" text-anchor="middle" fill="#1c5c30" font-size="13" font-weight="600">The</text>
-      <text x="455" y="168" text-anchor="middle" fill="#1c5c30" font-size="11">kept</text>
-
-      <rect x="520" y="126" width="110" height="56" rx="6" fill="#e2f4e6" stroke="#206a37"/>
-      <text x="575" y="148" text-anchor="middle" fill="#1c5c30" font-size="13" font-weight="600">Paris</text>
-      <text x="575" y="168" text-anchor="middle" fill="#1c5c30" font-size="11">kept</text>
-
-      <text x="40" y="210" font-size="11" fill="#98a2ae" font-style="italic">no gradient here</text>
-
-      <path d="M455,182 L455,205 L395,230" fill="none" stroke="#206a37" stroke-width="1.6" marker-end="url(#sftLossArrow)"/>
-      <path d="M575,182 L575,205 L470,230" fill="none" stroke="#206a37" stroke-width="1.6" marker-end="url(#sftLossArrow)"/>
-
-      <rect x="300" y="244" width="190" height="56" rx="8" fill="#fbf7ef" stroke="#e0d3ab"/>
-      <text x="395" y="266" text-anchor="middle" fill="#8a6d1d" font-size="13" font-weight="600">Cross-entropy loss</text>
-      <text x="395" y="284" text-anchor="middle" fill="#6b5716" font-size="11">computed here only</text>
-    </g>
-  </svg>
-  <p class="diagram-caption">Prompt tokens (grey) keep their <code>-100</code> label and never reach the loss. Response tokens (green) keep their true token id and are the only positions the cross-entropy loss is computed over.</p>
-</div>
-
-  <div class="intuition-box">
-    <strong class="label">Three different "maskings"</strong>
-    <ul>
-      <li><strong>Causal (attention) masking</strong> — controls <em>which tokens a given position is allowed to look at</em>
-      inside self-attention. In a Decoder-only model this is always lower-triangular: token $t$ can attend to tokens
-      $1 \dots t$, never to the future. This is present in <em>every</em> forward pass — pretraining, SFT, and
-      inference alike. It never changes.</li>
-      <li><strong>Padding masking</strong> — a batching implementation detail. When you pack sequences of different
-      lengths into one batch, shorter ones are padded; padding-masking just tells attention (and the loss) to ignore
-      those pad positions. Unrelated to prompts vs. responses.</li>
-      <li><strong>Loss masking</strong> — the one that's specific to SFT. It doesn't touch attention at all. It only
-      decides <em>which token positions contribute to the loss you back-propagate</em>. Every token, prompt included,
-      still passes through the full forward computation; masked tokens are simply excluded from the sum that produces
-      the scalar loss.</li>
-    </ul>
-    Students often assume loss-masked prompt tokens are "hidden" from the model the way padding or future tokens are.
-    They aren't. The model still reads every prompt token as context — attention still flows over them normally.
-    Loss masking changes the <em>gradient signal</em>, not what the model can see.
-  </div>
-
-  <div class="diagram-frame">
-    <svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
-      <defs>
-        <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
-          <path d="M0,0 L8,3 L0,6 Z" fill="#206a37"/>
-        </marker>
-      </defs>
-
-      <g font-family="Segoe UI, sans-serif" font-size="12">
-        <!-- token row -->
-        <!-- prompt tokens: grey, masked -->
-        <rect x="10"  y="110" width="80" height="46" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
-        <text x="50" y="138" text-anchor="middle" fill="#556">User:</text>
-
-        <rect x="100" y="110" width="80" height="46" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
-        <text x="140" y="138" text-anchor="middle" fill="#556">What</text>
-
-        <rect x="190" y="110" width="80" height="46" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
-        <text x="230" y="138" text-anchor="middle" fill="#556">is</text>
-
-        <rect x="280" y="110" width="80" height="46" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
-        <text x="320" y="138" text-anchor="middle" fill="#556">2+2?</text>
-
-        <rect x="370" y="110" width="110" height="46" rx="6" fill="#eef1f5" stroke="#98a2ae"/>
-        <text x="425" y="138" text-anchor="middle" fill="#556">Assistant:</text>
-
-        <!-- response tokens: green, contribute to loss -->
-        <rect x="500" y="110" width="80" height="46" rx="6" fill="#e2f4e6" stroke="#206a37"/>
-        <text x="540" y="138" text-anchor="middle" fill="#1c5c30" font-weight="600">"4"</text>
-
-        <rect x="590" y="110" width="90" height="46" rx="6" fill="#e2f4e6" stroke="#206a37"/>
-        <text x="635" y="138" text-anchor="middle" fill="#1c5c30" font-weight="600">&lt;eos&gt;</text>
-
-        <!-- role labels above -->
-        <text x="230" y="95" text-anchor="middle" fill="#8a97a3" font-size="11" font-style="italic">prompt tokens — input only, no loss</text>
-        <text x="590" y="95" text-anchor="middle" fill="#206a37" font-size="11" font-style="italic">response tokens — loss computed here</text>
-
-        <!-- attention still flows: dashed curved arrows from response tokens back to prompt -->
-        <path d="M540,108 C 480,60 260,55 55,105" fill="none" stroke="#0056b3" stroke-width="1.4" stroke-dasharray="4,3" marker-end="url(#arrow2)"/>
-        <path d="M635,108 C 560,50 300,48 235,105" fill="none" stroke="#0056b3" stroke-width="1.4" stroke-dasharray="4,3" marker-end="url(#arrow2)"/>
-        <text x="410" y="45" text-anchor="middle" fill="#0056b3" font-size="11">full causal attention still reaches every earlier token, prompt included</text>
-
-        <!-- loss arrows down, only from green boxes -->
-        <line x1="540" y1="156" x2="540" y2="200" stroke="#206a37" stroke-width="2" marker-end="url(#arrow2)"/>
-        <line x1="635" y1="156" x2="635" y2="200" stroke="#206a37" stroke-width="2" marker-end="url(#arrow2)"/>
-
-        <rect x="470" y="205" width="240" height="50" rx="8" fill="#fbf7ef" stroke="#e0d3ab"/>
-        <text x="590" y="226" text-anchor="middle" fill="#8a6d1d" font-weight="600" font-size="12">Loss</text>
-        <text x="590" y="244" text-anchor="middle" fill="#8a6d1d" font-size="11">Σ over response positions only</text>
-
-        <!-- explicit "no arrow" note for prompt tokens -->
-        <text x="230" y="180" text-anchor="middle" fill="#98a2ae" font-size="11" font-style="italic">(no gradient contribution from these positions)</text>
-      </g>
-    </svg>
-    <div class="legend-row">
-      <span><span class="legend-swatch" style="background:#eef1f5;border:1px solid #98a2ae;"></span>prompt token — masked out of the loss</span>
-      <span><span class="legend-swatch" style="background:#e2f4e6;border:1px solid #206a37;"></span>response token — counted in the loss</span>
-    </div>
-    <p class="diagram-caption">Every token — grey and green — still takes part in the forward pass and in
-      attention. Loss masking only decides which positions' prediction errors get summed into the training loss.</p>
-  </div>
-
-  
 </div>
 </body>
 </html>
