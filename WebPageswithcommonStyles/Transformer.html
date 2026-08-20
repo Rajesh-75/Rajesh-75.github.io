@@ -338,6 +338,34 @@
 
             <div class="derivation-box" style="border-left-color: #8b5cf6; margin-top: 25px;">
                 <h4 style="margin-top:0; color:#4c1d95;">Step-by-Step Mathematical Flow</h4>
+
+                <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 0; font-family: monospace; margin: 10px 0 20px 0;">
+                    <div style="text-align: center; width: 120px;">
+                        <div style="background: #e2e8f0; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; font-size: 0.92rem;">X</div>
+                        <p style="font-family: sans-serif; font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Input embeddings</p>
+                    </div>
+                    <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
+                    <div style="text-align: center; width: 120px;">
+                        <div style="background: #bae6fd; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #0284c7; font-size: 0.92rem;">Q, K, V</div>
+                        <p style="font-family: sans-serif; font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Linear projections of X</p>
+                    </div>
+                    <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
+                    <div style="text-align: center; width: 120px;">
+                        <div style="background: #c7d2fe; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #4f46e5; font-size: 0.92rem;">Scores</div>
+                        <p style="font-family: sans-serif; font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">$QK^T/\sqrt{d_k}$</p>
+                    </div>
+                    <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
+                    <div style="text-align: center; width: 120px;">
+                        <div style="background: #fed7aa; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #ea580c; font-size: 0.92rem;">Softmax</div>
+                        <p style="font-family: sans-serif; font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Row-wise normalize to weights</p>
+                    </div>
+                    <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
+                    <div style="text-align: center; width: 120px;">
+                        <div style="background: #bbf7d0; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #16a34a; font-size: 0.92rem;">Output</div>
+                        <p style="font-family: sans-serif; font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Weights &times; V</p>
+                    </div>
+                </div>
+                <p style="font-size: 0.78rem; color: #94a3b8; text-align: center; margin: -12px 0 20px 0;">(Steps 1&ndash;5 below, worked through with numbers)</p>
                 
                 <p><strong>Step 1: Input Vector Matrix Construction ($X$)</strong></p>
                 <p>Given a baseline sentence layout: <code>"Cat sat mat"</code>, each word is mapped to a static embedding space ($d_{\text{model}} = 4$):</p>
@@ -614,6 +642,18 @@
                 Notice the shapes: Embeddings mapped a token <em>id</em> ($V$-dimensional, one-hot) to a vector ($d_{\text{model}}$-dimensional) using $W_{\text{embed}} \in \mathbb{R}^{V \times d_{\text{model}}}$. Output Projection does the reverse — vector back to a $V$-dimensional distribution — using $W_{\text{unembed}} \in \mathbb{R}^{d_{\text{model}} \times V}$. Because these two matrices have exactly transposed shapes, many production models set $W_{\text{unembed}} = W_{\text{embed}}^{T}$ directly — a technique called <strong>weight tying</strong> — reusing one learned matrix for both directions instead of paying its $\sim V \times d_{\text{model}}$ parameter cost twice.
             </div>
         </section>
+		<!-- ADDED SECTION: Backpropagation & Optimization (AdamW) -->
+        <section id="transformer-backprop" style="margin-bottom: 40px; margin-top: 40px;">
+            <h2 style="color: #0f172a; border-bottom: 2px solid #cbd5e1; padding-bottom: 5px;">Backpropagation & Optimization in Transformers</h2>
+            
+            <p>
+                The fundamental mechanics of <strong>Backpropagation (BP)</strong> in Transformers follow the same core principles as traditional feedforward networks, CNNs, and RNNs: errors computed at the output layer via a loss function are differentiated using the chain rule, and gradients are propagated backward across every layer to adjust the internal weights.
+            </p>
+
+            <p>
+                However, because Transformers rely on massive parallel attention blocks and billions of parameters rather than sequential recurrence or spatial filters, standard gradient descent encounters significant scaling inefficiencies. To combat issues like unstable updates across deep layers and improper weight penalization, standard optimizers are replaced by <strong>AdamW</strong>. Detailed implementations and derivations of these optimization algorithms are available in <a href="NN_version1.html" style="color: #2563eb; text-decoration: underline;">NN_versions1.html</a>.
+            </p>
+        </section>
 
         <section id="llm-anatomy" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px;">
             <h2>The Internal Anatomy of a Modern LLM (e.g., Claude)</h2>
@@ -763,6 +803,7 @@
     <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
         <em>The solid slate arrows are one forward pass, run once. The dashed red path is <strong>one</strong> backward pass &mdash; not three separate ones. There is only one loss $L$, computed once, and the chain rule computes $\partial L/\partial\theta$ for every parameter $\theta$ in the network in that single sweep. So it's not "train Embeddings, then train Attention, then train FFN" &mdash; every parameter, in every component, is updated together, in the same optimizer step, every single training iteration.</em>
     </p>
+	
 </div>
 
         <section id="training-stages" style="margin-bottom: 40px;">
@@ -829,6 +870,7 @@
                     </tr>
                 </tbody>
             </table>
+			
             
             <p style="font-size: 0.9rem; color: #475569; margin-top: 10px; font-style: italic;">
                 * Note for trainees: Parameters represent the physical value entries populated within the $W^Q, W^K, W^V$ weight configurations across all internal layers, optimized entirely during the pre-training execution phase.
