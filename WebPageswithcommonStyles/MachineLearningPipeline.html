@@ -37,11 +37,9 @@
 
     <h1 class="detail-title">AI and Statistics</h1>
 
-    <p class="detail-description">AI (Artificial Intelligence) is one of the most important and fastest-growing fields of technology today. Applications of AI are becoming ubiquitous, and solutions learned from data are increasingly displacing traditional hand-crafted algorithms. Machine Learning (ML) and Deep Learning (DL) are major branches of artificial intelligence (AI) that provide systems with the ability to automatically learn and improve from experience without being explicitly programmed.</p>
+    <p class="detail-description">AI (Artificial Intelligence) is one of the most important and fastest-growing fields of technology today. Applications of AI are becoming ubiquitous, and solutions learned from data are increasingly displacing traditional hand-crafted algorithms. <strong>Machine Learning (ML) and Deep Learning (DL)</strong> are major branches of artificial intelligence (AI) that provide systems with the ability to automatically learn and improve from experience without being explicitly programmed.</p>
 
-    <p class="detail-description">This tutorial explores the fundamental theory and practical engineering of various Machine Learning and Deep Learning models, including classic algorithms like SVM, Decision Trees, and Naive Bayes, as well as advanced architectures such as Convolutional Neural Networks (CNN), Recurrent Neural Networks (RNN), and Transformers. We will also demonstrate how to train and apply these models across diverse real-world applications.</p>
-
-    <p class="detail-description">Serving as the major foundational tool, Statistics underpins the entire scope of this tutorial.</p>
+        <p class="detail-description">Serving as the major foundational tool, Statistics underpins the entire scope of this tutorial.This page covers mostly the Foundational aspects of ML/DL by way of Machine Pipeline</p>
 
     <p class="detail-description">Both Machine Learning and Deep Learning follow a pipeline structure to create and deploy AI-based systems. The pipeline commonly has the following form:</p>
 
@@ -340,7 +338,7 @@
         Before looking at how a model is trained, it helps to classify <em>what kind</em> of learning problem it is solving, based on how much labeled data is available:
     </p>
     <ul>
-        <li><strong>Supervised Learning:</strong> The model learns from labeled examples—input-output pairs where the correct answer is known (e.g., an email marked "spam" or "not spam"). Most classical algorithms in this tutorial (SVM, Decision Trees, Naive Bayes) and most classification/regression tasks fall here.</li>
+        <li><strong>Supervised Learning:</strong> The model learns from labeled examples—input-output pairs where the correct answer is known (e.g., an email marked "spam" or "not spam"). Most classical algorithms in this tutorial <a href="svm.html">SVM</a>,<a href="Decision_Tree.html">Decision Trees</a> ,<a href="NaiveBayes.html">Naive Bayes</a> ) and most classification/regression tasks fall here.</li>
         <li><strong>Unsupervised Learning:</strong> The model works with unlabeled data and must find structure on its own, such as grouping similar customers together (clustering, e.g., K-Means) or reducing dimensionality (e.g., PCA).</li>
         <li><strong>Semi-Supervised Learning:</strong> A middle ground where a small amount of labeled data is combined with a much larger pool of unlabeled data—useful when labeling is expensive or slow, but unlabeled examples are cheap to collect. The model uses the unlabeled data to learn the general structure of the input space, and the labeled data to anchor that structure to the correct outputs.</li>
     </ul>
@@ -692,6 +690,64 @@
 
     <h3>4. Deployment Readiness Check</h3>
     <p class="detail-description">Beyond statistical performance, the model is checked against practical constraints — inference latency, memory footprint, and alignment with the business metric it was built to improve — before it is cleared for release.</p>
+	<div class="flowchart-wrap" role="img" aria-label="Flowchart: Quantitative Scoring, Generalization Check, and Residual and Error Analysis grouped as one offline evaluation pass, feeding into a separate Deployment Readiness gate; a Pass decision either proceeds to Deployment or loops back to retraining">
+        <svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="evalArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#555"/>
+                </marker>
+                <marker id="evalArrowRed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#c94f4f"/>
+                </marker>
+            </defs>
+
+            <!-- cluster box around 1-3: offline evaluation, done together/iteratively -->
+            <rect x="15" y="55" width="480" height="130" rx="10" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4"/>
+            <text x="255" y="42" text-anchor="middle" font-size="13" fill="#475569" font-weight="bold">Offline Evaluation (usually done together, iteratively)</text>
+
+            <rect class="flow-box" x="30"  y="90" width="135" height="60" rx="8"/>
+            <text class="flow-num" x="97" y="106">1</text>
+            <text class="flow-text" x="97" y="126" font-size="12">Quantitative</text>
+            <text class="flow-text" x="97" y="140" font-size="12">Scoring</text>
+
+            <rect class="flow-box" x="180" y="90" width="150" height="60" rx="8"/>
+            <text class="flow-num" x="255" y="106">2</text>
+            <text class="flow-text" x="255" y="126" font-size="12">Generalization</text>
+            <text class="flow-text" x="255" y="140" font-size="12">Check</text>
+
+            <rect class="flow-box" x="345" y="90" width="135" height="60" rx="8"/>
+            <text class="flow-num" x="412" y="106">3</text>
+            <text class="flow-text" x="412" y="122" font-size="11">Residual &amp;</text>
+            <text class="flow-text" x="412" y="136" font-size="11">Error Analysis</text>
+
+            <path class="flow-arrow" d="M165,120 L178,120"/>
+            <path class="flow-arrow" d="M330,120 L343,120"/>
+
+            <!-- gated step 4, styled distinctly like the hyperparameter-tuning gate elsewhere -->
+            <rect x="530" y="90" width="150" height="60" rx="8" style="fill:#fdf3e7; stroke:#c98a2c; stroke-width:1.5;"/>
+            <text x="605" y="106" text-anchor="middle" font-size="12" fill="#8a5a10" font-weight="bold">4. Deployment</text>
+            <text x="605" y="122" text-anchor="middle" font-size="12" fill="#8a5a10" font-weight="bold">Readiness Check</text>
+            <text x="605" y="140" text-anchor="middle" font-size="10" fill="#8a5a10">(separate, later gate)</text>
+
+            <path class="flow-arrow" d="M495,120 L528,120"/>
+
+            <!-- decision diamond -->
+            <polygon points="770,90 840,120 770,150 700,120" fill="#f1f5f9" stroke="#555" stroke-width="1.5"/>
+            <text x="770" y="124" text-anchor="middle" font-size="12" fill="#333">Pass?</text>
+
+            <path class="flow-arrow" d="M680,120 L698,120"/>
+
+            <!-- yes -> deployment -->
+            <path class="flow-arrow" d="M840,120 L900,120"/>
+            <text x="865" y="112" text-anchor="middle" font-size="10" fill="#2a7a3b">Yes</text>
+            <rect x="900" y="95" width="90" height="50" rx="8" style="fill:#eaf6ec; stroke:#2a7a3b; stroke-width:1.5;"/>
+            <text x="945" y="125" text-anchor="middle" font-size="12" fill="#2a7a3b" font-weight="bold">Deployment</text>
+
+            <!-- no -> loop back to retraining -->
+            <path d="M770,90 L770,40 L150,40 L150,88" fill="none" stroke="#c94f4f" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#evalArrowRed)"/>
+            <text x="460" y="30" text-anchor="middle" font-size="11" fill="#c94f4f">No &mdash; retrain (back to Model Training / Feature Engineering)</text>
+        </svg>
+    </div>
 
     <hr class="section-divider">
 
@@ -730,6 +786,252 @@
     <p class="detail-description">
         When drift is detected, the typical response is to retrain the model on fresh data and repeat the pipeline — which is why the ML pipeline is usually a loop rather than a straight line in practice.
     </p>
+	<h2>Additional Topics: LLM Deployment and Evaluation</h2>
+	<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+    <svg viewBox="0 0 1000 370" xmlns="http://www.w3.org/2000/svg" style="max-width: 75%; height: auto;">
+        <defs>
+            <style>
+                .flow-box { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.5; }
+            </style>
+            <marker id="llmEvalArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#555"/>
+            </marker>
+            <marker id="llmEvalArrowRed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#c94f4f"/>
+            </marker>
+        </defs>
 
+        <!-- Retrain box -->
+        <rect x="30" y="15" width="200" height="48" rx="8" style="fill:#fee2e2; stroke:#c94f4f; stroke-width:1.5;"/>
+        <text x="130" y="35" text-anchor="middle" style="font-size:10px; font-weight:bold;" fill="#991b1b">Retrain</text>
+        <text x="130" y="49" text-anchor="middle" style="font-size:7px;" fill="#991b1b">Fine-Tune / RLHF / Prompt Changes</text>
+
+        <!-- No path: diamond top vertex -> up -> over -> down into Retrain -->
+        <path d="M655,170 L655,8 L130,8 L130,13" fill="none" stroke="#c94f4f" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#llmEvalArrowRed)"/>
+        <text x="665" y="90" style="font-size:9px; font-weight:bold;" fill="#c94f4f">No</text>
+
+        <!-- Feedback into metrics after retraining -->
+        <path d="M30,39 L8,39 L8,140 L28,140" fill="none" stroke="#555" stroke-width="2" marker-end="url(#llmEvalArrow)"/>
+        <text x="8" y="90" transform="rotate(-90 8 90)" text-anchor="middle" style="font-size:6px;" fill="#475569">re-evaluate</text>
+
+        <!-- Cluster title -->
+        <text x="110" y="80" text-anchor="middle" style="font-size:10px; font-weight:bold;" fill="#475569">Automated Metrics</text>
+        <text x="110" y="91" text-anchor="middle" style="font-size:7.5px; font-style:italic;" fill="#64748b">(= Quantitative Scoring, run independently per task)</text>
+
+        <!-- Cluster box: vertical stack of 3 boxes -->
+        <rect x="15" y="100" width="190" height="210" rx="10" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+        <rect class="flow-box" x="30" y="115" width="140" height="50" rx="8"/>
+        <text x="100" y="130" text-anchor="middle" style="font-size:9px; font-weight:bold;" fill="#2c6fbb">1</text>
+        <text x="100" y="145" text-anchor="middle" style="font-size:8.5px;" fill="#1a1a1a">Translation</text>
+        <text x="100" y="158" text-anchor="middle" style="font-size:7.5px;" fill="#1a1a1a">BLEU / chrF</text>
+
+        <rect class="flow-box" x="30" y="180" width="140" height="50" rx="8"/>
+        <text x="100" y="195" text-anchor="middle" style="font-size:9px; font-weight:bold;" fill="#2c6fbb">2</text>
+        <text x="100" y="210" text-anchor="middle" style="font-size:8.5px;" fill="#1a1a1a">Summarization</text>
+        <text x="100" y="223" text-anchor="middle" style="font-size:7.5px;" fill="#1a1a1a">ROUGE / BERTScore</text>
+
+        <rect class="flow-box" x="30" y="245" width="140" height="50" rx="8"/>
+        <text x="100" y="260" text-anchor="middle" style="font-size:9px; font-weight:bold;" fill="#2c6fbb">3</text>
+        <text x="100" y="275" text-anchor="middle" style="font-size:8.5px;" fill="#1a1a1a">Reasoning</text>
+        <text x="100" y="288" text-anchor="middle" style="font-size:7.5px;" fill="#1a1a1a">MMLU / HumanEval</text>
+
+        <!-- Independent arrows -->
+        <path d="M170,140 L408,187" stroke="#555" stroke-width="1.5" fill="none" marker-end="url(#llmEvalArrow)"/>
+        <path d="M170,205 L408,205" stroke="#555" stroke-width="1.5" fill="none" marker-end="url(#llmEvalArrow)"/>
+        <path d="M170,270 L408,223" stroke="#555" stroke-width="1.5" fill="none" marker-end="url(#llmEvalArrow)"/>
+
+        <!-- Gate -->
+        <rect x="410" y="170" width="170" height="70" rx="8" style="fill:#fdf3e7; stroke:#c98a2c; stroke-width:1.5;"/>
+        <text x="495" y="187" text-anchor="middle" style="font-size:9px; font-weight:bold;" fill="#8a5a10">Human Eval &amp; Safety</text>
+        <text x="495" y="200" text-anchor="middle" style="font-size:7px;" fill="#8a5a10">(Chatbot Arena, MT-Bench)</text>
+        <text x="495" y="213" text-anchor="middle" style="font-size:7px;" fill="#8a5a10">replaces Generalization +</text>
+        <text x="495" y="226" text-anchor="middle" style="font-size:7px;" fill="#8a5a10">Residual Analysis</text>
+
+        <path d="M580,205 L590,205" stroke="#555" stroke-width="2" fill="none" marker-end="url(#llmEvalArrow)"/>
+
+        <!-- Decision diamond -->
+        <polygon points="655,170 720,205 655,240 590,205" fill="#f1f5f9" stroke="#555" stroke-width="1.5"/>
+        <text x="655" y="209" text-anchor="middle" style="font-size:10px;" fill="#333">Pass?</text>
+
+        <path d="M720,205 L748,205" stroke="#555" stroke-width="2" fill="none" marker-end="url(#llmEvalArrow)"/>
+        <text x="734" y="197" text-anchor="middle" style="font-size:8px; font-weight:bold;" fill="#2a7a3b">Yes</text>
+
+        <!-- Deployment -->
+        <rect x="750" y="180" width="90" height="50" rx="8" style="fill:#eaf6ec; stroke:#2a7a3b; stroke-width:1.5;"/>
+        <text x="795" y="209" text-anchor="middle" style="font-size:10px; font-weight:bold;" fill="#2a7a3b">Deployment</text>
+
+        <!-- Scope notes -->
+        <text x="430" y="330" text-anchor="middle" style="font-size:8px; font-style:italic;" fill="#64748b">Macro-level view of LLMOps Evaluation: Explains the global architecture and feedback loops.</text>
+    </svg>
+</div>
+	<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+<svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" style="background-color: #0f172a; font-family: system-ui, -apple-system, sans-serif; max-width: 75%; height: auto;">
+    <!-- Definitions for gradients and markers -->
+    <defs>
+        <linearGradient id="grad-input" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8" />
+            <stop offset="100%" stop-color="#0284c7" />
+        </linearGradient>
+        <linearGradient id="grad-gate" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#818cf8" />
+            <stop offset="100%" stop-color="#4f46e5" />
+        </linearGradient>
+        <linearGradient id="grad-pass" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#34d399" />
+            <stop offset="100%" stop-color="#059669" />
+        </linearGradient>
+        <linearGradient id="grad-fail" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f87171" />
+            <stop offset="100%" stop-color="#dc2626" />
+        </linearGradient>
+        
+        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#94a3b8" />
+        </marker>
+        <marker id="arrow-fail" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#f87171" />
+        </marker>
+        <marker id="arrow-pass" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399" />
+        </marker>
+        <marker id="llmEvalArrowRed" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#c94f4f"/>
+        </marker>
+    </defs>
+
+    <!-- Title -->
+    <text x="500" y="35" text-anchor="middle" fill="#f8fafc" font-size="20" font-weight="bold" letter-spacing="0.5">Automated CI/CD Evaluation Gates for LLM Deployments</text>
+
+    <!-- Stage: Input / Prompt -->
+    <g transform="translate(40, 90)">
+        <rect width="150" height="70" rx="8" fill="url(#grad-input)" />
+        <text x="75" y="32" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">Prompt / Model</text>
+        <text x="75" y="50" text-anchor="middle" fill="#e0f2fe" font-size="11">CI Pipeline Trigger</text>
+    </g>
+
+    <!-- Connector: Input to Gate 1 -->
+    <path d="M 190 125 L 230 125" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)" />
+
+    <!-- Stage: Gate 1 (Schema Check) -->
+    <g transform="translate(240, 80)">
+        <rect width="140" height="90" rx="8" fill="url(#grad-gate)" />
+        <text x="70" y="28" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">1. Schema Check</text>
+        <text x="70" y="50" text-anchor="middle" fill="#e0e7ff" font-size="10">Validates JSON keys,</text>
+        <text x="70" y="65" text-anchor="middle" fill="#e0e7ff" font-size="10">types &amp; formats</text>
+    </g>
+
+    <!-- Connector: Gate 1 to Gate 2 -->
+    <path d="M 380 125 L 420 125" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-pass)" />
+    <text x="400" y="115" text-anchor="middle" fill="#34d399" font-size="10" font-weight="bold">Pass</text>
+
+    <!-- Stage: Gate 2 (Semantic Similarity) -->
+    <g transform="translate(430, 80)">
+        <rect width="140" height="90" rx="8" fill="url(#grad-gate)" />
+        <text x="70" y="28" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">2. Semantic Sim</text>
+        <text x="70" y="50" text-anchor="middle" fill="#e0e7ff" font-size="10">Embeddings match</text>
+        <text x="70" y="65" text-anchor="middle" fill="#e0e7ff" font-size="10">gold standards</text>
+    </g>
+
+    <!-- Connector: Gate 2 to Gate 3 -->
+    <path d="M 570 125 L 610 125" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-pass)" />
+    <text x="590" y="115" text-anchor="middle" fill="#34d399" font-size="10" font-weight="bold">Pass</text>
+
+    <!-- Stage: Gate 3 (LLM-Judge) -->
+    <g transform="translate(620, 80)">
+        <rect width="140" height="90" rx="8" fill="url(#grad-gate)" />
+        <text x="70" y="28" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">3. LLM-Judge</text>
+        <text x="70" y="50" text-anchor="middle" fill="#e0e7ff" font-size="10">Evaluates tone, safety</text>
+        <text x="70" y="65" text-anchor="middle" fill="#e0e7ff" font-size="10">&amp; nuanced rubrics</text>
+    </g>
+
+    <!-- Connector: Gate 3 to Production -->
+    <path d="M 760 125 L 810 125" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-pass)" />
+    <text x="785" y="115" text-anchor="middle" fill="#34d399" font-size="10" font-weight="bold">Pass</text>
+
+    <!-- Stage: Production -->
+    <g transform="translate(820, 90)">
+        <rect width="140" height="70" rx="8" fill="url(#grad-pass)" />
+        <text x="70" y="32" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">Deployment</text>
+        <text x="70" y="50" text-anchor="middle" fill="#d1fae5" font-size="11">Production Ready</text>
+    </g>
+
+    <!-- Failure Paths & Quarantine -->
+    <path d="M 310 170 L 310 380 L 415 380" fill="none" stroke="#f87171" stroke-width="1.8" marker-end="url(#arrow-fail)" />
+    <text x="320" y="200" text-anchor="start" fill="#f87171" font-size="10" font-weight="bold">Fail</text>
+
+    <path d="M 500 170 L 500 360" fill="none" stroke="#f87171" stroke-width="1.8" marker-end="url(#arrow-fail)" />
+    <text x="510" y="200" text-anchor="start" fill="#f87171" font-size="10" font-weight="bold">Fail</text>
+
+    <path d="M 690 170 L 690 380 L 585 380" fill="none" stroke="#f87171" stroke-width="1.8" marker-end="url(#arrow-fail)" />
+    <text x="700" y="200" text-anchor="start" fill="#f87171" font-size="10" font-weight="bold">Fail</text>
+
+    <!-- Stage: Quarantine & Retrain Loop -->
+    <g transform="translate(420, 350)">
+        <rect width="165" height="60" rx="8" fill="url(#grad-fail)" />
+        <text x="82.5" y="25" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="bold">Quarantine &amp; Log</text>
+        <text x="82.5" y="43" text-anchor="middle" fill="#fee2e2" font-size="10">Dataset Enrichment</text>
+    </g>
+
+    <!-- Feedback Loop Back to Prompt / Retrain -->
+    <path d="M 420 380 L 115 380 L 115 160" fill="none" stroke="#c94f4f" stroke-dasharray="5,4" stroke-width="2" marker-end="url(#llmEvalArrowRed)" />
+    <text x="260" y="372" text-anchor="middle" fill="#c94f4f" font-size="10" font-weight="bold">Retrain / Prompt Adjustments / RLHF</text>
+
+    <!-- Footer Notes -->
+    <text x="500" y="580" text-anchor="middle" fill="#94a3b8" font-size="10" font-style="italic">Macro-level CI/CD architecture showing automated gate filtering, failure quarantining, and continuous evaluation loops.</text>
+</svg>
+<h4 class="mt-20">Evaluating LLMs: Macro vs. Micro Views</h4>
+<p class="detail-description">
+    Evaluating a deployed LLM system requires checking two different things, at two different scales — and they're complementary, not redundant: each catches failures the other structurally can't.
+</p>
+
+<h5 style="margin-top:15px; color:#2c6fbb;">The Macro Level: "How good is this model version, overall?"</h5>
+<p class="detail-description">
+    This runs offline against fixed, pre-existing benchmark datasets — not live production traffic — split by task type: BLEU/chrF for translation, ROUGE/BERTScore for summarization, MMLU/HumanEval for reasoning. These feed into human and LLM-judge preference testing (Chatbot Arena, MT-Bench) as a second gate. It's worth being precise here: these tools <em>measure</em> quality, they don't <em>create</em> it — the actual fix for a failing model (retraining, fine-tuning, RLHF) happens separately, informed by what the evaluation reveals.
+</p>
+<p class="detail-description">
+    Because macro scores are averaged across thousands of examples, a model can score well overall while still occasionally failing on individual requests — which is exactly what this level can't catch.
+</p>
+
+<h5 style="margin-top:15px; color:#c98a2c;">The Micro Level: "Is this one response, right now, safe to ship?"</h5>
+<p class="detail-description">
+    This runs inside a CI/CD pipeline, triggered whenever a prompt or model change is proposed, and checks a single prompt/response pair through three sequential gates:
+</p>
+<ol style="padding-left: 20px; color: #333;">
+    <li style="margin-bottom: 10px;">
+        <strong>Schema Check</strong> — is the output structured correctly (valid JSON, required keys present)?
+    </li>
+    <li style="margin-bottom: 10px;">
+        <strong>Semantic Similarity</strong> — does the meaning match a reference answer? This uses <em>embeddings</em> rather than keyword overlap, because word-matching misses paraphrases and misreads meaning. For example:
+        <ul style="margin-top:8px; padding-left: 20px;">
+            <li>Reference: <span class="code-style">"The mitochondria produces energy for the cell."</span></li>
+            <li>Model output: <span class="code-style">"Cellular energy is generated by the mitochondria."</span></li>
+        </ul>
+        <p style="font-size:0.92rem; color:#475569; margin-top:8px;">
+            These share barely any words, so keyword overlap would score them as different — but they mean the same thing, so an embedding (which represents meaning as a vector, not a word list) correctly scores them as a near-match.
+        </p>
+    </li>
+    <li style="margin-bottom: 10px;">
+        <strong>LLM-as-Judge</strong> — does it pass a quality/safety rubric? A rubric is a written scoring guide given to a judge model, e.g.:
+        <p style="font-size:0.92rem; color:#475569; font-style:italic; margin-top:8px; padding:10px; background:#f8fafc; border-radius:4px;">
+            "Rate this response 1–5 on: accuracy, relevance, absence of harmful content, and tone. Score substance only — do not reward length."
+        </p>
+        The judge returns a number, and "passing" means that number clears a threshold set in code (e.g., <span class="code-style">score &ge; 3</span> out of 5).
+    </li>
+</ol>
+
+<p class="detail-description">
+    A failure at any micro gate quarantines that response and logs it, rather than letting it reach production, and can trigger the same feedback loop as a macro failure — fine-tuning, RLHF, or prompt adjustments.
+</p>
+
+<p class="detail-description">
+    The two levels differ in one more important way: <strong>micro pass/fail is fully automatable</strong> — a script checks a number against a threshold. <strong>Macro pass/fail usually isn't</strong> — "does this beat the current production model?" or "are there any safety red-team failures at all?" is typically a human/team judgment call informed by the numbers, not a script that outputs true or false on its own.
+</p>
+
+    <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em>Micro-level view of LLMOps Evaluation (The SVG): Explains the tactical code execution. It shows the step-by-step gatekeeper script running inside a specific CI runner whenever a developer makes a small change to a prompt config file.</em>
+    </p>
+	
+	
 </body>
 </html>
