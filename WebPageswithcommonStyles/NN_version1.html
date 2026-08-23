@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shallow Neural Networks</title>
+    <title>Neural Networks</title>
     <link rel="stylesheet" href="Style.css">
 
     <script>
@@ -142,11 +142,27 @@
         </div>
         Without non-linearity, your deep network with millions of parameters would have the same "expressive power" 
         as a single-layer Linear Regression—unable to learn curves, circles, or complex decision boundaries.
+		<div class="description-box">
+    <h3>Scaling to Deep Neural Networks (DNNs): From Scalars to Tensors</h3>
+    <p>
+        While shallow networks use individual scalar indices (like $n_1^{(l)}$), a general <strong>Deep Neural Network (DNN)</strong> scales this architecture across arbitrary depth ($L$ layers) and width ($d_l$ neurons) using full <strong>matrix and vector operations</strong>.
+    </p>
+    <p>
+        For any hidden layer $l$, the entire layer's linear pre-activation vector $\mathbf{z}^{(l)}$ is computed simultaneously via matrix multiplication:
+    </p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$$
+    </div>
+    <p>
+        Where $\mathbf{W}^{(l)} \in \mathbb{R}^{d_l \times d_{l-1}}$ is the weight matrix mapping the previous layer's outputs to the current layer, $\mathbf{b}^{(l)}$ is the bias vector, and $\mathbf{a}^{(l)} = f(\mathbf{z}^{(l)})$ applies the non-linear activation element-wise. This tensor-based formulation allows modern hardware (GPUs/TPUs) to process millions of parameters concurrently.
+    </p>
+</div>
     </div></p>
         </li>
 
 	<li class="section-item" style="list-style-type: none; margin-bottom: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
     <span class="section-title" style="font-size: 1.4rem; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db;">
+	
         5. Final Layer (L4) & Loss Evaluation
     </span>
     
@@ -233,12 +249,195 @@
     <strong>$$\nabla L(w) = 0 ...(5)$$.</strong> 
     where $\nabla L(w)$ is the gradient of the Loss Function.Rather than using a single equation to solve (5) for weights, a repetitive, step-by-step method locates the lowest point of error, much like walking down a hill This gradient is computed 
     by differentiating $L(w)$ with respect to weights ($w$).The most straightforward way to use gradient information is to update weights by taking a small step in the opposite direction of the gradient. This is calculated using the formula:$$w(\tau) = w(\tau-1) - \eta \nabla L(w(\tau-1))....(6)$$.In this equation, the positive value $\eta$ is called the learning rate.The symbol $\tau$ represents a discrete time index, representing the specific iteration count within the sequence of weight updates. After each update, the gradient is calculated again for the new weights, and the process repeats. Because the weights constantly move toward the sharpest possible drop in error, this method is known as <a href="BP2.html"><strong>gradient descent or steepest descent</strong></a>. 
+	<div class="algorithm-box" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <strong class="label" style="color: #0369a1; display: block; margin-bottom: 10px; font-size: 1.05rem;">AutoGrad for Back Propogation</strong>
+    <p style="margin: 0; line-height: 1.7; color: #1e293b;">
+        While gradient descent is theoretically driven by backpropagation via the chain rule, modern deep learning libraries implement this through <strong>Autograd</strong>—an automatic differentiation engine that programmatically computes exact analytical derivatives to yield the precise parameter gradients $\mathbf{g}_t = \nabla L(\theta_t)$ required for loss minimization. To accomplish this, the engine dynamically constructs a computation graph during the forward pass—recording every intermediate tensor operation along with its local derivative function—which is then traversed in reverse during the backward pass to evaluate local Jacobians and accumulate gradients. Once these gradients are extracted, they feed directly into AdamW,which is discussed below.
+    </p>
+	<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 1000 480" xmlns="http://www.w3.org/2000/svg" style="max-width: 50%; height: auto;">
+            <defs>
+                <marker id="fwdArrowAG" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#334155" />
+                </marker>
+                <marker id="bwdArrowAG" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#dc2626" />
+                </marker>
+            </defs>
+
+            <text x="500" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Autograd Computational Graph: Forward Build, Backward Chain Rule</text>
+            <text x="500" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#94a3b8">solid slate = forward pass &nbsp;|&nbsp; dashed red = backward pass (autograd)</text>
+
+            <!-- forward nodes -->
+            <rect x="20"  y="70" width="90"  height="50" rx="8" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+            <text x="65" y="100" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#0f172a">x</text>
+
+            <rect x="190" y="70" width="150" height="60" rx="8" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+            <text x="265" y="93" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#4338ca">Layer 1</text>
+            <text x="265" y="110" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">a&#8321;=h(w&#8321;x+b&#8321;)</text>
+
+            <rect x="420" y="70" width="150" height="60" rx="8" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+            <text x="495" y="93" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#0e7490">Layer 2</text>
+            <text x="495" y="110" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">a&#8322;=h(w&#8322;a&#8321;+b&#8322;)</text>
+
+            <rect x="650" y="70" width="150" height="60" rx="8" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
+            <text x="725" y="93" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#db2777">Layer 3 (out)</text>
+            <text x="725" y="110" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">a&#8323;=h(w&#8323;a&#8322;+b&#8323;)</text>
+
+            <rect x="880" y="70" width="100" height="50" rx="8" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+            <text x="930" y="100" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#e11d48">L</text>
+
+            <!-- forward arrows -->
+            <line x1="110" y1="95" x2="186" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#fwdArrowAG)"/>
+            <line x1="340" y1="95" x2="416" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#fwdArrowAG)"/>
+            <line x1="570" y1="95" x2="646" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#fwdArrowAG)"/>
+            <line x1="800" y1="95" x2="876" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#fwdArrowAG)"/>
+
+            <!-- weight nodes, tapped from each layer -->
+            <rect x="225" y="180" width="80" height="34" rx="6" fill="#fff7ed" stroke="#b45309" stroke-width="1.5"/>
+            <text x="265" y="202" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#b45309">w&#8321;, b&#8321;</text>
+
+            <rect x="455" y="180" width="80" height="34" rx="6" fill="#fff7ed" stroke="#b45309" stroke-width="1.5"/>
+            <text x="495" y="202" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#b45309">w&#8322;, b&#8322;</text>
+
+            <rect x="685" y="180" width="80" height="34" rx="6" fill="#fff7ed" stroke="#b45309" stroke-width="1.5"/>
+            <text x="725" y="202" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#b45309">w&#8323;, b&#8323;</text>
+
+            <!-- backward pass: main chain, right to left -->
+            <line x1="880" y1="130" x2="800" y2="180" stroke="#dc2626" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#bwdArrowAG)"/>
+            <text x="870" y="150" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#dc2626">&#8706;L/&#8706;a&#8323;</text>
+
+            <line x1="650" y1="145" x2="570" y2="145" stroke="#dc2626" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#bwdArrowAG)"/>
+            <text x="610" y="160" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;a&#8322; = &#8706;L/&#8706;a&#8323;&middot;h'(z&#8323;)&middot;w&#8323;</text>
+
+            <line x1="420" y1="145" x2="340" y2="145" stroke="#dc2626" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#bwdArrowAG)"/>
+            <text x="380" y="160" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;a&#8321; = &#8706;L/&#8706;a&#8322;&middot;h'(z&#8322;)&middot;w&#8322;</text>
+
+            <line x1="190" y1="145" x2="110" y2="145" stroke="#dc2626" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#bwdArrowAG)"/>
+            <text x="150" y="160" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;x = &#8706;L/&#8706;a&#8321;&middot;h'(z&#8321;)&middot;w&#8321;</text>
+
+            <!-- weight gradient taps -->
+            <line x1="725" y1="130" x2="725" y2="178" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#bwdArrowAG)"/>
+            <text x="820" y="235" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;w&#8323; = &#8706;L/&#8706;a&#8323;&middot;h'(z&#8323;)&middot;a&#8322;</text>
+
+            <line x1="495" y1="130" x2="495" y2="178" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#bwdArrowAG)"/>
+            <text x="590" y="235" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;w&#8322; = &#8706;L/&#8706;a&#8322;&middot;h'(z&#8322;)&middot;a&#8321;</text>
+
+            <line x1="265" y1="130" x2="265" y2="178" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#bwdArrowAG)"/>
+            <text x="355" y="235" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;w&#8321; = &#8706;L/&#8706;a&#8321;&middot;h'(z&#8321;)&middot;x</text>
+
+            <text x="500" y="280" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#334155">Every dashed edge is the chain rule applied once: (upstream gradient) &times; (this node's local derivative)</text>
+            <text x="500" y="300" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#334155">Weight taps (&#8706;L/&#8706;w&#8321;, &#8706;L/&#8706;w&#8322;, &#8706;L/&#8706;w&#8323;) are exactly what Eq. (6) uses to update each weight.</text>
+        </svg>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+            <em>The forward pass (top, solid) computes $a_1, a_2, a_3, L$ left to right, and remembers every operation used. The backward pass (dashed red) walks the same graph right to left exactly once, and at each node multiplies the gradient handed to it from downstream by that node's own local derivative &mdash; the chain rule, applied mechanically. This single backward sweep is what fills in every $\partial L/\partial w_i$ used by Eq. (6).</em>
+        </p>
+    </div>
+</div>
+	<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+    <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="max-width: 75%; height: auto;">
+        <defs>
+            <marker id="lossArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#e11d48" />
+            </marker>
+        </defs>
+        <text x="450" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">3D Parameterized Loss Surface — Gradient Descent to the Minimum</text>
+        <text x="450" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#94a3b8">(top-down contour view: darker green = lower loss)</text>
+        <ellipse cx="480" cy="235" rx="300" ry="145" fill="#fecaca"/>
+        <ellipse cx="480" cy="235" rx="255" ry="122" fill="#fed7aa"/>
+        <ellipse cx="480" cy="235" rx="205" ry="98"  fill="#fef08a"/>
+        <ellipse cx="480" cy="235" rx="155" ry="74"  fill="#d9f99d"/>
+        <ellipse cx="480" cy="235" rx="105" ry="50"  fill="#bbf7d0"/>
+        <ellipse cx="480" cy="235" rx="55"  ry="26"  fill="#4ade80"/>
+        <ellipse cx="480" cy="235" rx="18"  ry="9"   fill="#15803d"/>
+        <line x1="150" y1="380" x2="820" y2="380" stroke="#64748b" stroke-width="1.5"/>
+        <text x="800" y="398" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">θ<tspan baseline-shift="sub" font-size="9">2</tspan></text>
+        <line x1="150" y1="380" x2="150" y2="60" stroke="#64748b" stroke-width="1.5"/>
+        <text x="120" y="70" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">θ<tspan baseline-shift="sub" font-size="9">1</tspan></text>
+        <path d="M 730,150 Q 640,105 545,260 Q 505,320 475,255 Q 462,232 480,235" fill="none" stroke="#e11d48" stroke-width="2.5" stroke-dasharray="6,5" marker-end="url(#lossArrow)"/>
+        <circle cx="730" cy="150" r="6" fill="#e11d48"/>
+        <circle cx="545" cy="260" r="5" fill="#e11d48"/>
+        <circle cx="475" cy="255" r="4.5" fill="#e11d48"/>
+        <circle cx="480" cy="235" r="5" fill="#0f172a"/>
+        <text x="770" y="140" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7f1d1d">Start: θ₀</text>
+        <text x="770" y="155" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#7f1d1d">(random init)</text>
+        <text x="480" y="285" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#14532d">Global Minimum θ*</text>
+        <text x="480" y="300" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#14532d">(lowest loss)</text>
+        <text x="600" y="120" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#e11d48">Gradient Descent Path (−∇L)</text>
+        <text x="150" y="35" font-family="Segoe UI, sans-serif" font-size="10" fill="#7f1d1d">High Loss</text>
+        <rect x="150" y="42" width="18" height="10" fill="#fecaca"/><rect x="168" y="42" width="18" height="10" fill="#fed7aa"/><rect x="186" y="42" width="18" height="10" fill="#fef08a"/><rect x="204" y="42" width="18" height="10" fill="#d9f99d"/><rect x="222" y="42" width="18" height="10" fill="#bbf7d0"/><rect x="240" y="42" width="18" height="10" fill="#4ade80"/><rect x="258" y="42" width="18" height="10" fill="#15803d"/>
+        <text x="282" y="35" font-family="Segoe UI, sans-serif" font-size="10" fill="#14532d">Low Loss</text>
+    </svg> <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em>Each dashed segment is one optimizer step: the gradient ∇L points toward steepest increase in loss, so the update moves the opposite direction, −∇L, shrinking the loss a little at a time until the parameters settle near the bottom of the bowl — the same θ₁, θ₂ here stand in for any two of the model's billions of weights, with every other weight held fixed for this 2D slice.</em>
+    </p></div>
+	
+	
+	
+	 <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 900 440" xmlns="http://www.w3.org/2000/svg" style="max-width: 75%; height: auto;">
+            <defs>
+                <marker id="descentArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#dc2626" />
+                </marker>
+            </defs>
+
+            <text x="450" y="26" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Gradient Descent on the 3D Loss Surface</text>
+            <text x="450" y="44" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#94a3b8">(each step follows Eq. 6: $w(\tau) = w(\tau-1) - \eta\nabla L$)</text>
+
+            <!-- Rim -->
+            <ellipse cx="450" cy="150" rx="290" ry="72" fill="none" stroke="#dc2626" stroke-width="2"/>
+            <path d="M 160,150 C 190,270 320,340 450,344" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+            <path d="M 740,150 C 710,270 580,340 450,344" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+
+            <!-- same funnel rings -->
+            <ellipse cx="450" cy="176" rx="245" ry="60" fill="url(#bowlShade1)" opacity="0.18" stroke="#f59e0b" stroke-width="1.5"/>
+            <ellipse cx="450" cy="202" rx="200" ry="48" fill="url(#bowlShade1)" opacity="0.28" stroke="#facc15" stroke-width="1.5"/>
+            <ellipse cx="450" cy="228" rx="155" ry="38" fill="url(#bowlShade1)" opacity="0.4"  stroke="#a3e635" stroke-width="1.5"/>
+            <ellipse cx="450" cy="254" rx="110" ry="28" fill="url(#bowlShade1)" opacity="0.55" stroke="#4ade80" stroke-width="1.5"/>
+            <ellipse cx="450" cy="278" rx="65"  ry="18" fill="url(#bowlShade1)" opacity="0.75" stroke="#22c55e" stroke-width="1.5"/>
+            <ellipse cx="450" cy="298" rx="28"  ry="8"  fill="#15803d" opacity="0.9" stroke="#14532d" stroke-width="1.5"/>
+            <circle cx="450" cy="300" r="5" fill="#0f172a"/>
+
+            <!-- gradient descent path: spiraling down the funnel wall, step by step -->
+            <path d="M 700,158 Q 620,178 610,200 Q 560,215 555,232 Q 500,244 495,258 Q 470,268 468,280 Q 455,292 452,298"
+                  fill="none" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="6,5" marker-end="url(#descentArrow)"/>
+
+            <circle cx="700" cy="158" r="6" fill="#dc2626"/>
+            <circle cx="610" cy="200" r="5" fill="#dc2626"/>
+            <circle cx="555" cy="232" r="4.5" fill="#dc2626"/>
+            <circle cx="495" cy="258" r="4" fill="#dc2626"/>
+            <circle cx="468" cy="280" r="3.5" fill="#dc2626"/>
+
+            <text x="740" y="140" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7f1d1d">$w(0)$</text>
+            <text x="740" y="153" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#7f1d1d">(random init)</text>
+
+            <text x="450" y="330" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#14532d">$w(\tau) \to$ Minimum</text>
+
+            <text x="640" y="205" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#dc2626">$-\eta\nabla L(w)$ each step</text>
+
+            <!-- axes -->
+            <line x1="450" y1="380" x2="450" y2="150" stroke="#64748b" stroke-width="1.5"/>
+            <text x="465" y="160" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">L (Loss)</text>
+            <line x1="450" y1="380" x2="150" y2="410" stroke="#64748b" stroke-width="1.5"/>
+            <text x="120" y="418" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">w<tspan baseline-shift="sub" font-size="9">1</tspan></text>
+            <line x1="450" y1="380" x2="770" y2="410" stroke="#64748b" stroke-width="1.5"/>
+            <text x="775" y="418" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">w<tspan baseline-shift="sub" font-size="9">2</tspan></text>
+        </svg>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+            <em>Starting from a random $w(0)$ near the rim, each dashed segment is one update from Eq. (6) &mdash; a step of size $\eta$ in the direction $-\nabla L(w)$. Repeating this shrinks the loss a little at a time, tracing a path down the bowl wall until the weights settle at the global minimum.</em>
+        </p>
+		
+    </div>
+
+    
+</div>
 
     <!-- Advanced Optimizers Extension: Adam & AdamW as part of Gradient Descent -->
     <p style="margin-top: 15px;">While standard Gradient Descent uses a fixed learning rate uniformly across all parameters, advanced adaptive variants like <strong>Adam (Adaptive Moment Estimation)</strong> enhance gradient descent by combining momentum (tracking exponential moving averages of past gradients to smooth trajectories) with adaptive scaling (adjusting step sizes per parameter based on historical variances). The update rule incorporates first ($m_t$) and second ($v_t$) moment estimates:</p>
     <div class="math-display" style="text-align: center; margin: 10px 0;">
         $$m_t = \beta_1 m_{t-1} + (1 - \beta_1) \nabla L(w), \quad v_t = \beta_2 v_{t-1} + (1 - \beta_2) (\nabla L(w))^2$$
     </div>
+	
 
     <div class="algorithm-box">
         <strong class="label">Advanced Gradient Descent: Adam and AdamW Optimization</strong>
@@ -253,7 +452,7 @@
         </ul>
     </div>
 
-    More about the Gradient Descent is covered in <a href = "BP2.html">BackPropogation</a>. For various parameters used by Neural Network Learning algorithm,please refer <a href = "BP2.html">Parameters</a>
+    
     <p style="color: #444; line-height: 1.5;"><h3>About Initialization of weight values</h3> <ul>
         <li>When we use an algorithm like Gradient Descent to train a model, we have to pick a starting value for all the weights (parameters). Think of this as the "starting position" of your hiker on the 3D loss mountain we discussed.</li>
 		<li>Why it matters: Where you start has a huge impact. It determines how fast the model learns and how accurate it will be on new, unseen data.</li>
