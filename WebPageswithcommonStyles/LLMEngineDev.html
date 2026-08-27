@@ -50,7 +50,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 18px;
-    align-items: center;
+    align-items: left;
     font-size: 0.92rem;
   }
   .nav-bar a {
@@ -158,8 +158,8 @@
     height: 34px;
     border-radius: 50%;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: left;
+    justify-content: left;
     flex-shrink: 0;
   }
   .roadmap-card h4 {
@@ -187,7 +187,7 @@
     padding: 18px;
     background: #fbfdff;
     margin: 24px 0;
-    text-align: center;
+    text-align: left;
   }
   .diagram-caption {
     font-size: 0.85rem;
@@ -212,7 +212,7 @@
   .legend-row {
     display: flex;
     gap: 22px;
-    justify-content: center;
+    justify-content: left;
     flex-wrap: wrap;
     margin-top: 10px;
     font-size: 0.85rem;
@@ -332,9 +332,132 @@
       <text x="250" y="270" text-anchor="middle" fill="#93650a" font-size="11" font-family="Segoe UI, sans-serif">weights →</text>
     </svg>
     <p class="diagram-caption">Two loops: a <strong>training</strong> loop (top) that turns raw text
-      into an aligned model, and an <strong>inference</strong> loop (bottom) that turns that model
-      into a low-latency service. Everything in blue we've touched already; everything below is
-      what this section of the series builds out.</p>
+      into an aligned model, and an <strong>inference</strong> loop (bottom) that serves that model to
+      many concurrent users by caching past computation (KV cache) and batching requests together,
+      rather than redoing work or handling one user at a time. Everything in blue we've touched
+      already; everything below is what this section of the series builds out.</p>
+  </div>
+
+  <h2 id="running-example">One Prompt, Three Stages: What Actually Changes</h2>
+  <p>
+    Before the roadmap, it's worth seeing the whole point of this page in one place: the exact same
+    user prompt, run through the exact same Transformer architecture, at three different points in
+    training. Nothing about the network's structure changes between these three outputs — only the
+    weights, shaped by three very different training objectives.
+  </p>
+
+  <div style="background:#f4f4f0; border:1px solid #e0ddd3; border-radius:8px; padding:14px 20px; margin:18px 0;">
+    <strong style="color:#0056b3;">User prompt:</strong> "What is a REST API? Give me sample code demonstrating it."
+  </div>
+
+  <div style="border:2px solid #94a3b8; border-radius:10px; background:#f8fafc; padding:16px 20px; margin:18px 0;">
+    <strong style="color:#475569; text-transform:uppercase; font-size:0.8rem; letter-spacing:0.04em;">Stage 1 — Pretrained (Base) Model</strong>
+    <p style="margin:10px 0 0 0; font-style:italic; color:#334;">
+      <strong style="font-style:normal;">Response:</strong> "What is a REST API? Give me sample code demonstrating it. What is a SOAP API? What is the
+      difference between REST and GraphQL? These are common backend interview questions. A RESTful
+      API typically uses HTTP methods such as GET, POST, PUT, and DELETE, and candidates are often
+      asked to compare it against RPC-style APIs during system design rounds..."
+    </p>
+    <p style="margin:10px 0 0 0; font-size:0.88rem; color:#64748b;">
+      No code was written. No question was actually answered. The model isn't being unhelpful — it
+      has no concept of "answering" at all yet. It's doing exactly what it was trained to do: predict
+      the statistically likely next tokens for a page that opens with this sentence, and pages like
+      this are usually FAQ lists or interview-prep articles that keep listing more questions rather
+      than answering the first one.
+    </p>
+  </div>
+
+  <div style="display:flex; align-items:left; justify-content:left; gap:14px; margin:4px 0 18px;">
+    <svg width="70" height="34" viewBox="0 0 70 34">
+      <line x1="4" y1="17" x2="52" y2="17" stroke="#93650a" stroke-width="2.5"/>
+      <path d="M44,7 L58,17 L44,27" fill="none" stroke="#93650a" stroke-width="2.5"/>
+    </svg>
+    <span style="font-size:0.85rem; color:#93650a; font-weight:600;">SFT training</span>
+  </div>
+
+  <div style="border:2px solid #93650a; border-radius:10px; background:#fff9f0; padding:16px 20px; margin:18px 0;">
+    <strong style="color:#93650a; text-transform:uppercase; font-size:0.8rem; letter-spacing:0.04em;">Stage 2 — After SFT</strong>
+    <p style="margin:10px 0 0 0; color:#333;">
+      <strong>Response:</strong> "Great question! A REST API (Representational State Transfer) is an architectural style for
+      designing networked applications. It uses standard HTTP methods to perform operations on
+      resources, which are identified by URLs. REST APIs are widely used because they are simple,
+      scalable, and stateless, meaning each request from a client contains all the information needed
+      to process it. Here is a simple example demonstrating a REST API endpoint using Python's Flask
+      framework:"
+    </p>
+    <pre class="code-box" style="margin-top:10px;"><code>from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.route('/api/users/&lt;int:user_id&gt;', methods=['GET'])
+def get_user(user_id):
+    # In a real app this would query a database
+    user = {"id": user_id, "name": "Alice"}
+    return jsonify(user)
+
+if __name__ == '__main__':
+    app.run(debug=True)</code></pre>
+    <p style="margin:10px 0 0 0; color:#333;">
+      "This defines a GET endpoint that returns user data as JSON. You could similarly define POST,
+      PUT, and DELETE routes to complete the full set of RESTful operations for this resource. Let me
+      know if you'd like an example of those as well!"
+    </p>
+    <p style="margin:10px 0 0 0; font-size:0.88rem; color:#64748b;">
+      This is a real, working answer — instruction-following succeeded. But notice what SFT alone
+      didn't fix: an unearned "Great question!" opener, a definition longer than it needs to be, and
+      a closing offer nobody asked for. SFT was trained to imitate a fixed target response, and
+      nothing in that objective penalizes harmless filler the way a human reader would.
+    </p>
+  </div>
+
+  <div style="text-align:left; margin:6px 0;">
+  <div style="display:flex; align-items:left; justify-content:left; gap:14px; margin:4px 0 18px;">
+    <svg width="70" height="34" viewBox="0 0 70 34">
+      <line x1="4" y1="17" x2="52" y2="17" stroke="#206a37" stroke-width="2.5"/>
+      <path d="M44,7 L58,17 L44,27" fill="none" stroke="#206a37" stroke-width="2.5"/>
+    </svg>
+    <span style="font-size:0.85rem; color:#206a37; font-weight:600;">RLHF / DPO training</span>
+  </div>
+
+  <div style="border:2px solid #206a37; border-radius:10px; background:#f3faf5; padding:16px 20px; margin:18px 0;">
+    <strong style="color:#206a37; text-transform:uppercase; font-size:0.8rem; letter-spacing:0.04em;">Stage 3 — After RLHF / DPO</strong>
+    <p style="margin:10px 0 0 0; color:#333;">
+      <strong>Response:</strong> "A REST API lets applications talk over HTTP using standard methods — GET to read data, POST to
+      create it, PUT to update it, DELETE to remove it. Resources are addressed by URL, and each
+      request is stateless (it carries everything the server needs, with no session memory between
+      calls). Here's a minimal example in Flask:"
+    </p>
+    <pre class="code-box" style="margin-top:10px;"><code>from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.route('/api/users/&lt;int:user_id&gt;', methods=['GET'])
+def get_user(user_id):
+    user = {"id": user_id, "name": "Alice"}
+    return jsonify(user)
+
+app.run(debug=True)</code></pre>
+    <p style="margin:10px 0 0 0; color:#333;">
+      "This one route handles <code>GET /api/users/1</code>. Want the POST/PUT/DELETE versions too?"
+    </p>
+    <p style="margin:10px 0 0 0; font-size:0.88rem; color:#64748b;">
+      Same facts, same working code — but tighter, with the filler and unearned enthusiasm gone, and
+      a genuinely useful one-line follow-up instead of a generic closing offer. Nothing here required
+      new knowledge; it required a training signal that could tell the difference between two already-
+      correct answers and prefer the better one.
+    </p>
+  </div>
+
+  <div class="intuition-box">
+    <strong class="label">The Generalization</strong>
+    <ul style="margin-top:0; margin-bottom:0; padding-left:18px; text-align:left; list-style-position:outside;">
+      <li style="margin-bottom:6px;"><strong>Pretraining</strong> doesn't know how to "answer" — it only knows how to continue text.</li>
+      <li style="margin-bottom:6px;"><strong>SFT</strong> fixes that: it's trained directly to answer in the right format.</li>
+      <li style="margin-bottom:6px;">SFT can't fix filler, length, or tone — nothing in its targets ever marked those "wrong."</li>
+      <li style="margin-bottom:6px;"><strong>RLHF/DPO</strong> is trained on human preference, not a fixed target — exactly what polishes those.</li>
+      <li style="margin-bottom:6px;">Inference isn't a fourth training stage — it just serves whichever checkpoint training stopped at.</li>
+      <li style="margin-bottom:0;">Decoding settings (temperature, top-p) shift wording, not knowledge or alignment.</li>
+    </ul>
   </div>
 
   <h2 id="roadmap">Roadmap for This Section</h2>
@@ -343,37 +466,595 @@
   <div class="roadmap-card">
     <div class="roadmap-num">1</div>
     <div>
-      <h4>Tokenization at Scale <span class="status-tag status-upcoming">Upcoming</span></h4>
-      <p>Byte-Pair Encoding and Unigram/SentencePiece tokenizers, vocabulary construction, and why
-      tokenization choices ripple into everything downstream (context length, multilingual behavior,
-      arithmetic errors).</p>
+      <h4>Tokenization at Scale <span class="status-tag status-done">Done</span></h4>
+      <p>Byte-Pair Encoding vocabulary construction, worked examples, and the vocabulary-size
+      trade-off are covered in <a href="transformer_algorithm.html#input-preparation">Input
+      Preparation</a> on the Transformer Algorithm page. Unigram/SentencePiece tokenizers and the
+      downstream ripple effects (context length, multilingual behavior, arithmetic errors) are
+      covered here in <a href="#tokenization-extras">Beyond BPE</a>.</p>
     </div>
   </div>
 
   <div class="roadmap-card">
     <div class="roadmap-num">2</div>
     <div>
-      <h4>Embeddings and Positional Encoding, Revisited <span class="status-tag status-upcoming">Upcoming</span></h4>
-      <p>A short bridge page connecting the attention-level treatment from the Transformer pages to
-      how embedding tables and positional schemes (learned, sinusoidal, RoPE) are actually
-      implemented and sized in a real model.</p>
+      <h4>Embeddings and Positional Encoding, Revisited <span class="status-tag status-done">Done</span></h4>
+      <p>Embedding tables (lookup mechanics, worked example, weight tying) and sinusoidal positional
+      encoding are covered in the same <a href="transformer_algorithm.html#input-preparation">Input
+      Preparation</a> section. Learned and RoPE positional schemes are still to be added.</p>
     </div>
   </div>
 
   <div class="roadmap-card">
     <div class="roadmap-num">3</div>
     <div>
-      <h4>The Pretraining Loop <span class="status-tag status-upcoming">Upcoming</span></h4>
-      <p>Data pipelines and mixture ratios, the next-token cross-entropy objective, optimizer choices
-      (AdamW, learning-rate schedules), mixed-precision training, and the basics of distributing
-      training across multiple GPUs.</p>
+      <h4>The Pretraining Loop <span class="status-tag status-done">Done</span></h4>
+      <p>The forward/backward mechanics and next-token training loop are covered on the
+      Transformer Algorithm page (<a href="transformer_algorithm.html#transformer-backprop">Backpropagation
+      &amp; Optimization</a> and the <a href="transformer_algorithm.html#training-stages">three-stage
+      training overview</a>). Data pipelines and mixture ratios, mixed-precision training, and
+      distributed training across multiple GPUs are covered here in
+      <a href="#pretraining-loop">The Pretraining Loop</a>.</p>
     </div>
   </div>
 
   <div class="roadmap-card">
     <div class="roadmap-num">4</div>
     <div>
-      <h4>Scaling Laws and Model Sizing <span class="status-tag status-upcoming">Upcoming</span></h4>
+      <h4>Model Architectures at Scale: Mixture-of-Experts <span class="status-tag status-done">Done</span></h4>
+      <p>Why models like DeepSeek-V2/V3 replace a single dense feed-forward layer with many smaller
+      "expert" sub-networks and a learned router, how the router and experts train together, and the
+      load-balancing loss that keeps a handful of experts from doing all the work.</p>
+    </div>
+  </div>
+
+  <h2 id="tokenization-extras">Beyond BPE: Unigram, SentencePiece, and the Ripple Effects of Tokenization</h2>
+  <p>
+    The BPE walkthrough on the Transformer Algorithm page builds a vocabulary
+    <strong>bottom-up</strong> — starting from individual characters and repeatedly merging the most
+    frequent pair. The <strong>Unigram Language Model</strong> tokenizer (the algorithm behind
+    Google's <strong>SentencePiece</strong> library) takes the opposite direction entirely — and isn't
+    an LLM-specific technique, either; it's a general subword-tokenization method used across NLP
+    (T5, ALBERT, many multilingual systems), not something invented for large language models. The
+    diagram below walks through that top-down process step by step. The <strong>seed vocabulary</strong>
+    it starts from is every substring (up to some length cutoff) that appears anywhere in the training
+    corpus — every character, every 2-character chunk, every 3-character chunk, and so on — deliberately
+    enormous (often hundreds of thousands to a few million candidates) so the pruning step that follows
+    has real room to be selective.
+  </p>
+
+  <div class="diagram-frame">
+    <svg viewBox="0 0 860 280" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+      <defs>
+        <marker id="uniArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#0056b3"/>
+        </marker>
+        <marker id="uniLoopArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#93650a"/>
+        </marker>
+      </defs>
+      <g font-family="Segoe UI, sans-serif" font-size="12">
+        <rect x="10" y="70" width="160" height="70" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="90" y="98" text-anchor="middle" font-weight="700" fill="#003d82">Huge Seed</text>
+        <text x="90" y="116" text-anchor="middle" font-weight="700" fill="#003d82">Vocabulary</text>
+        <text x="90" y="160" text-anchor="middle" font-size="10" font-style="italic" fill="#556">e.g. "l","o","w","e",</text>
+        <text x="90" y="174" text-anchor="middle" font-size="10" font-style="italic" fill="#556">"lo","est","newest",...</text>
+
+        <line x1="170" y1="105" x2="206" y2="105" stroke="#0056b3" stroke-width="2" marker-end="url(#uniArrow)"/>
+
+        <rect x="210" y="70" width="160" height="70" rx="10" fill="#fff0d6" stroke="#93650a" stroke-width="2"/>
+        <text x="290" y="98" text-anchor="middle" font-weight="700" fill="#7a4e05">Score Each Token's</text>
+        <text x="290" y="116" text-anchor="middle" font-weight="700" fill="#7a4e05">Likelihood Contribution</text>
+        <text x="290" y="160" text-anchor="middle" font-size="10" font-style="italic" fill="#8a5a10">e.g. p("est")=0.021,</text>
+        <text x="290" y="174" text-anchor="middle" font-size="10" font-style="italic" fill="#8a5a10">p("q")&#8776;0.0002</text>
+
+        <line x1="370" y1="105" x2="406" y2="105" stroke="#0056b3" stroke-width="2" marker-end="url(#uniArrow)"/>
+
+        <rect x="410" y="70" width="180" height="70" rx="10" fill="#fff0d6" stroke="#93650a" stroke-width="2"/>
+        <text x="500" y="98" text-anchor="middle" font-weight="700" fill="#7a4e05">Prune Least-Valuable</text>
+        <text x="500" y="116" text-anchor="middle" font-weight="700" fill="#7a4e05">Tokens</text>
+        <text x="500" y="160" text-anchor="middle" font-size="10" font-style="italic" fill="#8a5a10">e.g. removed "q","xr" —</text>
+        <text x="500" y="174" text-anchor="middle" font-size="10" font-style="italic" fill="#8a5a10">near-zero contribution</text>
+
+        <path d="M500,190 Q500,220 350,220 Q290,220 290,192" fill="none" stroke="#93650a" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#uniLoopArrow)"/>
+        <text x="390" y="240" text-anchor="middle" font-size="11" font-style="italic" fill="#93650a">repeat until target size reached</text>
+
+        <line x1="590" y1="105" x2="626" y2="105" stroke="#0056b3" stroke-width="2" marker-end="url(#uniArrow)"/>
+
+        <rect x="630" y="70" width="160" height="70" rx="10" fill="#e2f4e6" stroke="#206a37" stroke-width="2"/>
+        <text x="710" y="98" text-anchor="middle" font-weight="700" fill="#1c5c30">Final Vocabulary</text>
+        <text x="710" y="116" text-anchor="middle" font-weight="700" fill="#1c5c30">(size $V$)</text>
+        <text x="710" y="160" text-anchor="middle" font-size="10" font-style="italic" fill="#3a7a4b">e.g. "low","est","new",</text>
+        <text x="710" y="174" text-anchor="middle" font-size="10" font-style="italic" fill="#3a7a4b">"wid", ... ($V$=32,000)</text>
+      </g>
+    </svg>
+    <p class="diagram-caption">Top-down: start big, iteratively remove the tokens that cost the
+      corpus's overall likelihood the least, repeat until only $V$ tokens remain — the mirror image
+      of BPE's bottom-up merging. (Example tokens reuse the same toy corpus —
+      <code>low</code>, <code>lower</code>, <code>newest</code>, <code>widest</code> — as the BPE
+      worked example on the Transformer Algorithm page.)</p>
+  </div>
+
+  <div class="algorithm-box">
+    <strong class="label">The Math Behind Scoring and Pruning</strong>
+    <p style="margin-top:0;">
+      <strong>Scoring:</strong> under a unigram model, a string's probability is the probability of its
+      <em>best</em> segmentation into vocabulary tokens — found efficiently via the Viterbi algorithm:
+    </p>
+    <div class="math-block">
+      $$P(x) = \max_{s_1 \cdots s_k \,=\, x} \; \prod_{i=1}^{k} p(s_i)$$
+    </div>
+    <p>
+      Token probabilities $p(s_i)$ are fit to the whole corpus via <strong>Expectation-Maximization</strong>: segment the
+      corpus with the current probabilities, re-estimate each $p(s_i)$ from how often it was actually
+      used, and repeat until stable. The corpus's total log-likelihood is then $\mathcal{L} =
+      \sum_{x \,\in\, \text{corpus}} \log P(x)$.
+    </p>
+    <p style="margin-bottom:0;">
+      <strong>Pruning:</strong> for each candidate token $t$, compute how much $\mathcal{L}$ would drop
+      if $t$ were removed (re-segmenting with whatever remains):
+    </p>
+    <div class="math-block">
+      $$\text{loss}(t) = \mathcal{L}_{\text{full}} - \mathcal{L}_{\text{without } t}$$
+    </div>
+    <p style="margin-bottom:0;">
+      Tokens with the smallest $\text{loss}(t)$ contributed least to the corpus's likelihood, so they're
+      the ones discarded — typically the bottom 10–20% each round, since removing any token changes the
+      optimal segmentation (and therefore everyone else's score) for the next round.
+    </p>
+  </div>
+
+  <div class="intuition-box">
+    <strong class="label">The Same Expectation-Maximization Pattern Elsewhere</strong>
+    This alternating estimate-then-refit structure isn't specific to tokenization — it's the same
+    Expectation-Maximization algorithm used to fit <strong>Gaussian Mixture Models</strong> (see the
+    <a href="normal_distribution.html" style="text-decoration:underline;">Normal Distribution</a> page's EM deep-dive). There, the hidden variable is which Gaussian component
+    generated a data point; here, it's which segmentation produced a word. In both cases the
+    observed-data log-likelihood is a <em>log of a sum</em> over that hidden variable — a sum over
+    components in GMM, a sum over segmentations here — which is exactly what blocks a direct,
+    closed-form maximum-likelihood solution and makes the E-step/M-step alternation necessary. The
+    Viterbi-based version here also mirrors GMM's own hard-assignment simplification: just as K-means
+    is GMM's soft responsibilities collapsed to a single best cluster, using only the single best
+    segmentation (rather than a full posterior over all segmentations) is Unigram's version of that
+    same hard-assignment shortcut. The diagram below lines up both cases side by side.
+  </div>
+
+  <div class="diagram-frame">
+    <svg viewBox="0 0 860 340" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+      <defs>
+        <marker id="emCmpArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#0056b3"/>
+        </marker>
+      </defs>
+      <g font-family="Segoe UI, sans-serif" font-size="12">
+        <text x="200" y="24" text-anchor="middle" font-weight="700" fill="#003d82" font-size="14">GMM (Normal Distribution page)</text>
+        <text x="660" y="24" text-anchor="middle" font-weight="700" fill="#7a4e05" font-size="14">Unigram Tokenizer (this page)</text>
+        <line x1="430" y1="10" x2="430" y2="330" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="5,4"/>
+
+        <rect x="60" y="38" width="280" height="34" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="200" y="59" text-anchor="middle" fill="#003d82">Observed: a data point $x_i$</text>
+        <rect x="520" y="38" width="280" height="34" rx="8" fill="#fff0d6" stroke="#93650a" stroke-width="2"/>
+        <text x="660" y="59" text-anchor="middle" fill="#7a4e05">Observed: a word in the corpus</text>
+
+        <line x1="200" y1="72" x2="200" y2="94" stroke="#0056b3" stroke-width="2" marker-end="url(#emCmpArrow)"/>
+        <line x1="660" y1="72" x2="660" y2="94" stroke="#93650a" stroke-width="2" marker-end="url(#emCmpArrow)"/>
+
+        <rect x="60" y="96" width="280" height="34" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="200" y="117" text-anchor="middle" fill="#003d82">Hidden: which component made it?</text>
+        <rect x="520" y="96" width="280" height="34" rx="8" fill="#fff0d6" stroke="#93650a" stroke-width="2"/>
+        <text x="660" y="117" text-anchor="middle" fill="#7a4e05">Hidden: which segmentation made it?</text>
+
+        <line x1="200" y1="130" x2="200" y2="152" stroke="#0056b3" stroke-width="2" marker-end="url(#emCmpArrow)"/>
+        <line x1="660" y1="130" x2="660" y2="152" stroke="#93650a" stroke-width="2" marker-end="url(#emCmpArrow)"/>
+
+        <rect x="60" y="154" width="280" height="34" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="200" y="175" text-anchor="middle" fill="#003d82">E-step: responsibility $\gamma_{ik}$</text>
+        <rect x="520" y="154" width="280" height="34" rx="8" fill="#fff0d6" stroke="#93650a" stroke-width="2"/>
+        <text x="660" y="175" text-anchor="middle" fill="#7a4e05">E-step: score each segmentation</text>
+
+        <line x1="200" y1="188" x2="200" y2="210" stroke="#0056b3" stroke-width="2" marker-end="url(#emCmpArrow)"/>
+        <line x1="660" y1="188" x2="660" y2="210" stroke="#93650a" stroke-width="2" marker-end="url(#emCmpArrow)"/>
+
+        <rect x="60" y="212" width="280" height="34" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="200" y="233" text-anchor="middle" fill="#003d82">M-step: update $\mu_k,\Sigma_k,\pi_k$</text>
+        <rect x="520" y="212" width="280" height="34" rx="8" fill="#fff0d6" stroke="#93650a" stroke-width="2"/>
+        <text x="660" y="233" text-anchor="middle" fill="#7a4e05">M-step: update each $p(s)$</text>
+
+        <text x="200" y="260" text-anchor="middle" font-size="10.5" font-style="italic" fill="#556">hard version: K-means</text>
+        <text x="660" y="260" text-anchor="middle" font-size="10.5" font-style="italic" fill="#8a5a10">hard version: Viterbi (best-only)</text>
+
+        <rect x="130" y="278" width="600" height="50" rx="10" fill="#f3e8e8" stroke="#93250a" stroke-width="2"/>
+        <text x="430" y="298" text-anchor="middle" fill="#5a1a05" font-weight="700">Both: log-likelihood is a log of a sum over the hidden variable</text>
+        <text x="430" y="316" text-anchor="middle" fill="#5a1a05" font-size="11">→ no closed-form MLE → E-step / M-step alternation required</text>
+
+        <line x1="200" y1="246" x2="200" y2="276" stroke="#93250a" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <line x1="660" y1="246" x2="660" y2="276" stroke="#93250a" stroke-width="1.5" stroke-dasharray="4,3"/>
+      </g>
+    </svg>
+    <p class="diagram-caption">Same four-step loop, two different hidden variables — component
+      membership on the left, segmentation on the right — both blocked from a direct solution by the
+      same log-of-a-sum obstruction.</p>
+  </div>
+
+  <div class="diagram-frame">
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+      <defs>
+        <marker id="segArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#93650a"/>
+        </marker>
+      </defs>
+      <g font-family="Segoe UI, sans-serif" font-size="12">
+        <rect x="10" y="98" width="140" height="50" rx="8" fill="#fff0d6" stroke="#93650a" stroke-width="2"/>
+        <text x="80" y="128" text-anchor="middle" font-weight="700" fill="#7a4e05">"lower"</text>
+
+        <line x1="150" y1="123" x2="186" y2="70" stroke="#93650a" stroke-width="2" marker-end="url(#segArrow)"/>
+        <line x1="150" y1="123" x2="186" y2="123" stroke="#93650a" stroke-width="2" marker-end="url(#segArrow)"/>
+        <line x1="150" y1="123" x2="186" y2="180" stroke="#93650a" stroke-width="2" marker-end="url(#segArrow)"/>
+
+        <rect x="190" y="45" width="230" height="46" rx="8" fill="#e2f4e6" stroke="#206a37" stroke-width="2.5"/>
+        <text x="305" y="63" text-anchor="middle" fill="#1c5c30">"low" + "er"</text>
+        <text x="305" y="80" text-anchor="middle" font-size="10.5" fill="#1c5c30">$p=0.0021$ &#9733; highest — Viterbi picks this</text>
+
+        <rect x="190" y="100" width="230" height="46" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+        <text x="305" y="118" text-anchor="middle" fill="#334">"lo" + "wer"</text>
+        <text x="305" y="135" text-anchor="middle" font-size="10.5" fill="#667">$p=0.00040$</text>
+
+        <rect x="190" y="155" width="230" height="46" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+        <text x="305" y="173" text-anchor="middle" fill="#334">"l"+"o"+"w"+"e"+"r"</text>
+        <text x="305" y="190" text-anchor="middle" font-size="10.5" fill="#667">$p=0.00000009$</text>
+
+        <line x1="420" y1="68" x2="456" y2="68" stroke="#206a37" stroke-width="2" marker-end="url(#segArrow)"/>
+
+        <rect x="460" y="45" width="220" height="46" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2.5"/>
+        <text x="570" y="63" text-anchor="middle" font-weight="700" fill="#003d82">Chosen segmentation</text>
+        <text x="570" y="80" text-anchor="middle" font-size="10.5" fill="#003d82">used for E-step / M-step counting</text>
+
+        <text x="305" y="230" text-anchor="middle" font-size="11" font-style="italic" fill="#667">Every candidate is a possible value of the hidden variable — the</text>
+        <text x="305" y="246" text-anchor="middle" font-size="11" font-style="italic" fill="#667">observed word's probability is the sum over all three, before the log.</text>
+      </g>
+    </svg>
+    <p class="diagram-caption">Concretely, for one word: "lower" could plausibly be split three
+      different ways, each with its own probability under the current token probabilities. Viterbi
+      picks the highest-probability split — this is the hidden variable made visible, the exact
+      counterpart to "which Gaussian generated this point" in GMM.</p>
+  </div>
+
+  <p style="font-size: 0.92rem; color:#475569;">
+    BPE asks "what should I combine next?"; Unigram asks "what can I afford to throw away?" Both
+    converge on a vocabulary of the same target size $V$ — they just get there from opposite ends.
+  </p>
+
+  <p>
+    SentencePiece packages this Unigram algorithm (or, optionally, BPE) into a tokenizer that treats
+    the input as a raw stream of Unicode characters — including whitespace, which it encodes as an
+    ordinary symbol rather than assuming words are pre-split on spaces. That single design choice
+    matters more than it sounds: languages like Japanese, Chinese, and Thai don't use whitespace to
+    separate words at all, so a tokenizer that assumes whitespace-delimited "words" as its starting
+    point (as classic BPE implementations often do) is already broken for those languages before
+    training even begins. SentencePiece sidesteps the problem by never assuming word boundaries exist.
+  </p>
+
+  <div class="intuition-box">
+    <strong class="label">Why Tokenization Choices Ripple Into Everything Downstream</strong>
+    <p style="margin-top:0;">
+      <strong>Context length:</strong> a model's context window is measured in tokens, not words or
+      characters. If a tokenizer needs 3 tokens to represent a word that a better-matched tokenizer
+      would represent in 1, the effective amount of <em>text</em> that fits in the same context window
+      shrinks by 3x for that content — the window's token count never changes, but how much reading
+      material it holds does.
+    </p>
+    <p style="margin-top:0;">
+      <strong>Multilingual behavior:</strong> vocabularies are learned from a training corpus, and most
+      large corpora are English-heavy. A tokenizer trained that way ends up with efficient, short token
+      sequences for English and long, fragmented ones for underrepresented languages and scripts — the
+      same sentence can cost noticeably more tokens (and therefore more compute, more latency, and a
+      smaller effective context) in one language than another, purely as an artifact of tokenizer
+      training data, not any property of the language itself.
+    </p>
+    <p style="margin-bottom:0;">
+      <strong>Arithmetic errors:</strong> BPE and Unigram vocabularies are built from whatever substrings
+      are frequent — which has no reason to respect place value. The digits of <code>380</code> might
+      be tokenized as one whole chunk, while <code>381</code> splits into <code>38</code> + <code>1</code>,
+      purely based on which substrings happened to be frequent in training. Since the model never sees
+      digits split consistently by place value, arithmetic — which depends on reliably tracking the
+      ones, tens, and hundreds column — becomes harder to learn than it would be with a
+      fixed-width, digit-by-digit tokenization scheme. This is a widely cited contributor to LLM
+      arithmetic mistakes, and it's a direct consequence of a tokenization choice made long before
+      training starts.
+    </p>
+  </div>
+
+  <h2 id="pretraining-loop">The Pretraining Loop: Data Mixtures, Mixed Precision, and Distributed Training</h2>
+  <p>
+    The forward/backward mechanics of a single training step — and the next-token cross-entropy
+    objective itself — are already covered on the Transformer Algorithm page (linked from roadmap
+    item 3 above). What's specific to pretraining <em>at LLM scale</em> is everything around that
+    single step: what data actually gets fed in, what numerical precision the computation runs at,
+    and how the work gets spread across hardware that no single GPU could handle alone.
+  </p>
+
+  <h3>Data Pipelines and Mixture Ratios</h3>
+  <p>
+    A pretraining corpus is never one uniform source — it's a blend of web crawls, curated text, and
+    code, combined according to a <strong>mixture ratio</strong>: the fraction of each training batch
+    drawn from each source. These ratios are chosen deliberately, not proportionally to how much of
+    each source exists on the internet — the diagram below contrasts the two directly.
+  </p>
+
+  <div class="diagram-frame">
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+      <defs>
+        <marker id="mixArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#93650a"/>
+        </marker>
+      </defs>
+      <g font-family="Segoe UI, sans-serif" font-size="12">
+        <text x="150" y="20" text-anchor="middle" font-weight="700" fill="#003d82">Natural Web Frequency</text>
+        <rect x="60" y="35" width="180" height="55" fill="#eaf2fb" stroke="#0056b3"/>
+        <text x="150" y="66" text-anchor="middle" fill="#003d82">Web crawl — 92%</text>
+        <rect x="60" y="90" width="180" height="7" fill="#e2f4e6" stroke="#206a37"/>
+        <rect x="60" y="97" width="180" height="4" fill="#fff0d6" stroke="#93650a"/>
+        <text x="150" y="120" text-anchor="middle" fill="#1c5c30" font-size="10">Books/Wiki 5% · Code 3%</text>
+
+        <text x="150" y="150" text-anchor="middle" font-size="11" fill="#667">(mostly web text, as</text>
+        <text x="150" y="164" text-anchor="middle" font-size="11" fill="#667">it naturally occurs online)</text>
+
+        <line x1="270" y1="80" x2="320" y2="80" stroke="#93650a" stroke-width="2" marker-end="url(#mixArrow)"/>
+        <text x="295" y="66" text-anchor="middle" font-size="10" font-style="italic" fill="#93650a">upsample</text>
+
+        <text x="490" y="20" text-anchor="middle" font-weight="700" fill="#7a4e05">Training Mixture</text>
+        <rect x="400" y="35" width="180" height="36" fill="#eaf2fb" stroke="#0056b3"/>
+        <text x="490" y="57" text-anchor="middle" fill="#003d82">Web crawl — 60%</text>
+        <rect x="400" y="71" width="180" height="15" fill="#e2f4e6" stroke="#206a37"/>
+        <text x="490" y="82" text-anchor="middle" fill="#1c5c30" font-size="10">Books/Wiki — 25%</text>
+        <rect x="400" y="86" width="180" height="9" fill="#fff0d6" stroke="#93650a"/>
+        <text x="490" y="94" text-anchor="middle" fill="#7a4e05" font-size="9">Code — 15%</text>
+
+        <text x="490" y="150" text-anchor="middle" font-size="11" fill="#667">(higher-quality sources</text>
+        <text x="490" y="164" text-anchor="middle" font-size="11" fill="#667">repeated more than their</text>
+        <text x="490" y="178" text-anchor="middle" font-size="11" fill="#667">natural web share)</text>
+      </g>
+    </svg>
+    <p class="diagram-caption">Illustrative ratios only — actual mixture weights vary by lab and are
+      often revised mid-training based on held-out evaluation results, treating the mixture itself as
+      a tunable hyperparameter rather than a fixed, one-time decision.</p>
+  </div>
+
+  <h3>Mixed-Precision Training</h3>
+  <p>
+    Training entirely in 32-bit floating point (FP32) is accurate but slow and memory-hungry at LLM
+    scale. <strong>Mixed-precision training</strong> runs most computation in a lower-precision
+    format — FP16 or, more commonly today, BF16 — roughly halving memory usage and speeding up matrix
+    multiplication, while keeping a master FP32 copy of the weights for the optimizer update itself.
+    The diagram below shows exactly why that lower-precision choice matters.
+  </p>
+
+  <div class="diagram-frame">
+    <svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+      <g font-family="Segoe UI, sans-serif" font-size="12">
+        <text x="175" y="22" text-anchor="middle" font-weight="700" fill="#7f1d1d">FP16 — narrow range</text>
+        <line x1="40" y1="90" x2="310" y2="90" stroke="#94a3b8" stroke-width="2"/>
+        <rect x="120" y="75" width="150" height="30" fill="#fef2f2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="195" y="95" text-anchor="middle" font-size="10" fill="#7f1d1d">representable range</text>
+        <circle cx="70" cy="90" r="6" fill="#7f1d1d"/>
+        <text x="70" y="130" text-anchor="middle" font-size="10" fill="#7f1d1d">tiny gradient</text>
+        <text x="70" y="144" text-anchor="middle" font-size="10" fill="#7f1d1d">underflows to 0</text>
+
+        <text x="525" y="22" text-anchor="middle" font-weight="700" fill="#1c5c30">BF16 — same range as FP32</text>
+        <line x1="360" y1="90" x2="690" y2="90" stroke="#94a3b8" stroke-width="2"/>
+        <rect x="380" y="75" width="290" height="30" fill="#e2f4e6" stroke="#206a37" stroke-width="1.5"/>
+        <text x="525" y="95" text-anchor="middle" font-size="10" fill="#1c5c30">representable range (wide exponent)</text>
+        <circle cx="400" cy="90" r="6" fill="#1c5c30"/>
+        <text x="400" y="130" text-anchor="middle" font-size="10" fill="#1c5c30">same tiny gradient</text>
+        <text x="400" y="144" text-anchor="middle" font-size="10" fill="#1c5c30">survives, stays nonzero</text>
+      </g>
+    </svg>
+    <p class="diagram-caption">FP16's narrow exponent range means small gradients can round down to
+      exactly zero — silently killing the learning signal. <strong>Loss scaling</strong> works around
+      this by multiplying the loss before the backward pass (then dividing gradients back down before
+      the optimizer step). BF16 shares FP32's wide exponent range, so it rarely needs loss scaling at
+      all — why most modern training setups prefer it over FP16.</p>
+  </div>
+
+  <h3>Distributing Training Across Multiple GPUs</h3>
+  <p>
+    A large model's weights, activations, and optimizer state together can easily exceed what a
+    single GPU's memory can hold — and even when they fit, training on one GPU would take far too
+    long. Three complementary strategies split the work across many GPUs at once:
+  </p>
+
+  <div class="diagram-frame">
+    <svg viewBox="0 0 860 260" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+      <g font-family="Segoe UI, sans-serif" font-size="12">
+        <rect x="20" y="20" width="240" height="200" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="140" y="46" text-anchor="middle" font-weight="700" fill="#003d82">Data Parallelism</text>
+        <text x="140" y="70" text-anchor="middle" fill="#445">Full model copied to</text>
+        <text x="140" y="86" text-anchor="middle" fill="#445">every GPU</text>
+        <text x="140" y="112" text-anchor="middle" fill="#445">Each GPU trains on a</text>
+        <text x="140" y="128" text-anchor="middle" fill="#445">different batch slice</text>
+        <text x="140" y="154" text-anchor="middle" fill="#445">Gradients averaged</text>
+        <text x="140" y="170" text-anchor="middle" fill="#445">across GPUs each step</text>
+        <text x="140" y="200" text-anchor="middle" font-style="italic" fill="#667">Use when the model fits</text>
+        <text x="140" y="214" text-anchor="middle" font-style="italic" fill="#667">on one GPU</text>
+
+        <rect x="310" y="20" width="240" height="200" rx="10" fill="#fff0d6" stroke="#93650a" stroke-width="2"/>
+        <text x="430" y="46" text-anchor="middle" font-weight="700" fill="#7a4e05">Tensor Parallelism</text>
+        <text x="430" y="70" text-anchor="middle" fill="#5a3d05">A single layer's weight</text>
+        <text x="430" y="86" text-anchor="middle" fill="#5a3d05">matrix is split across GPUs</text>
+        <text x="430" y="112" text-anchor="middle" fill="#5a3d05">Each GPU computes its</text>
+        <text x="430" y="128" text-anchor="middle" fill="#5a3d05">slice of that one layer</text>
+        <text x="430" y="154" text-anchor="middle" fill="#5a3d05">Results combined before</text>
+        <text x="430" y="170" text-anchor="middle" fill="#5a3d05">the next layer</text>
+        <text x="430" y="200" text-anchor="middle" font-style="italic" fill="#8a5a10">Use when even one layer</text>
+        <text x="430" y="214" text-anchor="middle" font-style="italic" fill="#8a5a10">is too big for one GPU</text>
+
+        <rect x="600" y="20" width="240" height="200" rx="10" fill="#e2f4e6" stroke="#206a37" stroke-width="2"/>
+        <text x="720" y="46" text-anchor="middle" font-weight="700" fill="#1c5c30">Pipeline Parallelism</text>
+        <text x="720" y="70" text-anchor="middle" fill="#2f6b3f">Different layers assigned</text>
+        <text x="720" y="86" text-anchor="middle" fill="#2f6b3f">to different GPUs</text>
+        <text x="720" y="112" text-anchor="middle" fill="#2f6b3f">Micro-batches stream</text>
+        <text x="720" y="128" text-anchor="middle" fill="#2f6b3f">through the GPU stages</text>
+        <text x="720" y="154" text-anchor="middle" fill="#2f6b3f">Keeps every GPU busy on</text>
+        <text x="720" y="170" text-anchor="middle" fill="#2f6b3f">a different micro-batch</text>
+        <text x="720" y="200" text-anchor="middle" font-style="italic" fill="#3a7a4b">Use when the model has</text>
+        <text x="720" y="214" text-anchor="middle" font-style="italic" fill="#3a7a4b">too many layers for one GPU</text>
+      </g>
+    </svg>
+    <p class="diagram-caption">These three strategies solve different bottlenecks and are typically
+      combined rather than chosen exclusively — large-scale training commonly runs all three at once
+      (sometimes called "3D parallelism"), plus sharding the optimizer state itself (as in DeepSpeed
+      ZeRO or PyTorch FSDP) to further reduce per-GPU memory pressure.</p>
+  </div>
+
+  <div class="intuition-box">
+    <strong class="label">Matching the Strategy to the Bottleneck</strong>
+    Data parallelism solves a <em>speed</em> problem — the model fits on one GPU, but training on one
+    GPU is too slow. Tensor and pipeline parallelism solve a <em>memory</em> problem — the model
+    itself doesn't fit on one GPU at all, regardless of speed. A useful mental shortcut: data
+    parallelism copies the whole model everywhere and splits the <em>data</em>; tensor and pipeline
+    parallelism keep the data flow simple and instead split the <em>model itself</em> — by width
+    (tensor) or by depth (pipeline).
+  </div>
+
+  <h2 id="moe">Model Architectures at Scale: Mixture-of-Experts</h2>
+  <p>
+    Everything in the Pretraining Loop item above assumes a single dense stack of Transformer blocks —
+    every token passes through every feed-forward layer, every time. Models such as
+    <strong>DeepSeek-V2/V3</strong> make a different architectural choice at pretraining time: replace
+    each block's feed-forward network (FFN) with a <strong>Mixture-of-Experts (MoE)</strong> layer, in
+    which each token is routed to only a handful of specialized sub-networks rather than the one dense
+    block every other token also uses.
+  </p>
+
+  <div class="intuition-box">
+    <strong class="label">Intuition</strong>
+    Picture a firm that used to route every incoming project through one generalist team, no matter
+    what the project needed. An MoE layer replaces that generalist team with a roster of specialist
+    teams and a receptionist (the <strong>router</strong>) who reads each incoming project and sends
+    it to whichever one or two specialists are the best fit. You still pay for a large roster overall,
+    but any single project only ever occupies the time of the specialists it actually needs — not the
+    whole building.
+  </div>
+
+  <div class="algorithm-box">
+    <strong class="label">Core Components of an MoE Layer</strong>
+    <ul>
+      <li><strong>The Experts:</strong> a collection of $N$ separate feed-forward networks — usually
+      the same shape an ordinary FFN layer would be — each with its own independent weights, free to
+      specialize on different kinds of input during training.</li>
+      <li><strong>The Router (Gating Network):</strong> a lightweight linear layer followed by a
+      softmax. Given a token's hidden representation, it outputs a score for every one of the $N$
+      experts, indicating how suited each one is to that specific token.</li>
+      <li><strong>Top-$k$ Selection:</strong> only the handful of experts with the highest scores
+      (commonly $k=2$) actually process the token. The rest are skipped entirely for that token — not
+      given a smaller share of the work, just skipped.</li>
+      <li><strong>Weighted Combination:</strong> the selected experts each produce their own output for
+      the token, and those outputs are combined as a weighted sum, using the router's own scores as the
+      weights (e.g., 70% of Expert 2's output + 30% of Expert 4's output). That single blended result
+      moves on to the next layer.</li>
+    </ul>
+  </div>
+
+  <p>
+    The router itself is not hand-coded with routing rules — it is just another small network, trained
+    by the same backpropagation process as everything else in the model. It starts out choosing experts
+    almost randomly; over many steps, routing choices that lead to better predictions get reinforced and
+    choices that lead to worse predictions get discouraged, until the router has learned, entirely on
+    its own, which experts tend to be good at which kinds of input.
+  </p>
+
+  <div class="diagram-frame">
+    <svg viewBox="0 0 860 300" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+      <defs>
+        <marker id="moeArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#0056b3"/>
+        </marker>
+        <marker id="moeArrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#206a37"/>
+        </marker>
+      </defs>
+      <g font-family="Segoe UI, sans-serif" font-size="13">
+
+        <rect x="10" y="120" width="120" height="60" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="70" y="145" text-anchor="middle" fill="#003d82" font-weight="600">Input</text>
+        <text x="70" y="163" text-anchor="middle" fill="#003d82" font-weight="600">Token</text>
+
+        <rect x="175" y="110" width="130" height="80" rx="8" fill="#fff0d6" stroke="#93650a" stroke-width="2"/>
+        <text x="240" y="140" text-anchor="middle" fill="#7a4e05" font-weight="600">Learned</text>
+        <text x="240" y="158" text-anchor="middle" fill="#7a4e05" font-weight="600">Router</text>
+
+        <line x1="130" y1="150" x2="171" y2="150" stroke="#0056b3" stroke-width="2" marker-end="url(#moeArrow)"/>
+
+        <rect x="360" y="10"  width="130" height="45" rx="8" fill="#eef1f5" stroke="#99a"/>
+        <text x="425" y="37" text-anchor="middle" fill="#667">Expert 1</text>
+
+        <rect x="360" y="65" width="130" height="45" rx="8" fill="#e2f4e6" stroke="#206a37" stroke-width="2"/>
+        <text x="425" y="92" text-anchor="middle" fill="#1c5c30" font-weight="600">Expert 2</text>
+
+        <rect x="360" y="120" width="130" height="45" rx="8" fill="#eef1f5" stroke="#99a"/>
+        <text x="425" y="147" text-anchor="middle" fill="#667">Expert 3</text>
+
+        <rect x="360" y="175" width="130" height="45" rx="8" fill="#e2f4e6" stroke="#206a37" stroke-width="2"/>
+        <text x="425" y="202" text-anchor="middle" fill="#1c5c30" font-weight="600">Expert 4</text>
+
+        <rect x="360" y="230" width="130" height="45" rx="8" fill="#eef1f5" stroke="#99a"/>
+        <text x="425" y="257" text-anchor="middle" fill="#667">Expert 5</text>
+
+        <path d="M305,125 L358,32" stroke="#bbb" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+        <path d="M305,140 L358,87" stroke="#206a37" stroke-width="2.5" fill="none" marker-end="url(#moeArrowGreen)"/>
+        <path d="M305,150 L358,142" stroke="#bbb" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+        <path d="M305,160 L358,197" stroke="#206a37" stroke-width="2.5" fill="none" marker-end="url(#moeArrowGreen)"/>
+        <path d="M305,175 L358,252" stroke="#bbb" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+
+        <rect x="630" y="120" width="140" height="60" rx="8" fill="#eaf2fb" stroke="#003d82" stroke-width="3"/>
+        <text x="700" y="145" text-anchor="middle" fill="#003d82" font-weight="700">Combined</text>
+        <text x="700" y="163" text-anchor="middle" fill="#003d82" font-weight="700">Output</text>
+
+        <path d="M490,87 C 560,87 560,140 626,145" stroke="#206a37" stroke-width="2.5" fill="none" marker-end="url(#moeArrowGreen)"/>
+        <path d="M490,197 C 560,197 560,150 626,155" stroke="#206a37" stroke-width="2.5" fill="none" marker-end="url(#moeArrowGreen)"/>
+      </g>
+    </svg>
+    <div class="legend-row">
+      <span><span class="legend-swatch" style="background:#e2f4e6;border:1px solid #206a37;"></span>active expert (top-$k$ selected)</span>
+      <span><span class="legend-swatch" style="background:#eef1f5;border:1px solid #99a;"></span>inactive expert (skipped, no gradient)</span>
+    </div>
+    <p class="diagram-caption">The router scores all five experts for this token, but only the two
+      highest-scoring experts (green) actually run. Their outputs are combined into one weighted
+      result using the router's own scores as weights; the other three experts see nothing from this
+      token at all — not this layer, not this step.</p>
+  </div>
+
+  <div class="algorithm-box">
+    <strong class="label">The Load-Balancing Problem, and Its Fix</strong>
+    <p style="margin-top:0;">
+      Only the experts a token's router actually selects receive a gradient update from that token —
+      skipped experts get no gradient at all, not a small one. Left alone, this creates a
+      "rich-get-richer" dynamic: whichever experts the router happens to favor early in training get
+      more practice and become slightly better, which makes the router favor them even more, until a
+      handful of experts do virtually all the work and the rest stay undertrained.
+    </p>
+    <p style="margin-bottom:0;">
+      To prevent this, MoE training adds an extra term to the loss function — a
+      <strong>load-balancing (auxiliary) loss</strong> — that penalizes the router whenever tokens are
+      distributed too unevenly across experts, pushing it to spread work across the whole roster
+      instead of collapsing onto a few favorites.
+    </p>
+  </div>
+
+  <div class="intuition-box">
+    <strong class="label">MoE vs. Classical Ensembling</strong>
+    If you've seen bagging, boosting, or stacking elsewhere in this series: MoE shares the "many
+    specialized components instead of one" spirit, but the resemblance stops there. Classical ensemble
+    methods combine several <em>fully-trained, independent</em> models after the fact, via averaging,
+    voting, or a meta-learner. In MoE, the router and every expert are trained <em>together, from the
+    start</em>, inside a single model — so it's better understood as a sparse, modular architecture
+    than as an ensemble of separately trained models.
+  </div>
+
+  <div class="roadmap-card">
+    <div class="roadmap-num">5</div>
+    <div>
+      <h4>Scaling Laws and Model Sizing <span class="status-tag status-done">Done</span></h4>
       <p>Why parameter count, data size, and compute trade off the way they do; a walk through the
       Chinchilla-style scaling relationships and what they mean for choosing a model size.</p>
     </div>
@@ -434,9 +1115,9 @@
   </p>
 
   <div class="roadmap-card">
-    <div class="roadmap-num">5</div>
+    <div class="roadmap-num">6</div>
     <div>
-      <h4>From Base Model to Assistant: SFT and Alignment <span class="status-tag status-upcoming">Upcoming</span></h4>
+      <h4>From Base Model to Assistant: SFT and Alignment <span class="status-tag status-current">Current</span></h4>
       <p>Supervised fine-tuning on instruction data, then preference-based alignment — RLHF (reward
       model + PPO) and the more recent DPO-style approaches that skip the explicit reward model.</p>
     </div>
@@ -616,15 +1297,44 @@
     </ul>
   </div>
 
+  <p>
+    What actually goes into a "tightly curated" SFT dataset isn't one thing — it's engineered across
+    four dimensions at once, shown in the quadrant below.
+  </p>
+
+  <div class="diagram-frame">
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+      <g font-family="Segoe UI, sans-serif" font-size="11">
+        <rect x="10" y="10" width="330" height="115" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="175" y="32" text-anchor="middle" font-weight="700" fill="#003d82">Human-Authored Craftsmanship</text>
+        <text x="175" y="54" text-anchor="middle" fill="#334" font-size="10">Domain experts and annotators write</text>
+        <text x="175" y="70" text-anchor="middle" fill="#334" font-size="10">ideal tone, reasoning, formatting,</text>
+        <text x="175" y="86" text-anchor="middle" fill="#334" font-size="10">and safe edge-case handling</text>
+
+        <rect x="360" y="10" width="330" height="115" rx="10" fill="#fff0d6" stroke="#93650a" stroke-width="2"/>
+        <text x="525" y="32" text-anchor="middle" font-weight="700" fill="#7a4e05">Teacher-Model Distillation</text>
+        <text x="525" y="54" text-anchor="middle" fill="#543" font-size="10">Frontier models generate ideal</text>
+        <text x="525" y="70" text-anchor="middle" fill="#543" font-size="10">answers for hard prompts — the</text>
+        <text x="525" y="86" text-anchor="middle" fill="#543" font-size="10">open-source community's usual route</text>
+
+        <rect x="10" y="135" width="330" height="115" rx="10" fill="#e2f4e6" stroke="#206a37" stroke-width="2"/>
+        <text x="175" y="157" text-anchor="middle" font-weight="700" fill="#1c5c30">Diversity &amp; Coverage</text>
+        <text x="175" y="179" text-anchor="middle" fill="#345" font-size="10">Spans coding, reasoning, creative</text>
+        <text x="175" y="195" text-anchor="middle" fill="#345" font-size="10">writing, roleplay, and explicit</text>
+        <text x="175" y="211" text-anchor="middle" fill="#345" font-size="10">instruction-following constraints</text>
+
+        <rect x="360" y="135" width="330" height="115" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+        <text x="525" y="157" text-anchor="middle" font-weight="700" fill="#4c1d95">Deduplication &amp; Filtering</text>
+        <text x="525" y="179" text-anchor="middle" fill="#453" font-size="10">Strips repetitive phrasing, hollow</text>
+        <text x="525" y="195" text-anchor="middle" fill="#453" font-size="10">sycophantic filler ("Sure, I can help!"),</text>
+        <text x="525" y="211" text-anchor="middle" fill="#453" font-size="10">and factual errors</text>
+      </g>
+    </svg>
+    <p class="diagram-caption">A high-performing SFT dataset isn't a random scrape of chat logs — it's
+      engineered across all four dimensions at once, not just one.</p>
+  </div>
+
   <div class="algorithm-box">
-    <strong class="label">Anatomy of a "Tightly Curated" SFT Dataset</strong>
-    <p>A high-performing SFT dataset is not just a random scrape of chat logs; it is meticulously engineered across four dimensions:</p>
-    <ul>
-      <li><strong>Human-Authored Craftsmanship:</strong> High-purity prompts written by domain experts, educators, and professional annotators. These responses model ideal tone, multi-step reasoning, markdown formatting, and explicit edge-case handling (e.g., how to politely decline unsafe requests).</li>
-      <li><strong>Teacher-Model Distillation (Synthetic Data):</strong> Leveraging frontier models (like GPT-4 or Claude) to generate ideal answers for complex programmatic, math, or creative prompts. The open-source community relies heavily on distilled datasets (like LMSYS Chatbot Arena dumps or OpenAssistant exports) to bridge the data gap.</li>
-      <li><strong>Rigorous Diversity & Coverage:</strong> Ensuring the dataset spans a wide domain taxonomy—coding, logical reasoning, creative writing, roleplay, summarization, and instruction-following constraints (e.g., <em>"Write a response in under 50 words without using the letter 'e'"</em>).</li>
-      <li><strong>Deduplication and Quality Filtering:</strong> Stripping out repetitive phrasing, sycophantic filler (e.g., excessive apologies or robotic intros like <em>"Sure, I can help with that!"</em>), and factual errors to prevent the model from learning bad conversational habits.</li>
-    </ul>
     <table class="data-table">
     <thead>
       <tr>
@@ -657,6 +1367,31 @@
       </tr>
     </tbody>
     </table>
+  </div>
+
+  <div class="callout-todo">
+    RLHF / DPO alignment content still to come — currently in progress. Once written, it completes
+    roadmap item 6 above and this section's status tag will move from "Current" to "Done."
+  </div>
+
+  <div class="roadmap-card">
+    <div class="roadmap-num">7</div>
+    <div>
+      <h4>Evaluating LLMs: Benchmarks and CI/CD Gates <span class="status-tag status-upcoming">Upcoming</span></h4>
+      <p>The macro/micro split in LLM evaluation — offline benchmarks (BLEU/chrF, ROUGE/BERTScore,
+      MMLU/HumanEval) and human/LLM-judge preference testing at the macro level, versus automated
+      schema, semantic-similarity, and LLM-as-judge gates running inside CI/CD at the micro level.</p>
+    </div>
+  </div>
+
+  <div class="roadmap-card">
+    <div class="roadmap-num">8</div>
+    <div>
+      <h4>Model Compression and Quantization for Serving <span class="status-tag status-upcoming">Upcoming</span></h4>
+      <p>Quantization, pruning, knowledge distillation, and low-rank factorization as post-training
+      techniques for shrinking a trained, evaluated model — plus the LLM-specific outlier-channel
+      problem that motivates GPTQ- and AWQ-style quantization over naive uniform schemes.</p>
+    </div>
   </div>
 
 </div>
