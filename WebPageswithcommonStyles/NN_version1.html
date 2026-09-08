@@ -1,24 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Hide body initially to prevent flickering -->
+    <style>body { visibility: hidden; }</style>
+    <!-- Load global MathJax configuration first -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neural Networks</title>
     <link rel="stylesheet" href="Style.css">
-
-    <script>
-    window.MathJax = {
-        tex: {
-            inlineMath: [['$', '$'], ['\\(', '\\)']],
-            displayMath: [['$$', '$$'], ['\\[', '\\]']],
-            processEscapes: true
-        },
-        options: {
-            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-        }
-    };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
       /* Algorithm box styling matching your tutorial's theme */
       .algorithm-box {
@@ -40,6 +29,30 @@
       .algorithm-box ul { margin: 6px 0 0 0; padding-left: 22px; color: #444; }
       .algorithm-box li { margin-bottom: 6px; line-height: 1.6; }
     </style>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
 </head>
 <body>
 
@@ -334,6 +347,55 @@
         </p>
     </div>
 </div>
+
+<div class="description-box">
+    <h3>Vanishing and Exploding Gradients: A Consequence of the Chain Rule</h3>
+    <p style="line-height: 1.6; color: #333;">
+        The backward sweep above multiplies local derivatives together, layer after layer. For a weight sitting near the input of an $L$-layer network, that gradient is a product of roughly $L$ terms:
+    </p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$\frac{\partial L}{\partial w^{(1)}} \;=\; \frac{\partial L}{\partial a^{(L)}} \cdot \prod_{l=2}^{L} \Big( h'\big(z^{(l)}\big)\cdot w^{(l)} \Big)$$
+    </div>
+    <p style="line-height: 1.6; color: #333;">
+        If each of those $L-1$ factors is, on average, smaller than 1 — which is almost guaranteed with <strong>Sigmoid</strong> (whose derivative $f(z)(1-f(z))$ maxes out at $0.25$) or <strong>Tanh</strong> — the product shrinks <em>geometrically</em> with depth. A 10-layer Sigmoid network can easily see gradients at layer 1 that are $0.25^{10} \approx 10^{-6}$ times the gradient at the output: the earliest layers effectively stop learning at all, even though nothing in Eq. (6) is technically broken. This is the <strong>vanishing gradient</strong> problem, and it's precisely what makes the "Vanishing Gradient?" column in the activation-function table below so important. The mirror-image failure, <strong>exploding gradients</strong>, happens when those factors are consistently greater than 1 (e.g. large weights): the product grows geometrically instead, producing huge, unstable weight updates and — in the worst case — loss values that jump to <code>NaN</code>.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        This is not a separate bug to patch — it's a direct, structural consequence of stacking many layers, which is exactly why ReLU's constant derivative of 1 (discussed in the Mathematical Deep Dives section) helps so much, and why the next two sections — <strong>principled weight initialization</strong> and <strong>Batch Normalization</strong> — exist: both are specifically designed to keep the magnitude of $h'(z^{(l)})\cdot w^{(l)}$ close to 1 at every layer, so this product neither vanishes nor explodes as depth increases.
+    </p>
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="max-width: 75%; height: auto;">
+            <text x="450" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Gradient Magnitude vs. Depth (schematic, log scale)</text>
+            <text x="450" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#94a3b8">walking backward from the output layer (right) toward the input layer (left)</text>
+
+            <line x1="120" y1="380" x2="800" y2="380" stroke="#64748b" stroke-width="1.5"/>
+            <text x="800" y="400" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">Layer (backward &#8592;)</text>
+            <line x1="120" y1="380" x2="120" y2="55" stroke="#64748b" stroke-width="1.5"/>
+            <text x="70" y="65" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">Gradient</text>
+            <text x="70" y="79" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">Magnitude</text>
+
+            <text x="130" y="393" font-family="Segoe UI, sans-serif" font-size="10" fill="#64748b">L (output)</text>
+            <text x="765" y="393" font-family="Segoe UI, sans-serif" font-size="10" fill="#64748b">1 (input)</text>
+
+            <!-- exploding (weights too large) -->
+            <path d="M 130,150 L 258,110 L 386,80 L 514,60 L 642,45 L 770,35" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+            <text x="770" y="25" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#dc2626">Exploding (Sigmoid/Tanh, large $w$)</text>
+
+            <!-- stable (ReLU + He init) -->
+            <path d="M 130,150 L 258,152 L 386,148 L 514,155 L 642,150 L 770,153" fill="none" stroke="#15803d" stroke-width="2.5"/>
+            <text x="770" y="168" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#15803d">Stable (ReLU + He init / BatchNorm)</text>
+
+            <!-- vanishing -->
+            <path d="M 130,150 L 258,210 L 386,270 L 514,320 L 642,355 L 770,375" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+            <text x="770" y="358" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#2563eb">Vanishing (Sigmoid/Tanh, small $w$)</text>
+
+            <circle cx="130" cy="150" r="5" fill="#0f172a"/>
+        </svg>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+            <em>All three curves start from the same gradient magnitude at the output layer. Each subsequent step backward multiplies by one more $h'(z^{(l)})\cdot w^{(l)}$ factor — repeatedly below 1 (blue) shrinks it toward zero within a handful of layers, repeatedly above 1 (red) blows it up, and keeping that factor near 1 (green) is the target that initialization and normalization schemes below are built to hit.</em>
+        </p>
+    </div>
+</div>
+
 	<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
     <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="max-width: 75%; height: auto;">
         <defs>
@@ -432,6 +494,97 @@
     
 </div>
 
+    <div class="description-box">
+        <h3>Reality Check: The Loss Surface Is Not a Single Smooth Bowl</h3>
+        <p style="line-height: 1.6; color: #333;">
+            The bowl-shaped surfaces above are a useful first picture, but they describe a <strong>convex</strong> loss — one with exactly one minimum. Real Neural Networks, especially deep ones with millions of parameters, have <strong>non-convex</strong> loss surfaces: the $(w_1, w_2, \ldots)$ landscape is folded into many separate basins. Each basin bottom satisfies $\nabla L(w) = 0$ just like Eq. (5), but only the single deepest basin is the <strong>global minimum</strong>; every other basin is a <strong>local minimum</strong> &mdash; a point that is locally "lowest" but not the best solution available anywhere on the surface. Flat, saddle-shaped regions (where the gradient is also near zero but the point is neither a peak nor a true valley) add further difficulty, often slowing training more than local minima do in practice.
+        </p>
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+            <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg" style="max-width: 85%; height: auto;">
+                <defs>
+                    <marker id="gdArrowMulti" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                        <path d="M0,0 L8,4 L0,8 Z" fill="#e11d48" />
+                    </marker>
+                </defs>
+
+                <text x="450" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Non-Convex Loss Surface: Local Minima vs. the Global Minimum</text>
+                <text x="450" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#94a3b8">(top-down contour view: darker green = lower loss)</text>
+
+                <!-- overall high-loss background terrain -->
+                <ellipse cx="450" cy="300" rx="420" ry="225" fill="#fecaca"/>
+                <ellipse cx="450" cy="300" rx="390" ry="205" fill="#fed7aa" opacity="0.6"/>
+
+                <!-- Local Minimum 1 (shallow, upper-left) -->
+                <ellipse cx="190" cy="190" rx="120" ry="85" fill="#fed7aa"/>
+                <ellipse cx="190" cy="190" rx="90"  ry="63" fill="#fef08a"/>
+                <ellipse cx="190" cy="190" rx="60"  ry="42" fill="#d9f99d"/>
+                <ellipse cx="190" cy="190" rx="30"  ry="20" fill="#bbf7d0"/>
+                <circle  cx="190" cy="190" r="6" fill="#166534"/>
+                <text x="190" y="150" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7f1d1d">Local Minimum</text>
+                <text x="190" y="228" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#374151">(shallow basin — higher loss than $w^*$)</text>
+
+                <!-- Local Minimum 2 (medium depth, upper-right) -->
+                <ellipse cx="690" cy="155" rx="130" ry="90" fill="#fed7aa"/>
+                <ellipse cx="690" cy="155" rx="100" ry="68" fill="#fef08a"/>
+                <ellipse cx="690" cy="155" rx="70"  ry="47" fill="#d9f99d"/>
+                <ellipse cx="690" cy="155" rx="42"  ry="28" fill="#bbf7d0"/>
+                <ellipse cx="690" cy="155" rx="18"  ry="12" fill="#4ade80"/>
+                <circle  cx="690" cy="155" r="6" fill="#166534"/>
+                <text x="690" y="112" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7f1d1d">Local Minimum</text>
+                <text x="690" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#374151">(deeper, but still not the best)</text>
+
+                <!-- Local Minimum 3 (shallow, lower-left) -->
+                <ellipse cx="255" cy="420" rx="110" ry="75" fill="#fed7aa"/>
+                <ellipse cx="255" cy="420" rx="82"  ry="55" fill="#fef08a"/>
+                <ellipse cx="255" cy="420" rx="54"  ry="36" fill="#d9f99d"/>
+                <ellipse cx="255" cy="420" rx="26"  ry="17" fill="#bbf7d0"/>
+                <circle  cx="255" cy="420" r="6" fill="#166534"/>
+                <text x="255" y="458" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7f1d1d">Local Minimum</text>
+
+                <!-- Saddle point between Local Minimum 2 and the Global Minimum -->
+                <path d="M 590,250 Q 640,235 690,250 Q 640,265 590,250 Z" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+                <text x="640" y="230" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#92400e">Saddle Point</text>
+                <text x="640" y="278" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-style="italic" fill="#92400e">($\nabla L \approx 0$, but not a minimum)</text>
+
+                <!-- GLOBAL MINIMUM (deepest basin, center) -->
+                <ellipse cx="480" cy="360" rx="200" ry="130" fill="#fed7aa"/>
+                <ellipse cx="480" cy="360" rx="165" ry="107" fill="#fef08a"/>
+                <ellipse cx="480" cy="360" rx="130" ry="85"  fill="#d9f99d"/>
+                <ellipse cx="480" cy="360" rx="95"  ry="62"  fill="#bbf7d0"/>
+                <ellipse cx="480" cy="360" rx="62"  ry="41"  fill="#4ade80"/>
+                <ellipse cx="480" cy="360" rx="32"  ry="21"  fill="#15803d"/>
+                <ellipse cx="480" cy="360" rx="12"  ry="8"   fill="#052e16"/>
+                <!-- star marker on the true global minimum -->
+                <path d="M480,352 L483,359 L491,359 L484.5,364 L487,371 L480,367 L473,371 L475.5,364 L469,359 L477,359 Z" fill="#fde047" stroke="#78350f" stroke-width="0.7"/>
+                <text x="480" y="410" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#052e16">Global Minimum $w^*$</text>
+                <text x="480" y="426" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#166534">(lowest loss anywhere on the surface)</text>
+
+                <!-- Two gradient descent trajectories from different random initializations -->
+                <path d="M 120,60 Q 155,100 175,150 Q 183,172 190,190" fill="none" stroke="#e11d48" stroke-width="2.2" stroke-dasharray="6,5" marker-end="url(#gdArrowMulti)"/>
+                <circle cx="120" cy="60" r="5" fill="#e11d48"/>
+                <text x="105" y="45" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-weight="bold" fill="#7f1d1d">$w(0)_A$</text>
+
+                <path d="M 620,470 Q 560,440 520,405 Q 500,385 484,364" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-dasharray="6,5" marker-end="url(#gdArrowMulti)"/>
+                <circle cx="620" cy="470" r="5" fill="#2563eb"/>
+                <text x="640" y="490" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-weight="bold" fill="#1e3a8a">$w(0)_B$</text>
+
+                <!-- axes -->
+                <line x1="60" y1="500" x2="850" y2="500" stroke="#64748b" stroke-width="1.5"/>
+                <text x="835" y="516" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">θ<tspan baseline-shift="sub" font-size="9">2</tspan></text>
+                <line x1="60" y1="500" x2="60" y2="55" stroke="#64748b" stroke-width="1.5"/>
+                <text x="30" y="65" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">θ<tspan baseline-shift="sub" font-size="9">1</tspan></text>
+
+                <!-- legend -->
+                <text x="60" y="20" font-family="Segoe UI, sans-serif" font-size="10" fill="#7f1d1d">High Loss</text>
+                <rect x="140" y="12" width="16" height="9" fill="#fecaca"/><rect x="156" y="12" width="16" height="9" fill="#fed7aa"/><rect x="172" y="12" width="16" height="9" fill="#fef08a"/><rect x="188" y="12" width="16" height="9" fill="#d9f99d"/><rect x="204" y="12" width="16" height="9" fill="#bbf7d0"/><rect x="220" y="12" width="16" height="9" fill="#4ade80"/><rect x="236" y="12" width="16" height="9" fill="#15803d"/><rect x="252" y="12" width="16" height="9" fill="#052e16"/>
+                <text x="272" y="20" font-family="Segoe UI, sans-serif" font-size="10" fill="#052e16">Low Loss</text>
+            </svg>
+            <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+                <em>Trajectory $w(0)_A$ (red) starts near a shallow basin and gradient descent settles it into a <strong>local minimum</strong> &mdash; the gradient is zero there, so plain gradient descent has no signal telling it to keep moving. Trajectory $w(0)_B$ (blue) starts closer to the deep basin and reaches the <strong>global minimum $w^*$</strong>, marked with a star. In practice, deep networks have so many parameters that most local minima found in practice turn out to have loss values close to the global minimum, and techniques like momentum, Adam (below), and random-restart initialization all help the optimizer avoid getting permanently stuck in a poor basin or a saddle point.</em>
+            </p>
+        </div>
+    </div>
+
     <!-- Advanced Optimizers Extension: Adam & AdamW as part of Gradient Descent -->
     <p style="margin-top: 15px;">While standard Gradient Descent uses a fixed learning rate uniformly across all parameters, advanced adaptive variants like <strong>Adam (Adaptive Moment Estimation)</strong> enhance gradient descent by combining momentum (tracking exponential moving averages of past gradients to smooth trajectories) with adaptive scaling (adjusting step sizes per parameter based on historical variances). The update rule incorporates first ($m_t$) and second ($v_t$) moment estimates:</p>
     <div class="math-display" style="text-align: center; margin: 10px 0;">
@@ -451,25 +604,200 @@
             This clean separation ensures consistent regularization across all network parameters, making AdamW the standard optimization engine for training robust deep neural networks and large language models.</li>
         </ul>
     </div>
-
-    
-    <p style="color: #444; line-height: 1.5;"><h3>About Initialization of weight values</h3> <ul>
-        <li>When we use an algorithm like Gradient Descent to train a model, we have to pick a starting value for all the weights (parameters). Think of this as the "starting position" of your hiker on the 3D loss mountain we discussed.</li>
-		<li>Why it matters: Where you start has a huge impact. It determines how fast the model learns and how accurate it will be on new, unseen data.</li>
-
-		<li>The Problem: There isn't a perfect mathematical "rulebook" that tells us the best place to start.</li></ul>
-
-The Reality: Because we lack a solid theory, we often rely on common "best practices" (like small random numbers) and trial-and-error to find an initialization that works.
-    </p>		
-</p>
 </div>
+
+    <div class="description-box">
+        <h3>Weight Initialization: Picking the Starting Point</h3>
+        <ul style="line-height: 1.8; color: #444;">
+            <li>When we use an algorithm like Gradient Descent to train a model, we have to pick a starting value for all the weights (parameters). Think of this as the "starting position" of your hiker on the 3D loss mountain we discussed.</li>
+            <li><strong>Why it matters:</strong> Where you start has a huge impact. It determines how fast the model learns and how accurate it will be on new, unseen data — and, as the previous section showed, a careless choice of initial weight scale is one of the most direct ways to trigger vanishing or exploding gradients before training even gets going.</li>
+            <li><strong>The Problem:</strong> There isn't a single mathematical "rulebook" that tells us the globally optimal place to start.</li>
+        </ul>
+        <p style="line-height: 1.6; color: #333;">
+            That said, initialization is not pure guesswork either. The guiding principle behind modern schemes is to pick the variance of the initial weights so that the variance of activations (forward pass) and gradients (backward pass) stays roughly constant from layer to layer — i.e. so the factor $h'(z^{(l)})\cdot w^{(l)}$ from the vanishing/exploding discussion above starts out close to 1, rather than leaving it to chance:
+        </p>
+        <div class="math-display" style="text-align: center; margin: 10px 0;">
+            $$\text{Xavier / Glorot (for Sigmoid, Tanh):} \quad \text{Var}(w) = \frac{2}{n_{in} + n_{out}} \qquad\qquad \text{He (for ReLU):} \quad \text{Var}(w) = \frac{2}{n_{in}}$$
+        </div>
+        <p style="line-height: 1.6; color: #333;">
+            Here $n_{in}$ and $n_{out}$ are the number of incoming and outgoing connections of a layer (the "fan-in" and "fan-out"). <strong>Xavier/Glorot initialization</strong> is derived assuming a roughly linear, zero-centered activation like Tanh, and balances variance across both directions. <strong>He initialization</strong> uses only $n_{in}$ and doubles the variance relative to a naive symmetric choice, specifically to compensate for ReLU zeroing out roughly half of its inputs on every pass — without that correction, activations would silently shrink toward zero as they pass through a deep ReLU network. In both cases, weights are typically drawn from a Normal$(0, \text{Var}(w))$ or a matched Uniform distribution; biases are simply initialized to zero.
+        </p>
+        <p style="line-height: 1.6; color: #333;">
+            <em>The Reality:</em> matching the initialization scheme to the activation function (He with ReLU, Xavier with Sigmoid/Tanh) is now standard practice in every major deep learning library — but it is still a well-reasoned heuristic, not a proof of optimality, so some trial-and-error alongside it remains normal.
+        </p>
+    </div>
+
+<div class="description-box">
+    <h3>Batch Normalization: Stabilizing What Each Layer Sees</h3>
+    <p style="line-height: 1.6; color: #333;">
+        Good initialization only controls the <em>starting</em> distribution of activations. As training proceeds and weights in earlier layers update, the distribution of values arriving at every later layer keeps shifting underneath it — each layer is perpetually chasing a moving target, which slows training and compounds the vanishing/exploding problem above. <strong>Batch Normalization (BatchNorm)</strong> addresses this directly by re-centering and re-scaling the pre-activation values within every mini-batch, at every layer, throughout training.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        For a mini-batch $B$, BatchNorm computes the batch mean $\mu_B$ and variance $\sigma_B^2$ of $z_j^{(l)}$ across the examples in that batch, normalizes to zero mean and unit variance, and then applies a <strong>learnable</strong> scale $\gamma_j$ and shift $\beta_j$:
+    </p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$\hat{z}_j^{(l)} = \frac{z_j^{(l)} - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}, \qquad \text{BN}\big(z_j^{(l)}\big) = \gamma_j \hat{z}_j^{(l)} + \beta_j$$
+    </div>
+    <p style="line-height: 1.6; color: #333;">
+        The learnable $\gamma_j, \beta_j$ matter: they let the network undo the normalization if that turns out to be better for a particular neuron, so BatchNorm never strictly reduces what the network is capable of representing — it only removes the <em>uncontrolled</em> drift in scale that would otherwise happen for free. BatchNorm is applied to the <strong>pre-activation</strong> $z_j^{(l)}$, before the nonlinearity — the opposite side of the activation from where Dropout was applied earlier in this page. A typical layer therefore runs: <strong>Linear ($z$) &rarr; BatchNorm &rarr; Activation ($h$) &rarr; Dropout &rarr; next layer</strong>.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        Like Dropout, BatchNorm behaves differently at test time: instead of using the current mini-batch's $\mu_B, \sigma_B^2$ (a single test example may not even come in a batch), it uses a running average of the mean and variance accumulated during training. Using mini-batch statistics (rather than the true population statistics) also injects a small amount of noise into training, which gives BatchNorm a mild regularizing side-effect — but stabilizing gradient flow through deep networks, not regularization, is its primary purpose.
+    </p>
+</div>
+
+<div class="description-box">
+    <h3>Regularization: Keeping the Network from Memorizing</h3>
+    <p style="line-height: 1.6; color: #333;">
+        A large Neural Network has enough parameters to fit its training data almost perfectly — including the noise. When this happens, training loss keeps falling while performance on new, unseen data gets worse; this gap is <strong>overfitting</strong>. <strong>Regularization</strong> is the collective name for techniques that trade a small amount of training accuracy for better generalization, effectively keeping the model on the smoother, simpler side of what it's capable of representing.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        To even notice this gap, the available data is normally split into three disjoint sets: a <strong>training set</strong> (used to compute $L(w)$ and update weights via Eq. (6)), a <strong>validation set</strong> (never used for weight updates — only to check, after each epoch, whether the model is starting to overfit), and a <strong>test set</strong> (touched exactly once, at the very end, to report a final, unbiased performance number). Early stopping, mentioned below, is defined entirely in terms of the validation set: it is the rising validation loss — while training loss keeps falling — that signals it's time to stop.
+    </p>
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="max-width: 75%; height: auto;">
+            <defs>
+                <marker id="stopArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#7c3aed" />
+                </marker>
+            </defs>
+            <text x="450" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Training vs. Validation Loss: Underfitting, the Sweet Spot, and Overfitting</text>
+
+            <line x1="100" y1="360" x2="820" y2="360" stroke="#64748b" stroke-width="1.5"/>
+            <text x="820" y="380" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">Training Epochs &#8594;</text>
+            <line x1="100" y1="360" x2="100" y2="55" stroke="#64748b" stroke-width="1.5"/>
+            <text x="60" y="65" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">Loss</text>
+
+            <!-- underfitting zone -->
+            <rect x="100" y="55" width="150" height="305" fill="#fef3c7" opacity="0.4"/>
+            <text x="175" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#92400e">Underfitting</text>
+            <!-- good fit zone -->
+            <rect x="250" y="55" width="130" height="305" fill="#d9f99d" opacity="0.5"/>
+            <text x="315" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#3f6212">Good Fit</text>
+            <!-- overfitting zone -->
+            <rect x="380" y="55" width="440" height="305" fill="#fecaca" opacity="0.35"/>
+            <text x="600" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#991b1b">Overfitting</text>
+
+            <!-- training loss curve: monotonically decreasing -->
+            <path d="M 100,330 C 160,250 220,190 300,155 C 400,115 550,85 820,55" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+            <text x="700" y="90" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#2563eb">Training Loss</text>
+
+            <!-- validation loss curve: decreases then rises after ~x=315 -->
+            <path d="M 100,345 C 160,270 220,210 300,175 C 340,163 360,160 380,160 C 480,175 650,240 820,320" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+            <text x="700" y="300" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#dc2626">Validation Loss</text>
+
+            <!-- early stopping marker -->
+            <line x1="380" y1="360" x2="380" y2="55" stroke="#7c3aed" stroke-width="1.8" stroke-dasharray="5,4"/>
+            <circle cx="380" cy="160" r="6" fill="#7c3aed"/>
+            <text x="380" y="400" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7c3aed">Early Stopping Point</text>
+            <text x="380" y="415" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#7c3aed">(validation loss is about to turn upward)</text>
+        </svg>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+            <em>Early on, both curves fall together — the model is still <strong>underfitting</strong> (too simple relative to the pattern). Past the marked point, training loss keeps improving but validation loss turns back up: the model has started memorizing training-set noise (<strong>overfitting</strong>) instead of learning the general pattern. <strong>Early stopping</strong> simply means keeping the weights from the point where validation loss was lowest, rather than the weights from the final epoch. Everything else in this section — L1/L2 penalties, Dropout — is aimed at pushing that upturn later, or removing it, without needing to stop early at all.</em>
+        </p>
+    </div>
+    <p style="line-height: 1.6; color: #333;">
+        The most direct approach adds a penalty term on the weights themselves to the loss function, discouraging any single weight from growing too large:
+    </p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$L_{reg}(w) = L(w) + \lambda \sum_i w_i^2 \quad \text{(L2 / "weight decay")}, \qquad L_{reg}(w) = L(w) + \lambda \sum_i |w_i| \quad \text{(L1 / sparsity)}$$
+    </div>
+    <p style="line-height: 1.6; color: #333;">
+        L2 regularization shrinks weights smoothly toward zero (it is exactly the $\lambda w$ term AdamW applies at the update step above); L1 regularization pushes many weights to exactly zero, producing a sparser network. These penalty-based methods are the classical form of regularization, and they are also what a <strong>shallow network</strong> (a single hidden layer, or even plain Logistic Regression) typically relies on: with far fewer parameters and no depth to exploit, shallow models are less prone to the extreme overfitting deep networks can exhibit, so L1/L2 weight penalties, keeping the hidden layer narrow, and <strong>early stopping</strong> (halting training once validation loss stops improving) are usually enough on their own.
+    </p>
+    <h4 style="color: #2c3e50; margin-top: 18px;">Dropout: Regularization Built for Depth</h4>
+    <p style="line-height: 1.6; color: #333;">
+        <strong>Dropout</strong> is the regularization technique most associated with deep networks specifically, because it exploits something shallow networks don't have much of: many redundant paths through many hidden units across many layers. On every forward pass during training, each neuron in a layer is independently "dropped" — its output forced to zero — with some fixed probability $p$ (commonly 0.2–0.5):
+    </p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$\tilde{a}_j^{(l)} = m_j^{(l)} \cdot a_j^{(l)}, \qquad m_j^{(l)} \sim \text{Bernoulli}(1-p)$$
+    </div>
+    <p style="line-height: 1.6; color: #333;">
+        Because a different random subset of neurons is silenced on every pass, no single neuron can become over-specialized or overly dependent on a handful of specific other neurons always being present — the network is forced to learn redundant, distributed representations of the same feature. This is often described as training a different "thinned" sub-network on every mini-batch and implicitly averaging over an enormous ensemble of them. At test time, dropout is turned off and every neuron is active; to keep the expected output magnitude consistent with training, activations are scaled by $(1-p)$ (or, equivalently, scaled by $1/(1-p)$ during training — "inverted dropout" — so no rescaling is needed at inference).
+    </p>
+
+    <h4 style="color: #2c3e50; margin-top: 18px;">What $m_j^{(l)}$ Actually Is, and Exactly When Dropout Fires</h4>
+    <p style="line-height: 1.6; color: #333;">
+        $m_j^{(l)}$ is simply a coin flip attached to neuron $j$ in layer $l$: it is a random variable that takes the value <strong>1 ("keep") with probability $1-p$</strong> and <strong>0 ("drop") with probability $p$</strong>. There is one independent $m_j^{(l)}$ per neuron, and — critically — a brand-new set of these coin flips is drawn <strong>every single forward pass</strong>, i.e. for every mini-batch of every epoch, starting from the very first batch of the very first epoch. Dropout is not "warmed up" or skipped early in training; it is active on step 1 exactly as it is on step 10,000. The only time it switches off is when the model is put into evaluation/inference mode (e.g. <code>model.eval()</code>), at which point every $m_j^{(l)}=1$ and the $(1-p)$ rescaling (or the inverted-dropout scaling already baked in during training) takes over so the outputs stay consistent.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        So the mechanics happen strictly inside the <strong>forward pass</strong>: for each hidden layer being regularized, (1) compute the pre-activation $z_j^{(l)}$ as usual, (2) apply the activation function to get $a_j^{(l)} = h(z_j^{(l)})$, (3) sample the mask $m_j^{(l)}$ fresh, and (4) multiply it in to get $\tilde{a}_j^{(l)} = m_j^{(l)} \cdot a_j^{(l)}$, which is what actually gets passed forward to layer $l+1$. Backpropagation then simply routes gradients through the same mask: any neuron with $m_j^{(l)}=0$ on that pass also gets zero gradient, since it contributed nothing to the loss on that particular pass.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        On the ordering question — dropout is defined on the layer's <em>output</em> $a_j^{(l)} = h(z_j^{(l)})$, so strictly speaking the activation function runs first and dropout is applied to what it produces, not the other way around. There is one special case worth knowing: because $m_j^{(l)}\in\{0,1\}$ and $\text{ReLU}(0)=0$, for ReLU specifically it makes no numerical difference whether you mask before or after the activation — $\text{ReLU}(m \cdot z) = m \cdot \text{ReLU}(z)$ for a 0/1 mask. That equivalence is <strong>ReLU-specific</strong>: it does not hold for activations like Sigmoid or Tanh, where $h(0) \neq 0$ (e.g. $\sigma(0)=0.5$), so masking before the activation would silently inject a constant $0.5$ instead of a true zero. That's why the general definition — and any framework's actual implementation — always masks the post-activation output.
+    </p>
+
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg" style="max-width: 90%; height: auto;">
+            <defs>
+                <marker id="dropoutArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#334155" />
+                </marker>
+            </defs>
+            <text x="450" y="22" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">Dropout Flow — One Layer, One Forward Pass (Training Mode)</text>
+
+            <rect x="15" y="60" width="140" height="70" rx="8" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+            <text x="85" y="88" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#4338ca">Pre-activation</text>
+            <text x="85" y="106" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" fill="#475569">$z_j^{(l)} = w_j a^{(l-1)} + b_j$</text>
+
+            <rect x="195" y="60" width="140" height="70" rx="8" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+            <text x="265" y="88" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#0e7490">Activation</text>
+            <text x="265" y="106" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" fill="#475569">$a_j^{(l)} = h(z_j^{(l)})$, e.g. ReLU</text>
+
+            <rect x="375" y="35" width="150" height="55" rx="8" fill="#fff7ed" stroke="#b45309" stroke-width="1.8" stroke-dasharray="4,3"/>
+            <text x="450" y="57" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#b45309">Sample fresh mask</text>
+            <text x="450" y="74" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" fill="#b45309">$m_j^{(l)}\sim\text{Bernoulli}(1{-}p)$</text>
+            <line x1="450" y1="90" x2="450" y2="112" stroke="#b45309" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#dropoutArrow)"/>
+
+            <rect x="375" y="112" width="150" height="70" rx="8" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
+            <text x="450" y="140" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#db2777">Apply mask</text>
+            <text x="450" y="158" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" fill="#475569">$\tilde{a}_j^{(l)} = m_j^{(l)} \cdot a_j^{(l)}$</text>
+
+            <rect x="595" y="60" width="150" height="70" rx="8" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
+            <text x="670" y="88" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#15803d">To layer $l{+}1$</text>
+            <text x="670" y="106" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" fill="#475569">$\tilde{a}_j^{(l)}$ passed forward</text>
+
+            <rect x="775" y="60" width="105" height="70" rx="8" fill="#fef2f2" stroke="#b91c1c" stroke-width="2"/>
+            <text x="827" y="88" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#b91c1c">Eval mode</text>
+            <text x="827" y="105" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#7f1d1d">$m_j^{(l)}\!\equiv\!1$</text>
+            <text x="827" y="119" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#7f1d1d">(no dropout)</text>
+
+            <line x1="155" y1="95" x2="191" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#dropoutArrow)"/>
+            <line x1="335" y1="95" x2="371" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#dropoutArrow)"/>
+            <line x1="525" y1="147" x2="560" y2="147" stroke="#334155" stroke-width="2"/>
+            <line x1="560" y1="147" x2="560" y2="95" stroke="#334155" stroke-width="2"/>
+            <line x1="560" y1="95" x2="591" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#dropoutArrow)"/>
+
+            <text x="450" y="205" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#64748b">A new $m_j^{(l)}$ is drawn on every training forward pass, from epoch 1 onward — it is only removed in eval/inference mode.</text>
+        </svg>
+    </div>
+
+    <p style="line-height: 1.6; color: #333;">
+        Dropout is rarely applied to shallow networks for a simple reason: with only one hidden layer and few units, randomly zeroing neurons removes too large a fraction of the model's total capacity on every step, making training unstable or simply throwing away signal the model can't afford to lose. It becomes effective precisely when there is depth and width to spare — which is why, alongside L2 weight decay, Dropout (and its relatives, like DropConnect and Stochastic Depth) is a default ingredient in training modern deep networks, CNNs, and Transformers.
+    </p>
+</div>
+
 <div class="description-box">
     <h3>Universal Approximation capabilities of Neural Networks</h3>
 
-It has been mathematically proven (most notably by Cybenko and Hornik) that Neural Networks are Universal Approximators. Using a property known as the 'density' of continuous functions, they proved that a single hidden layer can mimic any continuous relationship between inputs and outputs. While we won't go through the formal proof—which involves complex functional analysis—the takeaway is clear: if a logical pattern exists in your data, a Neural Network is theoretically capable of learning it.
+<p style="line-height: 1.6; color: #333;">
+    Before stating the theorem, it's worth being precise about <em>what</em> is being approximated. Recall from the "Scaling to Deep Neural Networks" section that a single layer computes $\mathbf{a}^{(l)} = h\left(\mathbf{W}^{(l)}\mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}\right)$. Write that whole layer as one function, $f^{(l)}(\cdot) = h\left(\mathbf{W}^{(l)}(\cdot) + \mathbf{b}^{(l)}\right)$. An entire $L$-layer Multi-Layer Perceptron is nothing more than these per-layer functions composed end to end, output of one feeding straight into the input of the next:
+</p>
+<div class="math-display" style="text-align: center; margin: 10px 0;">
+    $$F(x) \;=\; f^{(L)}\Big(f^{(L-1)}\big(\cdots f^{(2)}\left(f^{(1)}(x)\right)\cdots\big)\Big)$$
+</div>
+<p style="line-height: 1.6; color: #333;">
+    This single nested expression, $F(x)$, <em>is</em> the neural network — every weight, bias, and activation on this page exists only to shape this one composite function. Training (Sections 1–5 above) is the process of searching over $F$'s parameters so that $F(x)$ matches the unknown true mapping from inputs $x$ to targets $t$ as closely as possible, as measured by $L(w)$. The Universal Approximation Theorem is a formal statement about exactly this $F$:
+</p>
+<p style="line-height: 1.6; color: #333;">
+    It has been mathematically proven (most notably by Cybenko and Hornik) that Neural Networks are Universal Approximators. Using a property known as the 'density' of continuous functions, they proved that a single hidden layer can mimic any continuous relationship between inputs and outputs. While we won't go through the formal proof—which involves complex functional analysis—the takeaway is clear: if a logical pattern exists in your data, a Neural Network is theoretically capable of learning it.
+</p>
+<p style="line-height: 1.6; color: #333;">
+    One subtlety worth flagging: the theorem guarantees this for a network with just <strong>one</strong> hidden layer ($L=2$ in the notation above, counting the output layer), given enough width. Depth — stacking many $f^{(l)}$, as the Deep Neural Network section describes — doesn't unlock any function that a wide-enough shallow network couldn't theoretically also represent. What depth buys in practice is <em>efficiency</em>: reaching a comparably good approximation of $F(x)$ with far fewer total parameters than an extremely wide single layer would need, since each additional layer can reuse and recombine the features the previous layers already built.
 </div>
 
 <div class="description-box" style="overflow-x: auto;">
+
     <h3 style="color: #2c3e50;">Comparison of Common Activation Functions</h3>
     <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; background-color: white;">
         <thead>
@@ -543,6 +871,129 @@ It has been mathematically proven (most notably by Cybenko and Hornik) that Neur
             <em>Note:</em> In Large Language Models, $n$ is often 4096 or higher, leading to millions of connections per layer.
         </p>
     </div>
+</div>
+
+<div class="description-box">
+    <h3>Putting It All Together: The Full Training Loop</h3>
+    <p style="line-height: 1.6; color: #333;">
+        Every mechanism on this page — initialization, BatchNorm, Dropout, the loss surface, backprop, Adam/AdamW, early stopping — is a piece of one single loop. It's worth seeing them assembled in the order they actually fire. Weight initialization (He/Xavier) happens exactly <strong>once</strong>, before training begins — it is not repeated per epoch. Everything after that is a nested loop: an outer loop over <strong>epochs</strong>, and an inner loop over <strong>mini-batches</strong> within each epoch. Within a single mini-batch's forward pass, BatchNorm and Dropout sit on opposite sides of the activation function at every layer: BatchNorm normalizes the pre-activation $z^{(l)}$, then the activation $h(\cdot)$ runs, then Dropout randomly zeroes out the resulting $a^{(l)}$ before it moves to the next layer.
+    </p>
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 900 790" xmlns="http://www.w3.org/2000/svg" style="max-width: 88%; height: auto;">
+            <defs>
+                <marker id="loopArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#334155" />
+                </marker>
+                <marker id="loopArrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#15803d" />
+                </marker>
+                <marker id="loopArrowRed" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#b91c1c" />
+                </marker>
+            </defs>
+            <text x="450" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">The Full Neural Network Training Loop</text>
+
+            <!-- Weight Init -->
+            <rect x="330" y="42" width="240" height="46" rx="8" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+            <text x="450" y="61" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#4338ca">Weight Initialization</text>
+            <text x="450" y="76" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#4338ca">(He / Xavier &mdash; once, before training)</text>
+            <line x1="450" y1="88" x2="450" y2="108" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+
+            <!-- Epoch loop outer box -->
+            <rect x="55" y="108" width="790" height="440" rx="10" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="7,5"/>
+            <text x="75" y="128" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#64748b">For each EPOCH (repeat until stopped)</text>
+
+            <!-- Mini-batch loop inner box -->
+            <rect x="90" y="150" width="720" height="270" rx="10" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-dasharray="5,4"/>
+            <text x="110" y="170" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#4338ca">For each MINI-BATCH (repeat)</text>
+
+            <!-- Forward Pass box -->
+            <rect x="115" y="185" width="230" height="150" rx="8" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+            <text x="230" y="205" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#0e7490">1. Forward Pass</text>
+            <text x="230" y="226" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">(per layer, in order:)</text>
+            <text x="230" y="245" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">$z^{(l)} = W^{(l)}a^{(l-1)}+b^{(l)}$</text>
+            <text x="230" y="264" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#b45309">&darr; BatchNorm($z^{(l)}$)</text>
+            <text x="230" y="283" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">&darr; $a^{(l)} = h(z^{(l)})$, e.g. ReLU</text>
+            <text x="230" y="302" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#db2777">&darr; Dropout($a^{(l)}$)</text>
+            <text x="230" y="321" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#64748b">&rarr; passed to layer $l{+}1$</text>
+
+            <line x1="345" y1="260" x2="378" y2="260" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+
+            <!-- Loss box -->
+            <rect x="383" y="220" width="140" height="80" rx="8" fill="#fdf4ff" stroke="#a21caf" stroke-width="2"/>
+            <text x="453" y="245" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#a21caf">2. Compute Loss</text>
+            <text x="453" y="265" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#334155">$L(w)$</text>
+            <text x="453" y="282" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#64748b">predictions vs. targets</text>
+
+            <line x1="523" y1="260" x2="556" y2="260" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+
+            <!-- Backward Pass box -->
+            <rect x="561" y="220" width="140" height="80" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+            <text x="631" y="245" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#dc2626">3. Backward Pass</text>
+            <text x="631" y="265" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">chain rule / Autograd</text>
+            <text x="631" y="282" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">computes every $\partial L/\partial w$</text>
+
+            <line x1="631" y1="300" x2="631" y2="333" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+
+            <!-- Weight Update box -->
+            <rect x="561" y="338" width="140" height="65" rx="8" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
+            <text x="631" y="360" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#15803d">4. Weight Update</text>
+            <text x="631" y="378" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">SGD / Adam / AdamW</text>
+            <text x="631" y="393" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#64748b">Eq. (6)</text>
+
+            <!-- loop back to forward pass for next mini-batch -->
+            <path d="M 561,370 C 400,405 250,405 230,338" fill="none" stroke="#334155" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#loopArrow)"/>
+            <text x="400" y="416" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-style="italic" fill="#475569">next mini-batch</text>
+
+            <!-- arrow down out of mini-batch loop to validation check -->
+            <line x1="450" y1="420" x2="450" y2="463" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+            <text x="450" y="440" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-style="italic" fill="#64748b">(all mini-batches done)</text>
+
+            <!-- Validation check diamond -->
+            <polygon points="450,463 570,508 450,553 330,508" fill="#fffbeb" stroke="#b45309" stroke-width="2"/>
+            <text x="450" y="502" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#92400e">Validation loss</text>
+            <text x="450" y="516" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#92400e">still improving?</text>
+
+            <!-- Yes -> loop to next epoch -->
+            <path d="M 570,508 C 720,508 780,300 780,175 C 780,140 620,110 452,88" fill="none" stroke="#15803d" stroke-width="2.2" marker-end="url(#loopArrowGreen)"/>
+            <text x="740" y="300" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#15803d">Yes &rarr; next epoch</text>
+
+            <!-- No -> early stop -->
+            <line x1="450" y1="553" x2="450" y2="596" stroke="#b91c1c" stroke-width="2.2" marker-end="url(#loopArrowRed)"/>
+            <text x="475" y="578" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#b91c1c">No &rarr; stop</text>
+
+            <!-- Early stop box -->
+            <rect x="310" y="601" width="280" height="55" rx="8" fill="#fef2f2" stroke="#b91c1c" stroke-width="2"/>
+            <text x="450" y="623" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#b91c1c">Early Stop</text>
+            <text x="450" y="640" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#7f1d1d">keep the weights from the best epoch</text>
+
+            <line x1="450" y1="656" x2="450" y2="686" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+
+            <!-- Inference box -->
+            <rect x="230" y="691" width="440" height="80" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+            <text x="450" y="713" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#0f172a">Inference / Test Time</text>
+            <text x="450" y="733" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">Dropout OFF ($m_j \equiv 1$) &nbsp;&bull;&nbsp; BatchNorm uses running $\mu,\sigma^2$</text>
+            <text x="450" y="750" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">a single forward pass through the frozen, trained network</text>
+        </svg>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+            <em>The outer dashed box is the epoch loop; the inner dashed box is the mini-batch loop nested inside it. Steps 1&ndash;4 repeat for every mini-batch, every epoch, until the validation-loss check says to stop &mdash; at which point the frozen weights are used for inference, with Dropout switched off and BatchNorm switched to its running statistics.</em>
+        </p>
+    </div>
+</div>
+
+<div class="description-box">
+    <h3>What's Next: Specialized Network Architectures</h3>
+    <p style="line-height: 1.6; color: #333;">
+        Everything on this page — layers, weights, activations, backpropagation, the loss surface, and regularization — applies to the general, <strong>fully-connected</strong> Neural Network. In practice, most modern architectures are variations of this same core machinery, specialized for a particular kind of data:
+    </p>
+    <ul style="line-height: 1.8; color: #555;">
+        <li><strong>Convolutional Neural Networks (CNNs):</strong> specialized for grid-like data such as images, using shared, spatially-local filters instead of dense connections.</li>
+        <li><strong>Recurrent Neural Networks (RNNs):</strong> specialized for sequential data, maintaining a hidden state that carries information forward across time steps.</li>
+        <li><strong>Large Language Models (LLMs) and Transformers:</strong> specialized for language and other sequence modeling tasks, built on the self-attention mechanism rather than recurrence or convolution.</li>
+    </ul>
+    <p style="line-height: 1.6; color: #333;">
+        Each of these deserves — and gets — a dedicated, in-depth discussion on its own page, covering the architecture-specific mechanics that build on the foundations introduced here.
+    </p>
 </div>
 
 </body>
