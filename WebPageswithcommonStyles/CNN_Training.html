@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNN Training Discussion Summary</title>
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+          ignoreHtmlClass: 'tex2jax_ignore'
+        },
+        startup: {
+          pageReady: () => {
+            return MathJax.startup.defaultPageReady().then(() => {
+              document.body.style.visibility = 'visible';
+            });
+          }
+        }
+      };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background-color: #f9f9f9;
+            visibility: hidden; /* revealed once MathJax finishes typesetting */
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #1a365d;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            font-size: 28px;
+        }
+        h2 {
+            color: #2b6cb0;
+            font-size: 20px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #2d3748;
+            font-size: 16px;
+        }
+        p { margin: 10px 0; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+        strong { color: #1a202c; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f7fafc;
+            color: #4a5568;
+            font-weight: 600;
+        }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .highlight-box {
+            background-color: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .caution-box {
+            background-color: #fffaf0;
+            border-left: 4px solid #dd6b20;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .explain-box {
+            background-color: #f5f3ff;
+            border-left: 4px solid #7c3aed;
+            padding: 16px 20px;
+            margin: 16px 0 24px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .explain-box .q-label {
+            display: inline-block;
+            background-color: #7c3aed;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-bottom: 8px;
+        }
+        .explain-box p:first-of-type { margin-top: 4px; }
+        .math-block {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 14px 20px;
+            margin: 16px 0;
+            overflow-x: auto;
+            text-align: center;
+        }
+        code {
+            background-color: #edf2f7;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 0.92em;
+        }
+        .diagram-box {
+            background-color: #fbfbfc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 18px 0;
+            overflow-x: auto;
+        }
+        .diagram-box svg {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .diagram-caption {
+            text-align: center;
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+        pre.code-block {
+            background-color: #1a202c;
+            color: #e2e8f0;
+            padding: 18px 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 16px 0;
+        }
+        pre.code-block code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+        .comment { color: #a0aec0; }
+        .reading-list {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #ddd6fe;
+        }
+        .reading-list p.reading-title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            color: #6d28d9;
+            margin: 0 0 6px 0;
+        }
+        .reading-list ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+        .reading-list li {
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        .reading-list a {
+            color: #4c1d95;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>CNN Training Discussion Summary</h1>
+    <p>A comprehensive overview of our technical discussion on training Convolutional Neural Networks (CNNs), tracked from standard operational workflows to custom medical imaging solutions.</p>
+
+    <h2>1. Standard Training Workflow Sequence</h2>
+    <p>To systematically approach a new project, we mapped out the industry-standard progression:</p>
+    <ul>
+        <li><strong>Data Prep:</strong> Cleaning, scaling/normalising pixel values, splitting datasets (Train/Val/Test), and applying geometric/color augmentations.</li>
+        <li><strong>Architecture:</strong> Choosing between building a custom network from scratch or leveraging transfer learning with pre-trained backbones (e.g., ResNet, MobileNet).</li>
+        <li><strong>Optimization:</strong> Selecting appropriate loss functions (e.g., Cross-Entropy) and optimizers (e.g., Adam), alongside learning rate decay policies.</li>
+        <li><strong>Monitoring:</strong> Training in small mini-batches while tracking training vs. validation loss curves to catch under- or overfitting.</li>
+    </ul>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>What are "geometric/color augmentations"?</strong></p>
+        <p>They're label-preserving transformations applied to training images to artificially expand the effective size and diversity of the dataset, forcing the network to learn features that are invariant to irrelevant variation.</p>
+        <ul>
+            <li><strong>Geometric</strong> (change spatial arrangement): rotation, horizontal/vertical flip, random crop, translation, scaling/zoom, shear, elastic deformation (common in medical imaging to simulate tissue warping).</li>
+            <li><strong>Color / photometric</strong> (change pixel intensity, not layout): brightness/contrast jitter, hue/saturation shifts, Gaussian noise injection, random erasing/cutout.</li>
+        </ul>
+        <p>Intuition: a cow is still a cow if you flip the image or brighten it. Exposing the network to these variations stops it from latching onto incidental correlations (e.g., "cows are always in bright green fields"). In code this is a stochastic transform applied on-the-fly to each image before it enters a batch (e.g., <code>torchvision.transforms</code>, <code>albumentations</code>) — not a one-time step that permanently multiplies the dataset on disk.</p>
+        <p>Elastic deformation specifically: it warps the image locally &mdash; like the image is on a thin rubber sheet pushed and stretched unevenly &mdash; by moving each pixel according to a random displacement field that's been Gaussian-smoothed so nearby pixels shift in similar directions. This mimics how real tissue stretches, compresses, and shears during slide preparation or natural anatomical variation. It's the augmentation credited with letting U-Net train end-to-end from very few annotated images.</p>
+        <div class="reading-list">
+            <p class="reading-title">FURTHER READING</p>
+            <ul>
+                <li><a href="https://arxiv.org/abs/1505.04597" target="_blank" rel="noopener">Ronneberger, Fischer &amp; Brox (2015) &mdash; U-Net: Convolutional Networks for Biomedical Image Segmentation</a> &mdash; the paper that made elastic deformation famous in medical imaging.</li>
+                <li><a href="https://cognitivemedium.com/assets/rmnist/Simard.pdf" target="_blank" rel="noopener">Simard, Steinkraus &amp; Platt (2003) &mdash; Best Practices for Convolutional Neural Networks Applied to Visual Document Analysis</a> &mdash; the original paper defining elastic distortion via a Gaussian-smoothed displacement field.</li>
+                <li><a href="https://arxiv.org/pdf/2303.01178" target="_blank" rel="noopener">Garcea et al. &mdash; Augmenting Medical Imaging: A Comprehensive Catalogue of 65 Techniques</a> &mdash; survey with a section on elastic deformation and grid distortion, plus practical caveats.</li>
+            </ul>
+            <p style="margin-top:8px;">Ready-to-use implementations: <code>torchvision.transforms.ElasticTransform</code> or <code>albumentations.ElasticTransform</code>.</p>
+        </div>
+    </div>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>How is "training in small mini-batches while tracking training vs. validation loss" actually done?</strong></p>
+        <p><em>Mini-batch training:</em> instead of computing the gradient over the whole dataset at once (accurate but memory-prohibitive) or one sample at a time (fast but noisy), the training set is split into batches of, say, 32–256 images. For each batch: forward pass &rarr; compute loss &rarr; backpropagate &rarr; update weights. One full pass over all batches is one epoch — a practical compromise driven by GPU memory and a favorable noise-vs-speed tradeoff.</p>
+        <p><em>Tracking loss curves:</em> at the end of every epoch, compute the average loss on the training set and on a held-out validation set (never trained on), and plot both against epoch number.</p>
+        <ul>
+            <li>Both curves fall together &rarr; healthy learning.</li>
+            <li>Training loss falls, validation loss rises or plateaus &rarr; <strong>overfitting</strong>.</li>
+            <li>Both curves stay high and flat &rarr; <strong>underfitting</strong>.</li>
+        </ul>
+        <p>This is just two numbers logged per epoch and plotted — the "monitoring" is the diagnostic signal that tells you <em>when</em> to intervene, not an algorithm in itself.</p>
+    </div>
+
+    <div class="diagram-box">
+        <svg viewBox="0 0 680 190" role="img" aria-label="Mini-batch training loop with epoch-level loss tracking">
+            <defs>
+                <marker id="arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M2 1L8 5L2 9" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+            </defs>
+            <g>
+                <rect x="40" y="40" width="130" height="56" rx="8" fill="#f7fafc" stroke="#a0aec0" stroke-width="1"/>
+                <text x="105" y="60" text-anchor="middle" font-size="14" font-weight="600" fill="#2d3748">Mini-batch</text>
+                <text x="105" y="78" text-anchor="middle" font-size="12" fill="#4a5568">32-256 images</text>
+            </g>
+            <g>
+                <rect x="190" y="40" width="130" height="56" rx="8" fill="#ebf8ff" stroke="#3182ce" stroke-width="1"/>
+                <text x="255" y="60" text-anchor="middle" font-size="14" font-weight="600" fill="#1a365d">Forward pass</text>
+                <text x="255" y="78" text-anchor="middle" font-size="12" fill="#2b6cb0">Compute loss</text>
+            </g>
+            <g>
+                <rect x="340" y="40" width="130" height="56" rx="8" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+                <text x="405" y="60" text-anchor="middle" font-size="14" font-weight="600" fill="#7b341e">Backprop</text>
+                <text x="405" y="78" text-anchor="middle" font-size="12" fill="#c05621">Update weights</text>
+            </g>
+            <g>
+                <rect x="490" y="40" width="130" height="56" rx="8" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+                <text x="555" y="60" text-anchor="middle" font-size="14" font-weight="600" fill="#234e52">Epoch end</text>
+                <text x="555" y="78" text-anchor="middle" font-size="12" fill="#285e61">Log &amp; compare</text>
+            </g>
+            <line x1="170" y1="68" x2="188" y2="68" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr1)"/>
+            <line x1="320" y1="68" x2="338" y2="68" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr1)"/>
+            <line x1="470" y1="68" x2="488" y2="68" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr1)"/>
+            <path d="M405 96 L405 130 L105 130 L105 96" fill="none" stroke="#a0aec0" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr1)"/>
+            <text x="255" y="145" text-anchor="middle" font-size="12" fill="#718096">&#8635; repeats for every batch in the epoch</text>
+        </svg>
+        <p class="diagram-caption">Fig. 1 &mdash; mini-batch loop within an epoch, with train/val loss logged once per epoch</p>
+    </div>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>What kind of "fine-tuning models" are we talking about?</strong></p>
+        <p>This refers to <strong>transfer learning</strong>: taking a network pre-trained on a large generic dataset (typically ImageNet, ~1.2M images, 1000 classes) and adapting it to a specific task instead of training from random weight initialization. Common backbones: ResNet, MobileNet (edge/low-compute), EfficientNet, VGG, and increasingly ViT (Vision Transformer) variants.</p>
+        <ul>
+            <li><strong>Feature extraction:</strong> freeze all pre-trained convolutional layers <em>[frozen = the layer's weights are fixed at their pretrained values and never updated; feeding the same image through them on training step 1 or step 5000 produces the exact same output feature map every time]</em>, only train a new classification head on top. Good when the new dataset is small and similar in domain.</li>
+            <li><strong>Fine-tuning:</strong> unfreeze some or all pre-trained layers <em>[unfrozen = those weights receive gradients and update a little each step, so the same image's output feature map slowly drifts as training progresses]</em> and continue training them at a low learning rate along with the new head. Good when the domain (e.g., medical imaging) differs substantially from natural images.</li>
+        </ul>
+        <p>Why it helps with data scarcity: the early/middle layers of an ImageNet-trained CNN already encode generic, reusable features (edges, textures, simple shapes) — you're only adapting the final task-specific decision boundary, not learning those from zero.</p>
+        <p><strong>Important:</strong> the backbone's output is not the raw input pixels. Each convolutional stage produces a stack of <strong>feature maps</strong> &mdash; e.g. a 256&times;256&times;64 tensor (256&times;256 spatial grid, 64 channels) after an early layer, shrinking spatially and growing in channel depth deeper into the network (e.g. 7&times;7&times;512 near the end). Only the very first layer ever sees raw pixel values (typically H&times;W&times;3 for RGB); everything downstream is passing learned feature maps forward, and it's <em>those</em> feature maps &mdash; not pixels &mdash; that get frozen, fine-tuned, or fed into the new head.</p>
+    </div>
+
+    <div class="diagram-box">
+        <svg viewBox="0 0 680 260" role="img" aria-label="Transfer learning pipeline showing early frozen layers seeing raw pixels and later fine-tuned layers producing feature maps, feeding a new head">
+            <defs>
+                <marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M2 1L8 5L2 9" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+            </defs>
+            <text x="40" y="24" font-size="12" fill="#718096">Only the first conv layer sees raw pixels &mdash; everything after is feature maps</text>
+            <rect x="40" y="40" width="440" height="180" rx="16" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1"/>
+            <text x="60" y="65" font-size="14" font-weight="600" fill="#4c1d95">Pretrained backbone</text>
+            <rect x="70" y="90" width="180" height="110" rx="10" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+            <text x="160" y="115" text-anchor="middle" font-size="14" font-weight="600" fill="#234e52">Early layers</text>
+            <text x="160" y="133" text-anchor="middle" font-size="12" fill="#285e61">Raw pixels in (H&#215;W&#215;3)</text>
+            <text x="160" y="151" text-anchor="middle" font-size="12" fill="#285e61">Edges, corners</text>
+            <text x="160" y="169" text-anchor="middle" font-size="12" fill="#285e61">Generic, always frozen</text>
+            <rect x="270" y="90" width="180" height="110" rx="10" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+            <text x="360" y="115" text-anchor="middle" font-size="14" font-weight="600" fill="#7b341e">Later layers</text>
+            <text x="360" y="133" text-anchor="middle" font-size="12" fill="#c05621">Feature maps out</text>
+            <text x="360" y="151" text-anchor="middle" font-size="12" fill="#c05621">(e.g. 7&#215;7&#215;512)</text>
+            <text x="360" y="169" text-anchor="middle" font-size="12" fill="#c05621">Domain-specific, fine-tune</text>
+            <line x1="250" y1="145" x2="268" y2="145" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr3)"/>
+            <rect x="560" y="100" width="100" height="70" rx="8" fill="#f7fafc" stroke="#a0aec0" stroke-width="1"/>
+            <text x="610" y="128" text-anchor="middle" font-size="14" font-weight="600" fill="#2d3748">New head</text>
+            <text x="610" y="146" text-anchor="middle" font-size="12" fill="#4a5568">Trained on</text>
+            <text x="610" y="161" text-anchor="middle" font-size="12" fill="#4a5568">your data</text>
+            <line x1="480" y1="135" x2="558" y2="135" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr3)"/>
+            <text x="60" y="240" font-size="12" fill="#718096">May unfreeze &amp; fine-tune later layers at low LR if the target domain differs a lot</text>
+        </svg>
+        <p class="diagram-caption">Fig. 2 &mdash; early frozen layers see raw pixels and learn generic edges/corners; later fine-tuned layers pass domain-specific feature maps (not pixels) on to the new head</p>
+    </div>
+
+    <h2>2. Core CNN Training Challenges &amp; Mitigations</h2>
+    <p>While foundational innovations solved early absolute "showstoppers" like vanishing gradients, training deep networks still presents significant hurdles:</p>
+    <ul>
+        <li><strong>Overfitting &amp; Spurious Correlations:</strong> CNNs easily memorize training data or exploit "cheats" (e.g., memorising a green grass background instead of learning what a cow looks like). <em>Mitigation: Data augmentation, dropout, and early stopping.</em></li>
+        <li><strong>Data &amp; Hardware Scale:</strong> Modern architectures processing ultra-high-resolution images create massive memory bottlenecks. Furthermore, fine-tuning models for specialized domains constantly suffers from <strong>extreme data scarcity and severe class imbalance</strong>.</li>
+        <li><strong>Hyperparameter Tuning:</strong> Finding the optimal combination of learning rates, batch sizes, and architectures remains a complex, trial-and-error engineering problem.</li>
+    </ul>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>How is hyperparameter tuning actually done "by trial and error"?</strong></p>
+        <p>Not literally random guessing — there are structured search strategies, roughly in order of sophistication:</p>
+        <ul>
+            <li><strong>Manual search:</strong> adjust one hyperparameter at a time based on observed loss curves.</li>
+            <li><strong>Grid search:</strong> define a discrete set of values for each hyperparameter (e.g., LR &isin; {1e-2, 1e-3, 1e-4}, batch size &isin; {32, 64, 128}) and exhaustively train a model for every combination. Expensive — combinations grow fast.</li>
+            <li><strong>Random search:</strong> sample combinations randomly from specified ranges instead of exhaustively; often more efficient than grid search for the same compute budget.</li>
+            <li><strong>Bayesian optimization / automated tools</strong> (e.g., Optuna, Ray Tune): build a probabilistic model of how hyperparameters map to validation performance and intelligently pick the next combination to try — an informed search rather than blind trial.</li>
+        </ul>
+        <p>Each "trial" = train the model (or a cheap shortened proxy of it) end-to-end and record validation performance. "Error" = the model doesn't converge well, overfits, or underperforms, prompting an adjustment and retry. It's fundamentally trial-and-error because the loss landscape as a function of hyperparameters is non-convex, expensive to evaluate, and has no closed-form gradient to optimize directly.</p>
+    </div>
+
+  <h2>3. Data Imbalance Issue in Training</h2>
+
+<p>In this section we discuss the challenges posed by data imbalance during CNN training. Standard Empirical Risk Minimization quietly fails whenever a class is severely underrepresented, and it fails in two structurally different ways depending on <em>where</em> the rare classes sit relative to the majority. We first work through a fully numeric example of <strong>One-Sided Tail Data</strong>, where every rare class fans out on a single side of one dominant class, then contrast it with <strong>Two-Sided Tail Data</strong>, where two structurally different rare tails flank a majority "normal" class from opposite directions and therefore need a different fix.</p>
+
+<h3>3.1 One-Sided Tail Data</h3>
+
+<p>Let the total dataset consist of $N = 1000$ images distributed across $K = 25$ anomaly classes. The data distribution follows a severe power-law (long-tail) distribution partitioned into three distinct mathematical operational regimes:</p>
+
+<ul>
+    <li><strong>Head Tier ($K_{\text{head}} = 1$):</strong> Class 1 where $n_1 = 300$ images.</li>
+    <li><strong>Mid Tier ($K_{\text{mid}} = 3$):</strong> Classes 2, 3, 4 where $n_k = 80$ images each ($\sum n_k = 240$).</li>
+    <li><strong>Long-Tail Tier ($K_{\text{tail}} \approx 21$):</strong> Remaining classes sharing $\sum n_k = 460$ images, characterized by single-digit counts ($1 \le n_k \le 10$) up to $n_k = 22$.</li>
+</ul>
+
+<div class="caution-box">
+    <strong>Why This Breaks Training, in Plain Terms:</strong>
+    <p>Cross-entropy loss is just an average over all training examples. Since Class 1 alone supplies 300 of the 1000 images, its gradient contribution dominates that average — the optimizer spends most of its effort getting Class 1 right, because that's where most of the loss (and most of the achievable improvement) comes from.</p>
+    <p>A class with only 2–3 images barely moves the average loss at all, so its gradient signal is too weak to carve out a stable region for it in the classifier's output space. In effect, the network is never given a strong enough reason to "make room" for that class, so it predicts it correctly close to never.</p>
+    <p>On top of this, you can't even reliably measure the problem: with only 2–3 examples per rare class, there aren't enough samples to hold some out for validation without leaving almost nothing to train on — so stratified train/test splitting itself becomes unreliable at that tier.</p>
+</div>
+
+<h4>Algorithmic Metrics &amp; Evaluation</h4>
+<p>To avoid deceptive performance evaluation, precision, recall, and $F_1$ must be evaluated per class $k$, then aggregated globally:</p>
+<div class="math-block">
+    $$\text{Precision}_k = \frac{TP_k}{TP_k + FP_k} \qquad \text{Recall}_k = \frac{TP_k}{TP_k + FN_k} \qquad F_{1,k} = \frac{2 \cdot \text{Precision}_k \cdot \text{Recall}_k}{\text{Precision}_k + \text{Recall}_k}$$
+</div>
+
+<p><strong>Macro-averaging</strong> calculates the unweighted mean of $F_{1,k}$ across all $K$ classes, assigning equal weight to every anomaly type regardless of sample size:</p>
+<div class="math-block">
+    $$\text{Macro-F1} = \frac{1}{K}\sum_{k=1}^{K} F_{1,k}$$
+</div>
+<p><strong>Micro-averaging</strong> aggregates individual counts globally and is structurally dominated by the head tier, masking total failure on rare anomalies. <strong>Global Accuracy</strong> is fundamentally untrustworthy; a naive model predicting Class 1 exclusively yields 30% baseline accuracy while achieving 0% recall across the remaining 24 classes.</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Metric Condition</th>
+            <th>Mathematical Diagnostic</th>
+            <th>Immediate Engineering Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Macro-F1 is low, but Micro-F1 and Global Accuracy appear high.</strong></td>
+            <td>Class 1 (300 images) plus Classes 2–4 (240 images) together account for $300+240=540$ of the 1000 images, i.e. 54% of the dataset. Micro-F1 and Accuracy compute one pooled score across all 1000 images, so getting these 540 "easy" images right — while getting all 460 long-tail images wrong — is already enough to make the pooled score look high, since 54% of the pool was never actually at risk. Macro-F1 doesn't pool images; it averages one score <em>per class</em> ($\frac{1}{25}\sum F_{1,k}$), so the 21 failing long-tail classes count exactly as much as the 4 succeeding ones and drag the average down regardless of how few images they contained.</td>
+            <td>Deprecate global accuracy as a primary optimization metric. Monitor and report per-class recall vectors and Macro-F1.</td>
+        </tr>
+        <tr>
+            <td><strong>Mid-tier classes ($n_k = 80$) exhibit high variance and poor generalization.</strong></td>
+            <td>80 images is enough for a class to pull some gradient weight — unlike the 2–3-image tail classes — but not enough to independently learn robust convolutional filters (edges, textures, shapes at different poses/lighting) purely from its own data. Meanwhile the shared early conv layers are shaped mostly by Class 1's 300 images, since that class contributes roughly $\frac{300}{300+240}\approx 56\%$ of the head+mid gradient signal. The mid-tier classes end up leaning on features tuned for Class 1's appearance rather than their own. Two symptoms follow: <strong>high variance</strong> — which exact 80 images land in a given batch or augmentation pass swings the result noticeably, because there's no large pool to average that noise out over; and <strong>poor generalization</strong> — the decision boundary fits idiosyncrasies of those specific 80 images (a particular lighting condition, angle, or artifact) rather than the true, broader class manifold, so it fails on unseen examples that don't share those idiosyncrasies.</td>
+            <td>Deploy cost-sensitive loss functions (Weighted Cross-Entropy) + heavy augmentation. Initialize with a pre-trained transfer learning backbone.</td>
+        </tr>
+        <tr>
+            <td><strong>Long-tail classes ($n_k < 10$) display a 0% True Positive Rate.</strong></td>
+            <td>With so few examples, the loss function never accumulates enough signal from these classes to push the decision boundary into a stable position around them — there simply isn't enough gradient evidence to "claim" a region of the output space.</td>
+            <td>Transition the tail from classification to <strong>Few-Shot Metric Learning</strong>. Train an embedding space via Siamese or Prototypical Networks using head/mid tiers, then evaluate tail instances using cosine or Euclidean distance.</td>
+        </tr>
+        <tr>
+            <td><strong>High False Positive and False Negative overlap between distinct long-tail classes.</strong></td>
+            <td>Feature confusion due to visual similarities. The network lacks the geometric samples to learn a separating boundary.</td>
+            <td>Inject deterministic domain knowledge. Concatenate fixed hand-crafted features (GLCM texture or LBP matrices) directly to the network's final latent vector.</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="highlight-box">
+    <strong>Architectural Redesign (Two-Stage Pipeline):</strong> Do not force all 25 classes into a single flat Softmax layer. Instead, restructure the problem hierarchically:
+    <br><br>
+    <strong>Stage 1:</strong> An ordinary supervised CNN optimizing a 5-class problem: Class 1, 2, 3, 4, and an integrated "Out-of-Distribution / Rare Anomaly" background bucket (pooling all 460 tail images).
+    <br>
+    <strong>Stage 2:</strong> Images routed to the "Rare Anomaly" bucket are processed by a distance-based metric learning framework (Nearest Centroid) to identify the specific rare anomaly type without using Softmax classification.
+</div>
+
+<h3>3.2 One-Sided Tail: Algorithmic &amp; Hybrid Solutions</h3>
+<p>To fix this performance bottleneck without collecting more data, we established a multi-pronged strategy. The objective throughout is to prevent the model from ignoring the single rare tail.</p>
+
+<h4>Algorithmic Adjustments</h4>
+<ul>
+    <li><strong>Cost-Sensitive Loss:</strong> Switch to <strong>Focal Loss</strong>,
+        $$\mathcal{L} = -\alpha (1-p_{\mathrm{t}})^\gamma \log(p_{\mathrm{t}})$$
+        which down-weights easy background examples ($p_{\mathrm{t}}$ near 1) via the $(1-p_{\mathrm{t}})^\gamma$ term, forcing the remaining gradient budget onto the hard, rare-tail examples. Alternatively, apply <strong>Weighted Cross-Entropy</strong> with a single positive class scalar weight ($w_{\mathrm{pos}} \gg 1$).</li>
+    <li><strong>Resampling:</strong> Use a batch sampler (like PyTorch's <code>WeightedRandomSampler</code>) to force an artificial 50/50 class balance in every GPU training batch, and apply heavy data augmentation exclusively to the minority-class images.</li>
+    <li><strong>Output / Thresholding:</strong> With a single output logit $z \in \mathbb{R}$ passed through Sigmoid, adjust the decision threshold down from $0.5$ (e.g., to $0.15$) to maximize recall for the rare tail.</li>
+    <li><strong>Evaluation Metrics:</strong> Move away from plain "Accuracy" and judge the model using <strong>F1-Score</strong> or <strong>AUC-ROC</strong> instead (see the Precision/Recall/F1 definitions above).</li>
+</ul>
+
+<h4>Integrating Hand-Crafted Medical Feature Extraction</h4>
+<p>Because your project involves <strong>medical imaging</strong>, we concluded that injecting traditional, deterministic domain knowledge is an excellent way to compensate for data scarcity.</p>
+<ul>
+    <li><strong>The Hybrid Approach:</strong> Build a dual-branch network that extracts abstract global features using a CNN, extracts explicit traditional metrics (like <strong>GLCM</strong> for tissue texture, <strong>LBP</strong> for micro-patterns, or <strong>Active Contours</strong> for geometric boundaries) via hand-crafted algorithms, and <strong>concatenates</strong> them before the final classification layer.</li>
+    <li><strong>Why it helps:</strong> It gives the network a mathematical "cheat sheet," reducing the number of images needed to infer basic structural or texture regularities on its own.</li>
+</ul>
+
+<h3>3.3 Two-Sided Tail Distributions</h3>
+<p>The anomaly problem above is a <strong>one-sided long tail</strong>: one majority class, and every rare class fans out on a single side of it. A genuinely different (and equally common) pattern is a <strong>two-sided tail</strong>: a majority class sitting in the middle, with two separate rare tails extending in opposite directions — not two variations of the same kind of rarity, but two structurally different failure directions. As with the anomaly example above, this is still a CNN <strong>image</strong> classification problem: a camera photographs each manufactured part on the line, and the network classifies that image into one of five ordered categories — Severely Undersize / Undersize / In-Spec / Oversize / Severely Oversize — rather than doing anomaly detection on non-visual sensor readings.</p>
+
+<div class="highlight-box">
+    <strong>Real industry example: machine-vision quality control with a two-sided tolerance.</strong> In manufacturing (machined parts, injection-molded components, semiconductor dies, pharmaceutical tablets), an inline camera captures an image of each part, and a measured feature visible in that image — a shaft's diameter, a coating's thickness, a solder joint's size — has a target value with an <strong>Upper Specification Limit (USL)</strong> and a <strong>Lower Specification Limit (LSL)</strong>. Most part images land safely inside the tolerance band (the majority, "in-spec" class). But defects can occur in <strong>two opposite directions</strong>: too small/thin/under-filled (one tail) or too large/thick/over-filled (the other tail) — and each direction typically has its own internal severity levels (mildly undersize vs. severely undersize, for example), so each tail is itself a small long tail. This is standard Six Sigma / Statistical Process Control territory, where <strong>Cp</strong> and <strong>Cpk</strong> are the process-capability indices used to quantify how well a process stays within both limits simultaneously. Suppose again a training set of $N=1000$ part images, this time labeled by the ground-truth caliper measurement into the five severity classes above:
+    <div class="math-block">
+        $$C_p = \frac{USL - LSL}{6\sigma} \qquad C_{pk} = \min\left(\frac{USL-\mu}{3\sigma},\ \frac{\mu-LSL}{3\sigma}\right)$$
+    </div>
+    $C_p$ measures whether the tolerance band is wide enough for the process's natural spread ($6\sigma$); $C_{pk}$ additionally penalizes the process for being off-center. A value of $C_{pk} < 1.33$ is the usual signal that off-spec parts (your two rare tails) will keep appearing at a non-negligible rate no matter how tightly you control the mean.
+</div>
+
+<div class="diagram-box">
+    <svg viewBox="0 0 680 240" role="img" aria-label="Illustrative two-sided tail distribution for a dimensional quality inspection problem">
+        <line x1="40" y1="200" x2="630" y2="200" stroke="#a0aec0" stroke-width="1"/>
+        <g>
+            <rect x="60" y="178" width="90" height="22" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+            <text x="105" y="172" text-anchor="middle" font-size="12" fill="#7b341e">~15</text>
+            <text x="105" y="216" text-anchor="middle" font-size="11" fill="#7b341e">Severely undersize</text>
+        </g>
+        <g>
+            <rect x="175" y="148" width="90" height="52" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+            <text x="220" y="142" text-anchor="middle" font-size="12" fill="#7b341e">~70</text>
+            <text x="220" y="216" text-anchor="middle" font-size="11" fill="#7b341e">Undersize</text>
+        </g>
+        <g>
+            <rect x="290" y="60" width="90" height="140" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+            <text x="335" y="52" text-anchor="middle" font-size="13" font-weight="600" fill="#234e52">~800</text>
+            <text x="335" y="216" text-anchor="middle" font-size="11" font-weight="600" fill="#234e52">In-spec (majority)</text>
+        </g>
+        <g>
+            <rect x="405" y="140" width="90" height="60" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+            <text x="450" y="134" text-anchor="middle" font-size="12" fill="#7b5e12">~80</text>
+            <text x="450" y="216" text-anchor="middle" font-size="11" fill="#7b5e12">Oversize</text>
+        </g>
+        <g>
+            <rect x="520" y="182" width="90" height="18" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+            <text x="565" y="176" text-anchor="middle" font-size="12" fill="#7b5e12">~10</text>
+            <text x="565" y="216" text-anchor="middle" font-size="11" fill="#7b5e12">Severely oversize</text>
+        </g>
+        <text x="105" y="232" text-anchor="middle" font-size="11" fill="#718096">&larr; LSL direction</text>
+        <text x="565" y="232" text-anchor="middle" font-size="11" fill="#718096">USL direction &rarr;</text>
+    </svg>
+    <p class="diagram-caption">Fig. 4 — illustrative shape of a two-sided tail: one majority class in the middle, two independent rare tails extending in opposite directions, each with its own internal severity levels</p>
+</div>
+
+<p><strong>Worked example, tying the diagram to $C_{pk}$:</strong> suppose the target diameter is $10.00\text{mm}$ with $LSL = 9.90\text{mm}$ and $USL = 10.10\text{mm}$, and the process runs at $\mu = 10.01\text{mm}$, $\sigma = 0.03\text{mm}$. Then:</p>
+<div class="math-block">
+    $$C_{pk} = \min\left(\frac{10.10-10.01}{0.09},\ \frac{10.01-9.90}{0.09}\right) = \min(1.00,\ 1.22) = 1.00$$
+</div>
+<p>A $C_{pk}$ of $1.00$ is below the $1.33$ comfort threshold — which is exactly why, out of 1000 parts, roughly 25 of them (the ~15 severely undersize plus ~10 severely oversize in the figure) fall outside spec even though the process mean is close to target. The undersize tail is thinner than the oversize tail here because $\mu$ sits slightly above center, closer to the USL side.</p>
+
+<p><strong>Why this needs a different strategy than the one-sided anomaly problem above:</strong> separating "in-spec" from "defective" is usually the easy part here — undersize and oversize parts tend to look clearly different from good ones. The hard part, just like before, is the fine-grained classification <em>within</em> each tail (mild vs. severe undersize, mild vs. severe oversize), where sample counts drop fast the further out you go — so the same two-stage idea applies, just <strong>duplicated on both sides</strong>: an easier 3-way split (undersize / in-spec / oversize) first, then two separate few-shot/metric-learning models — one for undersize severity levels, one for oversize severity levels — since the two directions represent physically different failure mechanisms and shouldn't share one embedding space.</p>
+
+<p>The same two-sided-tail <em>shape</em> shows up well beyond machine vision — worth knowing, but note these next three are not image-classification tasks the way our CNN example is; they're included only to show how common this statistical pattern is:</p>
+<ul>
+    <li><strong>Semiconductor chip binning:</strong> most chips fall in the target performance bin; unusually slow/high-leakage chips and unusually fast/high-power chips are both rare bins on opposite ends of the same performance metric.</li>
+    <li><strong>Vital-sign / patient monitoring:</strong> most readings are in the normal range; bradycardia (too low) and tachycardia (too high) are both rare, clinically distinct alert classes on opposite sides of "normal."</li>
+    <li><strong>Credit risk scoring:</strong> most borrowers cluster around medium risk; both excellent-credit and severe-default cases are comparatively rare tails in opposite directions.</li>
+</ul>
+
+<h3>3.4 Two-Sided Tail: Algorithmic Solutions</h3>
+<p>The objective here is to maintain feature discriminability at <em>both</em> ends of the spectrum without letting them cancel each other out or get overwhelmed by the center.</p>
+<ul>
+    <li>
+        <strong>Loss Function Adjustment:</strong>
+        <ul>
+            <li>Switch from single binary classification to <strong>Ordinal Cross-Entropy</strong> or <strong>Multi-Class Focal Loss</strong> treating $C = \{\text{Left Tail}, \text{Normal}, \text{Right Tail}\}$ — the same Focal Loss weighting introduced in §3.2 applies here per-class, once for each tail independently.</li>
+            <li>If modeled as a regression task (predicting continuous severity), use <strong>Asymmetric Huber Loss</strong> or <strong>Focal L1 Loss</strong> to heavily penalize errors occurring at both low ($y < \theta_{\text{low}}$) and high ($y > \theta_{\text{high}}$) target values.</li>
+        </ul>
+    </li>
+    <li>
+        <strong>Sampling &amp; Batching:</strong> Use <strong>Stratified Multi-Tail Samplers</strong> (e.g., Triplet Batching) to guarantee that every GPU batch contains a fixed balance — for example $33\%$ Left Tail, $34\%$ Normal, and $33\%$ Right Tail — since plain random sampling starves both tails simultaneously rather than just one.
+    </li>
+    <li>
+        <strong>Architecture Modification:</strong> Single-sided heads easily learn a linear cutoff, but two-sided tails require non-monotonic decision functions. Adding <strong>ordinal anchor heads</strong>, or two separate classification branches (Branch A for Left Tail vs. Rest; Branch B for Right Tail vs. Rest), prevents optimization gradient interference between the two opposing extremes.
+    </li>
+</ul>
+
+<h3>3.5 Summary: One-Sided vs. Two-Sided Comparison</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Dimension</th>
+            <th>One-Sided Tail Data</th>
+            <th>Two-Sided Tail Data</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Loss Landscape</strong></td>
+            <td>Dominated by a single massive majority class or normal baseline; gradients pushing towards predicting the nominal state.</td>
+            <td>Tug-of-war between two distinct extreme states, separated by a dominant "normal" middle region. Risks class-collapsing to the middle.</td>
+        </tr>
+        <tr>
+            <td><strong>Data Imbalance</strong></td>
+            <td>Asymmetric ($1:N$ where $N \gg 1$). One minority positive class vs. majority negative class.</td>
+            <td>Symmetric or Asymmetric Multi-Region ($N_{\text{left}} \ll N_{\text{mid}} \gg N_{\text{right}}$). Two distinct minority tails flanking a majority center.</td>
+        </tr>
+        <tr>
+            <td><strong>Batch Composition</strong></td>
+            <td>Standard random sampling leads to GPU batches containing zero tail samples.</td>
+            <td>Standard random sampling starves <em>both</em> tails simultaneously, or severely over-represents the center.</td>
+        </tr>
+        <tr>
+            <td><strong>Boundary Mechanics</strong></td>
+            <td>Single decision hyperplane separating normal vs. extreme tail.</td>
+            <td>Two separate decision hyperplanes (or a non-linear closed manifold) separating Left Tail $\leftarrow$ Normal $\rightarrow$ Right Tail.</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<div class="container">
+    <h1>Mathematical Formulations of CNN Interpretability</h1>
+
+    <p>To establish attribution mappings within deep networks, we use gradients of the network's output with respect to either the input pixels or intermediate feature maps, to quantify spatial and feature importance relative to a target classification decision.</p>
+
+    <h2>1. Vanilla Saliency Maps</h2>
+    <p>Vanilla Saliency measures the sensitivity of a specific input pixel configuration toward a targeted output class logit score. It relies on a first-order (local) Taylor-series approximation of the network's highly non-linear decision function.</p>
+
+    <p>Let $I \in \mathbb{R}^{H \times W \times C}$ be the input image, and let $S_c(I)$ be the unnormalized output score (logit) for class $c$, prior to the softmax activation. The local linear approximation around a specific image $I_0$ is:</p>
+
+    <div class="math-block">
+        $$S_c(I) \approx w^T I + b$$
+    </div>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>What is $S_c(I)$, the "unnormalized output"?</strong></p>
+        <p>In a classification network, the final layer produces one raw real-valued number per class — these are called <strong>logits</strong>. $S_c(I)$ is the logit for class $c$ given input $I$: just one entry of the vector output by the last fully-connected layer, <em>before</em> it passes through softmax.</p>
+        <p>Why "unnormalized" matters: softmax turns the logit vector into a probability distribution via $p_c = e^{S_c}/\sum_{c'} e^{S_{c'}}$ — but that normalization couples every class's probability to every other class's logit; if one logit rises, another class's probability falls even if its own logit didn't change. For saliency/Grad-CAM, we want "what makes the network's raw evidence for class $c$ go up or down," independent of competition from other classes — so we differentiate the pre-softmax logit $S_c$, not the post-softmax probability $p_c$.</p>
+    </div>
+
+    <p>where $w$ is the gradient of the class score with respect to the input, evaluated at $I_0$ — the direction of steepest local change in the score:</p>
+
+    <div class="math-block">
+        $$w = \left. \frac{\partial S_c(I)}{\partial I} \right|_{I = I_0}$$
+    </div>
+
+    <p>To collapse the $H \times W \times C$ gradient tensor $w$ into a single 2D spatial heatmap $M_{\text{Saliency}}$, the maximum absolute gradient magnitude across the channel dimension $C$ is taken at each spatial location:</p>
+
+    <div class="math-block">
+        $$M_{\text{Saliency}}(i, j) = \max_{c'} \left| w_{i,j,c'} \right|$$
+    </div>
+
+    <h2>2. Grad-CAM (Gradient-weighted Class Activation Mapping)</h2>
+    <p>Grad-CAM operates over high-level, coarse feature spaces. Instead of using raw input-pixel gradients, it takes gradients with respect to the feature activation maps of the network's final convolutional layer, which retains more global semantic localization than pixel-space saliency.</p>
+
+    <p>Let $A^k \in \mathbb{R}^{U \times V}$ be the $k$-th feature-map channel produced by the final convolutional layer, where $U$ and $V$ are its spatial dimensions. First, the gradient of the class logit with respect to each activation element is computed:</p>
+
+    <div class="math-block">
+        $$\frac{\partial S_c}{\partial A^k_{i,j}}$$
+    </div>
+
+    <p>These localized gradients are then collapsed into a single per-channel importance weight $\alpha_k^c$ via <strong>Global Average Pooling (GAP)</strong> over the $U \times V$ spatial grid:</p>
+
+    <div class="math-block">
+        $$\alpha_k^c = \frac{1}{U \times V} \sum_{i=1}^{U} \sum_{j=1}^{V} \frac{\partial S_c}{\partial A^k_{i,j}}$$
+    </div>
+
+    <p>Finally, the $K$ feature maps are combined as a weighted sum using $\alpha_k^c$, and passed through a <strong>ReLU</strong> to keep only the features that have a positive influence on class $c$:</p>
+
+    <div class="math-block">
+        $$L_{\text{Grad-CAM}}^c = \text{ReLU}\left( \sum_k \alpha_k^c A^k \right)$$
+    </div>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>Does Grad-CAM happen during or after training?</strong></p>
+        <p><strong>After.</strong> Grad-CAM is a post-hoc interpretability technique, not part of the training loop or loss function.</p>
+        <ol>
+            <li>Train the CNN normally to convergence (or to whichever checkpoint you want to inspect) — training uses ordinary backprop of the <em>loss</em> to update <em>weights</em>.</li>
+            <li>Take a <strong>trained, frozen</strong> model. Pick a specific input image and a target class $c$ (usually the predicted class, or the true class if diagnosing a misclassification).</li>
+            <li>Run one <strong>forward pass</strong> to get the logit $S_c$ and the feature maps $A^k$ at the chosen convolutional layer.</li>
+            <li>Run one <strong>backward pass</strong> — but differentiate $S_c$ with respect to the activations $A^k$, not the loss with respect to the weights. No parameter update happens.</li>
+            <li>Use those gradients to compute $\alpha_k^c$, then the weighted, ReLU'd combination $L^c_{\text{Grad-CAM}}$ — this produces a diagnostic heatmap, not a gradient step.</li>
+        </ol>
+        <p>The superficial similarity to training (both use backprop) is exactly what causes the confusion. The crucial distinction is <em>what</em> is differentiated with respect to <em>what</em>, and that the weights never change — it's the same autograd machinery repurposed for explanation on an already-finished model, not for learning.</p>
+    </div>
+
+    <div class="diagram-box">
+        <svg viewBox="0 0 680 175" role="img" aria-label="Grad-CAM pipeline run after training on a frozen model">
+            <defs>
+                <marker id="arr4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M2 1L8 5L2 9" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+            </defs>
+            <text x="40" y="26" font-size="12" fill="#718096">After training completes &mdash; model weights are frozen</text>
+            <g>
+                <rect x="40" y="50" width="130" height="56" rx="8" fill="#f7fafc" stroke="#a0aec0" stroke-width="1"/>
+                <text x="105" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#2d3748">Trained model</text>
+                <text x="105" y="88" text-anchor="middle" font-size="12" fill="#4a5568">Weights frozen</text>
+            </g>
+            <g>
+                <rect x="190" y="50" width="120" height="56" rx="8" fill="#ebf8ff" stroke="#3182ce" stroke-width="1"/>
+                <text x="250" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#1a365d">Forward pass</text>
+                <text x="250" y="88" text-anchor="middle" font-size="12" fill="#2b6cb0">Get Sc and Ak</text>
+            </g>
+            <g>
+                <rect x="330" y="50" width="130" height="56" rx="8" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+                <text x="395" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#7b341e">Backward pass</text>
+                <text x="395" y="88" text-anchor="middle" font-size="12" fill="#c05621">dSc/dAk only</text>
+            </g>
+            <g>
+                <rect x="480" y="50" width="140" height="56" rx="8" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+                <text x="550" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#234e52">Weight + ReLU</text>
+                <text x="550" y="88" text-anchor="middle" font-size="12" fill="#285e61">Produce heatmap</text>
+            </g>
+            <line x1="170" y1="78" x2="188" y2="78" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr4)"/>
+            <line x1="310" y1="78" x2="328" y2="78" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr4)"/>
+            <line x1="460" y1="78" x2="478" y2="78" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr4)"/>
+            <text x="40" y="135" font-size="12" fill="#718096">No parameter update happens anywhere in this pipeline</text>
+        </svg>
+        <p class="diagram-caption">Fig. 3 &mdash; Grad-CAM runs after training, on a frozen model, differentiating the logit w.r.t. activations instead of the loss w.r.t. weights</p>
+    </div>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>Grad-CAM pseudocode</strong></p>
+        <p>The backward pass here differentiates the logit $S_c$ with respect to the activations $A^k$, not the loss with respect to the weights &mdash; and nothing gets updated. Two hooks are the whole trick: they tap into a chosen convolutional layer's output and its incoming gradient without changing how the model normally runs.</p>
+        <pre class="code-block"><code>function grad_cam(model, image, target_class, target_layer):
+    model.eval()                        <span class="comment"># freeze: no dropout, no batchnorm updates</span>
+    model.requires_grad_(False)         <span class="comment"># no weight gradients needed at all</span>
+
+    activations = None
+    gradients = None
+
+    <span class="comment"># hook 1: capture the feature maps A^k during the forward pass</span>
+    def forward_hook(module, input, output):
+        nonlocal activations
+        activations = output.detach()
+
+    <span class="comment"># hook 2: capture dSc/dA^k during the backward pass</span>
+    def backward_hook(module, grad_input, grad_output):
+        nonlocal gradients
+        gradients = grad_output[0].detach()
+
+    target_layer.register_forward_hook(forward_hook)
+    target_layer.register_full_backward_hook(backward_hook)
+
+    <span class="comment"># ---- forward pass ----</span>
+    logits = model(image)               <span class="comment"># S_c(I) for every class c</span>
+    score = logits[0, target_class]     <span class="comment"># pick S_c for our target class</span>
+
+    <span class="comment"># ---- backward pass (NOT a training step) ----</span>
+    model.zero_grad()
+    score.backward()                    <span class="comment"># populates `gradients` via the hook</span>
+                                         <span class="comment"># no optimizer.step() is ever called</span>
+
+    <span class="comment"># ---- global average pool the gradients -> alpha_k^c ----</span>
+    weights = gradients.mean(dim=[2, 3])          <span class="comment"># average over H, W per channel k</span>
+
+    <span class="comment"># ---- weighted combination of feature maps, then ReLU ----</span>
+    cam = sum(weights[k] * activations[k] for k in range(len(weights)))
+    cam = relu(cam)
+
+    <span class="comment"># ---- upsample coarse map to input image size for overlay ----</span>
+    cam = resize(cam, size=image.shape[-2:])
+    cam = cam / cam.max()               <span class="comment"># normalize to [0, 1] for visualization</span>
+
+    return cam</code></pre>
+    </div>
+
+    <h3>3. Debugging CNNs with Grad-CAM &amp; Saliency Maps</h3>
+    <div class="summary-card">
+        <ul>
+            <li>
+                <strong>Exposes Data Leakage:</strong> They reveal if the model is "cheating" by focusing on background artifacts like text watermarks, scanner borders, or timestamps instead of the actual target object.
+            </li>
+            <li>
+                <strong>Diagnoses Feature Misattribution:</strong> They show if the model is looking at the wrong part of an image (e.g., surrounding healthy tissue instead of a lesion), indicating it has learned incorrect visual rules.
+            </li>
+            <li>
+                <strong>Detects Pixel-Level Underfitting:</strong> If Vanilla Saliency displays scattered, uniform noise rather than clear object boundaries, it signals that early convolutional layers have failed to learn meaningful spatial shapes.
+            </li>
+            <li>
+                <strong>Validates True Positives:</strong> They help verify whether correct predictions were driven by genuine feature recognition or by spurious background correlations.
+            </li>
+            <li>
+                <strong>Identifies Blind Spots (False Negatives):</strong> They map exactly where the network looked when it missed a target completely, pinpointing whether it was distracted by competing visual elements.
+            </li>
+        </ul>
+        <p style="margin-top:12px; margin-bottom:0;"><em>Note: Grad-CAM's resolution is limited to the spatial size of the final conv layer ($U \times V$, typically much smaller than the input image), so it's upsampled for display — it localizes coarse regions well but isn't pixel-precise. For finer boundaries, it's often paired with Guided Backpropagation (Guided Grad-CAM).</em></p>
+    </div>
+</div>
+
+</body>
+</html>
