@@ -3,17 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
+    <!-- Hide body initially to prevent flickering -->
+    <style>body { visibility: hidden; }</style>
+    <!-- Load global MathJax configuration first -->
     <title>Machine Learning Tutorial</title>
-    <script type="text/javascript" async
-        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-    </script>
+
     <script>
         window.MathJax = {
             tex: {
-                inlineMath: [['$', '$'], ['\(', '\)']],
-                displayMath: [['$$', '$$'], ['\[', '\]']]
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
             }
         };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
 </head>
 <body>
@@ -23,25 +39,99 @@
 
     <h2>🧠 Introduction to Decision Trees</h2>
     <p>
-        A **Decision Tree** is a non-parametric supervised learning algorithm used for both classification and regression. It models decisions by creating a tree structure, where internal nodes represent tests on features, branches represent the outcome of the test, and leaf nodes represent the final class label or value. The goal is to create a model that predicts the value of a target variable by learning simple decision rules inferred from the data features.
+        A <strong>Decision Tree</strong> is a non-parametric supervised learning algorithm used for both classification and regression. It models decisions by creating a tree structure, where internal nodes represent tests on features, branches represent the outcome of the test, and leaf nodes represent the final class label or value. The goal is to create a model that predicts the value of a target variable by learning simple decision rules inferred from the data features.
     </p>
 
     <h3>Key Algorithms</h3>
     <p>
         Several well-known algorithms guide the construction of Decision Trees by determining the optimal way to perform splits:
         <ul>
-            <li>**ID3 (Iterative Dichotomiser 3) / C4.5:** These algorithms primarily use **Information Gain** based on **Entropy** as the splitting criterion. They are designed to find the feature that maximizes the reduction in impurity at each step.</li>
-            <li>**CART (Classification and Regression Trees):** This algorithm uses the **Gini Impurity** measure for classification and the Mean Squared Error (MSE) for regression. CART is the most commonly used framework today.</li>
+            <li><strong>ID3 (Iterative Dichotomiser 3) / C4.5:</strong> These algorithms primarily use <strong>Information Gain</strong> based on <strong>Entropy</strong> as the splitting criterion. They are designed to find the feature that maximizes the reduction in impurity at each step.</li>
+            <li><strong>CART (Classification and Regression Trees):</strong> This algorithm uses the <strong>Gini Impurity</strong> measure for classification and the Mean Squared Error (MSE) for regression. CART is the most commonly used framework today.</li>
         </ul>
         The splitting criterion (Entropy/Information Gain or Gini Impurity) is the core mechanism that drives the tree's construction and performance.
     </p>
-    
+
+    <hr>
+    <h2>🌍 A Real-World Example: Should We Play Tennis?</h2>
+    <p>Before deriving any formulas, it helps to see what a trained Decision Tree actually looks like. Consider the classic weather-based decision problem: given the day's <strong>Outlook</strong>, <strong>Temperature</strong>, <strong>Humidity</strong>, and <strong>Wind</strong>, should you play tennis? Here are 14 recorded days:</p>
+
+    <table class="data-table">
+        <thead>
+            <tr><th>Day</th><th>Outlook</th><th>Temperature</th><th>Humidity</th><th>Wind</th><th>Play Tennis?</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td>Sunny</td><td>Hot</td><td>High</td><td>Weak</td><td>No</td></tr>
+            <tr><td>2</td><td>Sunny</td><td>Hot</td><td>High</td><td>Strong</td><td>No</td></tr>
+            <tr><td>3</td><td>Overcast</td><td>Hot</td><td>High</td><td>Weak</td><td>Yes</td></tr>
+            <tr><td>4</td><td>Rain</td><td>Mild</td><td>High</td><td>Weak</td><td>Yes</td></tr>
+            <tr><td>5</td><td>Rain</td><td>Cool</td><td>Normal</td><td>Weak</td><td>Yes</td></tr>
+            <tr><td>6</td><td>Rain</td><td>Cool</td><td>Normal</td><td>Strong</td><td>No</td></tr>
+            <tr><td>7</td><td>Overcast</td><td>Cool</td><td>Normal</td><td>Strong</td><td>Yes</td></tr>
+            <tr><td>8</td><td>Sunny</td><td>Mild</td><td>High</td><td>Weak</td><td>No</td></tr>
+            <tr><td>9</td><td>Sunny</td><td>Cool</td><td>Normal</td><td>Weak</td><td>Yes</td></tr>
+            <tr><td>10</td><td>Rain</td><td>Mild</td><td>Normal</td><td>Weak</td><td>Yes</td></tr>
+            <tr><td>11</td><td>Sunny</td><td>Mild</td><td>Normal</td><td>Strong</td><td>Yes</td></tr>
+            <tr><td>12</td><td>Overcast</td><td>Mild</td><td>High</td><td>Strong</td><td>Yes</td></tr>
+            <tr><td>13</td><td>Overcast</td><td>Hot</td><td>Normal</td><td>Weak</td><td>Yes</td></tr>
+            <tr><td>14</td><td>Rain</td><td>Mild</td><td>High</td><td>Strong</td><td>No</td></tr>
+        </tbody>
+    </table>
+
+    <p>A trained Decision Tree turns this table into a compact set of nested yes/no questions. Here is the tree a well-trained algorithm produces from this exact data (we will derive it two different ways &mdash; via ID3 and via CART &mdash; in the sections below):</p>
+
+    <div style="text-align: center; margin: 20px 0;">
+        <svg viewBox="0 0 940 320" xmlns="http://www.w3.org/2000/svg" style="max-width: 720px; width: 100%; height: auto; font-family: 'Segoe UI', sans-serif;">
+            <line x1="470" y1="65" x2="180" y2="125" stroke="#888" stroke-width="1.5"/>
+            <line x1="470" y1="65" x2="470" y2="125" stroke="#888" stroke-width="1.5"/>
+            <line x1="470" y1="65" x2="760" y2="125" stroke="#888" stroke-width="1.5"/>
+            <line x1="180" y1="175" x2="100" y2="235" stroke="#888" stroke-width="1.5"/>
+            <line x1="180" y1="175" x2="260" y2="235" stroke="#888" stroke-width="1.5"/>
+            <line x1="760" y1="175" x2="680" y2="235" stroke="#888" stroke-width="1.5"/>
+            <line x1="760" y1="175" x2="840" y2="235" stroke="#888" stroke-width="1.5"/>
+
+            <text x="300" y="90" text-anchor="middle" font-size="13" fill="#444">Sunny</text>
+            <text x="500" y="90" text-anchor="middle" font-size="13" fill="#444">Overcast</text>
+            <text x="640" y="90" text-anchor="middle" font-size="13" fill="#444">Rain</text>
+            <text x="115" y="210" text-anchor="middle" font-size="13" fill="#444">High</text>
+            <text x="245" y="210" text-anchor="middle" font-size="13" fill="#444">Normal</text>
+            <text x="695" y="210" text-anchor="middle" font-size="13" fill="#444">Weak</text>
+            <text x="825" y="210" text-anchor="middle" font-size="13" fill="#444">Strong</text>
+
+            <rect x="400" y="15" width="140" height="50" rx="8" fill="#0056b3"/>
+            <text x="470" y="45" text-anchor="middle" fill="white" font-size="15" font-weight="bold">Outlook?</text>
+
+            <rect x="115" y="125" width="130" height="50" rx="8" fill="#0056b3"/>
+            <text x="180" y="155" text-anchor="middle" fill="white" font-size="15" font-weight="bold">Humidity?</text>
+
+            <rect x="420" y="125" width="100" height="50" rx="8" fill="#28a745"/>
+            <text x="470" y="155" text-anchor="middle" fill="white" font-size="15" font-weight="bold">Yes</text>
+
+            <rect x="700" y="125" width="120" height="50" rx="8" fill="#0056b3"/>
+            <text x="760" y="155" text-anchor="middle" fill="white" font-size="15" font-weight="bold">Wind?</text>
+
+            <rect x="50" y="235" width="100" height="50" rx="8" fill="#d9534f"/>
+            <text x="100" y="265" text-anchor="middle" fill="white" font-size="15" font-weight="bold">No</text>
+
+            <rect x="210" y="235" width="100" height="50" rx="8" fill="#28a745"/>
+            <text x="260" y="265" text-anchor="middle" fill="white" font-size="15" font-weight="bold">Yes</text>
+
+            <rect x="630" y="235" width="100" height="50" rx="8" fill="#28a745"/>
+            <text x="680" y="265" text-anchor="middle" fill="white" font-size="15" font-weight="bold">Yes</text>
+
+            <rect x="790" y="235" width="100" height="50" rx="8" fill="#d9534f"/>
+            <text x="840" y="265" text-anchor="middle" fill="white" font-size="15" font-weight="bold">No</text>
+        </svg>
+    </div>
+
+    <p><strong>Tracing an example:</strong> Take Day 14 (Rain, Mild, High, Strong). Follow the tree: Outlook = Rain &rarr; Wind = Strong &rarr; leaf <strong>No</strong>. That matches the recorded label exactly. Notice that once <strong>Outlook = Overcast</strong>, the tree answers <strong>Yes</strong> immediately without even checking Temperature, Humidity, or Wind &mdash; because in this data, Overcast alone perfectly determines the outcome (Days 3, 7, 12, 13 are all "Yes"). That is the intuition the entropy and Gini formulas below are built to formalize: <em>which feature, tested first, sorts the data into the purest possible groups?</em></p>
+
     <hr>
     <h2>🌳 Core Concepts: Entropy and Information Gain</h2>
     <p>Entropy Gain is the criterion used to select the best feature split at a node. The split is chosen to achieve the <strong>maximum reduction in impurity</strong>.</p>
 
     <h3>1. Entropy (Impurity Measure)</h3>
-    <p>Measures the disorder or randomness in a set of data. Value ranges from 0 (pure) to $\log_2(C)$ (maximum disorder). **A value zero means no further split is required, and high disorder requires us to split based on the variation in the dataset.**</p>
+    <p>Measures the disorder or randomness in a set of data. Value ranges from 0 (pure) to $\log_2(C)$ (maximum disorder). <strong>A value of zero means no further split is required, and high disorder requires us to split based on the variation in the dataset.</strong></p>
     
     <div class="note">
         <h3>Maximum Disorder (Entropy = 1.0) 🎲</h3>
@@ -58,7 +148,7 @@
 
         <h3>Perfect Purity (Entropy = 0) ✅</h3>
         <p>A node containing only one type of item (e.g., 5 Red balls) has an Entropy of $\mathbf{0}$.</p>
-        <p><strong>Concept:</strong> This node is **pure** (or homogeneous). There is no uncertainty about the class, so **no further split is required**. This node becomes a leaf node in the Decision Tree.</p>
+        <p><strong>Concept:</strong> This node is <strong>pure</strong> (or homogeneous). There is no uncertainty about the class, so <strong>no further split is required</strong>. This node becomes a leaf node in the Decision Tree.</p>
         <p><strong>The Math:</strong></p>
         <div style="padding-left: 20px;">
             $$\text{Entropy} = - \left[ \left(\frac{5}{5} \log_2\left(\frac{5}{5}\right)\right) + \left(\frac{0}{5} \log_2\left(\frac{0}{5}\right)\right) \right]$$
@@ -79,21 +169,496 @@
         $$\text{Information Gain}(S, A) = \text{Entropy}(S) - \sum_{v \in \text{Values}(A)} \frac{|S_v|}{|S|} \text{Entropy}(S_v)$$
     </div>
 
+    <h3>ID3 in Action: Building the Real-World Tree by Entropy</h3>
+    <p>Applying this to the 14-day tennis dataset: the parent set has 9 "Yes" and 5 "No", so $\text{Entropy}(S) = -\frac{9}{14}\log_2\frac{9}{14} - \frac{5}{14}\log_2\frac{5}{14} = 0.940$. Computing the Information Gain for every candidate attribute at the root gives:</p>
+
+    <table class="data-table">
+        <thead>
+            <tr><th>Attribute</th><th>Weighted Entropy After Split</th><th>Information Gain</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Outlook</td><td>0.694</td><td><strong>0.246</strong> (highest)</td></tr>
+            <tr><td>Humidity</td><td>0.789</td><td>0.151</td></tr>
+            <tr><td>Wind</td><td>0.892</td><td>0.048</td></tr>
+            <tr><td>Temperature</td><td>0.911</td><td>0.029</td></tr>
+        </tbody>
+    </table>
+
+    <p>ID3 always chooses the attribute with the highest gain, so <strong>Outlook</strong> becomes the root, and &mdash; because ID3 handles categorical features natively &mdash; all three of its values (Sunny, Overcast, Rain) branch out from the root <em>in a single step</em>. The Overcast branch is already pure (Gain isn't even needed there: 4/4 are "Yes"), so it becomes a leaf immediately. Recursing on the Sunny subset (5 days) finds Humidity gives a perfectly pure split (High &rarr; all No, Normal &rarr; all Yes); recursing on the Rain subset (5 days) finds Wind gives a perfectly pure split (Weak &rarr; all Yes, Strong &rarr; all No). The result is exactly the tree shown earlier, now with sample counts at every node:</p>
+
+    <div style="text-align: center; margin: 20px 0;">
+        <svg viewBox="0 0 940 320" xmlns="http://www.w3.org/2000/svg" style="max-width: 720px; width: 100%; height: auto; font-family: 'Segoe UI', sans-serif;">
+            <line x1="470" y1="65" x2="180" y2="125" stroke="#888" stroke-width="1.5"/>
+            <line x1="470" y1="65" x2="470" y2="125" stroke="#888" stroke-width="1.5"/>
+            <line x1="470" y1="65" x2="760" y2="125" stroke="#888" stroke-width="1.5"/>
+            <line x1="180" y1="175" x2="100" y2="235" stroke="#888" stroke-width="1.5"/>
+            <line x1="180" y1="175" x2="260" y2="235" stroke="#888" stroke-width="1.5"/>
+            <line x1="760" y1="175" x2="680" y2="235" stroke="#888" stroke-width="1.5"/>
+            <line x1="760" y1="175" x2="840" y2="235" stroke="#888" stroke-width="1.5"/>
+
+            <text x="300" y="90" text-anchor="middle" font-size="13" fill="#444">Sunny</text>
+            <text x="500" y="90" text-anchor="middle" font-size="13" fill="#444">Overcast</text>
+            <text x="640" y="90" text-anchor="middle" font-size="13" fill="#444">Rain</text>
+            <text x="115" y="210" text-anchor="middle" font-size="13" fill="#444">High</text>
+            <text x="245" y="210" text-anchor="middle" font-size="13" fill="#444">Normal</text>
+            <text x="695" y="210" text-anchor="middle" font-size="13" fill="#444">Weak</text>
+            <text x="825" y="210" text-anchor="middle" font-size="13" fill="#444">Strong</text>
+
+            <rect x="395" y="10" width="150" height="55" rx="8" fill="#0056b3"/>
+            <text x="470" y="32" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Outlook?</text>
+            <text x="470" y="50" text-anchor="middle" fill="#dbe9fb" font-size="11.5">[14: 9Y / 5N]</text>
+
+            <rect x="105" y="120" width="150" height="55" rx="8" fill="#0056b3"/>
+            <text x="180" y="142" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Humidity?</text>
+            <text x="180" y="160" text-anchor="middle" fill="#dbe9fb" font-size="11.5">[5: 2Y / 3N]</text>
+
+            <rect x="410" y="120" width="120" height="55" rx="8" fill="#28a745"/>
+            <text x="470" y="142" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Yes</text>
+            <text x="470" y="160" text-anchor="middle" fill="#e3f5e8" font-size="11.5">[4: 4Y / 0N]</text>
+
+            <rect x="685" y="120" width="150" height="55" rx="8" fill="#0056b3"/>
+            <text x="760" y="142" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Wind?</text>
+            <text x="760" y="160" text-anchor="middle" fill="#dbe9fb" font-size="11.5">[5: 3Y / 2N]</text>
+
+            <rect x="45" y="230" width="110" height="55" rx="8" fill="#d9534f"/>
+            <text x="100" y="252" text-anchor="middle" fill="white" font-size="14" font-weight="bold">No</text>
+            <text x="100" y="270" text-anchor="middle" fill="#fbe0df" font-size="11.5">[3: 0Y / 3N]</text>
+
+            <rect x="205" y="230" width="110" height="55" rx="8" fill="#28a745"/>
+            <text x="260" y="252" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Yes</text>
+            <text x="260" y="270" text-anchor="middle" fill="#e3f5e8" font-size="11.5">[2: 2Y / 0N]</text>
+
+            <rect x="625" y="230" width="110" height="55" rx="8" fill="#28a745"/>
+            <text x="680" y="252" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Yes</text>
+            <text x="680" y="270" text-anchor="middle" fill="#e3f5e8" font-size="11.5">[3: 3Y / 0N]</text>
+
+            <rect x="785" y="230" width="110" height="55" rx="8" fill="#d9534f"/>
+            <text x="840" y="252" text-anchor="middle" fill="white" font-size="14" font-weight="bold">No</text>
+            <text x="840" y="270" text-anchor="middle" fill="#fbe0df" font-size="11.5">[2: 0Y / 2N]</text>
+        </svg>
+    </div>
+    <p style="font-size: 0.9em; color: #555;">Every leaf above is perfectly pure (Entropy = 0) &mdash; ID3 reaches a fully consistent tree in just two levels of recursion because it can consume an entire categorical attribute (all 3 Outlook values, or both Humidity/Wind values) in one split.</p>
+
     <hr>
     
     <h2>⚖️ Alternative Impurity Measure: Gini Impurity</h2>
-    <p>While **Entropy** and **Information Gain** are used by algorithms like ID3/C4.5, an equally popular measure of impurity is **Gini Impurity**. Like Entropy, Gini Impurity also aims for zero, with the best split being the one that minimizes the Gini Impurity of the child nodes.</p>
+    <p>While <strong>Entropy</strong> and <strong>Information Gain</strong> are used by algorithms like ID3/C4.5, an equally popular measure of impurity is <strong>Gini Impurity</strong> &mdash; the criterion used by CART, and the default in most modern libraries (e.g. scikit-learn), because it avoids computing logarithms and is therefore cheaper to evaluate at every candidate split. Like Entropy, Gini Impurity is 0 for a pure node and increases with disorder, with the best split being the one that <strong>minimizes the weighted Gini Impurity of the child nodes</strong> (equivalently, maximizes the <strong>Gini Gain</strong> &mdash; the reduction in Gini Impurity from parent to children, exactly analogous to Information Gain).</p>
+
+    <h3>3. Gini Impurity</h3>
+    <p>Gini Impurity measures the probability that a randomly chosen item from the set would be <em>incorrectly</em> classified if it were randomly labeled according to the class distribution of the set. Value ranges from 0 (pure) to a maximum of $1 - \frac{1}{C}$ for $C$ classes (maximum disorder).</p>
+
+    <div class="formula">
+        $$\text{Gini}(S) = 1 - \sum_{c=1}^{C} P_c^2$$
+    </div>
+
+    <div class="note">
+        <h3>Maximum Disorder (Gini = 0.5) 🎲</h3>
+        <p>A 50/50 split for a binary classification problem results in a Gini Impurity of $\mathbf{0.5}$ &mdash; the highest possible impurity for two classes.</p>
+        <p><strong>Concept:</strong> Just as with Entropy, this node is maximally uncertain: guessing the majority class at random is right only half the time. Note that Gini's maximum (0.5) is numerically different from Entropy's maximum (1.0) for two classes &mdash; the two measures use different scales, but they agree on <em>where</em> the impurity is highest and lowest, which is why either can drive tree construction to essentially the same splits in practice.</p>
+        <p><strong>The Math:</strong></p>
+        <div style="padding-left: 20px;">
+            $$\text{Gini}(S) = 1 - \left[ \left(\frac{5}{10}\right)^2 + \left(\frac{5}{10}\right)^2 \right]$$
+            $$\text{Gini}(S) = 1 - \left[ 0.25 + 0.25 \right] = \mathbf{0.5}$$
+        </div>
+
+        <hr style="border-color: #bee5eb;">
+
+        <h3>Perfect Purity (Gini = 0) ✅</h3>
+        <p>A node containing only one type of item (e.g., 5 Red balls) has a Gini Impurity of $\mathbf{0}$.</p>
+        <p><strong>Concept:</strong> With probability 1 of drawing a Red ball, the chance of a random guess being <em>wrong</em> is zero. This node is pure and becomes a leaf, exactly as with Entropy.</p>
+        <p><strong>The Math:</strong></p>
+        <div style="padding-left: 20px;">
+            $$\text{Gini}(S) = 1 - \left[ \left(\frac{5}{5}\right)^2 + \left(\frac{0}{5}\right)^2 \right]$$
+            $$\text{Gini}(S) = 1 - \left[ 1.0 + 0 \right] = \mathbf{0}$$
+        </div>
+        <p style="font-weight: bold; margin-top: 15px;">Same rule as Entropy: the goal is to choose splits that drive the Gini value from its maximum down toward 0.0.</p>
+    </div>
+
+    <h3>Entropy vs. Gini, side by side</h3>
+    <p>For a binary node, both measures are functions of a single probability $p$ (the fraction of the node belonging to one class), and both peak at $p = 0.5$ and vanish at $p = 0$ or $p = 1$. The curves differ only in shape and scale &mdash; Entropy rises and falls slightly more sharply near the extremes, which is why it is occasionally more sensitive to small, near-pure splits than Gini.</p>
+
+    <div style="text-align: center; margin: 20px 0;">
+        <svg viewBox="0 0 560 340" xmlns="http://www.w3.org/2000/svg" style="max-width: 560px; width: 100%; height: auto; font-family: 'Segoe UI', sans-serif;">
+            <line x1="60" y1="280" x2="520" y2="280" stroke="#333" stroke-width="1.5"/>
+            <line x1="60" y1="280" x2="60" y2="30" stroke="#333" stroke-width="1.5"/>
+            <text x="290" y="315" text-anchor="middle" font-size="14" fill="#333">p (fraction of class 1)</text>
+            <text x="20" y="155" text-anchor="middle" font-size="14" fill="#333" transform="rotate(-90 20 155)">Impurity</text>
+            <text x="60" y="298" text-anchor="middle" font-size="12" fill="#555">0.0</text>
+            <text x="290" y="298" text-anchor="middle" font-size="12" fill="#555">0.5</text>
+            <text x="520" y="298" text-anchor="middle" font-size="12" fill="#555">1.0</text>
+            <text x="48" y="284" text-anchor="end" font-size="12" fill="#555">0.0</text>
+            <text x="48" y="159" text-anchor="end" font-size="12" fill="#555">0.5</text>
+            <text x="48" y="34" text-anchor="end" font-size="12" fill="#555">1.0</text>
+            <line x1="60" y1="155" x2="520" y2="155" stroke="#ddd" stroke-width="1" stroke-dasharray="4,3"/>
+            <line x1="290" y1="30" x2="290" y2="280" stroke="#ddd" stroke-width="1" stroke-dasharray="4,3"/>
+            <path d="M 60,280 L 106,235 L 152,200 L 198,175 L 244,160 L 290,155 L 336,160 L 382,175 L 428,200 L 474,235 L 520,280"
+                  fill="none" stroke="#0056b3" stroke-width="2.5"/>
+            <path d="M 60,280 L 106,162.8 L 152,99.5 L 198,59.7 L 244,37.3 L 290,30 L 336,37.3 L 382,59.7 L 428,99.5 L 474,162.8 L 520,280"
+                  fill="none" stroke="#d9534f" stroke-width="2.5"/>
+            <rect x="360" y="45" width="14" height="4" fill="#0056b3"/>
+            <text x="380" y="52" font-size="13" fill="#333">Gini: $1 - p^2 - (1-p)^2$, max 0.5</text>
+            <rect x="360" y="65" width="14" height="4" fill="#d9534f"/>
+            <text x="380" y="72" font-size="13" fill="#333">Entropy: $-p\log_2 p - (1-p)\log_2(1-p)$, max 1.0</text>
+        </svg>
+    </div>
+
+    <h3>CART in Action: Building the Real-World Tree by Gini &mdash; Binary Only</h3>
+    <p>CART is not allowed to fan a categorical attribute out into all of its values at once &mdash; every split must be binary. For a $k$-valued categorical attribute this means searching over all ways to partition its values into two groups. For Outlook ($k=3$: Sunny, Overcast, Rain), that means testing all three possible binary groupings:</p>
+
+    <table class="data-table">
+        <thead>
+            <tr><th>Candidate Binary Split of Outlook</th><th>Weighted Gini</th><th>Gini Gain</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>{Sunny} vs. {Overcast, Rain}</td><td>0.394</td><td>0.066</td></tr>
+            <tr><td><strong>{Overcast} vs. {Sunny, Rain}</strong></td><td><strong>0.357</strong></td><td><strong>0.102 (best)</strong></td></tr>
+            <tr><td>{Rain} vs. {Sunny, Overcast}</td><td>0.457</td><td>0.002</td></tr>
+        </tbody>
+    </table>
+
+    <p>Comparing that best Outlook split against the other (already-binary) attributes &mdash; Humidity (Gain 0.092), Wind (Gain 0.031), and the best binary grouping of Temperature (Gain 0.016) &mdash; <strong>{Overcast} vs. {Sunny, Rain}</strong> still wins at the root, using the parent Gini of $1 - (\frac{9}{14})^2 - (\frac{5}{14})^2 = 0.459$. So CART agrees with ID3 that Outlook is the most informative attribute &mdash; but it can only peel off <em>one</em> value at a time. The 10 non-Overcast days (5 Yes, 5 No) then recurse: the best split there is Humidity (High vs. Normal, Gain 0.18), and each resulting branch still isn't pure, so Outlook and Wind each get reused <em>a second time</em>, deeper in the tree, to finish separating the remaining cases:</p>
+
+    <div style="text-align: center; margin: 20px 0;">
+        <svg viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" style="max-width: 760px; width: 100%; height: auto; font-family: 'Segoe UI', sans-serif;">
+            <line x1="470" y1="55" x2="80" y2="105" stroke="#888" stroke-width="1.5"/>
+            <line x1="470" y1="55" x2="515" y2="105" stroke="#888" stroke-width="1.5"/>
+            <line x1="515" y1="135" x2="320" y2="185" stroke="#888" stroke-width="1.5"/>
+            <line x1="515" y1="135" x2="710" y2="185" stroke="#888" stroke-width="1.5"/>
+            <line x1="320" y1="215" x2="220" y2="265" stroke="#888" stroke-width="1.5"/>
+            <line x1="320" y1="215" x2="420" y2="265" stroke="#888" stroke-width="1.5"/>
+            <line x1="710" y1="215" x2="620" y2="265" stroke="#888" stroke-width="1.5"/>
+            <line x1="710" y1="215" x2="800" y2="265" stroke="#888" stroke-width="1.5"/>
+            <line x1="420" y1="295" x2="360" y2="345" stroke="#888" stroke-width="1.5"/>
+            <line x1="420" y1="295" x2="480" y2="345" stroke="#888" stroke-width="1.5"/>
+            <line x1="800" y1="295" x2="740" y2="345" stroke="#888" stroke-width="1.5"/>
+            <line x1="800" y1="295" x2="860" y2="345" stroke="#888" stroke-width="1.5"/>
+
+            <text x="230" y="78" text-anchor="middle" font-size="12" fill="#444">Overcast</text>
+            <text x="540" y="78" text-anchor="middle" font-size="12" fill="#444">Sunny / Rain</text>
+            <text x="380" y="158" text-anchor="middle" font-size="12" fill="#444">High</text>
+            <text x="655" y="158" text-anchor="middle" font-size="12" fill="#444">Normal</text>
+            <text x="240" y="238" text-anchor="middle" font-size="12" fill="#444">Sunny</text>
+            <text x="405" y="238" text-anchor="middle" font-size="12" fill="#444">Rain</text>
+            <text x="635" y="238" text-anchor="middle" font-size="12" fill="#444">Weak</text>
+            <text x="785" y="238" text-anchor="middle" font-size="12" fill="#444">Strong</text>
+            <text x="365" y="318" text-anchor="middle" font-size="12" fill="#444">Weak</text>
+            <text x="480" y="318" text-anchor="middle" font-size="12" fill="#444">Strong</text>
+            <text x="745" y="318" text-anchor="middle" font-size="12" fill="#444">Sunny</text>
+            <text x="855" y="318" text-anchor="middle" font-size="12" fill="#444">Rain</text>
+
+            <rect x="395" y="10" width="150" height="50" rx="8" fill="#0056b3"/>
+            <text x="470" y="30" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Outlook = Overcast?</text>
+            <text x="470" y="48" text-anchor="middle" fill="#dbe9fb" font-size="11">[14: 9Y / 5N]</text>
+
+            <rect x="30" y="105" width="100" height="50" rx="8" fill="#28a745"/>
+            <text x="80" y="127" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Yes</text>
+            <text x="80" y="145" text-anchor="middle" fill="#e3f5e8" font-size="11">[4: 4Y / 0N]</text>
+
+            <rect x="435" y="105" width="160" height="50" rx="8" fill="#0056b3"/>
+            <text x="515" y="125" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Humidity = High?</text>
+            <text x="515" y="143" text-anchor="middle" fill="#dbe9fb" font-size="11">[10: 5Y / 5N]</text>
+
+            <rect x="240" y="185" width="160" height="50" rx="8" fill="#0056b3"/>
+            <text x="320" y="205" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Outlook = Sunny?</text>
+            <text x="320" y="223" text-anchor="middle" fill="#dbe9fb" font-size="11">[5: 1Y / 4N]</text>
+
+            <rect x="630" y="185" width="160" height="50" rx="8" fill="#0056b3"/>
+            <text x="710" y="205" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Wind = Weak?</text>
+            <text x="710" y="223" text-anchor="middle" fill="#dbe9fb" font-size="11">[5: 4Y / 1N]</text>
+
+            <rect x="170" y="265" width="100" height="50" rx="8" fill="#d9534f"/>
+            <text x="220" y="287" text-anchor="middle" fill="white" font-size="13" font-weight="bold">No</text>
+            <text x="220" y="305" text-anchor="middle" fill="#fbe0df" font-size="11">[3: 0Y / 3N]</text>
+
+            <rect x="360" y="265" width="120" height="50" rx="8" fill="#0056b3"/>
+            <text x="420" y="285" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Wind = Weak?</text>
+            <text x="420" y="303" text-anchor="middle" fill="#dbe9fb" font-size="11">[2: 1Y / 1N]</text>
+
+            <rect x="570" y="265" width="100" height="50" rx="8" fill="#28a745"/>
+            <text x="620" y="287" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Yes</text>
+            <text x="620" y="305" text-anchor="middle" fill="#e3f5e8" font-size="11">[3: 3Y / 0N]</text>
+
+            <rect x="740" y="265" width="120" height="50" rx="8" fill="#0056b3"/>
+            <text x="800" y="285" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Outlook = Sunny?</text>
+            <text x="800" y="303" text-anchor="middle" fill="#dbe9fb" font-size="11">[2: 1Y / 1N]</text>
+
+            <rect x="315" y="345" width="90" height="50" rx="8" fill="#28a745"/>
+            <text x="360" y="367" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Yes</text>
+            <text x="360" y="385" text-anchor="middle" fill="#e3f5e8" font-size="11">[Day 4]</text>
+
+            <rect x="435" y="345" width="90" height="50" rx="8" fill="#d9534f"/>
+            <text x="480" y="367" text-anchor="middle" fill="white" font-size="13" font-weight="bold">No</text>
+            <text x="480" y="385" text-anchor="middle" fill="#fbe0df" font-size="11">[Day 14]</text>
+
+            <rect x="695" y="345" width="90" height="50" rx="8" fill="#28a745"/>
+            <text x="740" y="367" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Yes</text>
+            <text x="740" y="385" text-anchor="middle" fill="#e3f5e8" font-size="11">[Day 11]</text>
+
+            <rect x="815" y="345" width="90" height="50" rx="8" fill="#d9534f"/>
+            <text x="860" y="367" text-anchor="middle" fill="white" font-size="13" font-weight="bold">No</text>
+            <text x="860" y="385" text-anchor="middle" fill="#fbe0df" font-size="11">[Day 6]</text>
+        </svg>
+    </div>
+    <p style="font-size: 0.9em; color: #555;">Both algorithms agree on the same two most informative attributes (Outlook, then Humidity/Wind) and both reach 100% pure leaves &mdash; but CART needs <strong>4 levels</strong> of binary splits (and reuses Outlook twice) to express what ID3 captured in <strong>2 levels</strong> using multi-way splits. This is the direct, concrete trade-off of "binary-only" splitting: simpler, more uniform split logic (every node asks exactly one yes/no question, which is also what makes cost-complexity pruning and CART's regression-tree extension straightforward) at the cost of deeper trees and repeated use of the same feature.</p>
 
     <hr>
 
     <h3>Multi-Feature Split Scenario (Detailed)</h3>
-    <p>To classify balls by a combination of Circumference ($>$ Val, $\le$ Val) and Color (Red, Green, etc.), the algorithm:</p>
+    <p>To classify balls by a combination of Circumference ($>$ Val, $\le$ Val) and Color (Red, Green, etc.), it is tempting to combine the features into compound target classes (e.g. "Red Large", "Green Small"). <strong>This is not what a decision tree does</strong> &mdash; the target classes stay exactly as originally labeled (Red, Green, etc.), and the tree evaluates <strong>one feature at a time</strong> against that unchanged target. The actual split-search procedure, at every node, is:</p>
     <ol>
-        <li>Defines the target as **distinct classes** (e.g., Red Large, Red Small, Green Large, etc.).</li>
-        <li>Tests every possible numerical value in the dataset as the **threshold Val** for numerical features.</li>
-        <li>Calculates the **Information Gain** for that specific $Val$ across the resulting subsets.</li>
-        <li>Chooses the **Val** or feature split that produces the **Maximum Information Gain**.</li>
+        <li>Keep the target classes fixed as given in the dataset (e.g., Red, Green) &mdash; the split search never redefines or combines them.</li>
+        <li>For <strong>each feature independently</strong> (Circumference, Color, ...): for a numerical feature, test every candidate <strong>threshold Val</strong> present in the data (splitting into $\le$ Val and $>$ Val); for a categorical feature, test each candidate grouping of its categories.</li>
+        <li>For every (feature, threshold) candidate, compute the resulting <strong>Information Gain</strong> (or Gini Gain) of that single-feature split relative to the parent node's impurity.</li>
+        <li>Across <strong>all features and all thresholds</strong> considered together, choose the single (feature, Val) pair that produces the <strong>maximum gain</strong> &mdash; this one winning split is applied at the node, producing exactly two children (for CART) or one branch per value (for ID3-style categorical splits).</li>
+        <li>Recurse independently on each child node, repeating steps 1&ndash;4, until a stopping condition is met (node is pure, or a depth/sample-count limit is reached).</li>
     </ol>
+    <p>In other words, Circumference and Color are never merged into a single combined variable during the search &mdash; they are two separate candidate features, each scored on its own, and only the best-scoring one is used at that node. A later node further down the tree may then split on the other feature.</p>
+
+    <hr>
+    <h2>🔒 Regularization: Preventing Overfitting</h2>
+    <p>Left unconstrained, both ID3 and CART will keep splitting until <strong>every leaf is perfectly pure</strong> &mdash; even our tiny 14-row tennis example, if it had one more mildly noisy row, could grow an extra branch just to isolate that single outlier. A tree that memorizes every training example this way generalizes poorly to new data: it has effectively learned the noise, not the underlying pattern. Regularization is what keeps a tree from growing to that extreme.</p>
+
+    <h3>1. Pre-Pruning (Early Stopping)</h3>
+    <p>These are the stopping conditions already visible in the recursive-build flowchart at the top of this page &mdash; they halt growth <em>during</em> construction, before a branch is ever added:</p>
+    <table class="data-table">
+        <thead>
+            <tr><th>Hyperparameter</th><th>Effect</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>max_depth</code></td><td>Caps how many levels of splits the tree may have, regardless of purity.</td></tr>
+            <tr><td><code>min_samples_split</code></td><td>A node with fewer than this many samples is not split further &mdash; it becomes a leaf even if impure.</td></tr>
+            <tr><td><code>min_samples_leaf</code></td><td>Rejects any candidate split that would leave a child with too few samples (guards against splits that isolate a single noisy point).</td></tr>
+            <tr><td><code>min_impurity_decrease</code></td><td>Rejects a split unless it reduces impurity (Gini/Entropy Gain) by at least this amount &mdash; directly analogous to the flowchart's "Best Gain &lt; 0?" check, generalized to "Gain too small to be worth it".</td></tr>
+            <tr><td><code>max_leaf_nodes</code></td><td>Caps the total number of leaves the finished tree may have.</td></tr>
+        </tbody>
+    </table>
+
+    <h3>2. Post-Pruning: Cost-Complexity Pruning (CCP)</h3>
+    <p>CART's standard approach instead grows the <strong>full, unpruned tree first</strong>, then prunes it back afterward. It does this by minimizing a cost function that explicitly trades off fit against tree size &mdash; a direct structural parallel to L1/L2 weight-penalty regularization in neural networks:</p>
+    <div class="formula">
+        $$R_\alpha(T) = R(T) + \alpha \, |T|$$
+    </div>
+    <p>Here $R(T)$ is the tree's total misclassification cost (or weighted impurity) over all its leaves, $|T|$ is the number of leaves (the tree's "complexity"), and $\alpha \ge 0$ is a tunable penalty &mdash; exactly playing the role that $\lambda$ plays in $L(\theta) + \lambda\lVert\theta\rVert^2$ for a neural network. Increasing $\alpha$ makes each additional leaf more "expensive," so the algorithm prunes back branches whose contribution to reducing $R(T)$ doesn't justify their complexity cost. In practice, $\alpha$ is chosen the same way any regularization strength is chosen: via cross-validation, picking the value that minimizes error on held-out data.</p>
+
+    <h3>3. Ensembling as Implicit Regularization</h3>
+    <p>A single deep tree is a high-variance model &mdash; a small change in the training data can produce a very different tree. Random Forests reduce this variance by training many trees on bootstrapped samples with random feature subsets at each split, then averaging their predictions; Gradient Boosted Trees instead build shallow, heavily-regularized trees sequentially, each correcting the previous ensemble's residual error. Both are beyond the scope of this page but are the practical reason production systems rarely deploy a single, unpruned tree.</p>
+
+    <hr>
+    <h2>🔗 Mapping Decision Trees to the Model &rarr; Cost Function &rarr; Optimization Framework</h2>
+    <p>Every supervised learning algorithm can be described as three pieces: a <strong>Model</strong> that produces a prediction, a <strong>Cost Function</strong> that scores how wrong that prediction is, and an <strong>Optimization</strong> procedure that adjusts the model to reduce that cost. For a neural network these map to Forward Pass (FP), Cross-Entropy Loss, and Backpropagation (BP) + gradient descent. Here is how a Decision Tree maps onto the same three pieces:</p>
+
+    <table class="data-table">
+        <thead>
+            <tr><th>Stage</th><th>Neural Network</th><th>Decision Tree</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Model</strong></td>
+                <td>Forward Pass: $\hat{y} = f(x; \theta)$, a fixed composition of linear and nonlinear layers with continuous parameters $\theta$.</td>
+                <td>The tree itself: a nested sequence of if/then feature tests that partitions the input space into axis-aligned regions, each leaf outputting a constant (majority class or class distribution).</td>
+            </tr>
+            <tr>
+                <td><strong>Cost Function</strong></td>
+                <td>Cross-Entropy Loss: one global, differentiable scalar computed over the whole dataset (or batch), $L(\hat y, y)$.</td>
+                <td>Entropy/Gini Impurity: a local scalar recomputed at each candidate split, quantifying disorder in that node only &mdash; not one global loss over the whole tree.</td>
+            </tr>
+            <tr>
+                <td><strong>Optimization</strong></td>
+                <td>Backpropagation computes exact gradients $\partial L/\partial\theta$ via the chain rule; an optimizer (SGD/Adam) iteratively descends the loss surface over many epochs, refining the <em>same</em> parameters each time.</td>
+                <td>Greedy recursive splitting: at each node, exhaustively score every (feature, threshold) candidate and pick the single best local impurity reduction, then recurse. Each decision is made once and never revisited.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Where the Mapping Breaks Down</h3>
+    <p>The high-level three-stage shape holds, but the mechanics underneath are genuinely different in ways worth naming explicitly rather than glossing over:</p>
+    <ol>
+        <li><strong>No global objective.</strong> A neural network minimizes one loss function jointly over every parameter. A tree's split search is myopic: it optimizes each node's impurity in isolation, with no lookahead into how that choice constrains splits further down. Two different attributes with near-identical root Information Gain can lead to very differently shaped downstream trees, and the greedy search has no mechanism to notice or correct for this &mdash; it can only make the locally best choice at each step.</li>
+        <li><strong>No gradients &mdash; the parameters are discrete.</strong> A network's weights are continuous and differentiable, which is precisely what makes backpropagation possible. A tree's "parameters" (which feature, which threshold, at which node) are discrete, combinatorial choices with no defined gradient. This is not an implementation detail: finding the globally optimal decision tree is known to be NP-hard (Hyafil &amp; Rivest, 1976), which is exactly <em>why</em> every practical algorithm (ID3, C4.5, CART) falls back on a greedy heuristic instead of a global optimizer.</li>
+        <li><strong>No backward pass.</strong> Backpropagation explicitly propagates an error signal <em>backward</em> through the composition of layers, updating every earlier parameter based on how it contributed to the final loss. A tree has no analogous step: once a split is chosen, nothing about the leaves' eventual accuracy ever flows back up to revise it. Cost-complexity pruning is the closest thing to a correction, but it happens as a separate, one-time post-processing pass over the finished tree &mdash; not as a continuous feedback loop.</li>
+        <li><strong>No iterative refinement.</strong> Network training repeats forward/backward passes over many epochs, gradually improving the same set of parameters. A single tree makes each split decision exactly once, in one pass, top-down. There is no equivalent of "training longer" to improve the same tree structure.</li>
+        <li><strong>Where it genuinely does match:</strong> impurity truly plays the same conceptual <em>role</em> a loss function does &mdash; a scalar quantifying "how bad is this arrangement," which the algorithm actively works to reduce. It is simply applied locally and greedily rather than globally and via gradients.</li>
+    </ol>
+    <p style="font-size: 0.9em; color: #555;">Interestingly, this exact gap is what motivates <strong>Gradient Boosted Trees</strong> (XGBoost, LightGBM): they reintroduce a single global, differentiable loss and perform gradient descent <em>in function space</em>, fitting each new shallow tree to the negative gradient (residual) of that global loss &mdash; explicitly correcting the greedy shortsightedness of a single CART tree. That connection is a good next topic once the LLM Engine work settles.</p>
+
+    <hr>
+    <h2>📜 Pseudocode: ID3 vs. CART</h2>
+    <p>Both algorithms share the same recursive skeleton &mdash; score every candidate split, take the best one, recurse on the children &mdash; but differ in exactly what gets scored and how a node is allowed to branch.</p>
+
+    <h3>ID3</h3>
+    <div style="background:#f8f9fa; border-left:4px solid #0056b3; padding:15px 20px; border-radius:4px; overflow-x:auto;">
+    <pre class="tex2jax_ignore" style="margin:0; font-family:'Courier New', monospace; font-size:0.9em; line-height:1.5;"><code>function ID3(S, Attributes, Target):
+    if every example in S has the same Target value v:
+        return Leaf(v)                              # pure node
+    if Attributes is empty:
+        return Leaf(MajorityValue(S, Target))        # ran out of features
+
+    A &larr; argmax over a in Attributes of InformationGain(S, a)
+    root &larr; DecisionNode(A)                       # one branch per value of A
+
+    for each value v of A:
+        S_v &larr; { examples in S where A = v }
+        if S_v is empty:
+            root.addChild(v, Leaf(MajorityValue(S, Target)))
+        else:
+            root.addChild(v, ID3(S_v, Attributes - {A}, Target))
+
+    return root</code></pre>
+    </div>
+
+    <h3>CART</h3>
+    <div style="background:#f8f9fa; border-left:4px solid #0056b3; padding:15px 20px; border-radius:4px; overflow-x:auto;">
+    <pre class="tex2jax_ignore" style="margin:0; font-family:'Courier New', monospace; font-size:0.9em; line-height:1.5;"><code>function CART(S, depth):
+    if StoppingConditionMet(S, depth):     # pure, max_depth, min_samples_split, ...
+        return Leaf(MajorityClass(S))
+
+    bestGain &larr; -&infin;
+    for each feature F:
+        for each candidate split v of F:    # threshold (numeric) or category subset
+            (S_left, S_right) &larr; partition(S, F, v)
+            gain &larr; Gini(S) - ( |S_left|/|S| * Gini(S_left)
+                                + |S_right|/|S| * Gini(S_right) )
+            if gain > bestGain:
+                bestGain, bestFeature, bestSplit &larr; gain, F, v
+
+    if bestGain &le; 0:
+        return Leaf(MajorityClass(S))        # no useful split found
+
+    (S_left, S_right) &larr; partition(S, bestFeature, bestSplit)
+    node &larr; DecisionNode(bestFeature, bestSplit)   # exactly 2 children, always
+    node.left  &larr; CART(S_left,  depth + 1)
+    node.right &larr; CART(S_right, depth + 1)
+    return node</code></pre>
+    </div>
+    <p style="font-size: 0.9em; color: #555;">This is the same recursion drawn in the <code>fit</code> / <code>_build_tree</code> flowchart at the top of this page &mdash; <code>StoppingConditionMet</code> is the "Stopping Conditions Met?" diamond, and the <code>bestGain &le; 0</code> check is the "Best Gain &lt; 0?" diamond.</p>
+
+    <hr>
+    <h2>🏭 Industry Example: Predictive Maintenance in Manufacturing</h2>
+    <p>The tennis dataset is useful for learning the mechanics, but the reason Decision Trees are genuinely popular in industry is different: they're <strong>interpretable</strong> (a maintenance engineer can read the tree as a checklist, not a black box), they need <strong>no feature scaling</strong>, they handle mixed numeric/categorical sensor data natively, and once trained, <strong>inference is just a handful of comparisons</strong> &mdash; cheap enough to run directly on an edge device sitting next to the machine, unlike a large neural network. This is exactly why Decision Trees (and their ensemble descendants, Random Forests and Gradient Boosted Trees) remain a default choice for tabular business and manufacturing data.</p>
+
+    <p>Consider a factory floor with vibration and temperature sensors on each machine, logging whether it fails within the next 24 hours:</p>
+
+    <table class="data-table">
+        <thead>
+            <tr><th>Machine Reading</th><th>Vibration Level</th><th>Hours Since Maintenance</th><th>Temperature</th><th>Error Code Logged?</th><th>Failure (next 24h)?</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>M1</td><td>High</td><td>&gt;500 hrs</td><td>High</td><td>No</td><td>Yes</td></tr>
+            <tr><td>M2</td><td>High</td><td>&gt;500 hrs</td><td>High</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td>M3</td><td>Normal</td><td>&gt;500 hrs</td><td>High</td><td>No</td><td>No</td></tr>
+            <tr><td>M4</td><td>Low</td><td>200&ndash;500 hrs</td><td>High</td><td>No</td><td>No</td></tr>
+            <tr><td>M5</td><td>Low</td><td>&lt;200 hrs</td><td>Normal</td><td>No</td><td>No</td></tr>
+            <tr><td>M6</td><td>Low</td><td>&lt;200 hrs</td><td>Normal</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td>M7</td><td>Normal</td><td>&lt;200 hrs</td><td>Normal</td><td>Yes</td><td>No</td></tr>
+            <tr><td>M8</td><td>High</td><td>200&ndash;500 hrs</td><td>High</td><td>No</td><td>Yes</td></tr>
+            <tr><td>M9</td><td>High</td><td>&lt;200 hrs</td><td>Normal</td><td>No</td><td>No</td></tr>
+            <tr><td>M10</td><td>Low</td><td>200&ndash;500 hrs</td><td>Normal</td><td>No</td><td>No</td></tr>
+            <tr><td>M11</td><td>High</td><td>200&ndash;500 hrs</td><td>Normal</td><td>Yes</td><td>No</td></tr>
+            <tr><td>M12</td><td>Normal</td><td>200&ndash;500 hrs</td><td>High</td><td>Yes</td><td>No</td></tr>
+            <tr><td>M13</td><td>Normal</td><td>&gt;500 hrs</td><td>Normal</td><td>No</td><td>No</td></tr>
+            <tr><td>M14</td><td>Low</td><td>200&ndash;500 hrs</td><td>High</td><td>Yes</td><td>Yes</td></tr>
+        </tbody>
+    </table>
+
+    <p>This table has the exact same underlying structure as the tennis dataset (Vibration Level in place of Outlook, Temperature in place of Humidity, Error Code in place of Wind, Hours Since Maintenance in place of Temperature) &mdash; so the same Gini-gain computation from the CART section above applies directly. Since CART is "the most commonly used framework today" (per the introduction), that's the algorithm shown here:</p>
+
+    <table class="data-table">
+        <thead>
+            <tr><th>Candidate Root Split (best binary grouping per feature)</th><th>Gini Gain</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>{Normal Vibration} vs. {High, Low Vibration}</strong></td><td><strong>0.102 (best)</strong></td></tr>
+            <tr><td>{Temperature = High} vs. {Normal}</td><td>0.092</td></tr>
+            <tr><td>{Error Code = Yes} vs. {No}</td><td>0.031</td></tr>
+            <tr><td>Best grouping of Hours Since Maintenance</td><td>0.016</td></tr>
+        </tbody>
+    </table>
+
+    <p>Vibration Level wins the root split, and because CART is binary-only, it isolates the single safest group (Normal) first, then keeps splitting the remaining machines by Temperature, Error Code, and (again) Vibration Level until every group is pure:</p>
+
+    <div style="text-align: center; margin: 20px 0;">
+        <svg viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" style="max-width: 760px; width: 100%; height: auto; font-family: 'Segoe UI', sans-serif;">
+            <line x1="470" y1="55" x2="80" y2="105" stroke="#888" stroke-width="1.5"/>
+            <line x1="470" y1="55" x2="515" y2="105" stroke="#888" stroke-width="1.5"/>
+            <line x1="515" y1="135" x2="320" y2="185" stroke="#888" stroke-width="1.5"/>
+            <line x1="515" y1="135" x2="710" y2="185" stroke="#888" stroke-width="1.5"/>
+            <line x1="320" y1="215" x2="220" y2="265" stroke="#888" stroke-width="1.5"/>
+            <line x1="320" y1="215" x2="420" y2="265" stroke="#888" stroke-width="1.5"/>
+            <line x1="710" y1="215" x2="620" y2="265" stroke="#888" stroke-width="1.5"/>
+            <line x1="710" y1="215" x2="800" y2="265" stroke="#888" stroke-width="1.5"/>
+            <line x1="420" y1="295" x2="360" y2="345" stroke="#888" stroke-width="1.5"/>
+            <line x1="420" y1="295" x2="480" y2="345" stroke="#888" stroke-width="1.5"/>
+            <line x1="800" y1="295" x2="740" y2="345" stroke="#888" stroke-width="1.5"/>
+            <line x1="800" y1="295" x2="860" y2="345" stroke="#888" stroke-width="1.5"/>
+
+            <text x="230" y="78" text-anchor="middle" font-size="12" fill="#444">Normal</text>
+            <text x="540" y="78" text-anchor="middle" font-size="12" fill="#444">High / Low</text>
+            <text x="380" y="158" text-anchor="middle" font-size="12" fill="#444">High</text>
+            <text x="655" y="158" text-anchor="middle" font-size="12" fill="#444">Normal</text>
+            <text x="240" y="238" text-anchor="middle" font-size="12" fill="#444">High</text>
+            <text x="405" y="238" text-anchor="middle" font-size="12" fill="#444">Low</text>
+            <text x="635" y="238" text-anchor="middle" font-size="12" fill="#444">No</text>
+            <text x="785" y="238" text-anchor="middle" font-size="12" fill="#444">Yes</text>
+            <text x="365" y="318" text-anchor="middle" font-size="12" fill="#444">No</text>
+            <text x="480" y="318" text-anchor="middle" font-size="12" fill="#444">Yes</text>
+            <text x="745" y="318" text-anchor="middle" font-size="12" fill="#444">High</text>
+            <text x="855" y="318" text-anchor="middle" font-size="12" fill="#444">Low</text>
+
+            <rect x="380" y="10" width="180" height="50" rx="8" fill="#0056b3"/>
+            <text x="470" y="30" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Vibration = Normal?</text>
+            <text x="470" y="48" text-anchor="middle" fill="#dbe9fb" font-size="11">[14: 9 OK / 5 Fail]</text>
+
+            <rect x="20" y="105" width="120" height="50" rx="8" fill="#28a745"/>
+            <text x="80" y="127" text-anchor="middle" fill="white" font-size="13" font-weight="bold">No Failure</text>
+            <text x="80" y="145" text-anchor="middle" fill="#e3f5e8" font-size="11">[4: 4 OK / 0]</text>
+
+            <rect x="425" y="105" width="180" height="50" rx="8" fill="#0056b3"/>
+            <text x="515" y="125" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Temperature = High?</text>
+            <text x="515" y="143" text-anchor="middle" fill="#dbe9fb" font-size="11">[10: 5 OK / 5 Fail]</text>
+
+            <rect x="230" y="185" width="180" height="50" rx="8" fill="#0056b3"/>
+            <text x="320" y="205" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Vibration = High?</text>
+            <text x="320" y="223" text-anchor="middle" fill="#dbe9fb" font-size="11">[5: 1 OK / 4 Fail]</text>
+
+            <rect x="620" y="185" width="180" height="50" rx="8" fill="#0056b3"/>
+            <text x="710" y="205" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Error Code = No?</text>
+            <text x="710" y="223" text-anchor="middle" fill="#dbe9fb" font-size="11">[5: 4 OK / 1 Fail]</text>
+
+            <rect x="165" y="265" width="110" height="50" rx="8" fill="#d9534f"/>
+            <text x="220" y="287" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Failure</text>
+            <text x="220" y="305" text-anchor="middle" fill="#fbe0df" font-size="11">[3: 0 OK / 3]</text>
+
+            <rect x="355" y="265" width="130" height="50" rx="8" fill="#0056b3"/>
+            <text x="420" y="285" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Error Code = No?</text>
+            <text x="420" y="303" text-anchor="middle" fill="#dbe9fb" font-size="11">[2: 1 OK / 1 Fail]</text>
+
+            <rect x="565" y="265" width="110" height="50" rx="8" fill="#28a745"/>
+            <text x="620" y="287" text-anchor="middle" fill="white" font-size="13" font-weight="bold">No Failure</text>
+            <text x="620" y="305" text-anchor="middle" fill="#e3f5e8" font-size="11">[3: 3 OK / 0]</text>
+
+            <rect x="735" y="265" width="130" height="50" rx="8" fill="#0056b3"/>
+            <text x="800" y="285" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Vibration = High?</text>
+            <text x="800" y="303" text-anchor="middle" fill="#dbe9fb" font-size="11">[2: 1 OK / 1 Fail]</text>
+
+            <rect x="310" y="345" width="100" height="50" rx="8" fill="#28a745"/>
+            <text x="360" y="367" text-anchor="middle" fill="white" font-size="13" font-weight="bold">No Failure</text>
+            <text x="360" y="385" text-anchor="middle" fill="#e3f5e8" font-size="11">[M4]</text>
+
+            <rect x="430" y="345" width="100" height="50" rx="8" fill="#d9534f"/>
+            <text x="480" y="367" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Failure</text>
+            <text x="480" y="385" text-anchor="middle" fill="#fbe0df" font-size="11">[M14]</text>
+
+            <rect x="690" y="345" width="100" height="50" rx="8" fill="#28a745"/>
+            <text x="740" y="367" text-anchor="middle" fill="white" font-size="13" font-weight="bold">No Failure</text>
+            <text x="740" y="385" text-anchor="middle" fill="#e3f5e8" font-size="11">[M11]</text>
+
+            <rect x="810" y="345" width="100" height="50" rx="8" fill="#d9534f"/>
+            <text x="860" y="367" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Failure</text>
+            <text x="860" y="385" text-anchor="middle" fill="#fbe0df" font-size="11">[M6]</text>
+        </svg>
+    </div>
+
+    <p><strong>Reading the tree as a business rule:</strong> "If vibration is Normal, don't worry. Otherwise, if the machine is also running hot, escalate immediately &mdash; unless it's still low-vibration with a clean error log, in which case check again after the next reading." That sentence is literally what the trained tree encodes, and it's exactly the kind of rule a reliability engineer can audit, question, and trust before wiring it into an automated shutdown or maintenance-ticket system &mdash; a very different trust story than handing the same decision to an uninterpretable model.</p>
 </div>
 
 </body>
