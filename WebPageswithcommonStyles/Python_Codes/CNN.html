@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convolutional Neural Networks - Training Algorithm</title>
+    <link rel="stylesheet" href="style.css">
+     <script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+      ignoreHtmlClass: 'tex2jax_ignore',
+      processHtmlClass: 'tex2jax_process'
+    },
+    startup: {
+      pageReady: () => {
+        return MathJax.startup.defaultPageReady().then(() => {
+          document.body.style.visibility = 'visible';
+        });
+      }
+    }
+  };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+    <h1>Convolutional Neural Networks</h1>
+    <p>The MLP is the foundation we covered in the previous section. A Convolutional Neural Network (CNN) is yet another kind of Neural Network, where layer processing is a mathematical operation called <strong>convolution</strong>. The basic idea is to divide the input into overlapping 2D image patches and to compare each patch with a set of small weight matrices, or filters, which represent parts of an object; this is shown below. We can think of this as a form of <strong>template matching</strong>.</p>
+    
+    <h2>Why MLPs Struggle with Visual Data</h2>
+    <p>The primary failure of the Multi-Layer Perceptron (MLP) in image processing is its lack of Spatial Topology. When an image is flattened into a 1D vector to fit an MLP's input layer, the physical proximity between pixels is destroyed; a pixel's neighbor to the right or bottom is suddenly shifted thousands of indices away. This forces the MLP to learn the relationship between every single pixel globally, leading to a Parameter Explosion. For instance, a high-definition image would require billions of weights for just one hidden layer, exceeding the memory capacity of most hardware. Furthermore, MLPs lack Translation Invariance; if the network learns to recognize a feature in the top-left, it will not recognize that same feature in the bottom-right because the weights are tied to specific, static pixel coordinates. Finally, as you noted, the Fixed-Input Constraint is a major hurdle: MLPs require a hard-coded number of input neurons, making them incapable of processing variable image sizes without destructive resizing.</p>
+
+    <div style="background: #fdfdfd; border: 1px solid #ddd; padding: 20px; border-radius: 10px; font-family: sans-serif;">
+        <h3 style="text-align: center; color: #d32f2f;">Visualizing the "Flattening" Failure</h3>
+        
+        <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <div style="text-align: center;">
+                <strong>2D Image (Spatial)</strong>
+                <div style="display: grid; grid-template-columns: repeat(3, 40px); gap: 2px; margin-top: 10px;">
+                    <div style="width: 40px; height: 40px; background: #ffccbc; border: 1px solid #e64a19; display: flex; align-items: center; justify-content: center;">1</div>
+                    <div style="width: 40px; height: 40px; background: #ffccbc; border: 1px solid #e64a19; display: flex; align-items: center; justify-content: center;">2</div>
+                    <div style="width: 40px; height: 40px; background: #eee; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center;">3</div>
+                    <div style="width: 40px; height: 40px; background: #ffccbc; border: 1px solid #e64a19; display: flex; align-items: center; justify-content: center;">4</div>
+                    <div style="width: 40px; height: 40px; background: #eee; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center;">5</div>
+                    <div style="width: 40px; height: 40px; background: #eee; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center;">6</div>
+                </div>
+                <p style="font-size: 0.8rem; color: #666;">Pixels 1, 2, and 4 are neighbors.</p>
+            </div>
+
+            <div style="font-size: 2rem;">&rarr;</div>
+
+            <div style="text-align: center;">
+                <strong>1D Flattened (Vector)</strong>
+                <div style="display: flex; gap: 2px; margin-top: 25px;">
+                    <div style="width: 30px; height: 40px; background: #ffccbc; border: 1px solid #e64a19; display: flex; align-items: center; justify-content: center;">1</div>
+                    <div style="width: 30px; height: 40px; background: #ffccbc; border: 1px solid #e64a19; display: flex; align-items: center; justify-content: center;">2</div>
+                    <div style="width: 30px; height: 40px; background: #eee; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center;">3</div>
+                    <div style="width: 30px; height: 40px; background: #ffccbc; border: 1px solid #e64a19; display: flex; align-items: center; justify-content: center;">4</div>
+                    <div style="width: 30px; height: 40px; background: #eee; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center;">5</div>
+                    <div style="width: 30px; height: 40px; background: #eee; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center;">6</div>
+                </div>
+                <p style="font-size: 0.8rem; color: #d32f2f; font-weight: bold; margin-top: 15px;">Topology Broken: Pixel 4 is no longer "near" Pixel 1.</p>
+            </div>
+        </div>
+    </div>
+
+    <div style="background: #eef6ff; border-left: 5px solid #0056b3; padding: 20px; border-radius: 8px; margin: 30px 0;">
+        <h3 style="margin-top: 0; color: #0056b3;">A Different Kind of Learning Problem: End-to-End vs. Two-Stage</h3>
+        <p>Every classifier covered earlier in this series &mdash; Decision Trees/CART, Naive Bayes, SVM, K-NN, Logistic Regression &mdash; was trained on <strong>features you (or a fixed transform) had already decided on</strong>. That pipeline has two disconnected stages: first, a human designs or hand-extracts the features; then, and only then, a separate learning algorithm fits parameters &mdash; tree splits, class-conditional probabilities, support-vector weights, distance metrics &mdash; on top of those fixed, already-decided features. For images specifically, this hand-engineering stage has well-known names: <strong>SIFT</strong> (keypoint gradient-orientation descriptors, built to survive scale/rotation changes), <strong>HOG</strong> (gradient-orientation histograms over image cells, classically paired with an SVM for pedestrian detection), and <strong>Haar-like features</strong> (the rectangular intensity-difference features behind the original Viola-Jones face detector) &mdash; all designed by researchers, with no learned component. The feature-extraction stage in every one of these is not learned at all; it is designed once, by a person, before training even starts.</p>
+        <p>A CNN collapses this into a <strong>single learned stage</strong>. The convolutional filters you're about to see <em>are</em> the feature extractor &mdash; but unlike a hand-designed edge detector, their weights are trainable parameters. They start out as small random numbers (He initialization, Section 1 below), and the exact same backpropagation/Adam loop that updates the final classification layer also updates every filter weight in every convolutional layer. So by the time training finishes, "features" and "classifier parameters" are no longer two separately-produced artifacts &mdash; they're all just entries in one parameter vector, optimized jointly against one loss. Nobody decided in advance that the network should look for vertical edges, ovals, or ear-shaped curves; the network discovered that those particular patterns were useful, purely because they helped reduce the classification error.</p>
+        <p style="margin-bottom: 0;">Keep this in mind as you read the sections below: whenever you see a filter's weights, a feature map, or a "detector," ask whether it was designed or learned. In a CNN, past the raw pixels, the answer is always the latter.</p>
+    </div>
+
+    <h2>Convolutional Neural Networks Algorithm</h2>
+    <p>To overcome the parameter explosion and loss of topology in MLPs, we shift our focus from global connectivity to local feature detection. This is achieved through <strong>Weight Sharing</strong>.</p>
+
+    <p>When dealing with image data, we can apply the same weight matrix to each local patch of the image in order to reduce the number of parameters. If we "slide" this weight matrix over the image and add up the results, we get a technique known as <strong>convolution</strong>; in this case the weight matrix is often called a <strong>"kernel"</strong> or <strong>"filter."</strong></p>
+
+    <p>More precisely, let $X \in \mathbb{R}^{H \times W}$ be the input image, and $W \in \mathbb{R}^{h \times w}$ be the kernel. The output is denoted by $Z = X \circledast W$, where (ignoring boundary conditions) we have the following mathematical definition:</p>
+
+    <div style="text-align: center; margin: 20px 0; font-size: 1.2rem;">
+        $$Z_{i,j} = \sum_{u=0}^{h-1} \sum_{v=0}^{w-1} X_{i+u, j+v} \cdot W_{u,v}$$
+    </div>
+
+    <p>Essentially, we compare a local patch of $X$, of size $h \times w$ and centered at $(i,j)$, to the filter $W$. The output $Z_{i,j}$ measures the <strong>similarity</strong> between the input patch and the filter's learned pattern.</p>
+
+    <p>While the convolution formula above defines the mathematical "how," the <strong>motivation</strong> lies in capturing <strong>Spatial Local Correlations</strong>. In an MLP, every neuron is connected to every pixel, which is computationally expensive and ignores the fact that pixels are only meaningful in relation to their immediate neighbors. By using local kernels, we ensure the network focuses on these relationships first, drastically reducing parameters while granting the model <strong>Translation Invariance</strong>-the ability to recognize a pattern regardless of where it appears in the frame.</p>
+
+    <p>Building on this mathematical foundation, a <strong>Convolutional Neural Network (CNN)</strong> is a deep learning architecture designed to automatically and adaptively learn spatial hierarchies of features. It sequences multiple layers of convolution and specialized operations to transform raw pixel data into sophisticated, high-level semantic representations. The next section zooms into the single most important of those operations - the multi-channel convolution that a filter performs at every layer - before Figure 2 pulls back out to show how many such layers, plus pooling, are chained end-to-end to turn raw pixels into a probability.</p>
+
+    <hr>
+
+    <h3>Convolution layers</h3>
+    <p>CNN involves several convolutions before the raw pixels becomes a probability, as the full pipeline in <strong>Figure 2</strong> below shows. Convolution in these layers are multi-filter and multi-channel operations.</p>
+
+    <h4>The Multi-Filter, Multi-Channel Operation</h4>
+    <p>A standard CNN is composed of <strong>many layers</strong> stacked sequentially. Within each layer, we don't apply just one filter; we apply a <strong>bank of several filters</strong> (e.g., 32, 64, or 128) simultaneously.</p>
+
+    <h4>Several filters?</h4>
+    <p>Each filter acts as a specialized feature detector. Because a single filter can only learn to recognize one specific pattern-such as a vertical edge or a specific color gradient-a single-filter layer would be "blind" to all other visual information. By using a large bank of filters, the network can:</p>
+    <ul>
+        <li><strong>Capture Diversity:</strong> One filter might detect horizontal lines, another diagonal curves, and a third specific color blobs.</li>
+        <li><strong>Build a Rich Vocabulary:</strong> These filters collectively create a high-dimensional "vocabulary" of features that the next layer can use to build even more complex shapes.</li>
+    </ul>
+
+    <h4>Processing RGB Channels</h4>
+    <p>When processing a color image, the kernels are three-dimensional. For an input with <strong>RGB channels</strong>, each filter also has three channels. The convolution is performed as follows:</p>
+    <ul>
+        <li>The filter's "Red" weights convolve with the Red channel.</li>
+        <li>The filter's "Green" weights convolve with the Green channel.</li>
+        <li>The filter's "Blue" weights convolve with the Blue channel.</li>
+    </ul>
+	
+	
+    <div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
+        <figure style="display: inline-block; max-width: 100%; margin: 0;">
+            <img src="CNNVolumeOperations.svg" alt="3D Volume Convolution" style="width: 100%; max-width: 900px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
+                <strong>Figure 1: 3D Volume Convolution Across Input Channels.</strong> Follow the diagram left to right:
+                <ol style="margin-top: 8px; padding-left: 20px;">
+                    <li><strong>Input volume (far left).</strong> A 32&times;32&times;3 RGB image, drawn as three stacked 2D grids &mdash; Blue (back), Green (middle), Red (front, with sample pixel values shown). The red-outlined cell marks the "Start position": the first place a filter gets placed.</li>
+                    <li><strong>The filters.</strong> Two separate 3&times;3&times;3 filters are applied in this example. <em>Filter 1</em> (teal) is a <strong>vertical edge detector</strong> with weights <code>[-1,0,1; -2,0,2; -1,0,1]</code> repeated across all three channel slices. <em>Filter 2</em> (orange) is a <strong>horizontal edge detector</strong> with weights <code>[1,2,1; 0,0,0; -1,-2,-1]</code>. Each filter spans the <em>full depth</em> of the input (3 channels), not just its 3&times;3 spatial footprint. <strong>These specific numbers are shown only to make the arithmetic concrete</strong> &mdash; they happen to match classic hand-engineered Sobel edge kernels from traditional computer vision. In an actual CNN, no one sets these values: every filter starts as small random noise (He initialization) and these exact weights are <em>discovered</em> by Adam over the course of training, the same way the network's final classification weights are.</li>
+                    <li><strong>The "*" (convolve) and "=" (sum) operators.</strong> At the highlighted position, the filter's Red slice is multiplied element-by-element with the Red channel's 3&times;3 patch and summed; the same happens independently for Green and Blue. The callout box spells out the result: <code>Output(1,1) = sum(Red&middot;Red_ker + Grn&middot;Grn_ker + Blu&middot;Blu_ker) = scalar_val</code> &mdash; three channels' worth of numbers collapse into the single highlighted "1" cell shown at position (1,1) of the output map.</li>
+                    <li><strong>Feature maps (yellow and orange grids).</strong> Repeating step 3 at every position in the image produces one complete 30&times;30 feature map per filter &mdash; 30, not 32, because a 3&times;3 filter with stride 1 and no padding only fits at 30&times;30 distinct positions inside a 32&times;32 image. Filter 1 produces the yellow map, Filter 2 the orange map.</li>
+                    <li><strong>Stacked output (far right).</strong> The "convolve" arrow shows the two independent 30&times;30 feature maps being stacked along the depth axis into one output volume, <strong>30&times;30&times;2</strong>. That final "2" is the <em>number of filters used</em>, not the number of input channels &mdash; a different "3" and "2" are doing different jobs in this diagram, which is the detail most worth not glossing over.</li>
+                </ol>
+            </figcaption>
+            <p style="text-align: center; margin-top: 10px;"><a href="CNNVolumeOperations.svg" target="_blank" rel="noopener" style="font-size: 0.85rem; color: #0056b3;">Open full-size SVG &#8599;</a></p>
+        </figure>
+    </div>
+
+    <div class="math-display" style="text-align: center; margin: 20px 0;">
+        \[
+        Output_{i,j} = \sum_{h=0}^{K_H-1} \left[ \sum_{w=0}^{K_W-1} \left( \sum_{c=0}^{C-1} \text{Input}_{i+h, j+w, c} \cdot \text{Kernel}_{h, w, c} \right) \right] + b
+        \]
+    </div>
+
+    <p style="font-size: 0.9rem; color: #555; margin-top: 15px;">
+        <strong>Where:</strong><br>
+        \(C\) = Number of Input Channels (e.g., 3 for RGB)<br>
+        \(K_H, K_W\) = Kernel Height and Width (e.g., 3 &times; 3)<br>
+        \(b\) = Learned Bias term
+    </p>
+
+    <p>Crucially, the <strong>outputs of these three channels are added together</strong> as shown in Figure 1 (along with a bias term) to produce a single, unified 2D feature map for that specific filter. If a layer has 64 filters, the output will be a stack of 64 feature maps, forming the input for the next layer. Figure 1 shows this happening for a single convolutional layer; Figure 2 below now zooms back out to show how many such layers, interleaved with pooling, are chained together to turn that raw image into a final probability.</p>
+
+    <h4>Counting the Parameters: Closing the Loop with the MLP's "Parameter Explosion"</h4>
+    <p>Weight Sharing isn't just a qualitative idea &mdash; the parameter count makes it concrete, and lets us settle the "Parameter Explosion" claim from the very first section of this page with actual numbers. For a convolutional layer, every filter has one weight per cell of its footprint, repeated across all input channels, plus one bias per filter:</p>
+    <div style="background: #f9fafb; padding: 15px; border-radius: 6px; text-align: center; margin: 15px 0;">
+        $$\text{Params}_{\text{conv}} = (F_h \times F_w \times C_{in} + 1) \times C_{out}$$
+    </div>
+    <p>Take the 3&times;3&times;3 filters from Figure 1, with $C_{out}=64$ filters in the layer: $\text{Params} = (3 \times 3 \times 3 + 1) \times 64 = 28 \times 64 = \mathbf{1{,}792}$. That's the <em>entire</em> parameter cost of the layer &mdash; the same 1,792 numbers are reused at all 900 output positions (30&times;30) of the feature map, which is exactly the Weight Sharing property.</p>
+    <p>Now compare this to what an MLP would need to produce a same-sized output from the same 32&times;32&times;3 input. Flattening the input gives 3,072 units; fully connecting those to the 30&times;30&times;64 = 57,600 output values (matching the conv layer's output volume) requires $3{,}072 \times 57{,}600 \approx \mathbf{177{,}000{,}000}$ weights, plus 57,600 biases &mdash; roughly <strong>five orders of magnitude more parameters</strong> than the convolutional layer, for the same input and comparable output size. This is the "Parameter Explosion" from the "Why MLPs Struggle with Visual Data" section made numeric: weight sharing is precisely what closes that gap.</p>
+
+    <div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
+        <figure style="display: inline-block; max-width: 100%; margin: 0;">
+            <img src="CNNBlocks.svg" alt="CNN Architecture Pipeline" style="width: 100%; max-width: 1200px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 1200px; margin-left: auto; margin-right: auto;">
+                <strong>Figure 2: The Full CNN Pipeline (Conv/Pool Stack).</strong> Where Figure 1 zoomed into a single filter's multi-channel convolution, this figure pulls back out to the whole network: the input image passes through repeated conv &rarr; pool blocks, each one shrinking spatial size while building richer feature maps, before the result is flattened and passed to fully-connected layers that output a probability.
+            </figcaption>
+        </figure>
+    </div>
+
+    <div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
+        <figure style="display: inline-block; max-width: 100%; margin: 0;">
+            <img src="CNNBlocks_2.svg" alt="CNN Architecture Pipeline, alternate view" style="width: 100%; max-width: 1200px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: center; max-width: 1200px; margin-left: auto; margin-right: auto;">
+                <strong>Figure 2 (continued): Another View of the Same Conv/Pool Stack.</strong>
+            </figcaption>
+        </figure>
+    </div>
+	<h4>Other Convolution Operations: Padding and Striding</h4>
+
+<p>
+    Convolving a 10 x 10 image with a 3 x 3 filter results in an 8 x 8 output. 
+    In general, convolving an <strong>$h \times w$</strong> filter over an image of size 
+    <strong>$m \times n$</strong> produces an output of size:
+</p>
+
+<div class="formula-container" style="text-align: center; padding: 10px; background: #f9fafb; margin: 10px 0;">
+    $$(m - h + 1) \times (n - w + 1)$$
+</div>
+
+<p>
+    This is called <strong>valid convolution</strong> since we only apply the filter to "valid" 
+    parts of the input (we don't let it "slide off the ends"). However, this causes the 
+    spatial dimensions to shrink with every layer.
+</p>
+
+<div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
+        <figure style="display: inline-block; max-width: 100%; margin: 0;">
+            <img src="Zeropadding.svg" alt="Zero Padding for Same Convolution" style="width: 100%; max-width: 900px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
+                <strong>Figure 3: Zero-padding for Same Convolution.</strong> The two panels are the same 10&times;10 image and the same 3&times;3 filter, convolved two different ways:
+                <ol style="margin-top: 8px; padding-left: 20px;">
+                    <li><strong>Panel A &mdash; valid convolution (no padding).</strong> The orange 3&times;3 filter can only be <em>centered</em> at positions where it stays fully inside the 10&times;10 grid &mdash; the region marked by the red dashed box. That region is only 8&times;8 cells, because the filter's edges would otherwise hang off the image boundary at rows/columns 8 and 9. The result (green grid) is therefore smaller than the input: <code>(10-3+1)&times;(10-3+1) = 8&times;8</code>.</li>
+                    <li><strong>Panel B &mdash; same convolution (with zero-padding).</strong> Before convolving, a 1-cell border of zeros (gray, each labeled "0") is added all the way around the 10&times;10 image, making it effectively 12&times;12. Zero-valued padding cells carry no real information &mdash; they exist purely so the filter has somewhere to "stand" when centering on what used to be an edge or corner pixel.</li>
+                    <li><strong>Why the output size is restored.</strong> With the border in place, the filter can now be centered at a full 10&times;10 positions (it can reach every original pixel, including the corners, the same number of times it reaches interior pixels). The output (blue grid, right) comes out exactly the same size as the original input: <code>(10-3+1+2&times;1)&times;(10-3+1+2&times;1) = 10&times;10</code>.</li>
+                    <li><strong>Legend.</strong> Light blue = the real image data (input or output); gray = zero-padding, added and discarded, never "real" signal; orange = the filter's current footprint.</li>
+                </ol>
+            </figcaption>
+            <p style="text-align: center; margin-top: 10px;"><a href="Zeropadding.svg" target="_blank" rel="noopener" style="font-size: 0.85rem; color: #0056b3;">Open full-size SVG &#8599;</a></p>
+        </figure>
+    </div>
+
+<p>
+    If we want the output to have the <strong>same size</strong> as the input, we can use 
+    <strong>zero-padding</strong>, which involves adding a border of 0s around the image. 
+    This is referred to as <strong>same convolution</strong>.
+</p>
+<div style="background-color: #ffffff; border: 1px solid #d1d5db; border-radius: 8px; padding: 24px; font-family: 'Inter', sans-serif; max-width: 700px; margin: 20px auto;">
+    
+    <h4 style="margin-top: 0; color: #111827;">Reducing Redundancy: Strided Convolution</h4>
+    
+    <p style="color: #374151;">
+        Because neighboring outputs share overlapping inputs, they are often very similar. 
+        We can reduce this redundancy and speed up computation by skipping every $s$-th input. 
+        This is called <strong>Strided Convolution</strong>.
+    </p>
+
+    <div style="background: #f0f7ff; border-left: 4px solid #3498db; padding: 15px; margin: 20px 0;">
+        <strong>The General Formula for Output Size:</strong>
+        <div style="text-align: center; font-size: 1.2em; margin-top: 10px;">
+            $$ \left\lfloor \frac{X_h + 2P_h - F_h}{S_h} + 1 \right\rfloor \times \left\lfloor \frac{X_w + 2P_w - F_w}{S_w} + 1 \right\rfloor $$
+        </div>
+        <p style="font-size: 0.85rem; color: #555; margin-top: 10px;">
+            Where $X$ is input size, $P$ is padding, $F$ is filter size, and $S$ is stride.
+        </p>
+    </div>
+
+    <p style="color: #374151;"><strong>Example Calculation:</strong></p>
+    <p style="font-size: 0.95rem; color: #4b5563;">
+        For a $5 \times 7$ image, a $3 \times 3$ filter, no padding ($P=0$), and a stride of $S=2$:
+    </p>
+    
+    <div style="background: #f9fafb; padding: 12px; border-radius: 4px; font-family: monospace; text-align: center;">
+        Height: $\lfloor (5 - 3) / 2 + 1 \rfloor = 2$ <br>
+        Width: $\lfloor (7 - 3) / 2 + 1 \rfloor = 3$ <br>
+        <strong>Output Size: $2 \times 3$</strong>
+    </div>
+
+    <p style="font-size: 0.875rem; color: #6b7280; font-style: italic; margin-top: 15px;">
+        <strong>Architect's Note:</strong> Increasing the stride is a powerful way to reduce the "spatial footprint" of your feature maps as you go deeper into the network.
+    </p>
+</div>
+    <h3>The Role of the Pooling Layer</h3>
+    <p>As illustrated in the pipeline in Figure 2 above, <strong>Pooling Layers</strong> (typically Max Pooling) are the "editors" of the network. While convolution detects features, pooling serves as <strong>Spatial Downsampling</strong>. By taking the maximum value in a $2 \times 2$ or $3 \times 3$ window, the network achieves two goals:</p>
+    <ul>
+        <li><strong>Dimensionality Reduction:</strong> It sheds redundant data, keeping only the strongest activations and preventing the "Parameter Explosion" discussed earlier.</li>
+        <li><strong>Invariance to Noise:</strong> It makes the detection robust. It no longer matters exactly which pixel triggered a "corner" detection, only that the corner exists within that pooled region.</li>
+    </ul>
+
+    <h3>The Feature Hierarchy: From Primitives to Entities</h3>
+    <p>The "intelligence" of a CNN emerges from how these layers are stacked. This creates a <strong>Cognitive Hierarchy</strong> where the network learns to "see" in stages.</p>
+
+    <div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
+        <figure style="display: inline-block; max-width: 100%; margin: 0;">
+            <img src="CNNImageHumanBeing.svg" alt="CNN Feature Hierarchy" style="width: 100%; max-width: 900px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
+                <strong>Figure 4: The Cognitive Hierarchy.</strong> Read this diagram <strong>bottom-up</strong> &mdash; the same direction information actually flows through the network:
+                <ol style="margin-top: 8px; padding-left: 20px;">
+                    <li><strong>Bottom: the raw image.</strong> The face icon represents the unprocessed input pixels. Every fan line rising from it feeds all 13 boxes in the row above &mdash; the earliest convolutional layers look at the whole image when learning to detect each primitive.</li>
+                    <li><strong>Row 2: low-level primitives.</strong> These 13 boxes (arcs, a diagonal edge, curves, small ovals, angle shapes) are the simplest patterns the first convolutional layers learn &mdash; each one is just a local shape a single filter fires on, wherever it appears in the image. No box here "knows" it's part of a face.</li>
+                    <li><strong>The crossing lines.</strong> Each mid-level part is built from a specific, overlapping <em>subset</em> of primitives, not all 13 &mdash; that's why the connecting lines cross rather than running in neat parallel columns. For example, an eye detector combines an oval shape with a couple of adjacent curves; an ear detector combines a cluster of arcs. Adjacent parts share some of the same primitives, which is exactly how neighboring receptive fields overlap in a real CNN.</li>
+                    <li><strong>Row 1: mid-level parts.</strong> Ear, Eye, Nose, Mouth, Ear &mdash; five detectors, each activated by its own particular combination of primitives from the row below.</li>
+                    <li><strong>Top: "HUMAN BEING".</strong> The final layer combines all five part detectors into one entity-level detector. No single layer ever "sees" a whole face directly &mdash; the entity emerges purely from composing increasingly abstract, increasingly spatially-broad detectors on top of one another, exactly as in Figure 2's conv/pool stack.</li>
+                </ol>
+            </figcaption>
+            <p style="text-align: center; margin-top: 10px;"><a href="CNNImageHumanBeing.svg" target="_blank" rel="noopener" style="font-size: 0.85rem; color: #0056b3;">Open full-size SVG &#8599;</a></p>
+        </figure>
+    </div>
+
+    <p>The first layers act as <strong>Edge Detectors</strong>. Because these kernels are shared across the image, they learn basic geometric primitives. As we move deeper into the network, the <strong>Forward Pass</strong> combines these edges into <strong>Part Detectors</strong> (like whiskers or ears) and finally into <strong>Entity Detectors</strong> that represent the entire object.</p>
+
+    <h3>The Final Output: Reaching a Verdict</h3>
+    <p>Once the spatial features have been extracted and downsampled, the 3D maps are <strong>Flattened</strong> into a 1D vector. This vector is fed into the final "Dense" layers of the network.</p>
+    <p>For a binary classification task (e.g., Face vs. No-Face), the <strong>last layer consists of 2 output neurons</strong>. These neurons use a Softmax function to translate the abstract features into a probability distribution. If the "Face" neuron fires at 0.95 and the "No-Face" at 0.05, the network has successfully translated millions of raw pixels into a single, high-confidence identification.</p>
+
+    <div class="intuition-box">
+        <h3>Comparison: CNN vs. MLP</h3>
+        <p>While both are built from neurons and weights, their mathematical "engines" process data through fundamentally different operations.</p>
+        
+        <table style="width:100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background-color: #f2f2f2; text-align: left;">
+                    <th style="padding: 12px; border: 1px solid #ddd;">Feature</th>
+                    <th style="padding: 12px; border: 1px solid #ddd;">Multi-Layer Perceptron (MLP)</th>
+                    <th style="padding: 12px; border: 1px solid #ddd;">Convolutional Neural Network (CNN)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Mathematical Operation</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;"><strong>Matrix Multiplication:</strong> $Z = W \cdot A + b$. The operation between W and A is a dot-product of the entire input vector.</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;"><strong>Convolution:</strong> $Z = W * A + b$. The operation between W and A is a local sliding-window dot-product.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Connectivity</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;"><strong>Fully Connected:</strong> Every input unit connects to every hidden neuron.</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;"><strong>Locally Connected:</strong> Neurons only connect to a small local region (kernel).</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Parameter Efficiency</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">Total weights scale linearly with input size (leading to parameter explosion).</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;"><strong>Weight Sharing:</strong> The same filter is reused across the entire image.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Spatial Awareness</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">None. Data must be "flattened." The network is "Index-Bound."</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">Excellent. Maintains spatial hierarchy and is <strong>Translation Invariant.</strong> The network is "Pattern-Bound."</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>1. Initialization Phase</h3>
+    <div class="algorithm-block" style="background: #f4f4f4; padding: 20px; border-radius: 8px; font-family: monospace; border-left: 5px solid #1a237e; margin: 20px 0;">
+        <strong>Algorithm: He_Initialization</strong><br>
+        For each layer $l$ from $1$ to $L$:<br>
+        1. Calculate variance: $\sigma^2 = \frac{2}{n_{in}}$<br>
+        2. Sample weights: $W^{[l]} \sim \mathcal{N}(0, \sigma^2)$<br>
+        3. Set bias: $b^{[l]} = 0$
+    </div>
+
+    <div style="background: #fff8e1; padding: 15px; border-left: 5px solid #ffc107; margin: 10px 0 20px 0;">
+        <strong>Why He, not Xavier?</strong> Xavier/Glorot initialization ($\sigma^2 = \frac{2}{n_{in}+n_{out}}$) was derived assuming a symmetric activation like tanh or sigmoid. Because our network uses <strong>ReLU</strong> everywhere ($A = \max(0, Z)$), roughly half of the pre-activations are zeroed out on every forward pass. He initialization compensates for this by using only $n_{in}$ in the variance term, which keeps the variance of activations stable as signals pass through many ReLU layers — this is the standard choice for ReLU-based CNNs.
+    </div>
+
+    <hr>
+
+    <h3>2. Forward Pass (FP): The Convolution Engine</h3>
+    <div class="algorithm-block" style="background: #f4f4f4; padding: 20px; border-radius: 8px; font-family: monospace; border-left: 5px solid #1a237e; margin: 20px 0;">
+        <strong>Algorithm: CNN_Forward_Step</strong><br>
+        1. <strong>Convolution:</strong> $Z^{[l]}_{i,j,k} = \sum_{m} \sum_{n} (A^{[l-1]}_{i+m, j+n} \cdot W^{[l]}_{m,n,k}) + b^{[l]}_k$<br>
+        2. <strong>Activation:</strong> $A^{[l]} = \max(0, Z^{[l]})$<br>
+        3. <strong>Max Pooling:</strong> Downsample $A^{[l]}$ by taking window maximums.<br>
+        4. <strong>Softmax:</strong> $\hat{y} = \frac{e^{Z^{[L]}}}{\sum e^{Z^{[L]}}}$
+    </div>
+
+    <h3>3. Backward Pass & Adam Optimizer</h3>
+    <div class="algorithm-block" style="background: #f4f4f4; padding: 20px; border-radius: 8px; font-family: monospace; border-left: 5px solid #1a237e; margin: 20px 0;">
+        <strong>Algorithm: Adam_Optimization_Update</strong><br>
+        1. <strong>Calculate Output Error:</strong> $dZ^{[L]} = \hat{y} - y$<br>
+        2. <strong>Compute Gradients ($g_t$):</strong> Backpropagate error through pooling and convolution layers.<br>
+        3. <strong>Update Moments:</strong> $m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t$; $v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2$<br>
+        4. <strong>Apply Update:</strong> $W_{t+1} = W_t - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$
+    </div>
+<h3>4. More about Backward Pass and Gradient Computation through Chain Rule</h3>
+<p>In a CNN, the Backward Pass is the process of passing <strong>error maps</strong> backward through the spatial dimensions. To satisfy the <strong>Algorithm: Adam_Optimization_Update</strong>, we must calculate the gradients ($g_t$) by reversing the Forward Pass step-by-step.</p>
+
+<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; font-family: 'Inter', system-ui, -apple-system, sans-serif; max-width: 850px; margin: 20px auto; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+
+    <h2 style="margin-top: 0; color: #1e293b; border-bottom: 2px solid #3b82f6; padding-bottom: 12px; font-size: 1.5rem;">CNN Global Execution Protocol</h2>
+
+    <!-- THE MASTER FORWARD LOOP -->
+    <div style="margin-bottom: 30px; border: 2px solid #3b82f6; border-radius: 10px; background-color: #f8fafc;">
+        <div style="background-color: #3b82f6; padding: 12px 15px; font-weight: bold; color: #ffffff;">
+            FOR Layer $l = 1$ TO $L$: <span style="font-weight: normal; margin-left: 10px; font-style: italic;">(Sequential Forward Pass)</span>
+        </div>
+        
+        <div style="padding: 20px;">
+            <p style="margin-top: 0; color: #475569;">For each filter $k$, we sum convolutions across all input channels $c$ and apply final normalization:</p>
+            
+            <div style="background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 15px 0;">
+                <div style="color: #2563eb; font-family: monospace; margin-bottom: 10px; font-weight: bold;">
+                    1. Convolution & Activation:
+                </div>
+                <div style="text-align: center;">
+                    $$Z_{i,j,k}^{[l]} = \sum_{c=1}^{C_{in}} \left( \sum_{m=0}^{f_h-1} \sum_{n=0}^{f_w-1} A_{i+m, j+n, c}^{[l-1]} \cdot K_{m,n,c,k}^{[l]} \right) + b_k^{[l]}$$
+                    <p style="margin-top: 10px;">$$A_{i,j,k}^{[l]} = \text{ReLU}(Z_{i,j,k}^{[l]})$$</p>
+                </div>
+                
+                <div style="color: #2563eb; font-family: monospace; margin: 15px 0 10px 0; font-weight: bold; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+                    2. Final Output Softmax (at Layer $L$):
+                </div>
+                <div style="text-align: center;">
+                    $$P_{k} = \frac{e^{Z_{k}^{[L]}}}{\sum_{j=1}^{K} e^{Z_{j}^{[L]}}}$$
+                    <small style="color: #64748b; display: block; margin-top: 5px;">* $P$ represents the <strong>Actual Probability</strong> distribution.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- THE MASTER BACKWARD LOOP -->
+    <div style="margin-bottom: 30px; border: 2px solid #f97316; border-radius: 10px; background-color: #fffaf7;">
+        <div style="background-color: #f97316; padding: 12px 15px; font-weight: bold; color: #ffffff;">
+            FOR Layer $l = L$ DOWNTO $1$: <span style="font-weight: normal; margin-left: 10px; font-style: italic;">(Backpropagation Through Space)</span>
+        </div>
+
+        <div style="padding: 20px;">
+            <!-- STEP 1: dZ -->
+            <div style="margin-bottom: 20px;">
+                <span style="color: #c2410c; font-weight: bold;">Step 1: The Error Gate ($dZ$)</span>
+                <div style="background: #ffffff; padding: 15px; border-radius: 6px; border: 1px dashed #fdba74; text-align: center; margin-top: 5px;">
+                    <div style="margin-bottom: 10px;">
+                        <strong style="font-size: 0.85rem; color: #9a3412;">At Output Layer:</strong>
+                        <p style="margin: 5px 0; font-size: 0.85rem; color: #7c2d12;">Using categorical cross-entropy loss, $L = -\sum_{k} y_k \log P_k$, together with the softmax from Step 1 of the forward pass, the derivative $\partial L / \partial Z^{[L]}$ simplifies to:</p>
+                        <p style="margin: 5px 0;">$$dZ^{[L]} = P_{predicted} - y_{expected}$$</p>
+                    </div>
+                    <div style="border-top: 1px solid #fed7aa; padding-top: 10px;">
+                        <strong style="font-size: 0.85rem; color: #9a3412;">At Hidden Layers:</strong>
+                        <p style="margin: 5px 0;">$$dZ_{i,j,k}^{[l]} = dA_{i,j,k}^{[l]} \cdot f'(Z_{i,j,k}^{[l]})$$</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: dK -->
+            <div style="margin-bottom: 20px;">
+                <span style="color: #c2410c; font-weight: bold;">Step 2: Weight Gradients ($dK$)</span>
+                <div style="background: #ffffff; padding: 10px; border-radius: 6px; border: 1px dashed #fdba74; text-align: center; margin-top: 5px;">
+                    $$dK_{m,n,c,k}^{[l]} = \sum_{i=0}^{O_h-1} \sum_{j=0}^{O_w-1} A_{i+m, j+n, c}^{[l-1]} \cdot dZ_{i,j,k}^{[l]}$$
+                </div>
+            </div>
+
+            <!-- STEP 3: dA_prev -->
+            <div>
+                <span style="color: #c2410c; font-weight: bold;">Step 3: Propagating Blame to Layer $[l-1]$</span>
+                <div style="background: #ffffff; padding: 10px; border-radius: 6px; border: 1px dashed #fdba74; text-align: center; margin-top: 5px;">
+                    $$dA_{i,j,c}^{[l-1]} = \sum_{k=1}^{K} dZ_{i,j,k}^{[l]} * \text{rot180}(K_{c,k}^{[l]})$$
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADAM OPTIMIZER SECTION -->
+    <div style="border: 1px solid #22c55e; border-radius: 10px; background-color: #f0fdf4; padding: 20px;">
+        <h3 style="margin-top: 0; color: #166534; font-size: 1.1rem; border-bottom: 1px solid #bbf7d0; padding-bottom: 8px;">Global Parameter Update (Adam)</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+            <div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #dcfce7; text-align: center;">
+                <small style="display: block; color: #16a34a; margin-bottom: 5px;">1st Moment</small>
+                $$m_t = \beta_1 m_{t-1} + (1 - \beta_1) dK$$
+            </div>
+            <div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #dcfce7; text-align: center;">
+                <small style="display: block; color: #16a34a; margin-bottom: 5px;">2nd Moment</small>
+                $$v_t = \beta_2 v_{t-1} + (1 - \beta_2) (dK)^2$$
+            </div>
+        </div>
+
+        <div style="background: #166534; color: #ffffff; margin-top: 15px; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold;">
+            $$K_{new} = K_{old} - \frac{\eta \cdot \hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$$
+        </div>
+    </div>
+</div>
+
+<div class="math-breakdown">
+    <strong>Why Rotate the Kernel?</strong>
+    <p>In the forward pass, we slide the filter over the input. To go backwards, we mathematically flip the operation. We use <strong>Full Padding</strong> to ensure the output error map has the same dimensions as the original input $A^{[l-1]}$.</p>
+</div>
+<code class="code-snippet">dA_prev = signal.convolve2d(dZ, kernel, mode='full')</code>
+
+<div class="math-breakdown">
+    <strong>The "Convolutional" Gradient:</strong>
+    <p>This is mathematically equivalent to convolving the input $A^{[l-1]}$ with the error map $dZ$. It aligns the error found at each "look" with the pixel that caused it.</p>
+</div>
+
+<h4>NumPy Implementation</h4>
+<code class="code-snippet">dW = signal.correlate2d(A_prev, dZ, mode='valid')</code>
+<p style="font-size: 0.85rem; color: #6b7280;"><strong>Note:</strong> unlike the $dA_{prev}$ step, this uses <code>correlate2d</code>, not <code>convolve2d</code>. The $dK$ formula above is a direct cross-correlation (no kernel flip) between $A_{prev}$ and $dZ$ — <code>convolve2d</code> would flip $dZ$ before sliding it, which does not match the derivation.</p>
+<div class="intuition-box">
+    <strong>Intuition:</strong> If a specific part of the filter repeatedly saw a high-intensity pixel ($A$) that led to a high error ($dZ$), that weight gets a massive update.
+</div>
+<hr>
+
+<h3>5. Implementation: CNN Training from Scratch (Pure Python)</h3>
+<p>To truly understand the "mechanical engine" of a CNN, we can implement the forward and backward passes using nested loops. This avoids external libraries and shows exactly how the <strong>Weight Sharing</strong> and <strong>Valid Convolution</strong> we discussed are translated into code.</p>
+
+<div class="intuition-box">
+    <strong>Developer Note:</strong> This implementation uses "Pure Python" lists for maximum clarity. In a production environment, these loops are typically vectorized using NumPy or GPU kernels (CUDA) to improve performance.
+</div>
+
+<div class="algorithm-block" style="background: #2d3748; color: #edf2f7; padding: 25px; border-radius: 8px; font-family: 'Courier New', Courier, monospace; line-height: 1.5; overflow-x: auto;">
+    <pre style="margin: 0;">
+<span style="color: #9f7aea;">import</span> random <span style="color: #718096;"># Only for initialization</span>
+
+<span style="color: #ed64a6;">class</span> <span style="color: #ecc94b;">AdamOptimizer</span>:
+    <span style="color: #ed64a6;">def</span> <span style="color: #4299e1;">__init__</span>(self, learning_rate=0.001, b1=0.9, b2=0.999, epsilon=1e-8):
+        self.eta = learning_rate
+        self.b1, self.b2 = b1, b2
+        self.epsilon = epsilon
+        self.m = <span style="color: #ed64a6;">None</span>
+        self.v = <span style="color: #ed64a6;">None</span>
+        self.t = 0
+
+    <span style="color: #ed64a6;">def</span> <span style="color: #4299e1;">update</span>(self, weights, gradients):
+        <span style="color: #ed64a6;">if</span> self.m <span style="color: #ed64a6;">is None</span>:
+            self.m = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> row] <span style="color: #ed64a6;">for</span> row <span style="color: #ed64a6;">in</span> weights]
+            self.v = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> row] <span style="color: #ed64a6;">for</span> row <span style="color: #ed64a6;">in</span> weights]
+        
+        self.t += 1
+        new_w = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> row] <span style="color: #ed64a6;">for</span> row <span style="color: #ed64a6;">in</span> weights]
+        
+        <span style="color: #ed64a6;">for</span> i <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(weights)):
+            <span style="color: #ed64a6;">for</span> j <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(weights[0])):
+                g = gradients[i][j]
+                <span style="color: #718096;"># 1. Moment Updates</span>
+                self.m[i][j] = self.b1 * self.m[i][j] + (1 - self.b1) * g
+                self.v[i][j] = self.b2 * self.v[i][j] + (1 - self.b2) * (g**2)
+                
+                <span style="color: #718096;"># 2. Bias Correction</span>
+                m_hat = self.m[i][j] / (1 - self.b1**self.t)
+                v_hat = self.v[i][j] / (1 - self.b2**self.t)
+                
+                <span style="color: #718096;"># 3. Parameter Update</span>
+                new_w[i][j] = weights[i][j] - (self.eta * m_hat) / (v_hat**0.5 + self.epsilon)
+        <span style="color: #ed64a6;">return</span> new_w
+
+<span style="color: #ed64a6;">class</span> <span style="color: #ecc94b;">ConvLayer</span>:
+    <span style="color: #ed64a6;">def</span> <span style="color: #4299e1;">__init__</span>(self, kernel_size):
+        <span style="color: #718096;"># Small random initialization</span>
+        self.kernel = [[random.uniform(-0.1, 0.1) <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kernel_size)] 
+                       <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kernel_size)]
+        self.bias = 0.0
+        self.optimizer = AdamOptimizer()
+
+    <span style="color: #ed64a6;">def</span> <span style="color: #4299e1;">forward</span>(self, image):
+        self.last_input = image
+        h, w = <span style="color: #4299e1;">len</span>(image), <span style="color: #4299e1;">len</span>(image[0])
+        kh, kw = <span style="color: #4299e1;">len</span>(self.kernel), <span style="color: #4299e1;">len</span>(self.kernel[0])
+        output = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(w-kw+1)] <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(h-kh+1)]
+        
+        <span style="color: #718096;"># Standard 2D Convolution (Sliding Window)</span>
+        <span style="color: #ed64a6;">for</span> i <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(h-kh+1):
+            <span style="color: #ed64a6;">for</span> j <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(w-kw+1):
+                sum_val = 0
+                <span style="color: #ed64a6;">for</span> ki <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kh):
+                    <span style="color: #ed64a6;">for</span> kj <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kw):
+                        sum_val += image[i+ki][j+kj] * self.kernel[ki][kj]
+                output[i][j] = sum_val + self.bias
+        <span style="color: #ed64a6;">return</span> output
+
+    <span style="color: #ed64a6;">def</span> <span style="color: #4299e1;">backward</span>(self, d_out):
+        kh, kw = <span style="color: #4299e1;">len</span>(self.kernel), <span style="color: #4299e1;">len</span>(self.kernel[0])
+        ih, iw = <span style="color: #4299e1;">len</span>(self.last_input), <span style="color: #4299e1;">len</span>(self.last_input[0])
+        d_kernel = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kw)] <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kh)]
+        d_bias = 0.0
+
+        <span style="color: #718096;"># Step 2: dL/dW (Valid Correlation between Input and Error Map)</span>
+        <span style="color: #ed64a6;">for</span> i <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kh):
+            <span style="color: #ed64a6;">for</span> j <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kw):
+                <span style="color: #ed64a6;">for</span> oi <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(d_out)):
+                    <span style="color: #ed64a6;">for</span> oj <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(d_out[0])):
+                        d_kernel[i][j] += self.last_input[i+oi][j+oj] * d_out[oi][oj]
+
+        <span style="color: #718096;"># dL/db is just the sum of the error map</span>
+        <span style="color: #ed64a6;">for</span> row <span style="color: #ed64a6;">in</span> d_out:
+            d_bias += <span style="color: #4299e1;">sum</span>(row)
+
+        <span style="color: #718096;"># Step 3: dA_prev (Full Correlation of d_out with the 180-rotated kernel)</span>
+        <span style="color: #718096;"># This is what lets us chain backward() calls across stacked ConvLayers.</span>
+        rotated = [[self.kernel[kh-1-ki][kw-1-kj] <span style="color: #ed64a6;">for</span> kj <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kw)] <span style="color: #ed64a6;">for</span> ki <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kh)]
+        padded = [[0.0] * (<span style="color: #4299e1;">len</span>(d_out[0]) + 2*(kh-1)) <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(d_out) + 2*(kh-1))]
+        <span style="color: #ed64a6;">for</span> i <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(d_out)):
+            <span style="color: #ed64a6;">for</span> j <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(d_out[0])):
+                padded[i+kh-1][j+kw-1] = d_out[i][j]
+
+        d_input = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(iw)] <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(ih)]
+        <span style="color: #ed64a6;">for</span> i <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(ih):
+            <span style="color: #ed64a6;">for</span> j <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(iw):
+                sum_val = 0
+                <span style="color: #ed64a6;">for</span> ki <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kh):
+                    <span style="color: #ed64a6;">for</span> kj <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kw):
+                        sum_val += padded[i+ki][j+kj] * rotated[ki][kj]
+                d_input[i][j] = sum_val
+
+        <span style="color: #718096;"># Update kernel weights using Adam (bias updated with plain SGD here for simplicity)</span>
+        self.kernel = self.optimizer.update(self.kernel, d_kernel)
+        self.bias -= self.optimizer.eta * d_bias
+        <span style="color: #ed64a6;">return</span> d_input</pre>
+</div>
+
+<div style="background: #fff8e1; padding: 15px; border-left: 5px solid #ffc107; margin-top: 10px;">
+    <strong>Tutorial Focus:</strong> Notice how the <code>backward</code> method uses <code>self.last_input</code>. This confirms our derivation that the gradient for the weights depends directly on the values seen during the forward pass.
+</div>
+
+<hr>
+
+<h3>6. Beyond the Plain CNN: Specialized Architectures</h3>
+<p>The <code>ConvLayer</code> above is the mechanical engine shared by every CNN variant that follows &mdash; what differs is how these layers are <strong>arranged</strong>. Two arrangements matter enough to cover here: one solves a <strong>training</strong> problem (how do you stack enough layers without the network getting worse?), and the other solves an <strong>output</strong> problem (how do you get a prediction per pixel, not just per image?). Both arrangements lean on one small building block first, so it's worth pinning down before either one.</p>
+
+<h4>A Recurring Building Block: 1&times;1 Convolutions</h4>
+<p>Every convolution discussed so far has had a spatial footprint of at least 3&times;3, mixing information from a small neighborhood of pixels. A <strong>1&times;1 convolution</strong> is the degenerate case: $F_h = F_w = 1$, so plugging into the parameter-count formula above gives $\text{Params} = (1 \times 1 \times C_{in} + 1) \times C_{out}$ &mdash; no spatial neighborhood at all, just $C_{out}$ weighted sums, each combining the $C_{in}$ channel values sitting at a single pixel location. In other words, a 1&times;1 conv does no spatial mixing whatsoever; it only <strong>recombines channels</strong>, pixel by pixel, exactly like a tiny fully-connected layer applied independently at each spatial position.</p>
+<p>That's precisely why it's cheap and useful for changing channel depth: stacking a $1{\times}1$ conv that maps $C_{in} \to C_{reduced}$ (with $C_{reduced} < C_{in}$) before a more expensive $3{\times}3$ conv shrinks the number of channels the $3{\times}3$ filter has to sweep over, cutting that layer's parameter count substantially &mdash; without discarding any spatial information, since the $1{\times}1$ step never touched it. This is exactly the trick ResNet's bottleneck block and Inception's channel-reduction step (both referenced below and in the comparison table) are built on.</p>
+
+<h4>Residual Networks (ResNet)</h4>
+<p>Even with He initialization and proper normalization, plain CNNs hit a wall: past a certain depth, adding <em>more</em> layers makes <strong>training accuracy worse</strong>, not just validation accuracy &mdash; a purely optimization-side failure, not overfitting. ResNet's fix is the residual block $H(x) = F(x, \{W_i\}) + x$: each block learns a small correction $F(x)$ on top of an identity shortcut, rather than the full mapping from scratch. The reason this fixes training rather than just accuracy shows up directly in the gradient: $\frac{\partial L}{\partial x} = \frac{\partial L}{\partial H}\left(\frac{\partial F}{\partial x} + 1\right)$ &mdash; that "+1" guarantees a direct gradient path back through every block regardless of how small $\partial F/\partial x$ gets, which is exactly the mechanism that lets ResNets train at 50&ndash;150+ layers where plain stacks of our <code>ConvLayer</code> degrade. Deeper ResNet variants (50/101/152) additionally use a <strong>bottleneck block</strong> (1&times;1 &rarr; 3&times;3 &rarr; 1&times;1 convolutions &mdash; using the channel-reduction trick just described) to cut the parameter cost of each residual unit before scaling to that many layers. The full derivation, bottleneck design, and a pure-Python <code>ResidualBlock</code> built on top of the <code>ConvLayer</code> above are covered in the <a href="resnet.html">dedicated ResNet page</a> &mdash; update this link if your filename differs.</p>
+
+<h4>U-Net</h4>
+<p>Every architecture up to this point ends the same way: pool down, flatten, classify &mdash; one label per image. That throws away exactly the spatial detail a task like tumor segmentation needs. U-Net keeps the encoder you already know (stacked <code>ConvLayer</code> + pooling, shrinking spatial size while growing channel depth) and adds a mirror-image <strong>decoder</strong> that upsamples back to full resolution using <strong>transposed convolution</strong> &mdash; the same stride/padding output-size formula from Section on strided convolution, run in reverse. The distinguishing feature is the <strong>skip connection</strong>: at each decoder stage, the corresponding encoder feature map is <em>concatenated</em> (not added, unlike ResNet) onto the upsampled map before the next convolution, so the fine spatial detail lost during pooling is recovered from the encoder rather than reconstructed from nothing. Typical parameters: 4&ndash;5 encoder/decoder stages, channel depth doubling at each downsampling step (e.g. 64&rarr;128&rarr;256&rarr;512&rarr;1024 at the bottleneck) and halving on the way back up, with a final 1&times;1 convolution mapping to the number of output classes (or a single sigmoid channel for binary masks). Originally built for biomedical cell segmentation, it's now the default backbone for medical image segmentation generally (see the tumor-segmentation pipeline built for this series), satellite/aerial imagery segmentation, and &mdash; via its encoder-decoder-with-skip-connections shape &mdash; the denoising network at the core of most image diffusion models.</p>
+
+<h4>Architecture Comparison</h4>
+<table style="width:100%; border-collapse: collapse; margin: 20px 0;">
+    <thead>
+        <tr style="background-color: #f2f2f2; text-align: left;">
+            <th style="padding: 12px; border: 1px solid #ddd;">Network</th>
+            <th style="padding: 12px; border: 1px solid #ddd;">Motivation</th>
+            <th style="padding: 12px; border: 1px solid #ddd;">Key Structural Change</th>
+            <th style="padding: 12px; border: 1px solid #ddd;">Typical Use Case</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">LeNet-5</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">First practical demonstration that conv+pool+FC, trained end-to-end, beats hand-engineered features on a real task</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">2 conv+pool blocks &rarr; flatten &rarr; small FC head (tanh/sigmoid activations, pre-ReLU era)</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Handwritten digit recognition (e.g. postal codes, bank checks)</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Plain CNN (this page)</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Exploit spatial locality instead of full connectivity</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Conv + Pool stacked sequentially, then flatten</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Simple image classification</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">VGG</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">"Depth matters" &mdash; go deeper with a uniform design</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Uniform stacks of 3&times;3 convolutions instead of larger filters</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Classification; a common transfer-learning backbone</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Inception / GoogLeNet</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Capture features at multiple scales cheaply</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Parallel filter sizes per block; 1&times;1 convs for channel reduction</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Classification under tight compute budgets</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">ResNet</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Let networks go very deep without training degrading</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Residual (additive) skip connections: $H(x)=F(x)+x$</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Classification/detection backbones at 50&ndash;150+ layers</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">U-Net</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Produce a per-pixel output, not one label per image</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Encoder-decoder with concatenated (not additive) skip connections</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Segmentation (medical imaging, satellite); diffusion model backbones</td>
+        </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
