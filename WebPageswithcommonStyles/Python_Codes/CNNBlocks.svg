@@ -1,0 +1,346 @@
+<svg viewBox="0 0 1400 565" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTpiYTNmZjg1NS1lNGI0LTQ3ZDktOGRjZS04ZTYxYTUwYTAyZGQAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaM83ZQwNEmQqPFNCdXccR+EAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDoyMjVmOTJmMS1jYWNkLTQ1YWUtODE5YS0xMzhhNTM2ODM0M2JscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoCPl7LVzA7Ye8wt8+KI6vvAAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggj7yPm89KsH0zA1cRb0iUMGHHcOyKSSdh42lvN069YgSkZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaNOIfo+rA5yGYx57ztSOL0cAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCDZU3LLihwos9EOmsamWmpQTBIb6d8ryjtINcoEpsTb02RuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBioZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmJhM2ZmODU1LWU0YjQtNDdkOS04ZGNlLThlNjFhNTBhMDJkZC9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOmNkMmFjNzgxLWQxMmUtNDEzMS1iNzA1LTg4YWJlMzA5NDMwMHJjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCCPvI+bz0qwfTMDVxFvSJQwYcdw7IpJJ2HjaW83Tr1iBKJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggMxf/y6aVf4vdmS0HKjsuyYROhGKxj0shOct7JVbBF3KiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggyC6QmaeFZo5TZfis15+DdXbBRC/L34cEoYOZ1FZfHON0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQLKjPD+c3Ei10X48LcqDDou9FZY3bVAsLCGpGG+VEUFlExD0qmfq7ok8th9TWs2RKQz3j1Uasdk96/eTpIJm/DE=</c2pa:manifest></metadata>
+  <defs>
+    <linearGradient id="convGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#bfe3f0"/>
+      <stop offset="100%" stop-color="#2f8fb0"/>
+    </linearGradient>
+    <linearGradient id="convGradFront" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7fd0e8"/>
+      <stop offset="100%" stop-color="#1c7c9c"/>
+    </linearGradient>
+    <linearGradient id="poolGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd9a8"/>
+      <stop offset="100%" stop-color="#e8791a"/>
+    </linearGradient>
+    <linearGradient id="poolGradFront" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffbf70"/>
+      <stop offset="100%" stop-color="#d9660a"/>
+    </linearGradient>
+    <radialGradient id="brainGrad" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#e9e9e9"/>
+      <stop offset="55%" stop-color="#b9b9b9"/>
+      <stop offset="100%" stop-color="#7a7a7a"/>
+    </radialGradient>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#333"/>
+    </marker>
+    <radialGradient id="skullGrad" cx="50%" cy="42%" r="62%">
+      <stop offset="0%" stop-color="#dcdcdc"/>
+      <stop offset="60%" stop-color="#aeaeae"/>
+      <stop offset="100%" stop-color="#4a4a4a"/>
+    </radialGradient>
+    <radialGradient id="tumorGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#f2f2f2"/>
+      <stop offset="100%" stop-color="#cfcfcf" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softBlur"><feGaussianBlur stdDeviation="1.1"/></filter>
+    <pattern id="grain" width="6" height="6" patternUnits="userSpaceOnUse">
+      <rect width="6" height="6" fill="none"/>
+      <circle cx="1" cy="1" r="0.5" fill="#ffffff" opacity="0.10"/>
+      <circle cx="4" cy="3" r="0.4" fill="#000000" opacity="0.08"/>
+      <circle cx="2.5" cy="4.5" r="0.45" fill="#ffffff" opacity="0.08"/>
+      <circle cx="5" cy="5.5" r="0.35" fill="#000000" opacity="0.07"/>
+    </pattern>
+    <!-- condensed brain-slice artwork, reused (dimmed/scaled) as extra slices and as "feature map" thumbnails -->
+    <g id="brainArt">
+      <ellipse cx="145" cy="222" rx="79" ry="89" fill="#e6e6e6"/>
+      <ellipse cx="145" cy="222" rx="74" ry="84" fill="#3a3a3a"/>
+      <ellipse cx="145" cy="222" rx="70" ry="80" fill="url(#skullGrad)"/>
+      <path d="M145,143 C142,180 148,264 145,300" stroke="#2a2a2a" stroke-width="1.4" fill="none" opacity="0.75"/>
+      <path d="M131,214 C122,216 119,226 124,236 C128,244 136,248 140,244 C136,236 135,224 131,214 Z" fill="#242424" opacity="0.8"/>
+      <path d="M159,214 C168,216 171,226 166,236 C162,244 154,248 150,244 C154,236 155,224 159,214 Z" fill="#242424" opacity="0.8"/>
+      <ellipse cx="175" cy="178" rx="30" ry="25" fill="#dcdcdc" opacity="0.4"/>
+      <ellipse cx="176" cy="179" rx="14" ry="11" fill="url(#tumorGrad)"/>
+      <ellipse cx="176" cy="179" rx="14" ry="11" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.9"/>
+      <ellipse cx="178" cy="180" rx="5" ry="3.5" fill="#8a8a8a" opacity="0.7"/>
+    </g>
+  </defs>
+
+  <!-- Title -->
+  <text x="700" y="30" text-anchor="middle" font-size="20" font-weight="700" fill="#0056b3">
+    Convolutional Neural Network (CNN) Architecture — Medical Image Classification
+  </text>
+
+  <!-- ============ INPUT IMAGES (MRI slice stack) ============ -->
+  <!-- back slices: represent the multiple images / scan slices fed into the network -->
+  <g opacity="0.4">
+    <rect x="55" y="140" width="180" height="200" rx="4" fill="#020202" stroke="#333"/>
+    <clipPath id="headClipBack1"><ellipse cx="145" cy="242" rx="79" ry="89"/></clipPath>
+    <g clip-path="url(#headClipBack1)"><use href="#brainArt" transform="translate(0,20)"/></g>
+  </g>
+  <g opacity="0.65">
+    <rect x="65" y="130" width="180" height="200" rx="4" fill="#020202" stroke="#333"/>
+    <clipPath id="headClipBack2"><ellipse cx="155" cy="232" rx="79" ry="89"/></clipPath>
+    <g clip-path="url(#headClipBack2)"><use href="#brainArt" transform="translate(10,10)"/></g>
+  </g>
+
+  <!-- front slice: fully detailed, the one traced through the network -->
+  <g transform="translate(20,0)">
+  <g>
+    <rect x="55" y="120" width="180" height="200" rx="4" fill="#020202" stroke="#333"/>
+    <clipPath id="headClip">
+      <ellipse cx="145" cy="222" rx="79" ry="89"/>
+    </clipPath>
+    <g clip-path="url(#headClip)">
+      <!-- skull table (bright bone) -->
+      <ellipse cx="145" cy="222" rx="79" ry="89" fill="#e6e6e6"/>
+      <!-- CSF / dura thin dark ring -->
+      <ellipse cx="145" cy="222" rx="74" ry="84" fill="#3a3a3a"/>
+      <!-- brain parenchyma (gray/white matter) -->
+      <ellipse cx="145" cy="222" rx="70" ry="80" fill="url(#skullGrad)"/>
+      <!-- interhemispheric fissure -->
+      <path d="M145,143 C142,180 148,264 145,300" stroke="#2a2a2a" stroke-width="1.4" fill="none" opacity="0.75"/>
+      <!-- cortical gyri/sulci ribbon, densely packed around both hemispheres -->
+      <g stroke="#454545" stroke-width="1.1" fill="none" opacity="0.8">
+        <path d="M92,158 C104,163 112,160 120,164"/>
+        <path d="M83,175 C97,181 108,177 118,182"/>
+        <path d="M77,193 C93,199 105,195 116,200"/>
+        <path d="M74,212 C91,217 104,213 116,217"/>
+        <path d="M74,231 C91,236 104,233 116,236"/>
+        <path d="M77,250 C93,255 105,251 116,255"/>
+        <path d="M83,268 C97,273 108,270 118,274"/>
+        <path d="M92,285 C104,281 112,283 120,280"/>
+        <path d="M108,168 C114,176 116,182 120,190"/>
+        <path d="M100,205 C110,210 112,218 118,224"/>
+        <path d="M102,245 C112,248 114,255 120,260"/>
+      </g>
+      <g stroke="#454545" stroke-width="1.1" fill="none" opacity="0.8">
+        <path d="M198,158 C186,163 178,160 170,164"/>
+        <path d="M207,175 C193,181 182,177 172,182"/>
+        <path d="M213,193 C197,199 185,195 174,200"/>
+        <path d="M216,212 C199,217 186,213 174,217"/>
+        <path d="M216,231 C199,236 186,233 174,236"/>
+        <path d="M213,250 C197,255 185,251 174,255"/>
+        <path d="M207,268 C193,273 182,270 172,274"/>
+        <path d="M198,285 C186,281 178,283 170,280"/>
+        <path d="M182,168 C176,176 174,182 170,190"/>
+        <path d="M190,205 C180,210 178,218 172,224"/>
+        <path d="M188,245 C178,248 176,255 170,260"/>
+      </g>
+      <!-- lateral ventricles (butterfly shape, darker CSF), slightly compressed by mass effect -->
+      <path d="M131,214 C122,216 119,226 124,236 C128,244 136,248 140,244 C136,236 135,224 131,214 Z"
+            fill="#242424" opacity="0.8"/>
+      <path d="M159,214 C168,216 171,226 166,236 C162,244 154,248 150,244 C154,236 155,224 159,214 Z"
+            fill="#242424" opacity="0.8"/>
+      <!-- tumor: vasogenic edema halo (diffuse hyperintense, feathered) -->
+      <ellipse cx="175" cy="178" rx="34" ry="28" fill="#dcdcdc" opacity="0.4" filter="url(#softBlur)"/>
+      <ellipse cx="175" cy="178" rx="24" ry="19" fill="#e8e8e8" opacity="0.55" filter="url(#softBlur)"/>
+      <!-- tumor core: well-circumscribed hyperintense mass -->
+      <ellipse cx="176" cy="179" rx="14" ry="11" fill="url(#tumorGrad)"/>
+      <ellipse cx="176" cy="179" rx="14" ry="11" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.9"/>
+      <!-- necrotic/cystic center -->
+      <ellipse cx="178" cy="180" rx="5" ry="3.5" fill="#8a8a8a" opacity="0.7"/>
+      <!-- grain texture overlay for MRI look -->
+      <ellipse cx="145" cy="222" rx="79" ry="89" fill="url(#grain)"/>
+      <ellipse cx="145" cy="222" rx="79" ry="89" fill="#000000" opacity="0.06"/>
+    </g>
+    <ellipse cx="145" cy="222" rx="79" ry="89" fill="none" stroke="#555" stroke-width="1"/>
+    <text x="145" y="316" text-anchor="middle" font-size="10" fill="#bbb" font-family="Consolas, monospace" letter-spacing="0.5">AXIAL T2 — TUMOR</text>
+    <!-- highlighted receptive-field patches sampled from the scan -->
+    <rect x="164" y="166" width="18" height="18" fill="none" stroke="#ff5252" stroke-width="2"/>
+    <rect x="116" y="248" width="18" height="18" fill="none" stroke="#ff5252" stroke-width="2"/>
+  </g>
+  </g>
+
+  <!-- connector lines: input -> conv front layer -->
+  <line x1="202" y1="176" x2="354" y2="150" stroke="#333" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="154" y1="256" x2="424" y2="230" stroke="#333" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- ============ CONVOLUTION LAYER STACK ============ -->
+  <g id="convStack">
+    <rect x="300" y="190" width="190" height="190" fill="url(#convGrad)" stroke="#1c7c9c" opacity="0.55"/>
+    <rect x="309" y="181" width="190" height="190" fill="url(#convGrad)" stroke="#1c7c9c" opacity="0.6"/>
+    <rect x="318" y="172" width="190" height="190" fill="url(#convGrad)" stroke="#1c7c9c" opacity="0.65"/>
+    <rect x="327" y="163" width="190" height="190" fill="url(#convGrad)" stroke="#1c7c9c" opacity="0.75"/>
+    <rect x="336" y="154" width="190" height="190" fill="url(#convGrad)" stroke="#1c7c9c" opacity="0.85"/>
+    <rect x="345" y="145" width="190" height="190" fill="url(#convGrad)" stroke="#1c7c9c" opacity="0.95"/>
+    <rect x="354" y="136" width="190" height="190" fill="url(#convGradFront)" stroke="#0d5f78" stroke-width="1.5"/>
+    <!-- faint trace of the source image showing this feature map is derived from it -->
+    <clipPath id="convFrontClip"><rect x="354" y="136" width="190" height="190"/></clipPath>
+    <g clip-path="url(#convFrontClip)" opacity="0.5">
+      <use href="#brainArt" transform="translate(376.5,120) scale(0.5)"/>
+    </g>
+    <rect x="354" y="136" width="190" height="190" fill="#1c7c9c" opacity="0.18"/>
+    <!-- receptive field markers on front feature map -->
+    <rect x="374" y="150" width="16" height="16" fill="none" stroke="#00344a" stroke-width="2"/>
+    <rect x="444" y="230" width="16" height="16" fill="none" stroke="#00344a" stroke-width="2"/>
+  </g>
+
+  <!-- connector: conv front -> pooling front -->
+  <line x1="382" y1="158" x2="668" y2="158" stroke="#333" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="452" y1="238" x2="718" y2="208" stroke="#333" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- ============ POOLING LAYER STACK ============ -->
+  <g id="poolStack">
+    <rect x="620" y="205" width="115" height="115" fill="url(#poolGrad)" stroke="#c96410" opacity="0.6"/>
+    <rect x="632" y="193" width="115" height="115" fill="url(#poolGrad)" stroke="#c96410" opacity="0.7"/>
+    <rect x="644" y="181" width="115" height="115" fill="url(#poolGrad)" stroke="#c96410" opacity="0.82"/>
+    <rect x="656" y="169" width="115" height="115" fill="url(#poolGrad)" stroke="#c96410" opacity="0.92"/>
+    <rect x="668" y="157" width="115" height="115" fill="url(#poolGradFront)" stroke="#a34e08" stroke-width="1.5"/>
+    <clipPath id="poolFrontClip"><rect x="668" y="157" width="115" height="115"/></clipPath>
+    <g clip-path="url(#poolFrontClip)" opacity="0.5">
+      <use href="#brainArt" transform="translate(674.75,136.8) scale(0.35)"/>
+    </g>
+    <rect x="668" y="157" width="115" height="115" fill="#c96410" opacity="0.2"/>
+    <rect x="678" y="167" width="14" height="14" fill="none" stroke="#5c2c04" stroke-width="2"/>
+  </g>
+
+  <!-- connector: pooling front -> flatten -->
+  <line x1="783" y1="180" x2="825" y2="150" stroke="#333" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="783" y1="240" x2="825" y2="330" stroke="#333" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- ============ FLATTENING LAYER ============ -->
+  <g id="flatten">
+    <!-- 13 stacked cells forming the flattened feature vector -->
+    <rect x="822" y="130" width="26" height="20" fill="#f6d743"/>
+    <rect x="822" y="150" width="26" height="20" fill="#e8e05a"/>
+    <rect x="822" y="170" width="26" height="20" fill="#cfe07a"/>
+    <rect x="822" y="190" width="26" height="20" fill="#b3d98a"/>
+    <rect x="822" y="210" width="26" height="20" fill="#9ed49a"/>
+    <rect x="822" y="230" width="26" height="20" fill="#8fd0ab"/>
+    <rect x="822" y="250" width="26" height="20" fill="#8fc9c4"/>
+    <rect x="822" y="270" width="26" height="20" fill="#8fb9d6"/>
+    <rect x="822" y="290" width="26" height="20" fill="#9aa8dd"/>
+    <rect x="822" y="310" width="26" height="20" fill="#b3a0d6"/>
+    <rect x="822" y="330" width="26" height="20" fill="#cf9fce"/>
+    <rect x="822" y="350" width="26" height="20" fill="#e5a0bd"/>
+    <rect x="822" y="370" width="26" height="20" fill="#f0b3a8"/>
+    <rect x="822" y="130" width="26" height="260" fill="none" stroke="#555" stroke-width="1.5"/>
+  </g>
+
+  <!-- connector: flatten -> hidden FC nodes (one line per hidden node) -->
+  <line x1="848" y1="150" x2="930" y2="146" stroke="#333" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="848" y1="190" x2="930" y2="190" stroke="#333" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="848" y1="230" x2="930" y2="234" stroke="#333" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="848" y1="270" x2="930" y2="278" stroke="#333" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="848" y1="310" x2="930" y2="322" stroke="#333" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="848" y1="350" x2="930" y2="366" stroke="#333" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- ============ FULLY CONNECTED LAYERS ============ -->
+  <g id="fc">
+    <!-- hidden layer: 6 neurons -->
+    <circle cx="930" cy="146" r="15" fill="#c9de6a" stroke="#7a9a1e" stroke-width="1.5"/>
+    <circle cx="930" cy="190" r="15" fill="#c9de6a" stroke="#7a9a1e" stroke-width="1.5"/>
+    <circle cx="930" cy="234" r="15" fill="#c9de6a" stroke="#7a9a1e" stroke-width="1.5"/>
+    <circle cx="930" cy="278" r="15" fill="#c9de6a" stroke="#7a9a1e" stroke-width="1.5"/>
+    <circle cx="930" cy="322" r="15" fill="#c9de6a" stroke="#7a9a1e" stroke-width="1.5"/>
+    <circle cx="930" cy="366" r="15" fill="#c9de6a" stroke="#7a9a1e" stroke-width="1.5"/>
+
+    <!-- second hidden layer: 4 neurons -->
+    <circle cx="1055" cy="168" r="15" fill="#c9de6a" stroke="#7a9a1e" stroke-width="1.5"/>
+    <circle cx="1055" cy="212" r="15" fill="#c9de6a" stroke="#7a9a1e" stroke-width="1.5"/>
+    <circle cx="1055" cy="256" r="15" fill="#c9de6a" stroke="#7a9a1e" stroke-width="1.5"/>
+    <circle cx="1055" cy="300" r="15" fill="#c9de6a" stroke="#7a9a1e" stroke-width="1.5"/>
+
+    <!-- full connections: hidden layer 1 -> hidden layer 2 -->
+    <g stroke="#999" stroke-width="1">
+      <line x1="945" y1="146" x2="1040" y2="168"/>
+      <line x1="945" y1="146" x2="1040" y2="212"/>
+      <line x1="945" y1="146" x2="1040" y2="256"/>
+      <line x1="945" y1="146" x2="1040" y2="300"/>
+      <line x1="945" y1="190" x2="1040" y2="168"/>
+      <line x1="945" y1="190" x2="1040" y2="212"/>
+      <line x1="945" y1="190" x2="1040" y2="256"/>
+      <line x1="945" y1="190" x2="1040" y2="300"/>
+      <line x1="945" y1="234" x2="1040" y2="168"/>
+      <line x1="945" y1="234" x2="1040" y2="212"/>
+      <line x1="945" y1="234" x2="1040" y2="256"/>
+      <line x1="945" y1="234" x2="1040" y2="300"/>
+      <line x1="945" y1="278" x2="1040" y2="168"/>
+      <line x1="945" y1="278" x2="1040" y2="212"/>
+      <line x1="945" y1="278" x2="1040" y2="256"/>
+      <line x1="945" y1="278" x2="1040" y2="300"/>
+      <line x1="945" y1="322" x2="1040" y2="168"/>
+      <line x1="945" y1="322" x2="1040" y2="212"/>
+      <line x1="945" y1="322" x2="1040" y2="256"/>
+      <line x1="945" y1="322" x2="1040" y2="300"/>
+      <line x1="945" y1="366" x2="1040" y2="168"/>
+      <line x1="945" y1="366" x2="1040" y2="212"/>
+      <line x1="945" y1="366" x2="1040" y2="256"/>
+      <line x1="945" y1="366" x2="1040" y2="300"/>
+    </g>
+
+    <!-- output layer: 3 neurons (classification classes) -->
+    <circle cx="1180" cy="180" r="16" fill="#f4a58a" stroke="#c1502c" stroke-width="1.5"/>
+    <circle cx="1180" cy="234" r="16" fill="#c9a8e8" stroke="#7a4bb3" stroke-width="1.5"/>
+    <circle cx="1180" cy="288" r="16" fill="#a8dba0" stroke="#3f8f3f" stroke-width="1.5"/>
+
+    <!-- connections: hidden layer 2 -> output layer -->
+    <g stroke="#999" stroke-width="1">
+      <line x1="1070" y1="168" x2="1164" y2="180"/>
+      <line x1="1070" y1="168" x2="1164" y2="234"/>
+      <line x1="1070" y1="168" x2="1164" y2="288"/>
+      <line x1="1070" y1="212" x2="1164" y2="180"/>
+      <line x1="1070" y1="212" x2="1164" y2="234"/>
+      <line x1="1070" y1="212" x2="1164" y2="288"/>
+      <line x1="1070" y1="256" x2="1164" y2="180"/>
+      <line x1="1070" y1="256" x2="1164" y2="234"/>
+      <line x1="1070" y1="256" x2="1164" y2="288"/>
+      <line x1="1070" y1="300" x2="1164" y2="180"/>
+      <line x1="1070" y1="300" x2="1164" y2="234"/>
+      <line x1="1070" y1="300" x2="1164" y2="288"/>
+    </g>
+  </g>
+
+  <!-- output arrows + labels -->
+  <line x1="1196" y1="180" x2="1240" y2="180" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="1196" y1="234" x2="1240" y2="234" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="1196" y1="288" x2="1240" y2="288" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="1246" y="184" font-size="13" fill="#c1502c" font-weight="600">Tumor: Glioma</text>
+  <text x="1246" y="238" font-size="13" fill="#7a4bb3" font-weight="600">Tumor: Meningioma</text>
+  <text x="1246" y="292" font-size="13" fill="#3f8f3f" font-weight="600">No Tumor</text>
+  <text x="1246" y="150" font-size="14" font-weight="700" fill="#0056b3">Output</text>
+
+  <!-- ============ CAPTIONS / BRACES ============ -->
+  <!-- Input Image -->
+  <path d="M55,400 L55,406 L155,406 L155,412 M155,406 L255,406 L255,400" fill="none" stroke="#333" stroke-width="1.5"/>
+  <text x="155" y="428" text-anchor="middle" font-size="14" font-weight="700" fill="#222">Input Image(s)</text>
+  <text x="155" y="446" text-anchor="middle" font-size="12" fill="#555">MRI scan slices fed</text>
+  <text x="155" y="461" text-anchor="middle" font-size="12" fill="#555">into the network</text>
+
+  <!-- Convolution Layer -->
+  <path d="M300,400 L300,406 L422,406 L422,412 M422,406 L544,406 L544,400" fill="none" stroke="#333" stroke-width="1.5"/>
+  <text x="422" y="428" text-anchor="middle" font-size="14" font-weight="700" fill="#222">Convolution Layer</text>
+  <text x="422" y="446" text-anchor="middle" font-size="12" fill="#555">Learnable filters slide over the</text>
+  <text x="422" y="461" text-anchor="middle" font-size="12" fill="#555">image to extract features (edges,</text>
+  <text x="422" y="476" text-anchor="middle" font-size="12" fill="#555">textures, lesion boundaries)</text>
+
+  <!-- Pooling Layer -->
+  <path d="M620,400 L620,406 L695,406 L695,412 M695,406 L783,406 L783,400" fill="none" stroke="#333" stroke-width="1.5"/>
+  <text x="695" y="428" text-anchor="middle" font-size="14" font-weight="700" fill="#222">Pooling Layer</text>
+  <text x="695" y="446" text-anchor="middle" font-size="11.5" fill="#555">Shrinks feature maps</text>
+  <text x="695" y="460" text-anchor="middle" font-size="11.5" fill="#555">via max pooling —</text>
+  <text x="695" y="474" text-anchor="middle" font-size="11.5" fill="#555">less size, less compute</text>
+
+  <!-- Flattening Layer -->
+  <path d="M822,400 L822,406 L835,406 L835,412 M835,406 L848,406 L848,400" fill="none" stroke="#333" stroke-width="1.5"/>
+  <text x="835" y="428" text-anchor="middle" font-size="14" font-weight="700" fill="#222">Flattening</text>
+  <text x="835" y="446" text-anchor="middle" font-size="12" fill="#555">Reshapes the final</text>
+  <text x="835" y="461" text-anchor="middle" font-size="12" fill="#555">feature maps into a</text>
+  <text x="835" y="476" text-anchor="middle" font-size="12" fill="#555">1D vector</text>
+
+  <!-- Fully Connected Layer -->
+  <path d="M915,400 L915,406 L1055,406 L1055,412 M1055,406 L1196,406 L1196,400" fill="none" stroke="#333" stroke-width="1.5"/>
+  <text x="1055" y="428" text-anchor="middle" font-size="14" font-weight="700" fill="#222">Fully Connected Layers</text>
+  <text x="1055" y="446" text-anchor="middle" font-size="12" fill="#555">Dense (MLP) layers combine all</text>
+  <text x="1055" y="461" text-anchor="middle" font-size="12" fill="#555">extracted features to learn the</text>
+  <text x="1055" y="476" text-anchor="middle" font-size="12" fill="#555">final decision boundary</text>
+
+  <!-- Output -->
+  <text x="1290" y="428" text-anchor="middle" font-size="14" font-weight="700" fill="#222">Output</text>
+  <text x="1290" y="446" text-anchor="middle" font-size="12" fill="#555">Predicted class</text>
+  <text x="1290" y="461" text-anchor="middle" font-size="12" fill="#555">probabilities</text>
+
+  <!-- clarifying note on depth, spanning the full width below all captions -->
+  <rect x="55" y="495" width="1290" height="58" rx="5" fill="#fff3cd" stroke="#e0c060" stroke-width="1"/>
+  <text x="700" y="511" text-anchor="middle" font-size="11.5" fill="#7a5c00" font-weight="600">
+    ⚠ Simplified for clarity — this diagram shows only ONE Convolution + Pooling block.
+  </text>
+  <text x="700" y="527" text-anchor="middle" font-size="11.5" fill="#7a5c00">
+    Real CNNs (e.g. VGG, ResNet) stack many such blocks (5–50+ layers), each learning progressively higher-level features.
+  </text>
+  <text x="700" y="543" text-anchor="middle" font-size="11.5" fill="#7a5c00">
+    ▭ The small outlined squares mark the receptive field: a kernel of that same size is placed over the patch, its convolution is computed, and the single result replaces the corresponding pixel in the output feature map.
+  </text>
+</svg>

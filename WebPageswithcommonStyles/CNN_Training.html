@@ -186,8 +186,8 @@
 <body>
 
 <div class="container">
-    <h1>CNN Training Discussion Summary</h1>
-    <p>A comprehensive overview of our technical discussion on training Convolutional Neural Networks (CNNs), tracked from standard operational workflows to custom medical imaging solutions.</p>
+   <h1>CNN Training</h1>
+    <p>This tutorial explores the key challenges in large-scale CNN training for image recognition and outlines practical techniques for resolving them.</p>
 
     <h2>1. Standard Training Workflow Sequence</h2>
     <p>To systematically approach a new project, we mapped out the industry-standard progression:</p>
@@ -365,34 +365,51 @@
 </div>
 <p><strong>Micro-averaging</strong> aggregates individual counts globally and is structurally dominated by the head tier, masking total failure on rare anomalies. <strong>Global Accuracy</strong> is fundamentally untrustworthy; a naive model predicting Class 1 exclusively yields 30% baseline accuracy while achieving 0% recall across the remaining 24 classes.</p>
 
-<table>
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: left;">
     <thead>
-        <tr>
-            <th>Metric Condition</th>
-            <th>Mathematical Diagnostic</th>
-            <th>Immediate Engineering Action</th>
+        <tr style="background-color: #f2f2f2;">
+            <th style="width: 25%;">What You See (Symptom)</th>
+            <th style="width: 40%;">Why It Happens (Plain English)</th>
+            <th style="width: 35%;">What to Do (Fix)</th>
         </tr>
     </thead>
     <tbody>
         <tr>
-            <td><strong>Macro-F1 is low, but Micro-F1 and Global Accuracy appear high.</strong></td>
-            <td>Class 1 (300 images) plus Classes 2–4 (240 images) together account for $300+240=540$ of the 1000 images, i.e. 54% of the dataset. Micro-F1 and Accuracy compute one pooled score across all 1000 images, so getting these 540 "easy" images right — while getting all 460 long-tail images wrong — is already enough to make the pooled score look high, since 54% of the pool was never actually at risk. Macro-F1 doesn't pool images; it averages one score <em>per class</em> ($\frac{1}{25}\sum F_{1,k}$), so the 21 failing long-tail classes count exactly as much as the 4 succeeding ones and drag the average down regardless of how few images they contained.</td>
-            <td>Deprecate global accuracy as a primary optimization metric. Monitor and report per-class recall vectors and Macro-F1.</td>
+            <td><strong>High Overall Accuracy, but Low Macro-F1 Score</strong></td>
+            <td><strong>The Model Is Cheating by Counting Popular Classes:</strong><br>
+            The model correctly guesses the few large, "popular" classes (which make up 54% of all images) while failing on all 21 rare classes. Overall Accuracy looks high because it counts total images, but Macro-F1 grades every class equally, exposing that the rare categories are being ignored completely.</td>
+            <td><strong>Stop using Accuracy as your main metric.</strong> Track <em>Macro-F1</em> and per-class <em>Recall</em> so poor performance on rare classes isn't hidden behind popular ones.</td>
         </tr>
         <tr>
-            <td><strong>Mid-tier classes ($n_k = 80$) exhibit high variance and poor generalization.</strong></td>
-            <td>80 images is enough for a class to pull some gradient weight — unlike the 2–3-image tail classes — but not enough to independently learn robust convolutional filters (edges, textures, shapes at different poses/lighting) purely from its own data. Meanwhile the shared early conv layers are shaped mostly by Class 1's 300 images, since that class contributes roughly $\frac{300}{300+240}\approx 56\%$ of the head+mid gradient signal. The mid-tier classes end up leaning on features tuned for Class 1's appearance rather than their own. Two symptoms follow: <strong>high variance</strong> — which exact 80 images land in a given batch or augmentation pass swings the result noticeably, because there's no large pool to average that noise out over; and <strong>poor generalization</strong> — the decision boundary fits idiosyncrasies of those specific 80 images (a particular lighting condition, angle, or artifact) rather than the true, broader class manifold, so it fails on unseen examples that don't share those idiosyncrasies.</td>
-            <td>Deploy cost-sensitive loss functions (Weighted Cross-Entropy) + heavy augmentation. Initialize with a pre-trained transfer learning backbone.</td>
+            <td><strong>Mid-Sized Classes (~80 images) Give Unstable & Poor Results</strong></td>
+            <td><strong>Piggybacking on Large Classes & Gradient Bullying:</strong><br>
+            With 80 images, the model lacks enough data to build unique visual filters from scratch and gets overpowered by Class 1 (300 images). It forces the 80-image classes to "borrow" Class 1's filters, leading to severe overfitting on background details and lighting quirks.</td>
+            <td><strong>Combine 3 Engineering Fixes:</strong><br>
+    1. <strong>Transfer Learning:</strong> Provides ready-made, pre-trained visual feature maps, supplying the missing features that the model fails to learn when trained from scratch with limited data.<br>
+    2. <strong>Weighted Loss:</strong> Multiplies error penalties for small classes so 80 images exert equal learning force as 300 images.<br>
+    3. <strong>Data Augmentation:</strong> Rotates and crops images on the fly to multiply sample variety without gathering new data.</td>
+</tr>
         </tr>
+    <tr>
+    <td><strong>Tiny Tail Classes (&lt;10 images) Have a 0% Detection Rate</strong></td>
+    <td>
+        <strong>Complete Learning Starvation (No Gradient Signals):</strong><br>
+        When a class has fewer than 10 images, it almost never appears in random training batches, so its loss is rarely calculated. Without loss, there are no gradients; without gradients, the network's weights never update to recognize that class. The AI effectively acts as if that class doesn't exist.<br><br>
+        Even when a tail image is sampled, its gradient signal gets drowned out during mini-batch averaging:
+        <br><br>
+        <div style="text-align: center; font-family: monospace; background-color: #f9f9f9; padding: 6px; border-radius: 4px;">
+            Batch Gradient = (1 / N) * Σ (Gradient_i)
+        </div>
+        <br>
+        The single tail gradient is averaged with 31 or 63 majority-class gradients, causing <strong>gradient swamping</strong> where the strong signals from large classes completely erase the tiny update from the rare class.
+    </td>
+    <td><strong>Switch to Few-Shot Learning:</strong> Don't train a standard classifier. Instead, use a Siamese or Prototypical Network to map images into feature vectors and check if a new image is visually close in distance to your few sample images.You give them 1 sample photo of the rare bird to hold in their hand. When shown a new unknown picture, you ask: "Does this new picture look almost identical to the sample in your hand?</td>
+</tr>
         <tr>
-            <td><strong>Long-tail classes ($n_k < 10$) display a 0% True Positive Rate.</strong></td>
-            <td>With so few examples, the loss function never accumulates enough signal from these classes to push the decision boundary into a stable position around them — there simply isn't enough gradient evidence to "claim" a region of the output space.</td>
-            <td>Transition the tail from classification to <strong>Few-Shot Metric Learning</strong>. Train an embedding space via Siamese or Prototypical Networks using head/mid tiers, then evaluate tail instances using cosine or Euclidean distance.</td>
-        </tr>
-        <tr>
-            <td><strong>High False Positive and False Negative overlap between distinct long-tail classes.</strong></td>
-            <td>Feature confusion due to visual similarities. The network lacks the geometric samples to learn a separating boundary.</td>
-            <td>Inject deterministic domain knowledge. Concatenate fixed hand-crafted features (GLCM texture or LBP matrices) directly to the network's final latent vector.</td>
+            <td><strong>Rare Classes Keep Getting Confused With Each Other</strong></td>
+            <td><strong>Overlapping Visual Features:</strong><br>
+            The rare classes look visually similar, and because the model lacks enough sample images, it cannot learn where one class ends and the other begins.</td>
+            <td><strong>Inject Extra Visual Rules:</strong> Feed fixed, hand-crafted feature descriptors (like basic texture or edge rules) directly into the final decision layer to help separate look-alike classes.</td>
         </tr>
     </tbody>
 </table>
@@ -403,6 +420,7 @@
     <strong>Stage 1:</strong> An ordinary supervised CNN optimizing a 5-class problem: Class 1, 2, 3, 4, and an integrated "Out-of-Distribution / Rare Anomaly" background bucket (pooling all 460 tail images).
     <br>
     <strong>Stage 2:</strong> Images routed to the "Rare Anomaly" bucket are processed by a distance-based metric learning framework (Nearest Centroid) to identify the specific rare anomaly type without using Softmax classification.
+	
 </div>
 
 <h3>3.2 One-Sided Tail: Algorithmic &amp; Hybrid Solutions</h3>
@@ -426,10 +444,10 @@
 </ul>
 
 <h3>3.3 Two-Sided Tail Distributions</h3>
-<p>The anomaly problem above is a <strong>one-sided long tail</strong>: one majority class, and every rare class fans out on a single side of it. A genuinely different (and equally common) pattern is a <strong>two-sided tail</strong>: a majority class sitting in the middle, with two separate rare tails extending in opposite directions — not two variations of the same kind of rarity, but two structurally different failure directions. As with the anomaly example above, this is still a CNN <strong>image</strong> classification problem: a camera photographs each manufactured part on the line, and the network classifies that image into one of five ordered categories — Severely Undersize / Undersize / In-Spec / Oversize / Severely Oversize — rather than doing anomaly detection on non-visual sensor readings.</p>
+<p>Unlike the one-sided long tail above (one majority class, rarity fanning out on a single side), a <strong>two-sided tail</strong> has a majority class in the middle with two structurally different rare tails on opposite sides. It's still a CNN <strong>image</strong> classification task: a camera photographs each manufactured part, and the network sorts it into one of five ordered categories — Severely Undersize / Undersize / In-Spec / Oversize / Severely Oversize.</p>
 
 <div class="highlight-box">
-    <strong>Real industry example: machine-vision quality control with a two-sided tolerance.</strong> In manufacturing (machined parts, injection-molded components, semiconductor dies, pharmaceutical tablets), an inline camera captures an image of each part, and a measured feature visible in that image — a shaft's diameter, a coating's thickness, a solder joint's size — has a target value with an <strong>Upper Specification Limit (USL)</strong> and a <strong>Lower Specification Limit (LSL)</strong>. Most part images land safely inside the tolerance band (the majority, "in-spec" class). But defects can occur in <strong>two opposite directions</strong>: too small/thin/under-filled (one tail) or too large/thick/over-filled (the other tail) — and each direction typically has its own internal severity levels (mildly undersize vs. severely undersize, for example), so each tail is itself a small long tail. This is standard Six Sigma / Statistical Process Control territory, where <strong>Cp</strong> and <strong>Cpk</strong> are the process-capability indices used to quantify how well a process stays within both limits simultaneously. Suppose again a training set of $N=1000$ part images, this time labeled by the ground-truth caliper measurement into the five severity classes above:
+    <strong>Real industry example: machine-vision quality control.</strong> An inline camera photographs each manufactured part (machined parts, molded components, semiconductor dies, pharmaceutical tablets), and a measured feature — diameter, coating thickness, solder-joint size — must fall within an <strong>Upper Specification Limit (USL)</strong> and <strong>Lower Specification Limit (LSL)</strong>. Most parts are in-spec (majority); defects occur in two directions — undersize or oversize — each with its own severity levels, so each tail is itself a small long tail. This is Six Sigma / SPC territory, where <strong>Cp</strong> and <strong>Cpk</strong> quantify how well a process stays within both limits. For $N=1000$ part images labeled into the five severity classes:
     <div class="math-block">
         $$C_p = \frac{USL - LSL}{6\sigma} \qquad C_{pk} = \min\left(\frac{USL-\mu}{3\sigma},\ \frac{\mu-LSL}{3\sigma}\right)$$
     </div>
@@ -470,20 +488,13 @@
     <p class="diagram-caption">Fig. 4 — illustrative shape of a two-sided tail: one majority class in the middle, two independent rare tails extending in opposite directions, each with its own internal severity levels</p>
 </div>
 
-<p><strong>Worked example, tying the diagram to $C_{pk}$:</strong> suppose the target diameter is $10.00\text{mm}$ with $LSL = 9.90\text{mm}$ and $USL = 10.10\text{mm}$, and the process runs at $\mu = 10.01\text{mm}$, $\sigma = 0.03\text{mm}$. Then:</p>
+<p><strong>Worked example:</strong> target diameter $10.00\text{mm}$, $LSL = 9.90\text{mm}$, $USL = 10.10\text{mm}$, process at $\mu = 10.01\text{mm}$, $\sigma = 0.03\text{mm}$:</p>
 <div class="math-block">
     $$C_{pk} = \min\left(\frac{10.10-10.01}{0.09},\ \frac{10.01-9.90}{0.09}\right) = \min(1.00,\ 1.22) = 1.00$$
 </div>
-<p>A $C_{pk}$ of $1.00$ is below the $1.33$ comfort threshold — which is exactly why, out of 1000 parts, roughly 25 of them (the ~15 severely undersize plus ~10 severely oversize in the figure) fall outside spec even though the process mean is close to target. The undersize tail is thinner than the oversize tail here because $\mu$ sits slightly above center, closer to the USL side.</p>
+<p>$C_{pk}=1.00$ is below the $1.33$ comfort threshold, which is why ~25 of 1000 parts fall outside spec despite the mean being near target — the undersize tail is thinner since $\mu$ sits closer to the USL side.</p>
 
-<p><strong>Why this needs a different strategy than the one-sided anomaly problem above:</strong> separating "in-spec" from "defective" is usually the easy part here — undersize and oversize parts tend to look clearly different from good ones. The hard part, just like before, is the fine-grained classification <em>within</em> each tail (mild vs. severe undersize, mild vs. severe oversize), where sample counts drop fast the further out you go — so the same two-stage idea applies, just <strong>duplicated on both sides</strong>: an easier 3-way split (undersize / in-spec / oversize) first, then two separate few-shot/metric-learning models — one for undersize severity levels, one for oversize severity levels — since the two directions represent physically different failure mechanisms and shouldn't share one embedding space.</p>
-
-<p>The same two-sided-tail <em>shape</em> shows up well beyond machine vision — worth knowing, but note these next three are not image-classification tasks the way our CNN example is; they're included only to show how common this statistical pattern is:</p>
-<ul>
-    <li><strong>Semiconductor chip binning:</strong> most chips fall in the target performance bin; unusually slow/high-leakage chips and unusually fast/high-power chips are both rare bins on opposite ends of the same performance metric.</li>
-    <li><strong>Vital-sign / patient monitoring:</strong> most readings are in the normal range; bradycardia (too low) and tachycardia (too high) are both rare, clinically distinct alert classes on opposite sides of "normal."</li>
-    <li><strong>Credit risk scoring:</strong> most borrowers cluster around medium risk; both excellent-credit and severe-default cases are comparatively rare tails in opposite directions.</li>
-</ul>
+<p><strong>Strategy implication:</strong> separating in-spec from defective is easy; the hard part is fine-grained severity <em>within</em> each tail, where samples thin out fast the further out you go. The same two-stage idea from §3.2 applies, <strong>duplicated on both sides</strong>: an easy 3-way split (undersize / in-spec / oversize) first, then two separate few-shot models — one per tail — since the two failure directions shouldn't share one embedding space. (The same shape shows up elsewhere too — chip binning, vital-sign alerts, credit scoring — just not as image-classification tasks.)</p>
 
 <h3>3.4 Two-Sided Tail: Algorithmic Solutions</h3>
 <p>The objective here is to maintain feature discriminability at <em>both</em> ends of the spectrum without letting them cancel each other out or get overwhelmed by the center.</p>
@@ -503,212 +514,308 @@
     </li>
 </ul>
 
-<h3>3.5 Summary: One-Sided vs. Two-Sided Comparison</h3>
+<h3>3.5 Other Distribution Shapes: The General Multi-Class Long-Tail</h3>
+<p>The two patterns above are simplified cases of a broader shape you'll see called <strong>long-tailed recognition</strong> in the literature: many classes (not just the 1 head + 3 mid classes from §3.1) whose frequencies fall off along a smooth curve, conventionally split into <strong>head</strong> (abundant), <strong>body/medium</strong>, and <strong>tail</strong> (a handful of images each) classes — the same $K_{\text{head}}/K_{\text{mid}}/K_{\text{tail}}$ split already used for the 25-class anomaly set in §3.1, just generalized to dozens or hundreds of classes instead of 4.</p>
+
+<div class="highlight-box">
+    <strong>Real-world examples of the general long-tail shape:</strong> species/wildlife image classification (a handful of common species dominate a dataset while thousands of rarer species have only a few images each), retail product-defect catalogs (a few frequent defect types against a long catalog of rare ones), and industrial fault classification (a handful of common failure modes vs. dozens of rare ones). The frequency decay is often modeled as a power law/Zipf-style relation,
+    <div class="math-block">
+        $$n_k \propto k^{-s}$$
+    </div>
+    where $k$ is a class's frequency rank and $s$ controls how steep the drop-off is — a larger $s$ means a smaller handful of head classes dominate even more heavily.
+</div>
+
+<p>Because it's the same underlying shape as §3.1's tiered example — just more tiers, more classes — the diagnostic tools (per-class $F_1$, macro- vs. micro-averaging) and mitigations from §3.2 (weighted loss, transfer learning, augmentation, two-stage head/tail routing, few-shot learning for the deepest tail) carry over directly, so this shape doesn't need its own algorithmic-solutions subsection.</p>
+
+<h3>3.6 Summary: One-Sided vs. Two-Sided vs. Multi-Class Long-Tail Comparison</h3>
+
+<div class="diagram-box">
+    <svg viewBox="0 0 720 270" role="img" aria-label="Bar-chart comparison of one-sided, two-sided, and multi-class long-tail distribution shapes">
+        <!-- Panel A: One-Sided -->
+        <line x1="10" y1="220" x2="230" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <rect x="25" y="60" width="18" height="160" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="34" y="52" text-anchor="middle" font-size="10" fill="#234e52">300</text>
+        <rect x="47" y="177" width="18" height="43" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="69" y="177" width="18" height="43" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="91" y="177" width="18" height="43" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="113" y="208" width="18" height="12" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="135" y="212" width="18" height="8" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="157" y="215" width="18" height="5" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="179" y="217" width="18" height="3" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="201" y="219" width="18" height="1" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="120" y="245" text-anchor="middle" font-size="12" font-weight="600" fill="#2d3748">(a) One-Sided Tail (&sect;3.1)</text>
+        <text x="120" y="259" text-anchor="middle" font-size="10" font-style="italic" fill="#718096">K=25: 1 head + 3 mid + 21 rare</text>
+
+        <!-- Panel B: Two-Sided -->
+        <line x1="250" y1="220" x2="470" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <rect x="265" y="195" width="28" height="25" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="301" y="160" width="28" height="60" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="337" y="60" width="28" height="160" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="351" y="52" text-anchor="middle" font-size="10" fill="#234e52">800</text>
+        <rect x="373" y="150" width="28" height="70" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="409" y="200" width="28" height="20" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="360" y="245" text-anchor="middle" font-size="12" font-weight="600" fill="#2d3748">(b) Two-Sided Tail (&sect;3.3)</text>
+        <text x="360" y="259" text-anchor="middle" font-size="10" font-style="italic" fill="#718096">majority center, tails on both sides</text>
+
+        <!-- Panel C: Multi-Class Long-Tail -->
+        <line x1="490" y1="220" x2="710" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <rect x="500" y="60" width="12" height="160" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <rect x="515" y="140" width="12" height="80" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <rect x="530" y="167" width="12" height="53" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="545" y="180" width="12" height="40" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="560" y="188" width="12" height="32" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="575" y="193" width="12" height="27" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="590" y="197" width="12" height="23" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="605" y="200" width="12" height="20" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="620" y="202" width="12" height="18" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="635" y="204" width="12" height="16" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="650" y="205" width="12" height="15" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="665" y="207" width="12" height="13" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="600" y="245" text-anchor="middle" font-size="12" font-weight="600" fill="#2d3748">(c) Multi-Class Long-Tail (&sect;3.5)</text>
+        <text x="600" y="259" text-anchor="middle" font-size="10" font-style="italic" fill="#718096">power-law decay, head&rarr;body&rarr;tail</text>
+    </svg>
+    <p class="diagram-caption">Fig. 5 &mdash; statistical shape comparison: (a) a single one-sided tail (the 25-class anomaly set from &sect;3.1), (b) a two-sided tail flanking a central majority (the five-class tolerance example from &sect;3.3), and (c) a smooth multi-class power-law long-tail (&sect;3.5) &mdash; teal = head/majority, gold = mid/body, orange = tail classes</p>
+</div>
+
 <table>
     <thead>
         <tr>
             <th>Dimension</th>
             <th>One-Sided Tail Data</th>
             <th>Two-Sided Tail Data</th>
+            <th>Multi-Class Long-Tail (§3.5)</th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td><strong>Loss Landscape</strong></td>
-            <td>Dominated by a single massive majority class or normal baseline; gradients pushing towards predicting the nominal state.</td>
-            <td>Tug-of-war between two distinct extreme states, separated by a dominant "normal" middle region. Risks class-collapsing to the middle.</td>
+            <td>The massive amount of normal data overpowers the rare cases. This forces the model's updates to constantly favor predicting the normal state.</td>
+            <td>There is always gradient conflict.Imagine pushing a box left while someone else pushes it right with equal force—the box doesn't move. In neural networks, the error signals from the two extreme ends push the network's weights in opposite directions, canceling each other out and trapping the AI in the middle.</td>
+            <td>The same head-dominance effect as One-Sided, but replicated across every tail class at once: the head tier's loss contribution swamps the average, and each of the $K_{\text{tail}}$ classes individually gets too weak a gradient to carve out its own decision region.</td>
         </tr>
         <tr>
             <td><strong>Data Imbalance</strong></td>
             <td>Asymmetric ($1:N$ where $N \gg 1$). One minority positive class vs. majority negative class.</td>
             <td>Symmetric or Asymmetric Multi-Region ($N_{\text{left}} \ll N_{\text{mid}} \gg N_{\text{right}}$). Two distinct minority tails flanking a majority center.</td>
+            <td>Continuous power-law decay across $K$ classes ranked by frequency: $n_k \propto k^{-s}$. Not two or three discrete regions, but a smooth head &rarr; body &rarr; tail gradient over dozens or hundreds of classes.</td>
         </tr>
         <tr>
             <td><strong>Batch Composition</strong></td>
             <td>Standard random sampling leads to GPU batches containing zero tail samples.</td>
             <td>Standard random sampling starves <em>both</em> tails simultaneously, or severely over-represents the center.</td>
+            <td>Standard random sampling starves <em>most</em> of the $K_{\text{tail}}$ classes simultaneously — with enough tail classes, a typical batch may contain no tail samples at all, or at most one class's worth.</td>
         </tr>
         <tr>
             <td><strong>Boundary Mechanics</strong></td>
             <td>Single decision hyperplane separating normal vs. extreme tail.</td>
             <td>Two separate decision hyperplanes (or a non-linear closed manifold) separating Left Tail $\leftarrow$ Normal $\rightarrow$ Right Tail.</td>
+            <td>$K$-way Softmax decision regions, where head classes claim disproportionately large regions of the feature space and each tail class is squeezed into a sliver — the boundary problem is the one-sided problem repeated once per tail class.</td>
         </tr>
     </tbody>
 </table>
 </div>
 
-<div class="container">
-    <h1>Mathematical Formulations of CNN Interpretability</h1>
 
-    <p>To establish attribution mappings within deep networks, we use gradients of the network's output with respect to either the input pixels or intermediate feature maps, to quantify spatial and feature importance relative to a target classification decision.</p>
+	<h4>Overfitting: Mechanism, Diagnosis, and Fixes</h4>
+<p>A network overfits when it has enough capacity (parameters) to memorize the idiosyncrasies of the specific training images — a particular background, a specific lighting artifact, noise in a handful of pixels — rather than the true, generalizable pattern that defines the class. Memorizing noise still drives training loss down, but does nothing for images the network hasn't seen, so validation loss stops improving and eventually rises.</p>
 
-    <h2>1. Vanilla Saliency Maps</h2>
-    <p>Vanilla Saliency measures the sensitivity of a specific input pixel configuration toward a targeted output class logit score. It relies on a first-order (local) Taylor-series approximation of the network's highly non-linear decision function.</p>
+<div class="caution-box">
+    <strong>Why This Happens, in Plain Terms:</strong>
+    <p>Every model sits somewhere on a bias–variance tradeoff. Early in training, the network is still learning genuinely useful, generalizable features — both train and validation loss fall together (low variance regime). Past a certain point, the "easy" generalizable signal is exhausted, and the only way to keep pushing training loss down is to start fitting sample-specific noise (high variance regime). Since that noise is different in every image, fitting it on the training set actively hurts performance on the validation set — the two loss curves diverge.</p>
+    <p>This is exactly why a single loss number is a poor stopping signal: training loss will happily keep falling long after it has stopped meaning anything useful.</p>
+</div>
 
-    <p>Let $I \in \mathbb{R}^{H \times W \times C}$ be the input image, and let $S_c(I)$ be the unnormalized output score (logit) for class $c$, prior to the softmax activation. The local linear approximation around a specific image $I_0$ is:</p>
+<p><strong>Worked example:</strong> training a CNN on $N=500$ images with early stopping disabled, logging loss every 5 epochs:</p>
 
-    <div class="math-block">
-        $$S_c(I) \approx w^T I + b$$
-    </div>
+<table>
+    <thead>
+        <tr><th>Epoch</th><th>Train Loss</th><th>Val Loss</th><th>Generalization Gap</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>1</td><td>0.85</td><td>0.88</td><td>0.03</td></tr>
+        <tr><td>5</td><td>0.42</td><td>0.51</td><td>0.09</td></tr>
+        <tr><td>10</td><td>0.21</td><td>0.38</td><td>0.17</td></tr>
+        <tr><td><strong>15</strong></td><td><strong>0.09</strong></td><td><strong>0.35</strong></td><td><strong>0.26</strong></td></tr>
+        <tr><td>20</td><td>0.03</td><td>0.42</td><td>0.39</td></tr>
+        <tr><td>25</td><td>0.01</td><td>0.55</td><td>0.54</td></tr>
+        <tr><td>30</td><td>0.005</td><td>0.70</td><td>0.695</td></tr>
+    </tbody>
+</table>
+<p>Validation loss bottoms out at epoch 15 ($0.35$) and rises every epoch after — the network has moved from learning to memorizing. The generalization gap, $L_{\text{val}} - L_{\text{train}}$, is the number to actually watch: it grows monotonically once overfitting begins, well before the raw validation number looks alarming.</p>
 
-    <div class="explain-box">
-        <span class="q-label">STUDENT Q&amp;A</span>
-        <p><strong>What is $S_c(I)$, the "unnormalized output"?</strong></p>
-        <p>In a classification network, the final layer produces one raw real-valued number per class — these are called <strong>logits</strong>. $S_c(I)$ is the logit for class $c$ given input $I$: just one entry of the vector output by the last fully-connected layer, <em>before</em> it passes through softmax.</p>
-        <p>Why "unnormalized" matters: softmax turns the logit vector into a probability distribution via $p_c = e^{S_c}/\sum_{c'} e^{S_{c'}}$ — but that normalization couples every class's probability to every other class's logit; if one logit rises, another class's probability falls even if its own logit didn't change. For saliency/Grad-CAM, we want "what makes the network's raw evidence for class $c$ go up or down," independent of competition from other classes — so we differentiate the pre-softmax logit $S_c$, not the post-softmax probability $p_c$.</p>
-    </div>
+<div class="diagram-box">
+    <svg viewBox="0 0 680 260" role="img" aria-label="Train and validation loss curves diverging, marking the early stopping point">
+        <line x1="40" y1="220" x2="640" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <line x1="40" y1="40" x2="40" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <text x="340" y="245" text-anchor="middle" font-size="12" fill="#718096">Epoch</text>
+        <text x="20" y="130" text-anchor="middle" font-size="12" fill="#718096" transform="rotate(-90 20 130)">Loss</text>
+        <polyline points="40,60 140,130 240,175 340,195 440,204 540,209 640,211" fill="none" stroke="#319795" stroke-width="2.5"/>
+        <polyline points="40,55 140,120 240,155 340,163 440,148 540,116 640,72" fill="none" stroke="#dd6b20" stroke-width="2.5"/>
+        <line x1="340" y1="40" x2="340" y2="220" stroke="#c05621" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="340" y="30" text-anchor="middle" font-size="12" font-weight="600" fill="#c05621">Early stopping point (epoch 15)</text>
+        <rect x="470" y="45" width="14" height="14" fill="#319795"/>
+        <text x="490" y="56" font-size="12" fill="#234e52">Train Loss</text>
+        <rect x="470" y="65" width="14" height="14" fill="#dd6b20"/>
+        <text x="490" y="76" font-size="12" fill="#7b341e">Validation Loss</text>
+    </svg>
+    <p class="diagram-caption">Fig. 6 — train loss keeps falling while validation loss bottoms out and rises; the divergence point is where memorization overtakes generalization</p>
+</div>
 
-    <p>where $w$ is the gradient of the class score with respect to the input, evaluated at $I_0$ — the direction of steepest local change in the score:</p>
+<div class="highlight-box">
+    <strong>Regularization Toolkit:</strong>
+    <ul>
+        <li><strong>L2 Weight Decay:</strong> add a penalty on large weights to the loss, $\mathcal{L}_{\text{reg}} = \mathcal{L}_{\text{CE}} + \lambda \sum_i w_i^2$. Large weights let the network fit sharp, idiosyncratic patterns; penalizing them keeps the decision function smoother and less able to memorize noise.</li>
+        <li><strong>Dropout:</strong> zero out each neuron's activation independently with probability $p$ during training. This prevents any single neuron from becoming a dedicated "memorizer" for a specific training example, since it can't rely on any other specific neuron being present on a given forward pass.</li>
+        <li><strong>Early Stopping:</strong> stop training at $t^{*} = \arg\min_t L_{\text{val}}(t)$ — the epoch of minimum validation loss — rather than a fixed epoch count.</li>
+        <li><strong>Data Augmentation</strong> (already covered in §1): directly increases effective dataset diversity, raising the amount of genuine signal available before the network is forced to resort to memorization.</li>
+    </ul>
+</div>
+<h4>Why Cross-Entropy, and Why Adam Over Plain SGD</h4>
+<p>Cross-entropy loss isn't an arbitrary choice — for a classification network outputting a probability $\hat p_c$ per class, it is the loss that falls out of maximum-likelihood estimation under a categorical distribution:</p>
+<div class="math-block">
+    $$\mathcal{L}_{\text{CE}} = -\sum_{c=1}^{K} y_c \log(\hat p_c)$$
+</div>
+<p>where $y_c$ is 1 for the true class and 0 otherwise. Minimizing this is mathematically identical to maximizing the likelihood the network assigns to the correct labels.</p>
 
-    <div class="math-block">
-        $$w = \left. \frac{\partial S_c(I)}{\partial I} \right|_{I = I_0}$$
-    </div>
+<p><strong>Vanilla SGD</strong> updates every parameter by the same fixed step size in the direction of the gradient:</p>
+<div class="math-block">
+    $$\theta_t = \theta_{t-1} - \eta\, g_t$$
+</div>
+<p><strong>Adam</strong> instead tracks a running estimate of each parameter's gradient mean ($m_t$) and squared magnitude ($v_t$), then scales the step per-parameter:</p>
+<div class="math-block">
+    $$m_t = \beta_1 m_{t-1} + (1-\beta_1) g_t \qquad v_t = \beta_2 v_{t-1} + (1-\beta_2) g_t^2$$
+    $$\theta_t = \theta_{t-1} - \eta \frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}$$
+</div>
+<p>Intuition: $m_t$ smooths out noisy, oscillating gradient directions the way momentum smooths a ball rolling downhill. Dividing by $\sqrt{v_t}$ means a parameter that has recently seen large gradients gets a smaller effective step (preventing overshoot), while a parameter with small or sparse gradients — common in early conv filters that only activate on rare patterns — gets a relatively larger step. This adaptive, per-parameter scaling is why Adam typically converges faster and needs far less learning-rate tuning than plain SGD, especially in the first several epochs.</p>
 
-    <p>To collapse the $H \times W \times C$ gradient tensor $w$ into a single 2D spatial heatmap $M_{\text{Saliency}}$, the maximum absolute gradient magnitude across the channel dimension $C$ is taken at each spatial location:</p>
+<div class="diagram-box">
+    <svg viewBox="0 0 680 240" role="img" aria-label="Loss versus epoch comparing Adam and plain SGD convergence speed">
+        <line x1="40" y1="220" x2="640" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <line x1="40" y1="40" x2="40" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <text x="340" y="238" text-anchor="middle" font-size="12" fill="#718096">Epoch</text>
+        <text x="20" y="130" text-anchor="middle" font-size="12" fill="#718096" transform="rotate(-90 20 130)">Loss</text>
+        <polyline points="40,58 140,130 240,175 340,195 440,204 540,209 640,211" fill="none" stroke="#319795" stroke-width="2.5"/>
+        <polyline points="40,58 140,85 240,121 340,144 440,162 540,175 640,184" fill="none" stroke="#dd6b20" stroke-width="2.5"/>
+        <rect x="470" y="45" width="14" height="14" fill="#319795"/>
+        <text x="490" y="56" font-size="12" fill="#234e52">Adam</text>
+        <rect x="470" y="65" width="14" height="14" fill="#dd6b20"/>
+        <text x="490" y="76" font-size="12" fill="#7b341e">Plain SGD</text>
+    </svg>
+    <p class="diagram-caption">Fig. 7 — Adam's adaptive per-parameter step size drives faster early convergence than a fixed global learning rate</p>
+</div>
 
-    <div class="math-block">
-        $$M_{\text{Saliency}}(i, j) = \max_{c'} \left| w_{i,j,c'} \right|$$
-    </div>
+<p><strong>Caveat worth knowing:</strong> Adam's speed advantage is mostly early. On long training runs with a carefully tuned learning-rate schedule, SGD with momentum sometimes reaches a <em>better</em> final validation result than Adam — which is why some large-scale training recipes still use SGD + warmup + cosine decay rather than Adam by default. Adam is the safer, lower-effort choice; well-tuned SGD is the higher-effort, occasionally higher-ceiling choice.</p>
 
-    <h2>2. Grad-CAM (Gradient-weighted Class Activation Mapping)</h2>
-    <p>Grad-CAM operates over high-level, coarse feature spaces. Instead of using raw input-pixel gradients, it takes gradients with respect to the feature activation maps of the network's final convolutional layer, which retains more global semantic localization than pixel-space saliency.</p>
+<p><strong>Learning-rate decay</strong>, briefly: rather than a single fixed $\eta$, common schedules shrink the step size as training progresses — large steps early to explore quickly, small steps later to fine-tune without overshooting the minimum:</p>
+<div class="math-block">
+    $$\text{Step decay: } \eta_t = \eta_0 \cdot \gamma^{\lfloor t/s \rfloor} \qquad \text{Cosine annealing: } \eta_t = \eta_{\min} + \tfrac{1}{2}(\eta_0-\eta_{\min})\left(1+\cos\left(\tfrac{\pi t}{T}\right)\right)$$
+</div>
+<h4>Worked Example: Why Random Search Beats Grid Search</h4>
+<p>Suppose you're tuning $d=3$ hyperparameters — learning rate, batch size, dropout rate — with $k=4$ candidate values each. A full grid search requires:</p>
+<div class="math-block">
+    $$k^d = 4^3 = 64 \text{ trials}$$
+</div>
+<p>But here's the catch: across all 64 trials, learning rate is only ever tested at <strong>4 distinct values</strong> — the same is true for batch size and dropout. If it turns out only learning rate actually matters much for validation performance (a common outcome in practice), 60 of those 64 trials are wasted re-testing combinations of batch size and dropout that don't move the needle.</p>
+<p>Random search instead draws each hyperparameter independently from a continuous range. With $n=20$ trials — <strong>31% of the grid's compute</strong> — learning rate alone gets tested at up to 20 distinct values, a 5&times; finer sweep of the one dimension that matters, for less than a third of the cost:</p>
 
-    <p>Let $A^k \in \mathbb{R}^{U \times V}$ be the $k$-th feature-map channel produced by the final convolutional layer, where $U$ and $V$ are its spatial dimensions. First, the gradient of the class logit with respect to each activation element is computed:</p>
+<table>
+    <thead>
+        <tr><th>Strategy</th><th>Trials for Comparable Coverage</th><th>Distinct Values per Hyperparameter</th><th>Best For</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Grid Search</strong></td><td>64</td><td>4</td><td>Small spaces ($d \le 2$), guaranteed exhaustive coverage</td></tr>
+        <tr><td><strong>Random Search</strong></td><td>~20</td><td>20</td><td>Larger spaces where only 1–2 hyperparameters actually matter</td></tr>
+        <tr><td><strong>Bayesian Optimization</strong></td><td>~15–20</td><td>Adaptive</td><td>Expensive-to-train models where every trial's result should inform the next choice</td></tr>
+    </tbody>
+</table>
 
-    <div class="math-block">
-        $$\frac{\partial S_c}{\partial A^k_{i,j}}$$
-    </div>
+<div class="diagram-box">
+    <svg viewBox="0 0 680 220" role="img" aria-label="Bar chart comparing trials needed for grid, random, and Bayesian hyperparameter search">
+        <line x1="60" y1="200" x2="620" y2="200" stroke="#a0aec0" stroke-width="1"/>
+        <rect x="100" y="54" width="120" height="146" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="160" y="44" text-anchor="middle" font-size="13" font-weight="600" fill="#7b341e">64</text>
+        <text x="160" y="216" text-anchor="middle" font-size="12" fill="#7b341e">Grid Search</text>
+        <rect x="280" y="154" width="120" height="46" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="340" y="144" text-anchor="middle" font-size="13" font-weight="600" fill="#234e52">20</text>
+        <text x="340" y="216" text-anchor="middle" font-size="12" fill="#234e52">Random Search</text>
+        <rect x="460" y="159" width="120" height="41" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <text x="520" y="149" text-anchor="middle" font-size="13" font-weight="600" fill="#7b5e12">18</text>
+        <text x="520" y="216" text-anchor="middle" font-size="12" fill="#7b5e12">Bayesian Opt.</text>
+    </svg>
+    <p class="diagram-caption">Fig. 8 — trials needed for comparable hyperparameter-space coverage across the three search strategies (illustrative)</p>
+</div>
 
-    <p>These localized gradients are then collapsed into a single per-channel importance weight $\alpha_k^c$ via <strong>Global Average Pooling (GAP)</strong> over the $U \times V$ spatial grid:</p>
+<p><strong>Bayesian optimization</strong> pushes this further by using every trial's result to choose the next one, rather than sampling blindly: a surrogate model (typically a Gaussian Process) fits the observed (hyperparameters, validation score) pairs, and an acquisition function picks the next point expected to improve on the best score so far:</p>
+<div class="math-block">
+    $$x_{t+1} = \arg\max_x\ \mathbb{E}\big[\max(f(x) - f(x^{+}), 0)\big]$$
+</div>
+<p>where $f(x^{+})$ is the best validation score observed so far. This is why Bayesian tools like Optuna or Ray Tune tend to reach a good configuration in fewer trials than blind random search — each trial is chosen to be maximally informative given everything learned so far, not just another independent guess.</p>
 
-    <div class="math-block">
-        $$\alpha_k^c = \frac{1}{U \times V} \sum_{i=1}^{U} \sum_{j=1}^{V} \frac{\partial S_c}{\partial A^k_{i,j}}$$
-    </div>
+<h2>4. Putting It All Together: A Practical CNN Training Approach</h2>
 
-    <p>Finally, the $K$ feature maps are combined as a weighted sum using $\alpha_k^c$, and passed through a <strong>ReLU</strong> to keep only the features that have a positive influence on class $c$:</p>
+<p>Every piece covered above answers a different question that comes up during CNN training. Laid out as a single sequence, here's how they fit together:</p>
 
-    <div class="math-block">
-        $$L_{\text{Grad-CAM}}^c = \text{ReLU}\left( \sum_k \alpha_k^c A^k \right)$$
-    </div>
+<div class="highlight-box">
+    <strong>The five-step approach:</strong>
+    <ol>
+        <li><strong>Run the standard workflow first</strong> (&sect;1) — train/val split, epoch loop, log train and val loss every epoch. Nothing below matters if this loop isn't in place and monitored.</li>
+        <li><strong>Diagnose the shape of your class distribution</strong> (&sect;3) — balanced, one-sided tail, two-sided tail, or a multi-class long-tail. Plot per-class counts before choosing anything else; the shape determines every decision that follows.</li>
+        <li><strong>Apply the matching imbalance strategy</strong> — weighted loss and resampling for a mild one-sided tail (&sect;3.2), a two-stage/duplicated-branch approach for a two-sided tail (&sect;3.4), or head/body/tail-aware few-shot methods for a multi-class long-tail (&sect;3.5). Skip this step entirely if the distribution is already balanced.</li>
+        <li><strong>Train with a sensible default loss/optimizer</strong> (Cross-Entropy + Adam), and watch the train-vs-val loss curves from step 1 for the overfitting signature — rising val loss while train loss keeps falling. Apply augmentation, dropout, or early stopping the moment that gap opens, not after.</li>
+        <li><strong>Tune what's left with Random Search or Bayesian Optimization</strong>, not Grid Search — and only after the data and architecture decisions above are locked in, since retuning hyperparameters on top of a shifting data strategy wastes most of the search.</li>
+    </ol>
+</div>
 
-    <div class="explain-box">
-        <span class="q-label">STUDENT Q&amp;A</span>
-        <p><strong>Does Grad-CAM happen during or after training?</strong></p>
-        <p><strong>After.</strong> Grad-CAM is a post-hoc interpretability technique, not part of the training loop or loss function.</p>
-        <ol>
-            <li>Train the CNN normally to convergence (or to whichever checkpoint you want to inspect) — training uses ordinary backprop of the <em>loss</em> to update <em>weights</em>.</li>
-            <li>Take a <strong>trained, frozen</strong> model. Pick a specific input image and a target class $c$ (usually the predicted class, or the true class if diagnosing a misclassification).</li>
-            <li>Run one <strong>forward pass</strong> to get the logit $S_c$ and the feature maps $A^k$ at the chosen convolutional layer.</li>
-            <li>Run one <strong>backward pass</strong> — but differentiate $S_c$ with respect to the activations $A^k$, not the loss with respect to the weights. No parameter update happens.</li>
-            <li>Use those gradients to compute $\alpha_k^c$, then the weighted, ReLU'd combination $L^c_{\text{Grad-CAM}}$ — this produces a diagnostic heatmap, not a gradient step.</li>
-        </ol>
-        <p>The superficial similarity to training (both use backprop) is exactly what causes the confusion. The crucial distinction is <em>what</em> is differentiated with respect to <em>what</em>, and that the weights never change — it's the same autograd machinery repurposed for explanation on an already-finished model, not for learning.</p>
-    </div>
+<div class="diagram-box">
+    <svg viewBox="0 0 680 500" role="img" aria-label="Flowchart of the five-step practical CNN training approach">
+        <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#718096"/>
+            </marker>
+        </defs>
 
-    <div class="diagram-box">
-        <svg viewBox="0 0 680 175" role="img" aria-label="Grad-CAM pipeline run after training on a frozen model">
-            <defs>
-                <marker id="arr4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                    <path d="M2 1L8 5L2 9" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </marker>
-            </defs>
-            <text x="40" y="26" font-size="12" fill="#718096">After training completes &mdash; model weights are frozen</text>
-            <g>
-                <rect x="40" y="50" width="130" height="56" rx="8" fill="#f7fafc" stroke="#a0aec0" stroke-width="1"/>
-                <text x="105" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#2d3748">Trained model</text>
-                <text x="105" y="88" text-anchor="middle" font-size="12" fill="#4a5568">Weights frozen</text>
-            </g>
-            <g>
-                <rect x="190" y="50" width="120" height="56" rx="8" fill="#ebf8ff" stroke="#3182ce" stroke-width="1"/>
-                <text x="250" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#1a365d">Forward pass</text>
-                <text x="250" y="88" text-anchor="middle" font-size="12" fill="#2b6cb0">Get Sc and Ak</text>
-            </g>
-            <g>
-                <rect x="330" y="50" width="130" height="56" rx="8" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
-                <text x="395" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#7b341e">Backward pass</text>
-                <text x="395" y="88" text-anchor="middle" font-size="12" fill="#c05621">dSc/dAk only</text>
-            </g>
-            <g>
-                <rect x="480" y="50" width="140" height="56" rx="8" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
-                <text x="550" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#234e52">Weight + ReLU</text>
-                <text x="550" y="88" text-anchor="middle" font-size="12" fill="#285e61">Produce heatmap</text>
-            </g>
-            <line x1="170" y1="78" x2="188" y2="78" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr4)"/>
-            <line x1="310" y1="78" x2="328" y2="78" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr4)"/>
-            <line x1="460" y1="78" x2="478" y2="78" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr4)"/>
-            <text x="40" y="135" font-size="12" fill="#718096">No parameter update happens anywhere in this pipeline</text>
-        </svg>
-        <p class="diagram-caption">Fig. 3 &mdash; Grad-CAM runs after training, on a frozen model, differentiating the logit w.r.t. activations instead of the loss w.r.t. weights</p>
-    </div>
+        <rect x="90" y="20" width="500" height="46" rx="6" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="340" y="48" text-anchor="middle" font-size="12.5" fill="#234e52">1. Standard workflow — train/val split, epoch loop, monitor loss (&sect;1)</text>
 
-    <div class="explain-box">
-        <span class="q-label">STUDENT Q&amp;A</span>
-        <p><strong>Grad-CAM pseudocode</strong></p>
-        <p>The backward pass here differentiates the logit $S_c$ with respect to the activations $A^k$, not the loss with respect to the weights &mdash; and nothing gets updated. Two hooks are the whole trick: they tap into a chosen convolutional layer's output and its incoming gradient without changing how the model normally runs.</p>
-        <pre class="code-block"><code>function grad_cam(model, image, target_class, target_layer):
-    model.eval()                        <span class="comment"># freeze: no dropout, no batchnorm updates</span>
-    model.requires_grad_(False)         <span class="comment"># no weight gradients needed at all</span>
+        <line x1="340" y1="66" x2="340" y2="104" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-    activations = None
-    gradients = None
+        <rect x="90" y="106" width="500" height="46" rx="6" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <text x="340" y="134" text-anchor="middle" font-size="12.5" fill="#7b5e12">2. Diagnose the data distribution shape (&sect;3)</text>
 
-    <span class="comment"># hook 1: capture the feature maps A^k during the forward pass</span>
-    def forward_hook(module, input, output):
-        nonlocal activations
-        activations = output.detach()
+        <line x1="200" y1="152" x2="140" y2="192" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="340" y1="152" x2="340" y2="192" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="480" y1="152" x2="540" y2="192" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-    <span class="comment"># hook 2: capture dSc/dA^k during the backward pass</span>
-    def backward_hook(module, grad_input, grad_output):
-        nonlocal gradients
-        gradients = grad_output[0].detach()
+        <rect x="95" y="194" width="150" height="42" rx="5" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="170" y="219" text-anchor="middle" font-size="11" fill="#7b341e">One-Sided (&sect;3.1&ndash;3.2)</text>
+        <rect x="265" y="194" width="150" height="42" rx="5" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="340" y="219" text-anchor="middle" font-size="11" fill="#7b341e">Two-Sided (&sect;3.3&ndash;3.4)</text>
+        <rect x="435" y="194" width="150" height="42" rx="5" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="510" y="219" text-anchor="middle" font-size="11" fill="#7b341e">Multi-Class LT (&sect;3.5)</text>
 
-    target_layer.register_forward_hook(forward_hook)
-    target_layer.register_full_backward_hook(backward_hook)
+        <line x1="170" y1="236" x2="320" y2="278" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="340" y1="236" x2="340" y2="278" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="510" y1="236" x2="360" y2="278" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-    <span class="comment"># ---- forward pass ----</span>
-    logits = model(image)               <span class="comment"># S_c(I) for every class c</span>
-    score = logits[0, target_class]     <span class="comment"># pick S_c for our target class</span>
+        <rect x="90" y="280" width="500" height="46" rx="6" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="340" y="308" text-anchor="middle" font-size="12.5" fill="#234e52">3. Apply the matching imbalance-handling strategy</text>
 
-    <span class="comment"># ---- backward pass (NOT a training step) ----</span>
-    model.zero_grad()
-    score.backward()                    <span class="comment"># populates `gradients` via the hook</span>
-                                         <span class="comment"># no optimizer.step() is ever called</span>
+        <line x1="340" y1="326" x2="340" y2="364" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-    <span class="comment"># ---- global average pool the gradients -> alpha_k^c ----</span>
-    weights = gradients.mean(dim=[2, 3])          <span class="comment"># average over H, W per channel k</span>
+        <rect x="90" y="366" width="500" height="52" rx="6" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <text x="340" y="388" text-anchor="middle" font-size="12.5" fill="#7b5e12">4. Train with Cross-Entropy + Adam — watch train vs.</text>
+        <text x="340" y="405" text-anchor="middle" font-size="12.5" fill="#7b5e12">val loss for overfitting</text>
 
-    <span class="comment"># ---- weighted combination of feature maps, then ReLU ----</span>
-    cam = sum(weights[k] * activations[k] for k in range(len(weights)))
-    cam = relu(cam)
+        <line x1="340" y1="418" x2="340" y2="456" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-    <span class="comment"># ---- upsample coarse map to input image size for overlay ----</span>
-    cam = resize(cam, size=image.shape[-2:])
-    cam = cam / cam.max()               <span class="comment"># normalize to [0, 1] for visualization</span>
+        <rect x="90" y="458" width="500" height="42" rx="6" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="340" y="483" text-anchor="middle" font-size="12.5" fill="#234e52">5. Tune remaining hyperparameters: Random Search / Bayesian Opt.</text>
+    </svg>
+    <p class="diagram-caption">Fig. 9 &mdash; the five-step practical approach to CNN training, from workflow setup through final hyperparameter tuning, with the imbalance-diagnosis branch (&sect;3) sitting at the center of the pipeline</p>
+</div>
 
-    return cam</code></pre>
-    </div>
+<p><strong>A note before the full review:</strong> the ordering above is deliberate — data-distribution diagnosis (step 2) comes before loss/optimizer choice and hyperparameter tuning (steps 4&ndash;5) because an imbalance strategy changes what "good" training even looks like (e.g., which metric to watch, how batches are composed), and re-tuning on top of a shifting data strategy wastes most of a search budget.</p>
 
-    <h3>3. Debugging CNNs with Grad-CAM &amp; Saliency Maps</h3>
-    <div class="summary-card">
-        <ul>
-            <li>
-                <strong>Exposes Data Leakage:</strong> They reveal if the model is "cheating" by focusing on background artifacts like text watermarks, scanner borders, or timestamps instead of the actual target object.
-            </li>
-            <li>
-                <strong>Diagnoses Feature Misattribution:</strong> They show if the model is looking at the wrong part of an image (e.g., surrounding healthy tissue instead of a lesion), indicating it has learned incorrect visual rules.
-            </li>
-            <li>
-                <strong>Detects Pixel-Level Underfitting:</strong> If Vanilla Saliency displays scattered, uniform noise rather than clear object boundaries, it signals that early convolutional layers have failed to learn meaningful spatial shapes.
-            </li>
-            <li>
-                <strong>Validates True Positives:</strong> They help verify whether correct predictions were driven by genuine feature recognition or by spurious background correlations.
-            </li>
-            <li>
-                <strong>Identifies Blind Spots (False Negatives):</strong> They map exactly where the network looked when it missed a target completely, pinpointing whether it was distracted by competing visual elements.
-            </li>
-        </ul>
-        <p style="margin-top:12px; margin-bottom:0;"><em>Note: Grad-CAM's resolution is limited to the spatial size of the final conv layer ($U \times V$, typically much smaller than the input image), so it's upsampled for display — it localizes coarse regions well but isn't pixel-precise. For finer boundaries, it's often paired with Guided Backpropagation (Guided Grad-CAM).</em></p>
-    </div>
 </div>
 
 </body>
