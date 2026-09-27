@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLHF Training — Complete Walkthrough</title>
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+          ignoreHtmlClass: 'tex2jax_ignore'
+        },
+        startup: {
+          pageReady: () => {
+            return MathJax.startup.defaultPageReady().then(() => {
+              document.body.style.visibility = 'visible';
+            });
+          }
+        }
+      };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background-color: #f9f9f9;
+            visibility: hidden; /* revealed once MathJax finishes typesetting */
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #1a365d;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            font-size: 28px;
+        }
+        h2 {
+            color: #2b6cb0;
+            font-size: 20px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #2d3748;
+            font-size: 16px;
+            margin-top: 24px;
+        }
+        p { margin: 10px 0; }
+        ul, ol { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+        strong { color: #1a202c; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f7fafc;
+            color: #4a5568;
+            font-weight: 600;
+        }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .highlight-box {
+            background-color: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .caution-box {
+            background-color: #fffaf0;
+            border-left: 4px solid #dd6b20;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .explain-box {
+            background-color: #f5f3ff;
+            border-left: 4px solid #7c3aed;
+            padding: 16px 20px;
+            margin: 16px 0 24px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .explain-box .q-label {
+            display: inline-block;
+            background-color: #7c3aed;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-bottom: 8px;
+        }
+        .explain-box p:first-of-type { margin-top: 4px; }
+        .math-block {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 14px 20px;
+            margin: 16px 0;
+            overflow-x: auto;
+            text-align: center;
+        }
+        code {
+            background-color: #edf2f7;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 0.92em;
+        }
+        .diagram-frame {
+            background-color: #fbfbfc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 18px 0;
+            overflow-x: auto;
+        }
+        .diagram-frame svg {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .diagram-caption {
+            text-align: center;
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+        .algorithm-box {
+            background-color: #f5f8ff;
+            border: 1px solid #cfe0fa;
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin: 20px 0;
+        }
+        .algorithm-box .label {
+            display: block;
+            font-weight: 700;
+            color: #1a365d;
+            font-size: 13px;
+            letter-spacing: 0.02em;
+            margin-bottom: 10px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #e2e8f0;
+            padding: 10px 12px;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #f7fafc;
+            color: #4a5568;
+            font-weight: 600;
+        }
+        .data-table tr:nth-child(even) { background-color: #f8fafc; }
+        /* Was used in the body but never defined — rendered completely
+           unstyled until now. */
+        .analogy-box {
+            background-color: #f5fbf5;
+            border-left: 4px solid #38a169;
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .analogy-box .label {
+            display: inline-block;
+            background-color: #38a169;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<h2>3.1 What is Reinforcement Learning (RL)?</h2>
+<p>
+  Before diving into Large Language Models and alignment, we must understand the foundational mechanics of <strong>Reinforcement Learning (RL)</strong>. Unlike supervised learning—where a dataset explicitly tells the model the exact "correct" answer for every input—an RL agent learns entirely through <strong>trial and error</strong> by interacting with an environment.
+</p>
+
+<div class="algorithm-box">
+  <strong class="label">An Intuitive Analogy: Training a Dog</strong>
+  <p style="margin-bottom: 15px;">
+    To build intuition for how RL works, imagine training a dog to sit on command. The dog starts with no prior instruction and figures out what to do based on consequences:
+  </p>
+  <ul style="list-style-type: disc; padding-left: 20px; margin-bottom: 0;">
+    <li style="margin-bottom: 8px;"><strong>State ($s_t$):</strong> The dog's current position and posture at time step $t$ (e.g., standing up or wandering around).</li>
+    <li style="margin-bottom: 8px;"><strong>Action ($a_t$):</strong> What the dog chooses to do next (e.g., sit down, bark, or run away).</li>
+    <li style="margin-bottom: 8px;"><strong>Reward ($r_t$):</strong> The feedback signal. Giving the dog a tasty treat yields a positive reward ($+1$), while ignoring or correcting bad behavior yields a neutral or negative reward ($0$ or $-1$).</li>
+    <li style="margin-bottom: 8px;"><strong>Policy ($\pi$):</strong> The dog's internal decision-making strategy. Over time, the policy learns which actions yield treats for specific commands.</li>
+    <li><strong>Transition:</strong> How the physical world updates. If the dog is standing and decides to bend its legs, the physical laws of movement transition it into a new posture ($s_{t+1}$).</li>
+  </ul>
+</div>
+
+<div class="diagram-frame">
+  <svg viewBox="0 0 620 330" xmlns="http://www.w3.org/2000/svg" style="max-width:520px; height:auto; display:block; margin:0 auto;">
+    <defs>
+      <marker id="rlArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#233"/>
+      </marker>
+    </defs>
+    <g font-family="Segoe UI, sans-serif" font-size="14">
+      <rect x="200" y="20" width="220" height="90" rx="18" fill="#eaf2fb" stroke="#0056b3" stroke-width="2.5"/>
+      <text x="310" y="58" text-anchor="middle" fill="#003d82" font-weight="700" font-size="15">Agent</text>
+      <text x="310" y="82" text-anchor="middle" fill="#003d82" font-size="14">&#960;<tspan font-size="10" baseline-shift="sub">&#952;</tspan>(&#183;)</text>
+
+      <rect x="200" y="210" width="220" height="90" rx="10" fill="#eef1f5" stroke="#667" stroke-width="2.5"/>
+      <text x="310" y="248" text-anchor="middle" fill="#445" font-weight="700" font-size="15">Target</text>
+      <text x="310" y="270" text-anchor="middle" fill="#445" font-weight="700" font-size="15">Environment</text>
+
+      <path d="M200,255 L120,255 L120,65 L196,65" fill="none" stroke="#233" stroke-width="2" marker-end="url(#rlArrow)"/>
+      <text x="100" y="150" text-anchor="middle" fill="#233" font-style="italic" font-size="15">s<tspan font-size="10" baseline-shift="sub">t</tspan></text>
+      <text x="100" y="172" text-anchor="middle" fill="#233" font-style="italic" font-size="15">r<tspan font-size="10" baseline-shift="sub">t</tspan></text>
+
+      <path d="M420,65 L500,65 L500,255 L424,255" fill="none" stroke="#233" stroke-width="2" marker-end="url(#rlArrow)"/>
+      <text x="522" y="163" text-anchor="middle" fill="#233" font-style="italic" font-size="15">a<tspan font-size="10" baseline-shift="sub">t</tspan></text>
+    </g>
+  </svg>
+  <p class="diagram-caption">Figure 4: Standard RL loop &#8212; the agent &#960;<tspan font-size="10">&#952;</tspan>(&#183;)
+    picks an action a<tspan font-size="8">t</tspan> given the current state; the environment returns
+    the next state s<tspan font-size="8">t</tspan> and a reward r<tspan font-size="8">t</tspan>.</p>
+</div>
+
+<p>
+  Notice that Figure 4 writes the policy as $\pi_\theta(\cdot)$ rather than just $\pi$. The subscript
+  $\theta$ denotes the policy's <strong>parameters</strong> — in a neural-network policy, these are
+  simply its weights. Framed this way, "learning" in RL is really a search over $\theta$: the agent
+  repeatedly acts, observes the resulting state and reward, and adjusts $\theta$ so that future
+  actions accumulate more reward. The RL loop in Figure 4 is exactly this search running again and
+  again, one interaction at a time.
+</p>
+
+<h3>3.1.2 Mapping the RL Loop to Math (The Trajectory Distribution)</h3>
+<p>
+  In formal reinforcement learning, a complete episode or sequence of interactions (called a <strong>trajectory</strong> $\tau$) is modeled as a joint probability distribution over states and actions. Mathematically, this trajectory probability is expressed as:
+</p>
+
+<div class="math-block">
+  $$p_\pi(\tau) = \rho_0(s_0) \prod_{t=0}^{T-1} \pi(a_t \mid s_t) \, p(s_{t+1} \mid s_t, a_t)$$
+</div>
+
+<p>Every term in this equation breaks down directly into our components:</p>
+<ul style="list-style-type: disc; padding-left: 20px;">
+  <li style="margin-bottom: 8px;"><strong>$\rho_0(s_0)$:</strong> The probability of starting at an initial state $s_0$ (e.g., the dog standing at the start of training).</li>
+  <li style="margin-bottom: 8px;"><strong>$\pi(a_t \mid s_t)$:</strong> The <strong>Policy</strong> — the probability of taking action $a_t$ given the current state $s_t$.</li>
+  <li style="margin-bottom: 8px;"><strong>$p(s_{t+1} \mid s_t, a_t)$:</strong> The <strong>Transition Dynamics</strong> — the probability of landing in a new state $s_{t+1}$ given the current state and action.</li>
+</ul>
+
+<p>
+  We now have a name for what RL is searching for ($\theta$) and a formal description of the loop
+  it runs (the trajectory distribution above). What's still missing is the actual update rule: a
+  concrete procedure for adjusting $\theta$ after each interaction so that expected reward goes up.
+  This, too, is a general <strong>reinforcement learning</strong> question, with no connection yet
+  to language models — one widely-used answer is <strong>Proximal Policy Optimization
+  (PPO)</strong>, an RL algorithm that nudges $\theta$ in the direction of higher expected reward
+  while "clipping" each update so the policy doesn't change too drastically in a single step. PPO
+  was developed for general RL problems long before it was adopted for RLHF; we'll reuse it as-is
+  when we get to the policy-update step in Section 3.2.
+</p>
+
+<h2>3.2 Why RL cannot be used in LLM, Instead RLHF</h2>
+<p>
+  Applying classical Reinforcement Learning directly to Large Language Models fails because standard RL assumes an open-ended environment with fixed physical rewards and dynamic state transitions driven by environmental physics. In contrast, language generation requires a specialized formulation where the "state" is a fixed prompt combined with generated tokens, and the reward cannot be measured by a static rulebook. Instead, <strong> Reinforcement Learning from Human Feedback (RLHF) </strong> replaces environmental rewards with a learned neural network proxy (<strong>the Reward Model</strong>) that evaluates an entire response completion at once. Because there's no ongoing back-and-forth with an environment, the whole prompt-to-completion exchange is treated as a single-step interaction, as shown in the figure 5, rather than the many-step trajectory in Figure 4.
+</p>
+
+<div class="explain-box">
+  <span class="q-label">INTUITION</span>
+  <p><strong>What's a "bandit problem"?</strong> The name comes from a slot machine &#8212; an old
+    "one-armed bandit." You pull the lever once, see what you win, and that's it; there's no
+    state carried forward to the next pull. RLHF treats each prompt the same way: the policy
+    generates one full response, the reward model scores it once, and the interaction ends
+    there &#8212; no next state, no planning several moves ahead. That's exactly why the
+    state-transition arrows from Figure 4 (s<sub>t</sub> &#8594; s<sub>t+1</sub>) don't appear in
+    Figure 5: every generated token in the response is judged together, as part of one single
+    "pull of the lever," not as a sequence of separate environment steps.</p>
+</div>
+
+<div class="diagram-frame">
+  <svg viewBox="0 0 760 310" xmlns="http://www.w3.org/2000/svg" style="max-width:680px; height:auto; display:block; margin:0 auto;">
+    <defs>
+      <marker id="cleanArrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L7,3 L0,6 Z" fill="#233"/>
+      </marker>
+      <marker id="feedbackArrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L7,3 L0,6 Z" fill="#8a6d1d"/>
+      </marker>
+    </defs>
+    <g font-family="Segoe UI, sans-serif" font-size="13">
+      <rect x="20" y="40" width="150" height="90" rx="8" fill="#eef1f5" stroke="#667" stroke-width="2"/>
+      <text x="95" y="70" text-anchor="middle" fill="#445" font-weight="700" font-size="14">1. Prompt Source</text>
+      <text x="95" y="92" text-anchor="middle" fill="#556" font-size="11.5">Fixed Prompt (<tspan font-style="italic">p</tspan>)</text>
+      <text x="95" y="112" text-anchor="middle" fill="#778" font-size="10.5">No state transition</text>
+
+      <path d="M172,85 L228,85" fill="none" stroke="#233" stroke-width="2" marker-end="url(#cleanArrow)"/>
+      <text x="200" y="72" text-anchor="middle" fill="#233" font-size="11">prompt</text>
+
+      <rect x="230" y="40" width="160" height="90" rx="12" fill="#f5a623" stroke="#c9820f" stroke-width="2"/>
+      <text x="310" y="70" text-anchor="middle" fill="#332200" font-weight="700" font-size="14">2. Policy (&#960;<tspan font-size="10" baseline-shift="sub">&#952;</tspan>)</text>
+      <text x="310" y="92" text-anchor="middle" fill="#332200" font-size="11.5">LLM generates</text>
+      <text x="310" y="112" text-anchor="middle" fill="#332200" font-size="11">entire completion (<tspan font-style="italic">c</tspan>)</text>
+
+      <path d="M392,85 L448,85" fill="none" stroke="#233" stroke-width="2" marker-end="url(#cleanArrow)"/>
+      <text x="420" y="72" text-anchor="middle" fill="#233" font-size="11">completion</text>
+
+      <rect x="450" y="40" width="160" height="90" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+      <text x="530" y="70" text-anchor="middle" fill="#003d82" font-weight="700" font-size="14">3. Reward Model</text>
+      <text x="530" y="92" text-anchor="middle" fill="#003d82" font-size="11.5">Evaluates whole response</text>
+      <text x="530" y="112" text-anchor="middle" fill="#003d82" font-size="11">Outputs scalar reward (<tspan font-style="italic">r</tspan>)</text>
+
+      <rect x="230" y="195" width="380" height="85" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+      <text x="420" y="222" text-anchor="middle" fill="#5b21b6" font-weight="700" font-size="14">4. Policy Optimization / Update (PPO)</text>
+      <text x="420" y="246" text-anchor="middle" fill="#4c1d95" font-size="12">&#952;<tspan font-size="9" baseline-shift="sub">t+1</tspan> = &#952;<tspan font-size="9" baseline-shift="sub">t</tspan> + &#945;&#8711;<tspan font-size="9" baseline-shift="sub">&#952;</tspan>J(&#960;<tspan font-size="9" baseline-shift="sub">&#952;</tspan>) using Reward Signal</text>
+      <text x="420" y="266" text-anchor="middle" fill="#6d28d9" font-size="10.5">Treats prompt-to-response as a single bandit step</text>
+
+      <path d="M530,132 L530,165 L480,165 L480,191" fill="none" stroke="#8a6d1d" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#feedbackArrow)"/>
+      <text x="548" y="155" fill="#8a6d1d" font-size="11">Score (<tspan font-style="italic">r</tspan>)</text>
+
+      <path d="M230,237 L195,237 L195,105 L224,105" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#cleanArrow)"/>
+      <text x="163" y="175" text-anchor="middle" fill="#7c3aed" font-size="11">Weights Updated (&#952;)</text>
+    </g>
+  </svg>
+  <p class="diagram-caption">Figure 5: The RLHF Pipeline &mdash; flowing sequentially from Prompt Source (1) through Policy Generation (2) and Reward Model evaluation (3) down into the PPO Policy Update (4), emphasizing the single-step bandit nature without complex physical state transitions. The reward $r$ produced in step 3 is the only signal that flows back into step 4, where it scales how much the policy's weights move.</p>
+</div>
+
+<p>
+  Figure 5 lays out this single-step exchange as a left-to-right pipeline: a prompt is drawn from a
+  fixed source, the policy &pi;<sub>&theta;</sub> generates one full completion in response, and the
+  reward model scores that completion once, producing a single scalar reward $r$. The objective being
+  optimized is simply the expected reward, $J(\theta) = \mathbb{E}[r(p,c)]$, and its gradient,
+  $\nabla_\theta J(\theta) = \mathbb{E}[\nabla_\theta \log \pi_\theta(c \mid p) \cdot r(p,c)]$, shows
+  exactly how $r$ is used: it scales the direction that makes a completion more or less likely, so a
+  high-reward completion pulls $\theta$ toward it and a low-reward one pushes $\theta$ away. That
+  reward-scaled update is what flows into the PPO update step introduced in Section 3.1.2 &#8212; the
+  same general RL algorithm, unchanged &#8212; which adjusts the policy's weights before the next batch
+  of prompts is drawn.
+</p>
+
+<p style="font-size: 0.92em; color: #667;">
+  <em>Aside:</em> Direct Preference Optimization (DPO), covered in a later section, uses the reward
+  signal in a fundamentally different way &#8212; it skips the policy-gradient loop above entirely and
+  optimizes directly on pairs of preferred/dispreferred completions. We'll return to that contrast once
+  the PPO picture is complete.
+</p>
+
+<h2>3.3 RLHF Training</h2>
+<p>
+  During RLHF training, optimizing a policy model solely to maximize the Reward Model's score can
+  cause the model to exploit loopholes, generate repetitive text, or use superficial formatting
+  tricks to artificially inflate its reward &mdash; a manifestation of Goodhart's Law known as
+  <strong>reward hacking</strong>. To prevent this severe drift and preserve core language fluency,
+  a copy of the Supervised Fine-Tuned model is saved as a reference model ($\pi_{ref}$). Because
+  this reference model is frozen, its weights are static and do not receive gradient updates; its
+  sole function is to serve as a baseline probability distribution for computing the
+  Kullback&ndash;Leibler (KL) divergence penalty against the active policy. This penalizes the
+  policy whenever it strays too far from its original behavior, ensuring a stable balance captured
+  in the PPO objective:
+</p>
+
+<div class="math-block">
+  $$\max_\theta \;\; \mathbb{E}\big[RM_\psi(p, c)\big] \;-\; \beta \cdot \mathrm{KL}\big(\pi_\theta \,\Vert{}\, \pi_{ref}\big)$$
+</div>
+
+<p>
+  Unlike traditional reinforcement learning where rewards are distributed continuously across every
+  step, the Reward Model ($RM_\psi$) evaluates the complete prompt and generated response globally,
+  reading the entire sequence just once to output a single scalar score ($r_{RM}$). Because this
+  evaluation applies to the whole response rather than individual words, it cannot be neatly divided
+  across every token position. Consequently, during the token-by-token PPO optimization loop, the
+  Reward Model's score is injected exclusively at the very last token ($t = T$). For all preceding
+  steps ($t &lt; T$), the per-token reward consists solely of the KL divergence penalty.
+</p>
+
+<p>
+  The Critic ($V_\eta$) is a separate neural network trained alongside the policy model during PPO
+  optimization to serve as a vital value-estimator. Its primary job at each token position is to
+  evaluate the current state and predict the expected total future reward remaining until the end
+  of the response. This prediction acts as a crucial baseline, allowing the algorithm to calculate
+  the &ldquo;advantage&rdquo; of individual token choices by determining whether the generation
+  performed better or worse than expected. Operating technically as a regression task, the Critic
+  maintains independent weights and its own separate loss function, enabling it to track and
+  estimate future rewards accurately without sharing parameters with the policy or reward models.
+</p>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Forward Pass (FP)</th>
+      <th>Backward Pass (BP)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>$\pi_\theta$ (Policy)</td>
+      <td>&#10003; generates $c$, computes $\log \pi_\theta$</td>
+      <td>&#10003; gradients computed, $\theta$ updated</td>
+    </tr>
+    <tr>
+      <td>$RM_\psi$ (Reward Model)</td>
+      <td>&#10003; scores $(p,c) \to r$</td>
+      <td>&#10007; no gradient, $\psi$ untouched</td>
+    </tr>
+    <tr>
+      <td>$\pi_{ref}$ (Reference)</td>
+      <td>&#10003; computes $\log \pi_{ref}$ for KL term</td>
+      <td>&#10007; no gradient, weights untouched</td>
+    </tr>
+    <tr>
+      <td>$V_\eta$ (Critic)</td>
+      <td>&#10003; estimates $V(s_t)$</td>
+      <td>&#10003; gradients computed, $\eta$ updated</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="diagram-frame">
+  <svg viewBox="-90 0 1080 800" xmlns="http://www.w3.org/2000/svg" style="max-width:700px; height:auto; display:block; margin:0 auto;">
+    <defs>
+      <marker id="fpArrow3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#0056b3"/>
+      </marker>
+      <marker id="bpArrow3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#206a37"/>
+      </marker>
+    </defs>
+    <g font-family="Segoe UI, sans-serif" font-size="13">
+      <text x="450" y="20" text-anchor="middle" font-weight="700" fill="#334" font-size="14">
+        RLHF Step &#8212; Per-Token Reward &amp; Gradient Flow
+      </text>
+
+      <rect x="90" y="30" width="16" height="12" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+      <text x="112" y="40" fill="#445" font-size="11">Forward Pass</text>
+
+      <rect x="280" y="30" width="16" height="12" fill="#fbf7ef" stroke="#e0d3ab" stroke-width="2"/>
+      <text x="302" y="40" fill="#445" font-size="11">Loss Computation</text>
+
+      <line x1="470" y1="36" x2="500" y2="36" stroke="#206a37" stroke-width="2.5" marker-end="url(#bpArrow3)"/>
+      <text x="508" y="40" fill="#445" font-size="11">Backprop (Gradient Flow)</text>
+
+      <text x="450" y="52" text-anchor="middle" fill="#667" font-size="10.5" font-style="italic">
+        Green marks the direction gradients flow &#8212; it is not a fourth model, just an action.
+      </text>
+
+      <rect x="370" y="76" width="160" height="40" rx="8" fill="#f4f4f0" stroke="#94a3b8" stroke-width="2"/>
+      <text x="450" y="101" text-anchor="middle" fill="#334">Prompt <tspan font-style="italic">p</tspan></text>
+      <line x1="450" y1="116" x2="450" y2="146" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3)"/>
+
+      <rect x="280" y="150" width="340" height="74" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2.5"/>
+      <text x="450" y="176" text-anchor="middle" fill="#003d82" font-weight="700">
+        Policy Model &#960;<tspan font-size="70%" dy="5">&#952;</tspan><tspan dy="-5"> (trainable)</tspan>
+      </text>
+      <text x="450" y="198" text-anchor="middle" fill="#445" font-size="11.5">
+        generates <tspan font-style="italic">c</tspan> ~ &#960;<tspan font-size="70%" dy="4">&#952;</tspan><tspan dy="-4">(&#183;|p)</tspan>
+      </text>
+      <text x="450" y="214" text-anchor="middle" fill="#445" font-size="11.5">
+        computes log &#960;<tspan font-size="70%" dy="4">&#952;</tspan><tspan dy="-4">(c<tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">|s</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">)</tspan>
+      </text>
+
+      <line x1="450" y1="224" x2="450" y2="238" stroke="#0056b3" stroke-width="2.5"/>
+      <line x1="160" y1="238" x2="740" y2="238" stroke="#0056b3" stroke-width="2.5"/>
+      <line x1="160" y1="238" x2="160" y2="254" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3)"/>
+      <line x1="450" y1="238" x2="450" y2="254" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3)"/>
+      <line x1="740" y1="238" x2="740" y2="254" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3)"/>
+
+      <rect x="30" y="256" width="260" height="76" rx="10" fill="#eef1f5" stroke="#667" stroke-width="2.5" stroke-dasharray="6,3"/>
+      <text x="160" y="280" text-anchor="middle" fill="#445" font-weight="700" font-size="12.5">
+        Reference &#960;<tspan font-size="65%" dy="4">ref</tspan><tspan dy="-4"> (FROZEN)</tspan>
+      </text>
+      <text x="160" y="300" text-anchor="middle" fill="#667" font-size="11">
+        log &#960;<tspan font-size="65%" dy="4">ref</tspan><tspan dy="-4">(c<tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">|s</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">)</tspan>
+      </text>
+      <text x="160" y="318" text-anchor="middle" fill="#667" font-size="11">&#8594; feeds KL penalty (every step)</text>
+
+      <rect x="320" y="256" width="260" height="76" rx="10" fill="#eef1f5" stroke="#667" stroke-width="2.5" stroke-dasharray="6,3"/>
+      <text x="450" y="280" text-anchor="middle" fill="#445" font-weight="700" font-size="12.5">
+        Reward Model RM<tspan font-size="65%" dy="4">&#968;</tspan><tspan dy="-4"> (FROZEN)</tspan>
+      </text>
+      <text x="450" y="300" text-anchor="middle" fill="#667" font-size="11">
+        scores <tspan font-style="italic">(p, c)</tspan> once &#8594; r<tspan font-size="65%" dy="4">RM</tspan>
+      </text>
+      <text x="450" y="318" text-anchor="middle" fill="#b45309" font-size="11" font-weight="600">one scalar for the whole response</text>
+
+      <rect x="610" y="256" width="260" height="76" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2.5"/>
+      <text x="740" y="280" text-anchor="middle" fill="#003d82" font-weight="700" font-size="12.5">
+        Critic V<tspan font-size="70%" dy="4">&#951;</tspan><tspan dy="-4"> (trainable)</tspan>
+      </text>
+      <text x="740" y="300" text-anchor="middle" fill="#445" font-size="11">
+        estimates V(s<tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">)</tspan>
+      </text>
+      <text x="740" y="318" text-anchor="middle" fill="#445" font-size="11">at every position</text>
+
+      <path d="M160,332 C 160,352 205,352 210,368" fill="none" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3)"/>
+      <text x="150" y="352" text-anchor="middle" fill="#0056b3" font-size="10" font-style="italic">KL, every t</text>
+
+      <path d="M450,332 C 450,356 640,356 650,368" fill="none" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3)"/>
+      <text x="560" y="356" text-anchor="middle" fill="#b45309" font-size="10" font-style="italic">r_RM &#8212; only here</text>
+
+      <text x="450" y="366" text-anchor="middle" fill="#334" font-size="11.5" font-weight="600">
+        Per-token reward r<tspan font-size="70%" dy="3">t</tspan><tspan dy="-3">, across the sequence:</tspan>
+      </text>
+
+      <g font-size="11">
+        <rect x="205" y="374" width="90" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="1.5"/>
+        <text x="250" y="390" text-anchor="middle" font-weight="700" fill="#003d82">t = 1</text>
+        <text x="250" y="408" text-anchor="middle" fill="#334" font-size="10.5">&#8722;&#946;&#183;KL<tspan font-size="70%" dy="3">1</tspan></text>
+        <text x="250" y="424" text-anchor="middle" fill="#667" font-size="10">only</text>
+
+        <rect x="305" y="374" width="90" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="1.5"/>
+        <text x="350" y="390" text-anchor="middle" font-weight="700" fill="#003d82">t = 2</text>
+        <text x="350" y="408" text-anchor="middle" fill="#334" font-size="10.5">&#8722;&#946;&#183;KL<tspan font-size="70%" dy="3">2</tspan></text>
+        <text x="350" y="424" text-anchor="middle" fill="#667" font-size="10">only</text>
+
+        <rect x="405" y="374" width="90" height="70" rx="8" fill="#f7f8fa" stroke="#c7d0da" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="450" y="416" text-anchor="middle" fill="#98a2b3" font-size="20" font-weight="700">&#8230;</text>
+
+        <rect x="505" y="374" width="90" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="1.5"/>
+        <text x="550" y="390" text-anchor="middle" font-weight="700" fill="#003d82">t = T&#8722;1</text>
+        <text x="550" y="408" text-anchor="middle" fill="#334" font-size="10.5">&#8722;&#946;&#183;KL<tspan font-size="70%" dy="3">T&#8722;1</tspan></text>
+        <text x="550" y="424" text-anchor="middle" fill="#667" font-size="10">only</text>
+
+        <rect x="605" y="374" width="90" height="70" rx="8" fill="#fff0d6" stroke="#b45309" stroke-width="2.5"/>
+        <text x="650" y="390" text-anchor="middle" font-weight="700" fill="#7a4e05">t = T</text>
+        <text x="650" y="406" text-anchor="middle" fill="#7a4e05" font-size="10.5">&#8722;&#946;&#183;KL<tspan font-size="70%" dy="3">T</tspan></text>
+        <text x="650" y="422" text-anchor="middle" fill="#7a4e05" font-size="10.5" font-weight="700">+ r<tspan font-size="70%" dy="3">RM</tspan></text>
+      </g>
+      <text x="650" y="460" text-anchor="middle" fill="#b45309" font-size="10.5" font-style="italic">
+        &#8593; only cell where RM&#968; contributes
+      </text>
+
+      <line x1="450" y1="444" x2="420" y2="484" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3)"/>
+      <line x1="740" y1="332" x2="710" y2="484" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3)"/>
+
+      <rect x="190" y="486" width="520" height="66" rx="10" fill="#fbf7ef" stroke="#e0d3ab" stroke-width="2"/>
+      <text x="450" y="510" text-anchor="middle" fill="#8a6d1d" font-weight="700" font-size="12.5">
+        GAE: Advantage A<tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">  and  Value Target R</tspan><tspan font-size="70%" dy="4">t</tspan>
+      </text>
+      <text x="450" y="530" text-anchor="middle" fill="#6b5716" font-size="11">
+        computed from r<tspan font-size="70%" dy="3">t</tspan><tspan dy="-3"> (reward sequence) and V</tspan><tspan font-size="70%" dy="3">&#951;</tspan><tspan dy="-3">(s</tspan><tspan font-size="70%" dy="3">t</tspan><tspan dy="-3">) (critic estimate)</tspan>
+      </text>
+
+      <line x1="350" y1="552" x2="260" y2="580" stroke="#8a6d1d" stroke-width="2.5" marker-end="url(#fpArrow3)"/>
+      <line x1="550" y1="552" x2="640" y2="580" stroke="#8a6d1d" stroke-width="2.5" marker-end="url(#fpArrow3)"/>
+
+      <rect x="90" y="582" width="340" height="64" rx="10" fill="#fbf7ef" stroke="#e0d3ab" stroke-width="2"/>
+      <text x="260" y="608" text-anchor="middle" fill="#8a6d1d" font-weight="700" font-size="12.5">PPO Clipped Policy Gradient Loss</text>
+      <text x="260" y="630" text-anchor="middle" fill="#6b5716" font-size="11">
+        &#8711;<tspan font-size="70%" dy="4">&#952;</tspan><tspan dy="-4"> log &#960;</tspan><tspan font-size="70%" dy="4">&#952;</tspan><tspan dy="-4">(c</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">|s</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">) &#183; A</tspan><tspan font-size="70%" dy="4">t</tspan>
+      </text>
+
+      <rect x="470" y="582" width="340" height="64" rx="10" fill="#fbf7ef" stroke="#e0d3ab" stroke-width="2"/>
+      <text x="640" y="608" text-anchor="middle" fill="#8a6d1d" font-weight="700" font-size="12.5">Critic Value Loss (MSE)</text>
+      <text x="640" y="630" text-anchor="middle" fill="#6b5716" font-size="11">
+        ( V<tspan font-size="70%" dy="4">&#951;</tspan><tspan dy="-4">(s</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">) &#8722; R</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4"> )</tspan>&#178;
+      </text>
+
+      <path d="M90,614 C -60,614 -60,187 276,187" fill="none" stroke="#206a37" stroke-width="2.5" marker-end="url(#bpArrow3)"/>
+      <text x="-30" y="410" text-anchor="middle" fill="#206a37" font-size="12" font-weight="600" transform="rotate(-90 -30 410)">Backprop &#8594; updates &#952; (Policy)</text>
+
+      <path d="M810,614 C 960,614 960,294 874,294" fill="none" stroke="#206a37" stroke-width="2.5" marker-end="url(#bpArrow3)"/>
+      <text x="930" y="460" text-anchor="middle" fill="#206a37" font-size="12" font-weight="600" transform="rotate(-90 930 460)">Backprop &#8594; updates &#951; (Critic)</text>
+
+      <g font-size="11">
+        <rect x="40" y="720" width="16" height="12" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="62" y="730" fill="#445">Trainable (&#952;, &#951;)</text>
+
+        <rect x="220" y="720" width="16" height="12" fill="#eef1f5" stroke="#667" stroke-width="2" stroke-dasharray="4,2"/>
+        <text x="242" y="730" fill="#445">Frozen (&#968;, &#960;<tspan font-size="70%" dy="3">ref</tspan><tspan dy="-3"> — forward pass only)</tspan></text>
+
+        <line x1="520" y1="726" x2="550" y2="726" stroke="#206a37" stroke-width="2.5" marker-end="url(#bpArrow3)"/>
+        <text x="558" y="730" fill="#445">Backprop path (always green)</text>
+      </g>
+      <text x="450" y="754" text-anchor="middle" fill="#667" font-size="11.5" font-style="italic">
+        RM<tspan font-size="70%" dy="3">&#968;</tspan><tspan dy="-3"> runs once per response, not once per token &#8212; only its score at t=T ever reaches the loop.</tspan>
+      </text>
+    </g>
+  </svg>
+  <p class="diagram-caption">Figure 6: The complete RLHF training step, showing per-token detail. The KL
+    penalty (fed by &#960;<sub>ref</sub>) is computed at every single position, but RM<sub>&#968;</sub>
+    contributes exactly once &#8212; its scalar score lands only in the final cell (t = T), highlighted
+    above. Backprop (green) only ever updates &#952; and &#951;; RM<sub>&#968;</sub> and &#960;<sub>ref</sub>
+    are read from but never written to.</p>
+</div>
+
+<div class="algorithm-box" style="margin-top: 30px;">
+  <strong class="label">Step-by-Step: What Actually Happens in One RLHF Training Step</strong>
+  <p>
+    One RLHF step runs four models forward, but updates only two of them. Here it is broken down
+    plainly, in the same order it happens.
+  </p>
+
+  <ol style="margin-top: 10px; padding-left: 20px; line-height: 1.6;">
+    <li>
+      <strong>Generate and score — forward pass only, nothing learns yet:</strong>
+      <ul style="list-style-type: disc; margin-top: 5px; margin-bottom: 10px;">
+        <li><strong>Policy $\pi_\theta$ (trainable):</strong> writes the response $c$, one token at a time, and records how confident it was at each token — $\log \pi_\theta(c_t \mid s_t)$.</li>
+        <li><strong>Reference $\pi_{ref}$ (frozen):</strong> the "before" copy of the policy. It reads the same response and records its own confidence at each token — not to generate anything, just so we have something fixed to compare the policy against. That comparison becomes the KL penalty, every token.</li>
+        <li><strong>Reward Model $RM_\psi$ (frozen):</strong> reads the whole finished response once and gives it a single score, $r_{RM}$. It never looks token by token — only at the final result.</li>
+        <li><strong>Critic $V_\eta$ (trainable):</strong> at every token, estimates how much total reward it expects from this point onward — $V(s_t)$.</li>
+      </ul>
+    </li>
+
+    <li>
+      <strong>Turn those scores into a per-token reward:</strong>
+      <ul style="list-style-type: disc; margin-top: 5px; margin-bottom: 10px;">
+        <li>At every token $t$, the reward is mostly just the KL penalty — how far the policy has drifted from the reference at that step. Only at the very last token ($t=T$) does the reward model's score $r_{RM}$ get added in:
+          <div style="margin: 8px 0; text-align: center;">
+            $$r_t = -\beta \cdot \text{KL}(\pi_\theta \parallel \pi_{ref})_t \;+\; \begin{cases} r_{RM} & t = T \\ 0 & \text{otherwise} \end{cases}$$
+          </div>
+        </li>
+        <li>GAE then combines this reward sequence $r_t$ with the critic's estimates $V_\eta(s_t)$ to produce two things: the <strong>Advantage $A_t$</strong> (was this token better or worse than the critic expected?) and the <strong>Value Target $R_t$</strong> (what the critic should have predicted).</li>
+      </ul>
+    </li>
+
+    <li>
+      <strong>Update weights — the only place backprop happens:</strong>
+      <ul style="list-style-type: disc; margin-top: 5px; margin-bottom: 0;">
+        <li><strong>Policy update:</strong> the Advantage $A_t$ drives the PPO loss, $\nabla_\theta \log \pi_\theta(c_t \mid s_t) \cdot A_t$. Backprop updates <em>only</em> $\theta$.</li>
+        <li><strong>Critic update:</strong> the gap between $V_\eta(s_t)$ and $R_t$ drives a separate loss, $(V_\eta(s_t) - R_t)^2$. Backprop updates <em>only</em> $\eta$ — a completely separate update from the policy's.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <p style="margin-top: 15px; font-style: italic; color: #667;">
+    $RM_\psi$ and $\pi_{ref}$ are read from constantly, in every single step — but never once updated.
+    They stay exactly as they were for the entire training run.
+  </p>
+</div>
+
+<h3>Summary: The RLHF Training Loop</h3>
+<div class="algorithm-box">
+  <ol>
+    <li>The <strong>Policy's</strong> role in generating the text and tracking its own token log-probabilities.</li>
+    <li>The <strong>Reference Model's</strong> role as a frozen baseline computing the per-step KL divergence penalty to keep the model anchored.</li>
+    <li>The <strong>Reward Model's</strong> role as a global evaluator that scores the entire response at once, with its scalar dropped exclusively at the final token ($t = T$).</li>
+    <li>The <strong>Critic's</strong> role in estimating expected future rewards at each step to create a moving baseline.</li>
+    <li>The <strong>GAE</strong> calculation merging these signals into advantages ($A_t$) and value targets ($R_t$).</li>
+    <li>The <strong>dual losses</strong> (one for the policy, one for the critic).</li>
+    <li>The <strong>gradient flow rule</strong> (gradients only update the policy and the critic; the reference model and reward model remain completely frozen).</li>
+  </ol>
+</div>
+
+<h3>Real-Life Analogy of RLHF</h3>
+<div class="analogy-box">
+  <span class="label">ANALOGY</span>
+  <p>
+    The RLHF training loop closely mirrors human mentorship and creative critique across three
+    distinct roles: the writer and their natural habits act like the Policy and Reference Model,
+    where an inner voice anchors the writer to prevent them from slipping into overly dramatic
+    corporate robot speech (reward hacking); the Reward Model functions like a judge reading an
+    entire essay from start to finish to assign a final score based on overall impact rather than
+    interrupting with micro-grades; and finally, the Critic and GAE operate like a reflective coach
+    who breaks down the flow of a piece to distribute credit and figure out which exact choice
+    turned the tide.
+  </p>
+</div>
+
+</div>
+</body>
+</html>
