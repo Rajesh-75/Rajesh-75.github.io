@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Hide body initially to prevent flickering -->
+    <style>body { visibility: hidden; }</style>
+    <!-- Load global MathJax configuration first -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Building an LLM Engine — Introduction</title>
@@ -8,14 +11,6 @@
 <!-- MathJax: renders all $...$ / $$...$$ LaTeX on this page (Chinchilla scaling law,
      DPO loss, SFT loss masking formulas). Loaded from CDN — swap for a local copy
      if the site needs to work offline. -->
-<script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [['$', '$']],
-      displayMath: [['$$', '$$']]
-    }
-  };
-</script>
 <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
 
 <!-- NOTE TO SELF: this page currently ships its own <style> block below so it's
@@ -227,6 +222,30 @@
     vertical-align: middle;
   }
 </style>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
 </head>
 <body>
 
@@ -460,53 +479,7 @@ app.run(debug=True)</code></pre>
     </ul>
   </div>
 
-  <h2 id="roadmap">Roadmap for This Section</h2>
-  <p>Each numbered item below will become its own tutorial page, in roughly this order:</p>
-
-  <div class="roadmap-card">
-    <div class="roadmap-num">1</div>
-    <div>
-      <h4>Tokenization at Scale <span class="status-tag status-done">Done</span></h4>
-      <p>Byte-Pair Encoding vocabulary construction, worked examples, and the vocabulary-size
-      trade-off are covered in <a href="transformer_algorithm.html#input-preparation">Input
-      Preparation</a> on the Transformer Algorithm page. Unigram/SentencePiece tokenizers and the
-      downstream ripple effects (context length, multilingual behavior, arithmetic errors) are
-      covered here in <a href="#tokenization-extras">Beyond BPE</a>.</p>
-    </div>
-  </div>
-
-  <div class="roadmap-card">
-    <div class="roadmap-num">2</div>
-    <div>
-      <h4>Embeddings and Positional Encoding, Revisited <span class="status-tag status-done">Done</span></h4>
-      <p>Embedding tables (lookup mechanics, worked example, weight tying) and sinusoidal positional
-      encoding are covered in the same <a href="transformer_algorithm.html#input-preparation">Input
-      Preparation</a> section. Learned and RoPE positional schemes are still to be added.</p>
-    </div>
-  </div>
-
-  <div class="roadmap-card">
-    <div class="roadmap-num">3</div>
-    <div>
-      <h4>The Pretraining Loop <span class="status-tag status-done">Done</span></h4>
-      <p>The forward/backward mechanics and next-token training loop are covered on the
-      Transformer Algorithm page (<a href="transformer_algorithm.html#transformer-backprop">Backpropagation
-      &amp; Optimization</a> and the <a href="transformer_algorithm.html#training-stages">three-stage
-      training overview</a>). Data pipelines and mixture ratios, mixed-precision training, and
-      distributed training across multiple GPUs are covered here in
-      <a href="#pretraining-loop">The Pretraining Loop</a>.</p>
-    </div>
-  </div>
-
-  <div class="roadmap-card">
-    <div class="roadmap-num">4</div>
-    <div>
-      <h4>Model Architectures at Scale: Mixture-of-Experts <span class="status-tag status-done">Done</span></h4>
-      <p>Why models like DeepSeek-V2/V3 replace a single dense feed-forward layer with many smaller
-      "expert" sub-networks and a learned router, how the router and experts train together, and the
-      load-balancing loss that keeps a handful of experts from doing all the work.</p>
-    </div>
-  </div>
+  
 
   <h2 id="tokenization-extras">Beyond BPE: Unigram, SentencePiece, and the Ripple Effects of Tokenization</h2>
   <p>
@@ -772,6 +745,22 @@ app.run(debug=True)</code></pre>
     single step: what data actually gets fed in, what numerical precision the computation runs at,
     and how the work gets spread across hardware that no single GPU could handle alone.
   </p>
+
+  <div class="intuition-box">
+    <strong class="label">For Mathematically Mature Readers</strong>
+    Let $LLM_\phi$ denote the language model, parameterized by $\phi$, and let $[T_1, T_2, \ldots, T_V]$
+    be the vocabulary of size $V$, with $f(x) = k$ mapping token $x$ to its position $T_k$ in that
+    vocabulary. Given a training sequence $(x_1, x_2, \ldots, x_n)$, each position $i$ yields one
+    training sample: input $x = (x_1, \ldots, x_{i-1})$, ground truth $x_i$. Let $k = f(x_i)$ and let
+    $LLM_\phi(x) = [\bar{y}_1, \ldots, \bar{y}_V]$ be the model's output distribution over the
+    vocabulary at that position, with $\sum_j \bar{y}_j = 1$. The loss on this one sample is
+    $$CE(x, x_i; \phi) = -\log \bar{y}_k,$$
+    and pretraining minimizes this in expectation over every position of every sequence in the raw
+    corpus: $CE(\phi) = -\mathbb{E}_x[\log \bar{y}_k]$. This is exactly the cross-entropy loss used
+    everywhere else in this series — nothing in this stage is RL-specific. There is a fixed,
+    known target $x_i$ at every position, so the gradient $\nabla_\phi CE(\phi)$ is a direct backprop
+    gradient through a differentiable loss, no sampling or reward involved.
+  </div>
 
   <h3>Data Pipelines and Mixture Ratios</h3>
   <p>
@@ -1149,6 +1138,23 @@ app.run(debug=True)</code></pre>
     While pretraining relies on raw scale (trillions of web tokens), SFT relies heavily on <em>craftsmanship and quality</em> over sheer volume.
   </p>
 
+  <div class="intuition-box">
+    <strong class="label">For Mathematically Mature Readers</strong>
+    $LLM_\phi$ is now the pretrained model, re-initialized from its pretrained weights rather than
+    from scratch. Let $\mathcal{D}_{SFT} = \{(p^{(1)}, c^{(1)}), (p^{(2)}, c^{(2)}), \ldots\}$ be the
+    curated dataset of (prompt, demonstration-response) pairs. For a pair $(p, c)$ with
+    $c = (c_1, \ldots, c_m)$, form the full sequence $x = p \oplus c$. Loss is computed only over the
+    response tokens $c_i$ (the mask $m_t$ introduced below zeroes out the prompt): for input
+    $x_{<i} = (p, c_1, \ldots, c_{i-1})$, ground truth $c_i$, let $k = f(c_i)$ and
+    $LLM_\phi(x_{<i}) = [\bar{y}_1, \ldots, \bar{y}_V]$; the per-token loss is
+    $-\log \bar{y}_k$, exactly as in pretraining. The goal is
+    $$\min_\phi\; CE_{SFT}(\phi) = -\mathbb{E}_{(p,c)\sim\mathcal{D}_{SFT}}\Big[\tfrac{1}{m}\sum_{i=1}^m \log \bar{y}_{f(c_i)}\Big].$$
+    The equation is identical in form to pretraining's — same cross-entropy, same direct gradient,
+    fixed known targets throughout. Only two things changed: the data distribution (curated
+    demonstrations instead of raw web text) and the loss mask (only completion tokens count). Nothing
+    here is RL yet — no reward, no policy, no sampling of the model's own outputs.
+  </div>
+
   <p>Here is the block diagram for SFT training:</p>
 
   <div class="diagram-frame">
@@ -1372,6 +1378,27 @@ app.run(debug=True)</code></pre>
   <div class="callout-todo">
     RLHF / DPO alignment content still to come — currently in progress. Once written, it completes
     roadmap item 6 above and this section's status tag will move from "Current" to "Done."
+  </div>
+
+  <div class="intuition-box">
+    <strong class="label">For Mathematically Mature Readers</strong>
+    RLHF replaces SFT's fixed-target objective with one defined over the model's own samples. Let
+    $\pi_\theta$ be the policy (the SFT model, further trained), initialized from $\phi_{SFT}$, and let
+    $\pi_{ref}$ be a frozen copy of the SFT model used only for a KL penalty. A reward model $RM_\psi$
+    is trained beforehand on human preference triples $(p, c_w, c_l)$ (prompt, preferred response,
+    rejected response) via $\mathcal{L}(\psi) = -\mathbb{E}\big[\log\sigma(RM_\psi(p,c_w) - RM_\psi(p,c_l))\big]$.
+    For a prompt $p$, sample a full response $c \sim \pi_\theta(\cdot \mid p)$ token by token; the
+    per-token reward is mostly a KL penalty $r_t = -\beta \log\frac{\pi_\theta(c_t\mid p,c_{<t})}{\pi_{ref}(c_t\mid p,c_{<t})}$,
+    with the reward model's score $RM_\psi(p,c)$ added only at the final token. The goal is
+    $$\max_\theta\; J(\theta) = \mathbb{E}_{p,\, c\sim\pi_\theta(\cdot\mid p)}\Big[\sum_{t=1}^T r_t\Big],$$
+    which is not directly differentiable through the sampling step, so it's optimized via the policy
+    gradient $\nabla_\theta J(\theta) = \mathbb{E}[\nabla_\theta \log \pi_\theta(c_t\mid p,c_{<t}) \cdot A_t]$,
+    with the advantage $A_t$ estimated by a separate learned value network (PPO's "critic"). The
+    contrast with everything above in one line: SFT's goal, $\min_\phi \mathbb{E}_x[-\log \bar{y}_k]$,
+    has a fixed target and a direct gradient; RLHF's goal, $\max_\theta \mathbb{E}_{c\sim\pi_\theta}[\sum_t r_t]$,
+    has no fixed target — only an expectation over the policy's own self-generated samples — which is
+    the entire reason RLHF needs a reward model, a critic, and a policy gradient where SFT needed
+    none of it.
   </div>
 
   <div class="roadmap-card">
