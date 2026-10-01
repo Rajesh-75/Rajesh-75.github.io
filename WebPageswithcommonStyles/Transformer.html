@@ -1,26 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Hide body initially to prevent flickering -->
+    <style>body { visibility: hidden; }</style>
+    <!-- Load global MathJax configuration first -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Transformer Algorithm & Architecture From First Principles</title>
     
     <link rel="stylesheet" href="styles.css">
-    
+
     <script>
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                processEscapes: true
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
             },
             options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
                 ignoreHtmlClass: 'tex2jax_ignore',
                 processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
             }
         };
     </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
 </head>
 <body>
 
@@ -51,6 +63,7 @@
 	A complete walkthrough of the Encoder–Decoder Transformer is available
 <a href="encoder_decoder_transformer.html" style="color:#2563eb; text-decoration:underline;">here</a>.
     </div>
+<div style="background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #1e3a8a; line-height: 1.5;"><strong>Reading the figures on this page:</strong> the pipeline diagrams below show a <strong>decoder-only (causal)</strong> Transformer &mdash; the GPT/Claude-style LLM that predicts the next token. The Encoder&ndash;Decoder variant described above differs in two ways: the encoder reads the source with <em>bidirectional</em> attention, and the decoder adds a <em>cross-attention</em> sub-layer that reads the encoder output. For a side-by-side comparison of encoder-only, decoder-only and encoder&ndash;decoder models, see Section 8 of the <a href="encoder_decoder_transformer.html" style="color:#2563eb; text-decoration:underline;">Encoder&ndash;Decoder Transformer page</a>. Figures labelled &ldquo;Applies to all variants&rdquo; hold for every layout.</div>
 
     
 
@@ -84,6 +97,7 @@
 <h2>Transformer Architecture </h2>
 <p>The Transformer model is solely based on attention mechanisms without any convolutional or recurrent layer (Vaswani et al., 2017). Though originally proposed for sequence-to-sequence learning on text data, Transformers have been pervasive in a wide range of modern deep learning applications, such as in areas to do with language, vision, speech, and reinforcement learning. The Transformer is a deep neural network architecture that can process variable-length text and perform a wide range of NLP tasks using a mechanism called Attention, discussed below.</p>
             <h3>Key Structural Components of the Transformer Algorithm Pipeline</h3>
+            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) Transformer</strong> &mdash; the GPT/Claude-style stack that generates text one next token at a time. There is no separate encoder and no cross-attention in this pipeline.</div>
             <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div style="display: flex; flex-direction: column; align-items: center; font-family: monospace;">
                     <div style="background: #e2e8f0; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; font-size: 0.92rem;">Input Sentence</div>
@@ -99,7 +113,7 @@
                     <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Injects geometric coordinate signals to maintain sequence order</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #bbf7d0; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #16a34a; font-size: 0.92rem;">Self-Attention Block</div>
-                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Tokens look at every other token to compute dynamic relevance matrix</p>
+                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Each token looks at the tokens it is allowed to see (in a decoder-only LLM: itself and earlier tokens, via a causal mask) to compute a dynamic relevance matrix</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #fbcfe8; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #db2777; font-size: 0.92rem;">Feed Forward Networks</div>
                     <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Applies non-linear projections separately to each token representation</p>
@@ -284,6 +298,100 @@
                     $$PE_{(pos, 2i)} = \sin\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)$$
                     $$PE_{(pos, 2i+1)} = \cos\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)$$
                 </div>
+<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+    <svg id="pe-heatmap" viewBox="0 0 790 430" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;" role="img" aria-label="Heatmap of the sinusoidal positional encoding matrix, positions down, dimensions across"></svg>
+    <svg id="pe-waves" viewBox="0 0 790 300" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto; margin-top: 14px;" role="img" aria-label="Sine waves of four different frequencies plotted against token position"></svg>
+    <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em>Top: the full matrix $PE \in \mathbb{R}^{n \times d_{\text{model}}}$ for $d_{\text{model}}=64$ and 50 positions. Each <strong>row</strong> is the vector added to the token at that position; each <strong>column</strong> is one wave sampled at every position. Left columns oscillate quickly, right columns slowly (the wavelength grows from $2\pi$ up to roughly $10000 \cdot 2\pi$), so every row has a distinct pattern &mdash; like the digits of a counter, where the fast digit changes every step and the slow digit only occasionally. Bottom: four of those columns as curves; the vertical line at $pos=10$ reads off four of the 64 numbers in the outlined row above.</em>
+    </p>
+</div>
+<script>
+(function () {
+    var NS = 'http://www.w3.org/2000/svg';
+    var FONT = 'Segoe UI, sans-serif';
+    function el(tag, attrs, parent, text) {
+        var e = document.createElementNS(NS, tag);
+        for (var k in attrs) { e.setAttribute(k, attrs[k]); }
+        if (text !== undefined) { e.textContent = text; }
+        parent.appendChild(e);
+        return e;
+    }
+    function label(parent, x, y, s, size, weight, fill, anchor) {
+        return el('text', {x: x, y: y, 'text-anchor': anchor || 'middle', 'font-family': FONT,
+                           'font-size': size || 11, 'font-weight': weight || 'normal', fill: fill || '#475569'}, parent, s);
+    }
+    var D = 64, P = 50;
+    function pe(pos, j) {                       // j = embedding dimension index (0..D-1)
+        var i = Math.floor(j / 2);
+        var ang = pos / Math.pow(10000, (2 * i) / D);
+        return (j % 2 === 0) ? Math.sin(ang) : Math.cos(ang);
+    }
+    function color(v) {                          // -1 blue, 0 white, +1 orange
+        var t = (v + 1) / 2, a, b, u;
+        if (t < 0.5) { a = [29, 78, 216]; b = [255, 255, 255]; u = t / 0.5; }
+        else         { a = [255, 255, 255]; b = [234, 88, 12];  u = (t - 0.5) / 0.5; }
+        return 'rgb(' + Math.round(a[0] + (b[0] - a[0]) * u) + ',' + Math.round(a[1] + (b[1] - a[1]) * u) + ',' + Math.round(a[2] + (b[2] - a[2]) * u) + ')';
+    }
+
+    /* ---------- Panel A: heatmap ---------- */
+    var h = document.getElementById('pe-heatmap');
+    var ox = 60, oy = 62, cw = 10, ch = 6;
+    label(h, 395, 20, 'Sinusoidal Positional Encoding matrix  (d_model = 64, 50 positions)', 15, 'bold', '#0f172a');
+    label(h, ox + D * cw / 2, 44, '\u2190 high frequency (fast-changing)          low frequency (slow-changing) \u2192', 11, 'italic', '#475569');
+    var defs = el('defs', {}, h);
+    var grad = el('linearGradient', {id: 'peGrad', x1: 0, y1: 0, x2: 0, y2: 1}, defs);
+    for (var s = 0; s <= 10; s++) {
+        el('stop', {offset: (s * 10) + '%', 'stop-color': color(1 - s / 5)}, grad);
+    }
+    for (var p = 0; p < P; p++) {
+        for (var j = 0; j < D; j++) {
+            el('rect', {x: ox + j * cw, y: oy + p * ch, width: cw, height: ch, fill: color(pe(p, j)), 'shape-rendering': 'crispEdges'}, h);
+        }
+    }
+    el('rect', {x: ox, y: oy, width: D * cw, height: P * ch, fill: 'none', stroke: '#64748b', 'stroke-width': 1}, h);
+    el('rect', {x: ox - 1, y: oy + 10 * ch - 1, width: D * cw + 2, height: ch + 2, fill: 'none', stroke: '#0f172a', 'stroke-width': 2}, h);
+    var xt = [0, 16, 32, 48, 63];
+    xt.forEach(function (j) { label(h, ox + j * cw + cw / 2, oy + P * ch + 16, j, 10.5); });
+    var yt = [0, 10, 20, 30, 40, 49];
+    yt.forEach(function (p) { label(h, ox - 8, oy + p * ch + ch / 2 + 4, p, 10.5, 'normal', '#475569', 'end'); });
+    label(h, ox + D * cw / 2, oy + P * ch + 36, 'Embedding dimension index  (pairs 2i, 2i+1 share one frequency: sin, cos)', 11.5, 'bold', '#334155');
+    var yl = label(h, 14, oy + P * ch / 2, 'Token position (pos)', 11.5, 'bold', '#334155');
+    yl.setAttribute('transform', 'rotate(-90 14 ' + (oy + P * ch / 2) + ')');
+    label(h, ox + D * cw / 2, oy + P * ch + 56, 'Outlined row = the positional vector added to the token at pos = 10', 11.5, 'italic', '#0f172a');
+    // colour bar
+    el('rect', {x: 725, y: oy, width: 14, height: P * ch, fill: 'url(#peGrad)', stroke: '#64748b', 'stroke-width': 1}, h);
+    label(h, 745, oy + 8, '+1', 10.5, 'normal', '#475569', 'start');
+    label(h, 745, oy + P * ch / 2 + 4, '0', 10.5, 'normal', '#475569', 'start');
+    label(h, 745, oy + P * ch, '\u22121', 10.5, 'normal', '#475569', 'start');
+
+    /* ---------- Panel B: wave curves ---------- */
+    var w = document.getElementById('pe-waves');
+    var wx = 60, wy = 44, ww = 640, wh = 170, maxPos = 100, mid = wy + wh / 2, amp = wh / 2 - 8;
+    function X(pos) { return wx + pos / maxPos * ww; }
+    function Y(v) { return mid - v * amp; }
+    label(w, 395, 20, 'Four columns of the matrix as waves  (value of PE at dimension j vs. token position)', 15, 'bold', '#0f172a');
+    el('rect', {x: wx, y: wy, width: ww, height: wh, fill: '#ffffff', stroke: '#cbd5e1', 'stroke-width': 1}, w);
+    el('line', {x1: wx, y1: mid, x2: wx + ww, y2: mid, stroke: '#e2e8f0', 'stroke-width': 1}, w);
+    [0, 20, 40, 60, 80, 100].forEach(function (p) { label(w, X(p), wy + wh + 16, p, 10.5); });
+    [1, 0, -1].forEach(function (v) { label(w, wx - 8, Y(v) + 4, v, 10.5, 'normal', '#475569', 'end'); });
+    label(w, wx + ww / 2, wy + wh + 34, 'Token position (pos)', 11.5, 'bold', '#334155');
+    var cols = [[0, '#2563eb'], [8, '#ea580c'], [16, '#16a34a'], [32, '#7c3aed']];
+    cols.forEach(function (c, idx) {
+        var pts = [];
+        for (var q = 0; q <= maxPos * 4; q++) { var pos = q / 4; pts.push(X(pos).toFixed(1) + ',' + Y(pe(pos, c[0])).toFixed(1)); }
+        el('polyline', {points: pts.join(' '), fill: 'none', stroke: c[1], 'stroke-width': 2}, w);
+        var period = 2 * Math.PI * Math.pow(10000, c[0] / D);
+        var pTxt = period < 100 ? period.toFixed(1) : Math.round(period);
+        var lx = 90 + (idx % 2) * 330, ly = wy + wh + 58 + Math.floor(idx / 2) * 18;
+        el('line', {x1: lx, y1: ly - 4, x2: lx + 26, y2: ly - 4, stroke: c[1], 'stroke-width': 3}, w);
+        label(w, lx + 34, ly, 'dim ' + c[0] + ' (i = ' + (c[0] / 2) + '):  wavelength \u2248 ' + pTxt + ' positions', 11, 'normal', '#334155', 'start');
+    });
+    el('line', {x1: X(10), y1: wy, x2: X(10), y2: wy + wh, stroke: '#0f172a', 'stroke-width': 1.5, 'stroke-dasharray': '5,4'}, w);
+    cols.forEach(function (c) { el('circle', {cx: X(10), cy: Y(pe(10, c[0])), r: 4.5, fill: c[1], stroke: '#0f172a', 'stroke-width': 1.5}, w); });
+    label(w, X(10) + 6, wy + wh - 8, 'pos = 10', 10.5, 'bold', '#0f172a', 'start');
+})();
+</script>
+
             </div>
         </section>
 
@@ -424,6 +532,88 @@
                 <li><strong>Head 2:</strong> Maps long-range semantic coreferences and pronouns.</li>
                 <li><strong>Head 3:</strong> Evaluates immediate spatial or positional tokens.</li>
             </ul>
+<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+<svg viewBox="0 0 1100 450" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;" role="img" aria-label="Multi-head attention: input split into H heads of size d_k, attention run independently, outputs concatenated and mixed by W^O">
+<defs><marker id="mhaArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#334155"/></marker></defs>
+<text x="550" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a" >Multi-Head Attention: Split &#8594; Attend Independently &#8594; Concatenate &#8594; Mix</text>
+<rect x="10" y="185" width="90" height="70" rx="10" fill="#e2e8f0" stroke="#64748b" stroke-width="2" />
+<text x="55" y="214" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#0f172a" >Input X</text>
+<text x="55" y="232" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >n &#215; d_model</text>
+<text x="225" y="57" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#2563eb" >Head 1</text>
+<line x1="100" y1="220" x2="138" y2="100" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<rect x="140" y="65" width="170" height="70" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2" />
+<text x="225" y="86" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#2563eb" >Linear projections</text>
+<text x="225" y="103" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >W^Q_i , W^K_i , W^V_i</text>
+<text x="225" y="120" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >Q_i, K_i, V_i : n &#215; d_k</text>
+<line x1="310" y1="100" x2="346" y2="100" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<rect x="350" y="65" width="180" height="70" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2" />
+<text x="440" y="86" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#2563eb" >Scaled dot-product attn</text>
+<text x="440" y="103" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >softmax(Q_i K_i^T / &#8730;d_k) V_i</text>
+<text x="440" y="120" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="italic" fill="#475569" >runs independently</text>
+<line x1="530" y1="100" x2="566" y2="100" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<rect x="570" y="65" width="90" height="70" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2" />
+<text x="615" y="93" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#2563eb" >Head 1</text>
+<text x="615" y="112" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >n &#215; d_k</text>
+<text x="225" y="152" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#ea580c" >Head 2</text>
+<line x1="100" y1="220" x2="138" y2="195" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<rect x="140" y="160" width="170" height="70" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="2" />
+<text x="225" y="181" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#ea580c" >Linear projections</text>
+<text x="225" y="198" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >W^Q_i , W^K_i , W^V_i</text>
+<text x="225" y="215" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >Q_i, K_i, V_i : n &#215; d_k</text>
+<line x1="310" y1="195" x2="346" y2="195" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<rect x="350" y="160" width="180" height="70" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="2" />
+<text x="440" y="181" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#ea580c" >Scaled dot-product attn</text>
+<text x="440" y="198" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >softmax(Q_i K_i^T / &#8730;d_k) V_i</text>
+<text x="440" y="215" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="italic" fill="#475569" >runs independently</text>
+<line x1="530" y1="195" x2="566" y2="195" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<rect x="570" y="160" width="90" height="70" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="2" />
+<text x="615" y="188" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#ea580c" >Head 2</text>
+<text x="615" y="207" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >n &#215; d_k</text>
+<text x="225" y="312" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed" >Head H</text>
+<line x1="100" y1="220" x2="138" y2="355" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<rect x="140" y="320" width="170" height="70" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
+<text x="225" y="341" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#7c3aed" >Linear projections</text>
+<text x="225" y="358" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >W^Q_i , W^K_i , W^V_i</text>
+<text x="225" y="375" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >Q_i, K_i, V_i : n &#215; d_k</text>
+<line x1="310" y1="355" x2="346" y2="355" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<rect x="350" y="320" width="180" height="70" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
+<text x="440" y="341" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#7c3aed" >Scaled dot-product attn</text>
+<text x="440" y="358" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >softmax(Q_i K_i^T / &#8730;d_k) V_i</text>
+<text x="440" y="375" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="italic" fill="#475569" >runs independently</text>
+<line x1="530" y1="355" x2="566" y2="355" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<rect x="570" y="320" width="90" height="70" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
+<text x="615" y="348" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed" >Head H</text>
+<text x="615" y="367" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >n &#215; d_k</text>
+<text x="225" y="285" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="22" font-weight="bold" fill="#94a3b8" >&#8942;</text>
+<text x="440" y="285" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="22" font-weight="bold" fill="#94a3b8" >&#8942;</text>
+<text x="615" y="285" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="22" font-weight="bold" fill="#94a3b8" >&#8942;</text>
+<text x="55" y="285" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-weight="normal" fill="#475569" ></text>
+<rect x="710" y="130" width="130" height="190" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2" />
+<text x="775" y="152" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#0f172a" >Concat</text>
+<rect x="722" y="172" width="26" height="90" rx="3" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" />
+<rect x="750" y="172" width="26" height="90" rx="3" fill="#ffedd5" stroke="#ea580c" stroke-width="1.5" />
+<text x="789" y="224" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="bold" fill="#94a3b8" >&#8943;</text>
+<rect x="802" y="172" width="26" height="90" rx="3" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5" />
+<text x="775" y="282" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#0f172a" >n &#215; (H&#183;d_k)</text>
+<text x="775" y="298" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#0f172a" >= n &#215; d_model</text>
+<line x1="660" y1="100" x2="708" y2="185" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<line x1="660" y1="195" x2="708" y2="215" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<line x1="660" y1="355" x2="708" y2="255" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<line x1="840" y1="220" x2="866" y2="220" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<rect x="870" y="180" width="95" height="80" rx="10" fill="#fef9c3" stroke="#ca8a04" stroke-width="2" />
+<text x="917" y="206" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#a16207" >&#215; W^O</text>
+<text x="917" y="224" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-weight="normal" fill="#475569" >d_model &#215; d_model</text>
+<text x="917" y="240" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-weight="italic" fill="#475569" >mixes the heads</text>
+<line x1="965" y1="220" x2="991" y2="220" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
+<rect x="995" y="185" width="95" height="70" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2" />
+<text x="1042" y="213" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#166534" >Output</text>
+<text x="1042" y="231" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >n &#215; d_model</text>
+<text x="550" y="424" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="italic" fill="#475569" >Each head works in a slice of size d_k = d_model / H   (e.g. d_model = 512, H = 8  &#8594;  d_k = 64).  Total cost &#8776; one full-width head, but H different "views".</text>
+</svg>
+    <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em>Split-path view of Multi-Head Attention: the same input $X$ feeds $H$ parallel heads, each with its own $W^Q_i, W^K_i, W^V_i$ projecting down to $d_k = d_{\text{model}}/H$. Each head computes attention on its own and emits an $n \times d_k$ matrix; the $H$ outputs are concatenated back to $n \times d_{\text{model}}$, then mixed by $W^O$ so the output shape matches the input $X$ (required for the residual connection).</em>
+    </p>
+</div>
             <div class="math-block">
                 $$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{Head}_1, \text{Head}_2, \dots, \text{Head}_H) \times W^O$$
 				<h4 style="margin-top: 30px; color: #0f172a;">What Does the Multi-Head Attention Output Look Like?</h4>
@@ -496,6 +686,7 @@
                     <li>After $N$ repetitions, $h^{(N)}$ is the final, deeply context-enriched representation — this is what feeds into Output Projections, covered next.</li>
                 </ol>
             </div>
+            <div style="background: #ecfeff; border-left: 4px solid #0e7490; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #164e63; line-height: 1.5;"><strong>Applies to all variants:</strong> stacking works the same in every layout. In an encoder&ndash;decoder model there are two stacks (an encoder of $N$ blocks and a decoder of $N$ blocks, where each decoder block also has a cross-attention sub-layer); a decoder-only model such as GPT/Claude has just the one decoder stack.</div>
 
             <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
               <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
@@ -668,6 +859,7 @@
 
             <p>Let's map out how the sequence <code>"The cat sat on the mat"</code> moves through the network step-by-step to predict the next word (<code>"and"</code>):</p>
 
+            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) LLM.</strong> Inside every layer, each token attends only to itself and earlier tokens; the last position is the one used to predict the next token.</div>
             <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; font-family: monospace; font-size: 0.9rem;">
                 <div style="text-align:center; font-weight:bold; color:#1e293b;">[Execution Map: Layer Stack Pass-Through]</div>
                 <hr style="border:0; border-top:1px solid #cbd5e1; margin:10px 0;">
@@ -733,6 +925,7 @@
             </div>
         </section>
 		<h3>Complete Training loop of Transformer</h3>
+		<div style="background: #f1f5f9; border-left: 4px solid #64748b; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #334155; line-height: 1.5;"><strong>Applies to all variants:</strong> the single-loss / single-backward-pass idea is the same for every layout. For a decoder-only LLM the loss is next-token cross-entropy on the (shifted) input text; for an encoder&ndash;decoder model it is computed on the decoder outputs, and the gradient reaches the encoder through cross-attention.</div>
 		<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
     <svg viewBox="0 0 1000 270" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
         <defs>
@@ -830,6 +1023,9 @@
                     </p>
                 </div>
             </div>
+            <p style="margin-top: 15px;">
+                This page covers the architecture that all three stages train. To see the stages built step by step &mdash; the <a href="LLMEngineDev.html#pretraining-loop" style="color:#2563eb; text-decoration:underline;">pretraining loop</a> (data mixtures, mixed precision, distributed training), then <a href="LLMEngineDev.html" style="color:#2563eb; text-decoration:underline;">SFT and RLHF/DPO alignment</a> &mdash; continue to the <a href="LLMEngineDev.html" style="color:#2563eb; text-decoration:underline;">Building an LLM Engine</a> tutorial.
+            </p>
         </section>
 
         <section id="technical-summary">
