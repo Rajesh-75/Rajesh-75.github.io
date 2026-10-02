@@ -288,7 +288,7 @@
 <h2>3.2 Framing the LLM Alignment Problem: Why Standard RL Fails and How RLHF Integrates Human Preferences
 </h2>
 <p>
-  Applying traditional Reinforcement Learning directly to large language models breaks down because language lacks the hard, objective, programmatic environment rules found in chess or video games. Without a rigid ground-truth simulator to evaluate whether a generated paragraph is creative, helpful, or safe, standard RL loops have no intrinsic way to score success. More critically, text generation is fundamentally a single-step contextual <strong>bandit problem</strong> rather than a true multi-step trajectory where environment dynamics change based on intermediate actions. To bridge this gap, <strong>RLHF</Strong> replaces traditional environment rewards with a learned Reward Model trained on human preferences. This setup allows us to steer the model using subjective human intent, while a <strong>reference model and KL penalty</strong> anchor the policy to prevent it from gaming the reward function.
+  Applying traditional Reinforcement Learning directly to large language models breaks down because language lacks the hard, objective, programmatic environment rules found in chess or video games. Without a rigid ground-truth simulator to evaluate whether a generated paragraph is creative, helpful, or safe, standard RL loops have no intrinsic way to score success. More critically, text generation is fundamentally a single-step contextual <strong>bandit problem</strong> rather than a true multi-step trajectory where environment dynamics change based on intermediate actions. To bridge this gap, <strong>RLHF</Strong> replaces traditional environment rewards with a learned Reward Model trained on human preferences. This setup allows us to steer the model using subjective human intent, while a <strong>reference model and KL penalty</strong> anchor the policy to prevent it from gaming the reward function.It uses an optimization pipeline (algorithms like PPO or DPO) that optimizes an objective based on scalar preference judgments rather than exact token matches performed by pretrained models and SFT models.<strong>RLHF reduces halucinations by penalizing confident wrong answers and prevents harmless content</strong>.
 </p>
 
 <h3>3.2.1 The High-Level View: The Contextual Bandit</h3>
@@ -470,12 +470,38 @@
   To stop this and keep the language natural, we save a copy of the original model. 
   This copy is called the reference model ($\pi_{ref}$). 
   The reference model is frozen and never changes. 
-  It acts as a baseline to calculate a penalty (the KL divergence penalty) whenever the active AI changes too much. 
+  It acts as a baseline to calculate a penalty (the KL divergence penalty) (i.e penalizes the model from drifting too far from its original baseline). For example, the model might discover that repeating words like "excellent, helpful, fantastic" over and over tricks the Reward Model into giving a huge positive score, resulting in total gibberish that gets a high reward.
   This keeps the AI stable during training, as shown in the formula:
 </p>
 
-<div class="math-block">
-  $$\max_\theta \;\; \mathbb{E}\big[RM_\psi(p, c)\big] \;-\; \beta \cdot \mathrm{KL}\big(\pi_\theta \,\Vert{}\, \pi_{ref}\big)$$
+<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #0284c7; padding: 16px 20px; border-radius: 8px; max-width: 650px; margin: 30px auto; font-family: system-ui, -apple-system, sans-serif;">
+    <h4 style="margin-top: 0; margin-bottom: 10px; color: #0369a1; font-size: 1.05rem;">RLHF Objective &amp; KL Penalty</h4>
+
+    <!-- Full Objective Equation -->
+    <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 14px; text-align: center; margin-bottom: 12px; font-weight: 500;">
+        $$\max_\theta \;\; \mathbb{E}_{(x, y) \sim \mathcal{D}} \left[ R_\psi(x, y) - \beta \cdot D_{\text{KL}}\big(\pi_\theta(y \vert x) \,||\, \pi_{\text{ref}}(y \vert x)\big) \right]$$
+    </div>
+
+    <p style="margin-bottom: 8px; font-size: 0.92rem; color: #334155;">
+        At the token level, the per-token KL divergence penalty approximation is:
+    </p>
+
+    <!-- Token-level Approximation Formula -->
+    <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; text-align: center; margin-bottom: 12px;">
+        $$\text{KL Penalty}_t \approx \log \left( \frac{\pi_\theta(a_t \vert{} s_t)}{\pi_{\text{ref}}(a_t \vert{} s_t)} \right)$$
+    </div>
+
+    <!-- Intuition List -->
+    <ul style="padding-left: 20px; margin-bottom: 0; font-size: 0.92rem; color: #334155;">
+        <li style="margin-bottom: 8px;">
+            <strong>Similar Probabilities (Policy vs. SFT):</strong><br>
+            When $\frac{\pi_\theta}{\pi_{\text{ref}}} \approx 1 \implies \log(1) = 0$. The penalty is zero.
+        </li>
+        <li>
+            <strong>Drastic Over-assignment by Policy:</strong><br>
+            When $\frac{\pi_\theta}{\pi_{\text{ref}}} \gg 1 \implies \log(\text{large number}) > 0$. Subtracting this positive value reduces the overall net reward $r_t$.
+        </li>
+    </ul>
 </div>
 
 <h3>3.3.1 Why the KL Penalty Can Be Computed Per Token</h3>
