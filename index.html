@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A teaching portal on statistics, machine learning, deep learning and large language models, with derivations, pseudo-algorithms and worked examples.">
     <title>Rajesh's Engineering & ML Tutorials Project</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
     <style>
         :root {
             --navy: #0d2338;
@@ -191,6 +192,64 @@
             font-size: 0.85rem;
         }
 
+
+        /* ---- additions: skip link, hero figure tiles, jump bar, learning path, module features ---- */
+        .skip { position: absolute; left: -9999px; top: 0; background: #fff; color: var(--blue-dark); padding: 8px 14px; z-index: 10; }
+        .skip:focus { left: 8px; top: 8px; }
+        .hero { padding-bottom: 8px; margin-bottom: 36px; }
+        .hero-caption { padding: 6px 0 22px; text-align: center; }
+        .tiles-head {
+            font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--gold-light); margin: 6px 0 12px; text-align: center;
+        }
+        .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-bottom: 36px; }
+        .tile {
+            display: block; text-decoration: none; color: #eef3f8;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 10px; padding: 12px 12px 14px;
+            transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+        }
+        .tile:hover, .tile:focus-visible { transform: translateY(-3px); border-color: var(--gold-light); background: rgba(255,255,255,0.08); outline: none; }
+        .tile-svg { display: block; width: 100%; height: auto; }
+        .tile-svg text { font-family: 'Segoe UI', Arial, sans-serif; }
+        .tile-title { display: block; margin-top: 10px; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 1.05rem; color: #f4f7fb; }
+        .tile-desc { display: block; font-size: 0.84rem; color: #b9c9dc; line-height: 1.45; margin-top: 2px; }
+
+        .jump { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 6px; padding: 0; list-style: none; }
+        .jump a {
+            display: inline-block; text-decoration: none; font-size: 0.86rem; font-weight: 600;
+            color: var(--blue-dark); background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 999px; padding: 6px 14px; transition: border-color 0.15s ease, background 0.15s ease;
+        }
+        .jump a:hover { border-color: var(--gold); background: var(--gold-bg); }
+
+        h3.plain { color: var(--blue-dark); font-family: 'Source Serif 4', Georgia, serif; font-size: 1.25rem; margin: 34px 0 6px; }
+        .path { list-style: none; counter-reset: step; margin: 14px 0 6px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+        .path li { counter-increment: step; }
+        .path a {
+            display: block; height: 100%; text-decoration: none; color: var(--ink);
+            background: #fff; border: 1px solid var(--card-border); border-top: 3px solid var(--blue);
+            border-radius: 6px; padding: 12px 14px 14px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-top-color 0.15s ease;
+        }
+        .path a:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(13,35,56,0.10); border-top-color: var(--gold); }
+        .path .step-n { display: block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+        .path .step-n::before { content: "Step " counter(step); }
+        .path .step-t { display: block; font-weight: 600; color: var(--blue-dark); margin: 2px 0 4px; }
+        .path .step-d { display: block; font-size: 0.84rem; color: var(--muted); line-height: 1.45; }
+        .path-note { font-size: 0.88rem; color: var(--muted); margin: 8px 0 0; }
+
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 14px 0 4px; }
+        .feature { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 6px; padding: 12px 14px; }
+        .feature b { display: block; color: var(--blue-dark); margin-bottom: 2px; font-size: 0.95rem; }
+        .feature span { font-size: 0.86rem; color: var(--muted); line-height: 1.45; display: block; }
+
+        .stats-sub { color: #7a5c00; font-size: 0.95rem; margin: 26px 0 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+        .stats-sub:first-of-type { margin-top: 18px; }
+        [id] { scroll-margin-top: 14px; }
+
+        @media (max-width: 760px) { .tiles { grid-template-columns: 1fr; } }
+
         @media (max-width: 600px) {
             h1 { font-size: 1.9rem; }
             .hero { padding-top: 40px; }
@@ -198,6 +257,7 @@
     </style>
 </head>
 <body>
+<a class="skip" href="#start">Skip to the modules</a>
 
 <div class="hero">
     <div class="hero-inner">
@@ -265,9 +325,115 @@
                 <circle cx="850" cy="130" r="5.5"/>
             </g>
         </svg>
+        <div class="hero-caption">The same foundation, carried forward &mdash; from probability and inference to modern neural networks</div>
+
+        <div class="tiles-head">A first look at what you will learn</div>
+        <div class="tiles">
+            <a class="tile" href="#card-svm">
+<svg class="tile-svg" viewBox="0 0 330 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Support vector machine: two classes separated by a maximum-margin line">
+<defs><clipPath id="svmclip"><rect x="14" y="10" width="302" height="166" rx="4"/></clipPath></defs>
+<g clip-path="url(#svmclip)">
+<polygon points="22.0,242.2 308.0,-107.3 308.0,-43.1 22.0,306.4" fill="#7fb2e5" opacity="0.10"/>
+<line x1="22.0" y1="242.2" x2="308.0" y2="-107.3" stroke="#9bb6cc" stroke-width="1.2" stroke-dasharray="5 4"/>
+<line x1="22.0" y1="306.4" x2="308.0" y2="-43.1" stroke="#9bb6cc" stroke-width="1.2" stroke-dasharray="5 4"/>
+<line x1="22.0" y1="274.3" x2="308.0" y2="-75.2" stroke="#f4f7fb" stroke-width="2" />
+</g>
+<circle cx="48" cy="58" r="4.6" fill="#e0b84a"/>
+<circle cx="82" cy="38" r="4.6" fill="#e0b84a"/>
+<circle cx="116" cy="62" r="4.6" fill="#e0b84a"/>
+<circle cx="66" cy="96" r="4.6" fill="#e0b84a"/>
+<circle cx="104" cy="106" r="4.6" fill="#e0b84a"/>
+<circle cx="150" cy="52" r="4.6" fill="#e0b84a"/>
+<circle cx="44" cy="128" r="4.6" fill="#e0b84a"/>
+<circle cx="92" cy="142" r="4.6" fill="#e0b84a"/>
+<circle cx="140" cy="98" r="4.6" fill="#e0b84a"/>
+<rect x="199.6" y="79.6" width="8.8" height="8.8" fill="#7fb2e5"/>
+<rect x="231.6" y="47.6" width="8.8" height="8.8" fill="#7fb2e5"/>
+<rect x="257.6" y="95.6" width="8.8" height="8.8" fill="#7fb2e5"/>
+<rect x="209.6" y="127.6" width="8.8" height="8.8" fill="#7fb2e5"/>
+<rect x="271.6" y="141.6" width="8.8" height="8.8" fill="#7fb2e5"/>
+<rect x="183.6" y="159.6" width="8.8" height="8.8" fill="#7fb2e5"/>
+<rect x="235.6" y="163.6" width="8.8" height="8.8" fill="#7fb2e5"/>
+<rect x="163.6" y="123.6" width="8.8" height="8.8" fill="#7fb2e5"/>
+<rect x="245.6" y="65.6" width="8.8" height="8.8" fill="#7fb2e5"/>
+<circle cx="140" cy="98" r="9.5" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="204" cy="84" r="9.5" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="168" cy="128" r="9.5" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+<line x1="164.2" y1="68.4" x2="195.7" y2="94.1" stroke="#f4f7fb" stroke-width="1.3"/>
+<polygon points="164.2,68.4 166.2,73.9 170.0,69.2" fill="#f4f7fb"/>
+<polygon points="195.7,94.1 189.9,93.3 193.7,88.6" fill="#f4f7fb"/>
+<circle cx="22" cy="190" r="6" fill="none" stroke="#ffffff" stroke-width="1.4"/><text x="33" y="193" fill="#d5e1ee" font-size="9.8">support vectors</text>
+<line x1="120" y1="190" x2="142" y2="190" stroke="#f4f7fb" stroke-width="2"/><text x="148" y="193" fill="#d5e1ee" font-size="9.8">w·x + b = 0</text>
+<line x1="222" y1="190" x2="244" y2="190" stroke="#9bb6cc" stroke-width="1.2" stroke-dasharray="5 4"/><text x="250" y="193" fill="#d5e1ee" font-size="9.8">margin edges</text>
+</svg>
+                <span class="tile-title">Maximum-margin classification</span>
+                <span class="tile-desc">Support vector machines choose the boundary that leaves the widest margin; only the circled support vectors define it.</span>
+            </a>
+            <a class="tile" href="#card-tree">
+<svg class="tile-svg" viewBox="0 0 330 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Decision tree: two splits separating class A from class B">
+<line x1="150" y1="48" x2="62" y2="90" stroke="#9bb6cc" stroke-width="1.4"/>
+<text x="92" y="72" fill="#7f93aa" font-size="9.5" font-style="italic">yes</text>
+<line x1="150" y1="48" x2="232" y2="90" stroke="#9bb6cc" stroke-width="1.4"/>
+<text x="204" y="72" fill="#7f93aa" font-size="9.5" font-style="italic">no</text>
+<line x1="232" y1="124" x2="186" y2="160" stroke="#9bb6cc" stroke-width="1.4"/>
+<text x="196" y="145" fill="#7f93aa" font-size="9.5" font-style="italic">yes</text>
+<line x1="232" y1="124" x2="284" y2="160" stroke="#9bb6cc" stroke-width="1.4"/>
+<text x="272" y="145" fill="#7f93aa" font-size="9.5" font-style="italic">no</text>
+<rect x="86" y="12" width="128" height="36" rx="6" fill="rgba(255,255,255,0.08)" stroke="#9bb6cc" stroke-width="1.3"/><text x="150" y="27" text-anchor="middle" fill="#f4f7fb" font-size="11.5" font-weight="700">x₁ ≤ 3.0 ?</text><text x="150" y="40" text-anchor="middle" fill="#d5e1ee" font-size="9.2">n = 100 · Gini 0.50</text>
+<rect x="10" y="90" width="104" height="36" rx="6" fill="rgba(224,184,74,0.20)" stroke="#e0b84a" stroke-width="1.3"/><text x="62" y="105" text-anchor="middle" fill="#f4f7fb" font-size="11.5" font-weight="700">Class A</text><text x="62" y="118" text-anchor="middle" fill="#d5e1ee" font-size="9.2">n = 48 · Gini 0.08</text>
+<rect x="173" y="88" width="118" height="36" rx="6" fill="rgba(255,255,255,0.08)" stroke="#9bb6cc" stroke-width="1.3"/><text x="232" y="103" text-anchor="middle" fill="#f4f7fb" font-size="11.5" font-weight="700">x₂ ≤ 1.5 ?</text><text x="232" y="116" text-anchor="middle" fill="#d5e1ee" font-size="9.2">n = 52 · Gini 0.14</text>
+<rect x="140" y="160" width="92" height="36" rx="6" fill="rgba(127,178,229,0.22)" stroke="#7fb2e5" stroke-width="1.3"/><text x="186" y="175" text-anchor="middle" fill="#f4f7fb" font-size="11.5" font-weight="700">Class B</text><text x="186" y="188" text-anchor="middle" fill="#d5e1ee" font-size="9.2">n = 40 · Gini 0.00</text>
+<rect x="239" y="160" width="90" height="36" rx="6" fill="rgba(127,178,229,0.22)" stroke="#7fb2e5" stroke-width="1.3"/><text x="284" y="175" text-anchor="middle" fill="#f4f7fb" font-size="11.5" font-weight="700">Class B</text><text x="284" y="188" text-anchor="middle" fill="#d5e1ee" font-size="9.2">n = 12 · Gini 0.44</text>
+</svg>
+                <span class="tile-title">Learning by splitting</span>
+                <span class="tile-desc">A decision tree asks one question at a time, choosing splits that cut the Gini impurity the most.</span>
+            </a>
+            <a class="tile" href="#llm">
+<svg class="tile-svg" viewBox="0 0 330 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A language model reading five tokens with self-attention and predicting the next-token probabilities">
+<path d="M 287.0 44 Q 165 2 43 44" fill="none" stroke="#e0b84a" stroke-width="1.1" opacity="0.40"/>
+<path d="M 287.0 44 Q 196 8 104 44" fill="none" stroke="#e0b84a" stroke-width="2.3" opacity="0.61"/>
+<path d="M 287.0 44 Q 226 15 165 44" fill="none" stroke="#e0b84a" stroke-width="2.8" opacity="0.69"/>
+<path d="M 287.0 44 Q 256 22 226 44" fill="none" stroke="#e0b84a" stroke-width="4.0" opacity="0.90"/>
+<rect x="17" y="44" width="52" height="26" rx="5" fill="rgba(255,255,255,0.08)" stroke="#9bb6cc" stroke-width="1.2"/>
+<text x="43" y="61" text-anchor="middle" fill="#f4f7fb" font-size="12.5" font-weight="600">The</text>
+<rect x="78" y="44" width="52" height="26" rx="5" fill="rgba(255,255,255,0.08)" stroke="#9bb6cc" stroke-width="1.2"/>
+<text x="104" y="61" text-anchor="middle" fill="#f4f7fb" font-size="12.5" font-weight="600">cat</text>
+<rect x="139" y="44" width="52" height="26" rx="5" fill="rgba(255,255,255,0.08)" stroke="#9bb6cc" stroke-width="1.2"/>
+<text x="165" y="61" text-anchor="middle" fill="#f4f7fb" font-size="12.5" font-weight="600">sat</text>
+<rect x="200" y="44" width="52" height="26" rx="5" fill="rgba(255,255,255,0.08)" stroke="#9bb6cc" stroke-width="1.2"/>
+<text x="226" y="61" text-anchor="middle" fill="#f4f7fb" font-size="12.5" font-weight="600">on</text>
+<rect x="261" y="44" width="52" height="26" rx="5" fill="rgba(224,184,74,0.22)" stroke="#e0b84a" stroke-width="1.2"/>
+<text x="287" y="61" text-anchor="middle" fill="#f4f7fb" font-size="12.5" font-weight="600">the</text>
+<text x="17" y="12" fill="#7f93aa" font-size="9.5" font-style="italic">self-attention weights from the last token</text>
+<line x1="165" y1="70" x2="165" y2="86" stroke="#9bb6cc" stroke-width="1.4"/><polygon points="160,85 170,85 165,92" fill="#9bb6cc"/>
+<rect x="17" y="92" width="296" height="34" rx="6" fill="rgba(127,178,229,0.16)" stroke="#7fb2e5" stroke-width="1.3"/>
+<text x="165" y="107" text-anchor="middle" fill="#f4f7fb" font-size="11.5" font-weight="700">Transformer layers × N</text>
+<text x="165" y="120" text-anchor="middle" fill="#d5e1ee" font-size="9.2">self-attention + feed-forward</text>
+<line x1="165" y1="126" x2="165" y2="136" stroke="#9bb6cc" stroke-width="1.4"/><polygon points="160,135 170,135 165,142" fill="#9bb6cc"/>
+<text x="17" y="142" fill="#7f93aa" font-size="9.5" font-style="italic">next-token probabilities</text>
+<rect x="42" y="153.1" width="36" height="32.9" rx="2" fill="#e0b84a" opacity="1"/>
+<text x="60" y="150.1" text-anchor="middle" fill="#f4f7fb" font-size="9.5">0.58</text>
+<text x="60" y="197" text-anchor="middle" fill="#d5e1ee" font-size="10">mat</text>
+<rect x="96" y="175.2" width="36" height="10.8" rx="2" fill="#7fb2e5" opacity="0.75"/>
+<text x="114" y="172.2" text-anchor="middle" fill="#f4f7fb" font-size="9.5">0.19</text>
+<text x="114" y="197" text-anchor="middle" fill="#d5e1ee" font-size="10">floor</text>
+<rect x="150" y="180.9" width="36" height="5.1" rx="2" fill="#7fb2e5" opacity="0.75"/>
+<text x="168" y="177.9" text-anchor="middle" fill="#f4f7fb" font-size="9.5">0.09</text>
+<text x="168" y="197" text-anchor="middle" fill="#d5e1ee" font-size="10">sofa</text>
+<rect x="204" y="183.2" width="36" height="2.8" rx="2" fill="#7fb2e5" opacity="0.75"/>
+<text x="222" y="180.2" text-anchor="middle" fill="#f4f7fb" font-size="9.5">0.05</text>
+<text x="222" y="197" text-anchor="middle" fill="#d5e1ee" font-size="10">bed</text>
+<rect x="258" y="180.9" width="36" height="5.1" rx="2" fill="#7fb2e5" opacity="0.75"/>
+<text x="276" y="177.9" text-anchor="middle" fill="#f4f7fb" font-size="9.5">0.09</text>
+<text x="276" y="197" text-anchor="middle" fill="#d5e1ee" font-size="10">…</text>
+<line x1="22" y1="186" x2="298" y2="186" stroke="#9bb6cc" stroke-width="1"/>
+</svg>
+                <span class="tile-title">Predicting the next token</span>
+                <span class="tile-desc">A language model weighs the earlier tokens with self-attention and turns the result into a probability for every possible next word.</span>
+            </a>
+        </div>
     </div>
 </div>
-<div class="hero-caption">The same foundation, carried forward &mdash; from probability and inference to modern neural networks</div>
 
 <div class="wrap">
 
@@ -311,20 +477,51 @@
             training procedure laid out as pseudo-algorithms, and worked examples on
             real-world data so that theory and practice reinforce each other. The
             series begins with the end-to-end Machine Learning pipeline, moves
-            through the core classical algorithms and their hyperparameters, builds
-            up to CNNs, RNNs, and Transformers (including a dedicated treatment of
-            Encoder&ndash;Decoder architectures), and is now being extended into a
-            page on building an LLM Engine. Underpinning all of it is a full
-            Statistics track covering the subject the way it was taught to me &mdash;
-            the same foundation that every algorithm elsewhere on this site rests on.
+            through the core classical algorithms (SVM, K-NN, decision trees,
+            Na&iuml;ve Bayes, linear models and PCA) and their hyperparameters, builds
+            up through neural networks and gradient descent to CNNs, RNNs, and
+            Transformers (including a dedicated treatment of Encoder&ndash;Decoder
+            architectures), and is now being extended into pages on building an LLM
+            Engine and aligning it with reinforcement learning from human feedback.
+            Underpinning all of it is a full Statistics track covering the subject
+            the way it was taught to me &mdash; the same foundation that every
+            algorithm elsewhere on this site rests on.
         </p>
+
+        <h3 class="plain" id="start">How to use this portal</h3>
         <p>
-            Select a module below to begin.
+            Every page is self-contained, so you can start anywhere. If you are
+            building up from the beginning, this is the order in which the ideas
+            depend on one another.
         </p>
+        <ol class="path">
+            <li><a href="#statistics"><span class="step-n"></span><span class="step-t">Statistics</span><span class="step-d">Describe data, reason with probability, then estimate and test.</span></a></li>
+            <li><a href="#pipeline"><span class="step-n"></span><span class="step-t">The ML pipeline</span><span class="step-d">See the whole workflow from raw data to deployment.</span></a></li>
+            <li><a href="#algorithms"><span class="step-n"></span><span class="step-t">Classical algorithms</span><span class="step-d">SVM, K-NN, trees, Na&iuml;ve Bayes, linear models and PCA.</span></a></li>
+            <li><a href="#deep"><span class="step-n"></span><span class="step-t">Deep learning</span><span class="step-d">Neural networks, backpropagation, CNNs and RNNs.</span></a></li>
+            <li><a href="#llm"><span class="step-n"></span><span class="step-t">Transformers and LLMs</span><span class="step-d">Attention, encoder&ndash;decoder models, the LLM engine and RLHF.</span></a></li>
+        </ol>
+        <p class="path-note">New to the mathematics? Begin with the Statistics track. Already comfortable with it? Go straight to the pipeline or to the algorithm you need.</p>
+
+        <h3 class="plain">What each module gives you</h3>
+        <div class="features">
+            <div class="feature"><b>Derivations</b><span>Each result is derived step by step, so the formula is never a black box.</span></div>
+            <div class="feature"><b>Pseudo-algorithms</b><span>Training procedures written out so you can implement them yourself.</span></div>
+            <div class="feature"><b>Worked examples</b><span>Numerical problems and real-world data that tie the theory to practice.</span></div>
+            <div class="feature"><b>Illustrations and widgets</b><span>Diagrams throughout, plus interactive playgrounds and a timed quiz.</span></div>
+        </div>
+
+        <ul class="jump" aria-label="Jump to a section">
+            <li><a href="#statistics">Statistics</a></li>
+            <li><a href="#pipeline">ML pipeline</a></li>
+            <li><a href="#algorithms">Core algorithms</a></li>
+            <li><a href="#deep">Deep learning</a></li>
+            <li><a href="#llm">LLMs</a></li>
+        </ul>
     </div>
 
     <!-- ML PIPELINE -->
-    <h2>
+    <h2 id="pipeline">
         <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="4" cy="13" r="3" stroke="#0056b3" stroke-width="1.6"/><circle cx="13" cy="5" r="3" stroke="#0056b3" stroke-width="1.6"/><circle cx="13" cy="21" r="3" stroke="#0056b3" stroke-width="1.6"/><circle cx="22" cy="13" r="3" stroke="#0056b3" stroke-width="1.6"/><line x1="6.5" y1="11.5" x2="10.5" y2="7" stroke="#0056b3" stroke-width="1.4"/><line x1="6.5" y1="14.5" x2="10.5" y2="19" stroke="#0056b3" stroke-width="1.4"/><line x1="15.5" y1="7" x2="19.5" y2="11.5" stroke="#0056b3" stroke-width="1.4"/><line x1="15.5" y1="19" x2="19.5" y2="14.5" stroke="#0056b3" stroke-width="1.4"/></svg>
         The Machine Learning Pipeline
     </h2>
@@ -341,7 +538,7 @@
     </div>
 
     <!-- CORE ALGORITHMS -->
-    <h3 class="section-label">
+    <h3 class="section-label" id="algorithms">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 15 L6 8 L10 11 L16 3" stroke="#003d80" stroke-width="1.6" fill="none"/><circle cx="6" cy="8" r="1.6" fill="#003d80"/><circle cx="10" cy="11" r="1.6" fill="#003d80"/><circle cx="16" cy="3" r="1.6" fill="#003d80"/></svg>
         Core Machine Learning Algorithms
     </h3>
@@ -350,29 +547,37 @@
         for training, and a real-world worked example.
     </p>
     <div class="module-grid">
-        <a class="module-card" href="WebPageswithcommonStyles/svm.html">
+        <a class="module-card" id="card-svm" href="WebPageswithcommonStyles/svm.html">
             <span class="title">Support Vector Machines (SVM)</span>
             <span class="desc">Margins, the kernel trick, Lagrangian dual, and an interactive SMO playground.</span>
         </a>
-        <a class="module-card" href="WebPageswithcommonStyles/knn_classification.html">
+        <a class="module-card" href="WebPageswithcommonStyles/KNN.html">
             <span class="title">K-Nearest Neighbours (K-NN)</span>
             <span class="desc">From density estimation to classification, with an interactive nearest-neighbour widget.</span>
         </a>
-        <a class="module-card" href="WebPageswithcommonStyles/decision_tree.html">
+        <a class="module-card" id="card-tree" href="WebPageswithcommonStyles/decision-trees.html">
             <span class="title">Decision Trees</span>
             <span class="desc">Splitting criteria, tree construction, and pruning, derived step by step.</span>
         </a>
-        <a class="module-card" href="WebPageswithcommonStyles/neural_networks.html">
+        <a class="module-card" href="WebPageswithcommonStyles/NN_version1.html">
             <span class="title">Neural Networks (NN)</span>
             <span class="desc">Forward and backward passes, backpropagation derived from first principles.</span>
         </a>
-        <a class="module-card" href="WebPageswithcommonStyles/gradient_descent.html">
-            <span class="title">Gradient Descent</span>
+        <a class="module-card" href="WebPageswithcommonStyles/BP2.html">
+            <span class="title">Gradient Descent and Back Propogation</span>
             <span class="desc">The optimization engine behind training, with variants and convergence behaviour.</span>
         </a>
-        <a class="module-card" href="WebPageswithcommonStyles/naive_bayes.html">
+        <a class="module-card" href="WebPageswithcommonStyles/NaiveBayessian.html">
             <span class="title">Na&iuml;ve Bayes</span>
             <span class="desc">Multinomial Na&iuml;ve Bayes, Laplace and alternative smoothing techniques.</span>
+        </a>
+        <a class="module-card" href="WebPageswithcommonStyles/LinerModelandClassification.html">
+            <span class="title">Linear Models and Classification</span>
+            <span class="desc">Linear regression through least squares and maximum likelihood, with a worked numerical example.</span>
+        </a>
+        <a class="module-card" href="WebPageswithcommonStyles/PCA.html">
+            <span class="title">Principal Component Analysis (PCA)</span>
+            <span class="desc">Standardization, the covariance matrix, eigen-decomposition and projection onto the principal components.</span>
         </a>
     </div>
 
@@ -382,27 +587,27 @@
         Model Tuning
     </h3>
     <div class="module-grid">
-        <a class="module-card" href="WebPageswithcommonStyles/hyperparameters.html">
+        <a class="module-card" href="WebPageswithcommonStyles/ComparisonTable.html">
             <span class="title">Hyperparameters Across ML Models</span>
             <span class="desc">A dedicated reference for the key hyperparameters of the models covered above and how to tune them.</span>
         </a>
     </div>
 
     <!-- DEEP LEARNING -->
-    <h3 class="section-label">
+    <h3 class="section-label" id="deep">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" stroke="#003d80" stroke-width="1.3"/><rect x="10" y="1" width="7" height="7" rx="1" stroke="#003d80" stroke-width="1.3"/><rect x="4" y="10" width="7" height="7" rx="1" stroke="#003d80" stroke-width="1.3"/></svg>
         Deep Learning Architectures
     </h3>
     <div class="module-grid">
-        <a class="module-card" href="WebPageswithcommonStyles/cnn.html">
+        <a class="module-card" href="WebPageswithcommonStyles/CNN.html">
             <span class="title">Convolutional Neural Networks (CNN)</span>
             <span class="desc">Convolution, pooling, and feature hierarchies for spatial data.</span>
         </a>
-        <a class="module-card" href="WebPageswithcommonStyles/rnn.html">
+        <a class="module-card" href="WebPageswithcommonStyles/RNN.html">
             <span class="title">Recurrent Neural Networks (RNN)</span>
             <span class="desc">Sequence modelling, LSTM mechanics, and the challenges of long-range dependence.</span>
         </a>
-        <a class="module-card" href="WebPageswithcommonStyles/transformer_architectures.html">
+        <a class="module-card" href="WebPageswithcommonStyles/Transformer.html">
             <span class="title">Transformers</span>
             <span class="desc">Self-attention and Encoder-only, Decoder-only, and Encoder&ndash;Decoder variants.</span>
         </a>
@@ -412,20 +617,43 @@
         </a>
     </div>
 
-    <!-- LLM ENGINE -->
     <h3 class="section-label">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 3 H16 V12 H8 L4 15 V12 H2 Z" stroke="#003d80" stroke-width="1.3" stroke-linejoin="round"/></svg>
-        Building an LLM Engine <span class="badge">Under Construction</span>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 15 L6 10 L9 12 L16 3" stroke="#003d80" stroke-width="1.6" fill="none"/><line x1="2" y1="16" x2="16" y2="16" stroke="#003d80" stroke-width="1.2"/></svg>
+        Training, Regularization and Practice
     </h3>
     <div class="module-grid">
-        <a class="module-card" href="WebPageswithcommonStyles/llm_engine.html">
-            <span class="title">LLM Engine<span class="badge">In Progress</span></span>
+        <a class="module-card" href="WebPageswithcommonStyles/CNN_Training.html">
+            <span class="title">Training a CNN in Practice</span>
+            <span class="desc">Validation workflow, macro-F1 under class imbalance, and diagnosing weak classes.</span>
+        </a>
+        <a class="module-card" href="WebPageswithcommonStyles/Dropout.html">
+            <span class="title">Dropout</span>
+            <span class="desc">How randomly dropping units regularizes a network during training.</span>
+        </a>
+        <a class="module-card" href="WebPageswithcommonStyles/Quiz.html">
+            <span class="title">Neural Networks: Timed Quiz</span>
+            <span class="desc">A timed self-test to check how well the concepts have stuck.</span>
+        </a>
+    </div>
+
+    <!-- LLM ENGINE -->
+    <h3 class="section-label" id="llm">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 3 H16 V12 H8 L4 15 V12 H2 Z" stroke="#003d80" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        Building an LLM Engine 
+    </h3>
+    <div class="module-grid">
+        <a class="module-card" id="card-llm" href="WebPageswithcommonStyles/LLMEngineDev.html">
+            <span class="title">LLM Engine<span class="badge"></span>
             <span class="desc">Tokenization, pretraining, scaling laws, SFT/alignment, and the inference engine.</span>
+        </a>
+        <a class="module-card" href="WebPageswithcommonStyles/RLHF.html">
+            <span class="title">Training LLMs and RLHF</span>
+            <span class="desc">Practical issues in training language models, and aligning them with reinforcement learning from human feedback.</span>
         </a>
     </div>
 
     <!-- STATISTICS TRIBUTE -->
-    <div class="stats-section">
+    <div class="stats-section" id="statistics">
         <h2>
             <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M2 20 C4 20, 6 4, 13 4 C20 4, 22 20, 24 20" stroke="#b8860b" stroke-width="1.8" fill="none"/><line x1="2" y1="20" x2="24" y2="20" stroke="#b8860b" stroke-width="1.4"/></svg>
             Statistics &mdash; In Honour of L. R. Potti
@@ -444,48 +672,68 @@
             probability theory, to the inferential machinery of hypothesis testing and
             estimation.
         </p>
+        <h3 class="stats-sub">Describing data</h3>
         <div class="module-grid">
-            <a class="module-card" href="WebPageswithcommonStyles/measures_central_tendency.html">
+            <a class="module-card" href="WebPageswithcommonStyles/CentralTendency.html">
                 <span class="title">Measures of Central Tendency</span>
                 <span class="desc">Mean, median, mode, and how to choose between them.</span>
             </a>
-            <a class="module-card" href="WebPageswithcommonStyles/measures_dispersion.html">
+            <a class="module-card" href="WebPageswithcommonStyles/CentralTendency.html">
                 <span class="title">Measures of Dispersion</span>
                 <span class="desc">Range, variance, standard deviation, and coefficient of variation.</span>
             </a>
-            <a class="module-card" href="WebPageswithcommonStyles/skewness_kurtosis.html">
+            <a class="module-card" href="WebPageswithcommonStyles/CentralTendency.html">
                 <span class="title">Skewness and Kurtosis</span>
                 <span class="desc">Measuring asymmetry and tail behaviour in a distribution.</span>
             </a>
-            <a class="module-card" href="WebPageswithcommonStyles/probability_theory.html">
+            <a class="module-card" href="WebPageswithcommonStyles/StatisticalDataVisualization.html">
+                <span class="title">Statistical Data Visualization</span>
+                <span class="desc">A catalogue of statistical charts: bar and pie diagrams, histograms, box plots, ogives and contour plots.</span>
+            </a>
+        </div>
+        <h3 class="stats-sub">Probability</h3>
+        <div class="module-grid">
+            <a class="module-card" href="WebPageswithcommonStyles/Probability.html">
                 <span class="title">Probability Theory</span>
                 <span class="desc">Axioms, conditional probability, and independence.</span>
             </a>
-            <a class="module-card" href="WebPageswithcommonStyles/probability_distributions.html">
-                <span class="title">Probability Distributions</span>
-                <span class="desc">Discrete and continuous distributions and where each one applies.</span>
-            </a>
-            <a class="module-card" href="WebPageswithcommonStyles/random_variables_expectation_variance.html">
-                <span class="title">Random Variables, Expectation & Variance</span>
+           
+            <a class="module-card" href="WebPageswithcommonStyles/RandomVariableandExpectations.html">
+                <span class="title">Random Variables, Expectation &amp; Variance</span>
                 <span class="desc">Formalizing random variables and their moments.</span>
             </a>
-            <a class="module-card" href="WebPageswithcommonStyles/bayesian_theory.html">
+            <a class="module-card" href="WebPageswithcommonStyles/NormalDistribution.html">
+                <span class="title">The Normal Distribution</span>
+                <span class="desc">Definition, interactive exploration, standardization, the additive property and the multivariate normal.</span>
+            </a>
+        </div>
+        <h3 class="stats-sub">Inference</h3>
+        <div class="module-grid">
+            <a class="module-card" href="WebPageswithcommonStyles/NaiveBayessian.html">
                 <span class="title">Bayesian Theory</span>
                 <span class="desc">Prior, likelihood, and posterior &mdash; the Bayesian view of inference.</span>
             </a>
-            <a class="module-card" href="WebPageswithcommonStyles/testing_hypotheses.html">
+            <a class="module-card" href="WebPageswithcommonStyles/SamplingndStatisticalInference.html">
+                <span class="title">Sampling Distributions</span>
+                <span class="desc">Statistics versus parameters, standard error, and the distributions of the mean, &chi;&sup2;, t and F.</span>
+            </a>
+            <a class="module-card" href="WebPageswithcommonStyles/MaximumLikelihoodEstimation.html">
+                <span class="title">Maximum Likelihood Estimation</span>
+                <span class="desc">The likelihood and log-likelihood functions, and why maximum-likelihood estimators are trusted.</span>
+            </a>
+            <a class="module-card" href="WebPageswithcommonStyles/EstimationTheory.html">
+                <span class="title">Estimation Theory</span>
+                <span class="desc">Point and interval estimation, and the properties of a good estimator: unbiasedness, consistency, efficiency and sufficiency.</span>
+            </a>
+            <a class="module-card" href="WebPageswithcommonStyles/HypothesisTesting.html">
                 <span class="title">Testing of Hypotheses</span>
                 <span class="desc">Null and alternative hypotheses, test statistics, and significance.</span>
-            </a>
-            <a class="module-card" href="WebPageswithcommonStyles/estimation_theory.html">
-                <span class="title">Estimation Theory</span>
-                <span class="desc">Point and interval estimation, and properties of good estimators.</span>
             </a>
         </div>
     </div>
 
     <footer>
-        Site launching in full in September 2026. New modules are added regularly.
+        New modules are added regularly.
     </footer>
 
 </div>
