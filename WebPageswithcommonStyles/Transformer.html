@@ -43,6 +43,7 @@
             <p style="font-size: 1.1rem; color: #475569; margin: 0;">
                 A comprehensive architectural breakdown from historical lineage to token-by-token execution.
             </p>
+            <p style="margin: 10px 0 0 0;"><a href="#transformer-quiz" style="color:#2563eb; text-decoration:underline; font-weight:600;">&#9201; Take the 10-question timed quiz &darr;</a></p>
         </header>
 		<section id="transformer-introduction" style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 750px; margin: 20px 0;">
     
@@ -1071,6 +1072,174 @@
             <p style="font-size: 0.9rem; color: #475569; margin-top: 10px; font-style: italic;">
                 * Note for trainees: Parameters represent the physical value entries populated within the $W^Q, W^K, W^V$ weight configurations across all internal layers, optimized entirely during the pre-training execution phase.
             </p>
+        </section>
+
+
+        <!-- ============================================================
+             SECTION: TIMED QUIZ  (self-contained: styles + markup + script)
+             Tweak TIME_LIMIT (seconds per question) in the script below.
+             ============================================================ -->
+        <section id="transformer-animation" style="padding:56px 0;border-bottom:1px solid var(--rule,#B9CADA);font-family:var(--font-body,Georgia,serif);color:var(--ink,#14304D);line-height:1.65;">
+<h2 style="font-family:var(--font-body,Georgia,serif);font-weight:700;font-size:28px;margin:0 0 20px;color:var(--ink,#14304D);">Interactive animation: one forward pass, end to end</h2>
+<p style="margin:0 0 16px;">Type a sentence and step through a real decoder-only forward pass: embeddings, positional encoding, causal self-attention, the feed-forward network, and the next-word prediction.</p>
+<style>
+#tf-anim{--a-ink:var(--ink,#14304D);--a-soft:var(--ink-soft,#3C5A78);--a-faint:var(--ink-faint,#6F8AA4);--a-rule:var(--rule,#B9CADA);--a-grid:var(--paper-grid,#D6E1EC);--a-card:var(--card,#FFFFFF);--a-blue:var(--class-a,#1F6F8B);--a-red:var(--query,#B23A48);--pos:31,111,139;--neg:178,58,72;--a-body:var(--font-body,Georgia,serif);--a-data:var(--font-data,'Courier New',monospace);background:var(--a-card);border:1px solid var(--a-rule);border-radius:4px;padding:22px;margin:24px 0 10px;color:var(--a-ink);font-family:var(--a-body);font-size:16px;line-height:1.55}
+#tf-anim *{box-sizing:border-box}
+#tf-anim .widget-top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 12px}
+#tf-anim input{flex:1;min-width:200px;padding:7px 10px;border:1px solid var(--a-rule);border-radius:3px;background:#fff;color:var(--a-ink);font:14px var(--a-data)}
+#tf-anim button{padding:7px 14px;border:1px solid var(--a-ink);border-radius:3px;background:var(--a-card);color:var(--a-ink);font:13px var(--a-data);cursor:pointer}
+#tf-anim button.p{background:var(--a-ink);color:#fff}
+#tf-anim button:disabled{opacity:.4;cursor:default}
+#tf-anim .hint{font-family:var(--a-data);font-size:12.5px;color:var(--a-faint)}
+#tf-anim .dots{display:flex;gap:6px;margin:12px 0}
+#tf-anim .dots i{flex:1;height:5px;border-radius:3px;background:var(--a-grid);cursor:pointer}
+#tf-anim .dots i.on{background:var(--a-red)}
+#tf-anim #tf-card{border-top:1px dashed var(--a-rule);padding-top:14px;min-height:300px}
+#tf-anim h3{font-family:var(--a-body);font-weight:600;font-size:20px;margin:0 0 6px;color:var(--a-ink)}
+#tf-anim .d{color:var(--a-soft);margin:0 0 12px;font-size:16px}
+#tf-anim code{font-family:var(--a-data);font-size:.94em;background:none;padding:0}
+#tf-anim .sc{overflow-x:auto;margin:8px 0}
+#tf-anim .lab{font-family:var(--a-data);font-size:12.5px;color:var(--a-faint);margin:12px 0 2px;letter-spacing:.02em}
+#tf-anim table{width:auto;margin:0;border-collapse:separate;border-spacing:1px;font:11.5px var(--a-data)}
+#tf-anim th,#tf-anim td{border:0;padding:3px 5px;text-align:right;min-width:42px;background:none;color:var(--a-ink);font-weight:400;opacity:0;animation:tfade .35s forwards}
+#tf-anim tr:nth-child(even){background:none}
+#tf-anim th{color:var(--a-faint)}
+#tf-anim th.r{text-align:left;opacity:1;animation:none;color:var(--a-ink);padding-right:8px}
+#tf-anim th.c{opacity:1;animation:none}
+#tf-anim td.g{border-left:3px solid var(--a-rule)}
+#tf-anim td.m{color:var(--a-faint)}
+@keyframes tfade{to{opacity:1}}
+#tf-anim .row{display:flex;gap:18px;flex-wrap:wrap}
+#tf-anim .vote-row{margin:7px 0}
+#tf-anim .vr-top{display:flex;justify-content:space-between;font:13px var(--a-data);margin-bottom:4px}
+#tf-anim .vr-bar{height:14px;background:var(--a-grid);border-radius:3px;overflow:hidden}
+#tf-anim .vr-fill{height:100%;width:0;background:var(--a-blue);transition:width .9s ease-out}
+#tf-anim .vr-fill.w1{background:var(--a-red)}
+#tf-anim .predict-banner{margin-top:16px;padding:10px 12px;border-radius:3px;background:var(--a-grid);border:1px solid var(--a-rule);font:17px var(--a-data);color:var(--a-ink)}
+#tf-anim .predict-banner u{text-decoration:none;background:var(--a-red);color:#fff;padding:1px 8px;border-radius:3px}
+#transformer-animation .callout{background:var(--card,#FFFFFF);border:1px solid var(--rule,#B9CADA);border-left:4px solid var(--class-a,#1F6F8B);border-radius:2px;padding:18px 22px;margin:22px 0;font-size:16px}
+</style>
+<div id="tf-anim" class="widget">
+<div class="widget-top"><input id="tf-in" value="the cat sat on the" maxlength="60"><button class="p" id="tf-go">Run</button></div>
+<div class="widget-top"><button id="tf-pv">&#9664; Prev</button><button id="tf-nx">Next &#9654;</button><button id="tf-pl">&#9654; Play</button><span class="hint" id="tf-st"></span></div>
+<div class="dots" id="tf-dots"></div>
+<div id="tf-card"></div>
+</div>
+<div class="callout"><strong>Toy model.</strong> 1 layer, d_model = 8, 2 heads, FFN width 16, 24-word vocabulary, pre-LayerNorm, weight-tied output. Every number comes from a real forward pass, but the weights are random and untrained, so the predicted word illustrates the mechanics, not language skill. Teal cells are positive and red cells are negative.</div>
+<script>
+
+(function(){
+
+const V=["<unk>","the","cat","sat","on","mat","dog","a","ran","and","is","big","small","red","bird","sky","blue","sun","in","tree","he","she","it","was"];
+const D=8,H=2,DH=4,FF=16;
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=rng(7),rn=()=>Math.sqrt(-2*Math.log(R()+1e-9))*Math.cos(6.2832*R());
+const W=(r,c,s)=>Array.from({length:r},()=>Array.from({length:c},()=>rn()*s));
+const E=W(V.length,D,1),Wq=W(D,D,.9),Wk=W(D,D,.9),Wv=W(D,D,.6),Wo=W(D,D,.6),W1=W(D,FF,.55),W2=W(FF,D,.35);
+const mm=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((s,x,k)=>s+x*B[k][j],0)));
+const add=(A,B)=>A.map((r,i)=>r.map((x,j)=>x+B[i][j]));
+const ln=r=>{const m=r.reduce((a,b)=>a+b)/r.length,v=r.reduce((a,b)=>a+(b-m)**2,0)/r.length;return r.map(x=>(x-m)/Math.sqrt(v+1e-5))};
+const sm=r=>{const m=Math.max(...r),e=r.map(x=>Math.exp(x-m)),s=e.reduce((a,b)=>a+b);return e.map(x=>x/s)};
+const gelu=x=>.5*x*(1+Math.tanh(.79788*(x+.044715*x**3)));
+const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
+const f=x=>x===-Infinity?"−∞":(x<0?"−":" ")+Math.abs(x).toFixed(2);
+let cnt=0;
+function mat(M,rl,cl,o={}){o=o||{};const mx=o.mx||Math.max(.01,...M.flat().filter(isFinite).map(Math.abs));let h="<div class=sc><table><tr><th class=c></th>"+cl.map((c,j)=>`<th class="c${o.split&&j==o.split?" g":""}">${c}</th>`).join("")+"</tr>";
+M.forEach((r,i)=>{h+=`<tr><th class=r>${rl[i]}</th>`;r.forEach((v,j)=>{const a=isFinite(v)?Math.min(.6,Math.abs(v)/mx*.6):0,c=v>=0?"var(--pos)":"var(--neg)";h+=`<td class="${o.split&&j==o.split?"g ":""}${isFinite(v)?"":"m"}" style="background:rgba(${c},${a});animation-delay:${(i*r.length+j)*9}ms">${o.p?v.toFixed(2):f(v)}</td>`});h+="</tr>"});return h+"</table></div>"}
+const dn=n=>Array.from({length:n},(_,i)=>"d"+(i+1));
+let S=[],cur=0,timer=null;
+function run(){
+ const words=document.getElementById("tf-in").value.toLowerCase().replace(/[^a-z\s]/g,"").split(/\s+/).filter(Boolean).slice(0,8);
+ if(!words.length)words.push("the");
+ const ids=words.map(w=>Math.max(0,V.indexOf(w))),T=ids.length,tk=ids.map((i,k)=>V[i]===words[k]?words[k]:"&lt;unk&gt;");
+ const X=ids.map(i=>E[i]);
+ const PE=ids.map((_,p)=>Array.from({length:D},(_,i)=>i%2?Math.cos(p/Math.pow(1e4,(i-1)/D)):Math.sin(p/Math.pow(1e4,i/D))));
+ const X0=add(X,PE),N1=X0.map(ln),Q=mm(N1,Wq),K=mm(N1,Wk),Vv=mm(N1,Wv);
+ const sc=[],A=[];
+ for(let h=0;h<H;h++){const s=Q.map((q,i)=>K.map((k,j)=>j<=i?dot(q.slice(h*DH,h*DH+DH),k.slice(h*DH,h*DH+DH))/Math.sqrt(DH):-Infinity));sc.push(s);A.push(s.map(sm))}
+ const ctx=Q.map((_,i)=>{let o=[];for(let h=0;h<H;h++)for(let d=0;d<DH;d++)o.push(A[h][i].reduce((s,a,j)=>s+a*Vv[j][h*DH+d],0));return o});
+ const att=mm(ctx,Wo),X1=add(X0,att),N2=X1.map(ln),Hh=mm(N2,W1).map(r=>r.map(gelu)),Fo=mm(Hh,W2),X2=add(X1,Fo);
+ const fin=ln(X2[T-1]),lg=E.map(e=>dot(fin,e)),p=sm(lg),ord=p.map((v,i)=>i).sort((a,b)=>p[b]-p[a]),w=ord[0];
+ const rl=tk,hn=h=>"Head "+(h+1);
+ S=[
+ {t:"1. Tokenize",d:"Words become integer IDs from the vocabulary. Unknown words map to <unk> (ID 0). Only the first 8 words are used.",h:`<div class=sc><table><tr><th class=c>pos</th>${words.map((_,i)=>`<th class=c>${i}</th>`).join("")}</tr><tr><th class=r>word</th>${words.map((x,i)=>`<td style="animation-delay:${i*90}ms">${x}</td>`).join("")}</tr><tr><th class=r>id</th>${ids.map((x,i)=>`<td style="animation-delay:${i*90+400}ms">${x}</td>`).join("")}</tr></table></div>`},
+ {t:"2. Embedding lookup",d:`Each ID selects a row of the embedding matrix E (${V.length}×${D}). Result X: ${T}×${D}.`,h:mat(X,rl,dn(D))},
+ {t:"3. Add positional encoding",d:"Attention has no sense of order, so a sinusoidal position vector PE is added: X₀ = X + PE.",h:`<div class=lab>PE (${T}×${D})</div>`+mat(PE,rl,dn(D))+`<div class=lab>X₀ = X + PE</div>`+mat(X0,rl,dn(D))},
+ {t:"4. LayerNorm (pre-attention)",d:"Each row is normalized to mean 0 and variance 1 before the attention sub-layer. The un-normalized X₀ is kept for the residual connection.",h:mat(N1,rl,dn(D))},
+ {t:"5. Project to Q, K, V",d:`Q = N·W_Q, K = N·W_K, V = N·W_V. Columns d1–d4 belong to head 1 and d5–d8 to head 2.`,h:`<div class=lab>Q</div>`+mat(Q,rl,dn(D),{split:4})+`<div class=lab>K</div>`+mat(K,rl,dn(D),{split:4})+`<div class=lab>V</div>`+mat(Vv,rl,dn(D),{split:4})},
+ {t:"6. Scores with causal mask",d:`score(i,j) = Qᵢ·Kⱼ / √${DH} for each head. Positions j > i are masked to −∞ so a token never sees the future.`,h:`<div class=row>${sc.map((s,h)=>`<div><div class=lab>${hn(h)}</div>${mat(s,rl,rl)}</div>`).join("")}</div>`},
+ {t:"7. Softmax → attention weights",d:"Softmax turns each row into probabilities that sum to 1. Masked entries become exactly 0. Brighter cells mean more attention.",h:`<div class=row>${A.map((a,h)=>`<div><div class=lab>${hn(h)}</div>${mat(a,rl,rl,{mx:1,p:1})}</div>`).join("")}</div>`},
+ {t:"8. Weighted sum, output projection, residual",d:"Each head takes Σⱼ weightᵢⱼ·Vⱼ. Heads are concatenated, multiplied by W_O, and added back: X₁ = X₀ + attn.",h:`<div class=lab>Concatenated heads</div>`+mat(ctx,rl,dn(D),{split:4})+`<div class=lab>X₁ = X₀ + ctx·W_O</div>`+mat(X1,rl,dn(D))},
+ {t:"9. Feed-forward network",d:`LayerNorm, expand ${D}→${FF}, GELU, project back ${FF}→${D}, then add the residual: X₂ = X₁ + FFN(LN(X₁)). Each position is processed independently.`,h:`<div class=lab>GELU(LN(X₁)·W₁), ${T}×${FF}</div>`+mat(Hh,rl,Array.from({length:FF},(_,i)=>"h"+(i+1)))+`<div class=lab>X₂</div>`+mat(X2,rl,dn(D))},
+ {t:"10. Final LayerNorm and logits",d:`Only the last position (“${tk[T-1]}”) predicts the next word. After LayerNorm, its vector is dotted with every embedding row (weight tying): logits = h·Eᵀ.`,h:`<div class=lab>Final hidden vector (last position)</div>`+mat([fin],[tk[T-1]],dn(D))+`<div class=lab>Logits, ${V.length} words (top 8)</div>`+mat([ord.slice(0,8).map(i=>lg[i])],["logit"],ord.slice(0,8).map(i=>V[i]))},
+ {t:"11. Softmax → next word",d:"Softmax converts logits into a probability distribution. Greedy decoding picks the largest.",h:`<div id=tf-bars>${ord.slice(0,8).map((i,k)=>`<div class=vote-row><div class=vr-top><span>${V[i]}</span><span>${(p[i]*100).toFixed(1)}%</span></div><div class=vr-bar><div class="vr-fill${k?"":" w1"}" data-w="${p[i]*100}"></div></div></div>`).join("")}</div><div class="predict-banner out">${words.join(" ")} <u>${V[w]}</u></div>`}
+ ];
+ cur=0;stop();show()}
+function show(){
+ const s=S[cur];document.getElementById("tf-card").innerHTML=`<h3>${s.t}</h3><p class=d>${s.d}</p>${s.h}`;
+ document.getElementById("tf-st").textContent=`Step ${cur+1} / ${S.length}`;
+ document.getElementById("tf-dots").innerHTML=S.map((_,i)=>`<i class="${i<=cur?"on":""}" data-i="${i}"></i>`).join("");
+ document.querySelectorAll("#tf-dots i").forEach(e=>e.onclick=()=>{cur=+e.dataset.i;show()});
+ document.getElementById("tf-pv").disabled=cur==0;document.getElementById("tf-nx").disabled=cur==S.length-1;
+ requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".vr-fill[data-w]").forEach(e=>e.style.width=e.dataset.w+"%")))}
+function stop(){clearInterval(timer);timer=null;document.getElementById("tf-pl").textContent="▶ Play"}
+document.getElementById("tf-go").onclick=run;
+document.getElementById("tf-in").onkeydown=e=>{if(e.key=="Enter")run()};
+document.getElementById("tf-pv").onclick=()=>{stop();if(cur>0){cur--;show()}};
+document.getElementById("tf-nx").onclick=()=>{stop();if(cur<S.length-1){cur++;show()}};
+document.getElementById("tf-pl").onclick=()=>{if(timer)return stop();if(cur==S.length-1)cur=0;show();document.getElementById("tf-pl").textContent="⏸ Pause";timer=setInterval(()=>{if(cur<S.length-1){cur++;show()}else stop()},3500)};
+run();
+
+})();
+
+</script>
+</section>
+
+<section id="transformer-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Timed Transformer Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "What is the main &ldquo;information bottleneck&rdquo; of a classic RNN encoder&ndash;decoder (Seq2Seq) model?",
+              a: "The whole input sequence must be compressed into one fixed-length context vector",
+              w: ["The decoder can only generate one token per sequence", "The encoder has no hidden state to store information", "The output vocabulary is limited to the words in the input"] },
+            { q: "Why can Transformers be trained far more efficiently on GPUs than RNNs?",
+              a: "All token positions are processed in parallel, with no step-by-step recurrence over time",
+              w: ["They always have fewer parameters than an RNN", "They avoid matrix multiplications altogether", "They read the sequence one token at a time, but with bigger batches"] },
+            { q: "Why is positional encoding added to the token embeddings?",
+              a: "Self-attention has no built-in notion of word order, so position information must be injected",
+              w: ["To reduce the embedding dimension", "To convert tokens into integer IDs", "To normalise every embedding to unit length"] },
+            { q: "In self-attention, how are the Query, Key and Value vectors obtained?",
+              a: "By multiplying each token's vector with three learned matrices W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup>",
+              w: ["Q comes from the input, while K and V are fixed random vectors", "They are looked up from three separate vocabulary tables", "They are the output of the softmax over the attention scores"] },
+            { q: "Why are attention scores divided by &radic;d<sub>k</sub> before the softmax?",
+              a: "Large dot products would saturate the softmax and shrink its gradients",
+              w: ["To make the attention weights sum to 1", "To mask out future tokens", "To reduce the number of heads required"] },
+            { q: "What does the causal mask do in a decoder-only (GPT-style) Transformer?",
+              a: "It stops each token from attending to tokens that come after it",
+              w: ["It hides random tokens so the model must reconstruct them", "It removes padding tokens from the loss", "It stops each token from attending to itself"] },
+            { q: "What is the benefit of multi-head attention over a single head?",
+              a: "Different heads can learn to focus on different kinds of relationships in different subspaces",
+              w: ["It shortens the sequence before attention is applied", "It removes the need for positional encoding", "It lets the model skip the feed-forward layer"] },
+            { q: "How does the feed-forward network (FFN) in a Transformer layer treat the tokens?",
+              a: "Each token vector is transformed independently, using the same weights at every position",
+              w: ["It mixes information across all tokens, just like attention", "Every position has its own separately trained FFN", "It only runs on the last token of the sequence"] },
+            { q: "How does a decoder-only Transformer turn its final hidden vectors into a next-token prediction?",
+              a: "A linear projection to vocabulary size followed by a softmax over the vocabulary",
+              w: ["A softmax over the embedding dimension followed by averaging", "A nearest-neighbour lookup in the positional-encoding table", "A second self-attention block that outputs one word directly"] },
+            { q: "What is the usual order of the three LLM training stages?",
+              a: "Unsupervised pre-training &rarr; Supervised fine-tuning (SFT) &rarr; RLHF / alignment",
+              w: ["SFT &rarr; Pre-training &rarr; RLHF", "RLHF &rarr; SFT &rarr; Pre-training", "Pre-training &rarr; RLHF &rarr; SFT"] }
+        ]
+            });
+            </script>
         </section>
 
     </main>

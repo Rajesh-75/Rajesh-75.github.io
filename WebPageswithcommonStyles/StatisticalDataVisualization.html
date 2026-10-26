@@ -3,17 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
+    <!-- Hide body initially to prevent flickering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+body {
+  visibility: hidden;
+}
+.dataset-note {
+  font-style: italic;
+  margin: 0.6em 0;
+}
+.how-to-draw {
+  margin-top: 1em;
+  padding: 0.8em 1.2em;
+  border-left: 4px solid #4a6fa5;
+  background: rgba(74, 111, 165, 0.07);
+  border-radius: 4px;
+}
+.how-to-draw h3 {
+  margin: 0 0 0.5em 0;
+  font-size: 1.05em;
+}
+.how-to-draw ol {
+  margin: 0;
+  padding-left: 1.3em;
+}
+.how-to-draw li {
+  margin-bottom: 0.35em;
+}
+</style>
+    <!-- Load global MathJax configuration first -->
     <title>Machine Learning Tutorial</title>
-    <script type="text/javascript" async
-        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-    </script>
+
     <script>
         window.MathJax = {
             tex: {
-                inlineMath: [['$', '$'], ['\(', '\)']],
-                displayMath: [['$$', '$$'], ['\[', '\]']]
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
             }
         };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
 </head>
 <body>
@@ -23,133 +69,247 @@
         <h1>Data Visualization Catalog</h1>
         <p>A comprehensive guide to statistical diagrams for data interpretation.</p>
     </header>
-	
-	<div class="plot-card" id="bar">
-        <div class="plot-image-container">
-            <img src="BarDiagram.png" alt="Clustered Bar Diagram">
-        </div>
+
+    <!-- 1. CLUSTERED BAR -->
+    <div class="plot-card" id="bar">
+        
         <div class="plot-content">
             <span class="stat-tag">Comparative Analysis</span>
             <h2 class="plot-title">Clustered Bar Diagram</h2>
+            <div class="plot-image-container">
+            <img src="BarDiagram.png" alt="Clustered Bar Diagram">
+        </div>
             <p class="plot-description">This diagram places bars for different entities side-by-side, making it easy to compare specific values, such as the growth of Company A versus the decline of Company B.</p>
+            <p><strong>Introduction:</strong> A clustered (multiple) bar diagram is the natural choice when you have <em>two or more related series measured over the same categories</em> and you want to compare them directly, not just see their total.</p>
+            <p class="dataset-note">Dataset used: a value for each of two companies (A and B) recorded across the same set of time periods.</p>
+            <div class="how-to-draw">
+                <h3>How to draw it</h3>
+                <ol>
+                    <li>Arrange the data as a table: one row per category (e.g. year) and one column per series (Company A, Company B).</li>
+                    <li>Draw the horizontal axis for the categories and the vertical axis for the values. Start the vertical axis at zero and choose one common scale that covers the largest value.</li>
+                    <li>For each category, draw one bar per series <em>next to each other</em> with no gap inside the cluster, and leave a gap between clusters.</li>
+                    <li>Give every series the same colour in every cluster and the same bar width.</li>
+                    <li>Add a legend, axis labels with units, and a title.</li>
+                </ol>
+            </div>
         </div>
     </div>
-<div class="plot-image-container">
-            <img src="subdividedbarDiagram.png" alt="Subdivided Bar Diagram">
-        </div>
+
+    <!-- 2. SUBDIVIDED BAR (was missing its plot-card wrapper) -->
+    <div class="plot-card" id="subdivided">
+        
         <div class="plot-content">
             <span class="stat-tag">Component Analysis</span>
             <h2 class="plot-title">Subdivided Bar Diagram</h2>
+            <div class="plot-image-container">
+            <img src="subdividedbarDiagram.png" alt="Subdivided Bar Diagram">
+        </div>
             <p class="plot-description">
                 A <strong>Subdivided Bar Diagram</strong> (also called a Stacked Bar Chart) represents the total magnitude of a category while breaking it down into its constituent parts. It is perfect for showing how different segments contribute to a whole over time.
             </p>
             <p><strong>Insight:</strong> In the 1972-1974 cost data, we can see that while "Wages" and "Polishing" remained relatively stable, "Other Costs" surged in 1974, driving the total expenditure up significantly.</p>
+            <p class="dataset-note">Dataset used: yearly cost data for 1972, 1973 and 1974, split into cost components (Wages, Polishing, Other Costs).</p>
+            <div class="how-to-draw">
+                <h3>How to draw it</h3>
+                <ol>
+                    <li>For each year, add the components to get the total cost: $T = \text{Wages} + \text{Polishing} + \text{Other}$.</li>
+                    <li>Scale the vertical axis from 0 to slightly above the largest total.</li>
+                    <li>Draw one bar per year with height equal to its total.</li>
+                    <li>Divide each bar into segments. Start with the first component at the base, then stack the next on top of it. The segment boundaries sit at the <em>cumulative</em> values (Wages, Wages + Polishing, then the total).</li>
+                    <li>Shade each component with a fixed colour across all bars, and add a legend. Only the bottom component is easy to compare across years, so label segment values where possible.</li>
+                </ol>
+            </div>
         </div>
-	<div class="plot-card" id="deviation">
-        <div class="plot-image-container">
-            <img src="deviationbar.png" alt="Deviation Bar Diagram">
-        </div>
+    </div>
+
+    <!-- 3. DEVIATION BAR -->
+    <div class="plot-card" id="deviation">
+        
         <div class="plot-content">
             <span class="stat-tag">Net Variance</span>
             <h2 class="plot-title">Deviation Bar Diagram</h2>
+            <div class="plot-image-container">
+            <img src="deviationbar.png" alt="Deviation Bar Diagram">
+        </div>
             <p class="plot-description">
                 A <strong>Deviation Bar Diagram</strong> is specifically used to visualize the net difference between two related variables. By using a central baseline at zero, it clearly distinguishes between positive outcomes (surpluses) and negative outcomes (deficits).
             </p>
             <p><strong>Statistical Insight:</strong> In this trade dataset, the diagram reveals a volatile trend. While 1970-71 and 1972-73 enjoyed identical surpluses of +20, the year 1973-74 saw a massive trade deficit of -75, where imports were double the value of exports.</p>
+            <p class="dataset-note">Dataset used: exports and imports for each year (1970-71 to 1973-74).</p>
+            <div class="how-to-draw">
+                <h3>How to draw it</h3>
+                <ol>
+                    <li>Compute the net value for each year: $\text{Net} = \text{Exports} - \text{Imports}$.</li>
+                    <li>Draw the zero line in the middle of the axis. The vertical scale must run from the most negative to the most positive net value (here about -75 to +20).</li>
+                    <li>Draw one bar per year starting at zero. Surpluses (positive) go above the baseline, deficits (negative) go below it.</li>
+                    <li>Use two colours (for example green for surplus, red for deficit) so the sign is visible at a glance.</li>
+                    <li>Print the net value at the end of each bar.</li>
+                </ol>
+            </div>
         </div>
-    </div>	
-    <div class="plot-card">
-        <div class="plot-image-container">
-            <img src="PieImage.png" alt="Pie Diagram">
-        </div>
+    </div>
+
+    <!-- 4. PIE -->
+    <div class="plot-card" id="pie">
+        
         <div class="plot-content">
             <span class="stat-tag">Categorical</span>
             <h2 class="plot-title">Pie Diagram</h2>
+            <div class="plot-image-container">
+            <img src="PieImage.png" alt="Pie Diagram">
+        </div>
             <p class="plot-description">
                 The Pie Diagram is a circular graphic that represents data as slices of a whole. It is most effective when showing <strong>composition</strong> or <strong>proportions</strong> among a small number of categories. Mathematically, the arc length of each slice is proportional to the quantity it represents.
             </p>
+            <p><strong>Introduction:</strong> Use a pie when the question is "what share of the total does each part take?" and there are only about 3 to 6 categories.</p>
+            <div class="how-to-draw">
+                <h3>How to draw it</h3>
+                <ol>
+                    <li>List the categories with their values $x_i$ and compute the total $N = \sum x_i$.</li>
+                    <li>Convert each value to an angle: $\theta_i = \dfrac{x_i}{N} \times 360^\circ$. The angles must add up to $360^\circ$.</li>
+                    <li>Draw a circle and mark the centre. Draw a radius from the centre to the top of the circle as the starting line.</li>
+                    <li>Using a protractor, mark off each angle in turn, clockwise, usually starting with the largest category.</li>
+                    <li>Shade or label each sector with its category name and percentage.</li>
+                </ol>
+            </div>
         </div>
     </div>
 
-    <div class="plot-card">
-        <div class="plot-image-container">
-            <img src="BoxPlot.png" alt="Box Plot">
-        </div>
+    <!-- 5. BOX PLOT -->
+    <div class="plot-card" id="boxplot">
+        
         <div class="plot-content">
             <span class="stat-tag">Distribution</span>
             <h2 class="plot-title">Box Plot (Whisker Plot)</h2>
+            <div class="plot-image-container">
+            <img src="BoxPlot.png" alt="Box Plot">
+        </div>
             <p class="plot-description">
                 A Box Plot provides a visual summary of the <strong>central tendency</strong> and <strong>dispersion</strong> of a dataset. It displays the median, quartiles ($Q1$ and $Q3$), and whiskers that extend to show the range. Points outside the whiskers are identified as statistical outliers.
             </p>
+            <p><strong>Introduction:</strong> The box plot compresses a whole dataset into five numbers, so it is ideal for comparing the spread and symmetry of several groups side by side.</p>
+            <div class="how-to-draw">
+                <h3>How to draw it</h3>
+                <ol>
+                    <li>Sort the data and find the median, $Q_1$ (25th percentile) and $Q_3$ (75th percentile). Compute $IQR = Q_3 - Q_1$.</li>
+                    <li>Compute the fences: lower $= Q_1 - 1.5\,IQR$ and upper $= Q_3 + 1.5\,IQR$.</li>
+                    <li>Draw a box from $Q_1$ to $Q_3$ and a line inside it at the median.</li>
+                    <li>Extend whiskers from the box to the smallest and largest data values that lie <em>within</em> the fences.</li>
+                    <li>Plot every point beyond the fences individually as an outlier (dot or star).</li>
+                </ol>
+            </div>
         </div>
     </div>
 
-    <div class="plot-card">
-        <div class="plot-image-container">
-            <img src="Contourplot.png" alt="Contour Plot">
-        </div>
+    <!-- 6. CONTOUR -->
+    <div class="plot-card" id="contour">
+        
         <div class="plot-content">
             <span class="stat-tag">Multivariate</span>
             <h2 class="plot-title">Contour Plot</h2>
+            <div class="plot-image-container">
+            <img src="Contourplot.png" alt="Contour Plot">
+        </div>
             <p class="plot-description">
                 Contour Plots are used to visualize a <strong>three-dimensional surface</strong> on a two-dimensional plane. By connecting points of equal value with lines (contours), it reveals the topology of the data, such as peaks, valleys, and gradients in a continuous field.
             </p>
+            <p><strong>Introduction:</strong> Think of a topographic map: each line joins locations of the same height. In statistics and machine learning the same idea is used for bivariate densities and for loss surfaces $L(w_1, w_2)$.</p>
+            <div class="how-to-draw">
+                <h3>How to draw it</h3>
+                <ol>
+                    <li>Start with a function or dataset giving a value $z = f(x, y)$ at every point of a grid over the $x$-$y$ plane.</li>
+                    <li>Choose a set of levels $c_1 < c_2 < \dots < c_k$, usually evenly spaced.</li>
+                    <li>For each level $c$, find the points where $f(x, y) = c$. Between neighbouring grid points, use linear interpolation to locate where the value crosses $c$.</li>
+                    <li>Join these points into smooth closed or open curves, one set per level.</li>
+                    <li>Label the levels or fill between them with a colour gradient. Lines close together mean a steep slope, lines far apart mean a flat region.</li>
+                </ol>
+            </div>
         </div>
     </div>
 
-    <div class="plot-card">
-        <div class="plot-image-container">
-            <img src="HistogramPlot.png" alt="Histogram with KDE">
-        </div>
+    <!-- 7. HISTOGRAM + KDE -->
+    <div class="plot-card" id="histogram">
+        
         <div class="plot-content">
             <span class="stat-tag">Density</span>
             <h2 class="plot-title">Histogram with KDE</h2>
+            <div class="plot-image-container">
+            <img src="HistogramPlot.png" alt="Histogram with KDE">
+        </div>
             <p class="plot-description">
                 This dual-layer plot combines a <strong>Histogram</strong> (binned frequency counts) with a <strong>Kernel Density Estimate (KDE)</strong> curve. While the bars show exact counts, the KDE provides a smoothed estimate of the probability density function, making it easier to identify the distribution's skewness and modality.
             </p>
-        </div>
-    </div>
-	<div class="plot-card" id="ogive">
-        <div class="plot-image-container">
-            <img src="ogive.png" alt="Ogive Curve">
-        </div>
-        <div class="plot-content">
-            <span class="stat-tag">Cumulative Frequency</span>
-            <h2 class="plot-title">Ogive Curve</h2>
-            <p class="plot-description">
-                An <strong>Ogive</strong> (or Cumulative Frequency Polygon) is used to determine the number of data points below or above a specific value. It is constructed by plotting cumulative frequency on the y-axis against class boundaries on the x-axis. 
-            </p>
-            <p><strong>Key Use:</strong> Finding the <strong>Median</strong> and <strong>Quartiles</strong> graphically by identifying the x-values corresponding to 50% and 25%/75% of the total frequency.</p>
+            <p><strong>Introduction:</strong> A histogram shows how a continuous variable is distributed; the KDE is a smooth, non-parametric curve drawn on top so the shape does not depend only on the choice of bins.</p>
+            <div class="how-to-draw">
+                <h3>How to draw it</h3>
+                <ol>
+                    <li>Find the range of the data and choose the number of bins $k$, for example Sturges' rule $k = 1 + \log_2 n$. Divide the range into $k$ classes of equal width.</li>
+                    <li>Count the observations in each class. To overlay a density, scale the bar heights as density: $\dfrac{\text{count}}{n \cdot \text{bin width}}$, so the total area is 1.</li>
+                    <li>Draw adjacent bars with no gaps, since the variable is continuous.</li>
+                    <li>Compute the KDE on a fine grid of $x$ values: $\hat f(x) = \dfrac{1}{nh}\sum_{i=1}^{n} K\!\left(\dfrac{x - x_i}{h}\right)$, with a Gaussian kernel $K$ and bandwidth $h$.</li>
+                    <li>Plot $\hat f(x)$ as a smooth line over the bars. A small $h$ gives a wiggly curve, and a large $h$ over-smooths.</li>
+                </ol>
+            </div>
         </div>
     </div>
 
-    <div class="plot-card" id="lorenz">
-        <div class="plot-image-container">
-            <img src="lorenz.png" alt="Lorenz Curve">
+    <!-- 8. OGIVE -->
+    <div class="plot-card" id="ogive">
+        
+        <div class="plot-content">
+            <span class="stat-tag">Cumulative Frequency</span>
+            <h2 class="plot-title">Ogive Curve</h2>
+            <div class="plot-image-container">
+            <img src="ogive.png" alt="Ogive Curve">
         </div>
+            <p class="plot-description">
+                An <strong>Ogive</strong> (or Cumulative Frequency Polygon) is used to determine the number of data points below or above a specific value. It is constructed by plotting cumulative frequency on the y-axis against class boundaries on the x-axis.
+            </p>
+            <p><strong>Key Use:</strong> Finding the <strong>Median</strong> and <strong>Quartiles</strong> graphically by identifying the x-values corresponding to 50% and 25%/75% of the total frequency.</p>
+            <p><strong>Introduction:</strong> The ogive is the graph of the empirical cumulative distribution: for any value $x$, it tells you how many observations are at or below $x$.</p>
+            <p class="dataset-note">Dataset used: a grouped frequency distribution (class intervals with their frequencies).</p>
+            <div class="how-to-draw">
+                <h3>How to draw it</h3>
+                <ol>
+                    <li>Write the class intervals and frequencies $f_i$ in a table.</li>
+                    <li>Add a column of cumulative frequencies, $F_i = f_1 + f_2 + \dots + f_i$. The last value equals $n$.</li>
+                    <li>For a "less than" ogive, pair each cumulative frequency with the <em>upper</em> class boundary. Add the starting point (lowest lower boundary, 0).</li>
+                    <li>Plot these points with class boundaries on the x-axis and cumulative frequency on the y-axis, and join them with straight lines or a smooth curve. It always rises and never falls.</li>
+                    <li>To read the median, go to $n/2$ on the y-axis, draw across to the curve and down to the x-axis. Repeat with $n/4$ and $3n/4$ for $Q_1$ and $Q_3$.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. LORENZ -->
+    <div class="plot-card" id="lorenz">
+        
         <div class="plot-content">
             <span class="stat-tag">Inequality & Distribution</span>
             <h2 class="plot-title">Lorenz Curve</h2>
+            <div class="plot-image-container">
+            <img src="lorenz.png" alt="Lorenz Curve">
+        </div>
             <p class="plot-description">
                 The <strong>Lorenz Curve</strong> is a graphical representation of the distribution of income or wealth. It plots the cumulative percentage of total income against the cumulative percentage of the population.
             </p>
             <p><strong>Interpretation:</strong> The "Line of Equality" (a 45° diagonal) represents perfect distribution. The area between this line and the Lorenz curve is used to calculate the <strong>Gini Coefficient</strong>.</p>
+            <p><strong>Introduction:</strong> The further the curve bows below the diagonal, the more unequal the distribution. It is widely used in economics, and in data science to compare how concentrated a quantity is across a population.</p>
+            <div class="how-to-draw">
+                <h3>How to draw it</h3>
+                <ol>
+                    <li>Sort the units (people, households, groups) in <em>ascending</em> order of income.</li>
+                    <li>Compute the cumulative percentage of the population and the cumulative percentage of total income for each step.</li>
+                    <li>Draw a square graph with both axes running from 0% to 100%. Draw the diagonal from (0, 0) to (100, 100) as the line of equality.</li>
+                    <li>Plot the points (cumulative % population, cumulative % income) and join them, starting at (0, 0) and ending at (100, 100). The curve lies below the diagonal.</li>
+                    <li>Shade the area $A$ between the diagonal and the curve. If $B$ is the area under the curve, the Gini coefficient is $G = \dfrac{A}{A + B} = 1 - 2B$.</li>
+                </ol>
+            </div>
         </div>
     </div>
 
-    <div class="plot-card">
-        <div class="plot-card">
-        <div class="plot-image-container">
-            <img src="violin_plot.png" alt="Violin Plot">
-        </div>
-        <div class="plot-content">
-            <span class="stat-tag">Comparative</span>
-            <h2 class="plot-title">Violin Plot</h2>
-            <p class="plot-description">
-                Violin Plots are an advanced alternative to box plots. They feature a <strong>rotated kernel density plot</strong> on each side, representing the data's density at different values. This allows you to see the "shape" of the distribution, which is particularly useful when data is bimodal (has two peaks).
-            </p>
-        </div>
-    </div>
+   
+   
 
 </div>
 

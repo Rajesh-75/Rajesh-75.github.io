@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Hide body initially to prevent flickering -->
+    <style>body { visibility: hidden; }</style>
+    <!-- Load global MathJax configuration first -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Networks</title>
+    <link rel="stylesheet" href="Style.css">
+    <style>
+      /* Algorithm box styling matching your tutorial's theme */
+      .algorithm-box {
+        background: #fbf7ef;
+        border: 1px solid #e0d3ab;
+        border-radius: 6px;
+        padding: 18px 22px;
+        margin: 20px 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .algorithm-box strong.label {
+        color: #8a6d1d;
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .algorithm-box ul { margin: 6px 0 0 0; padding-left: 22px; color: #444; }
+      .algorithm-box li { margin-bottom: 6px; line-height: 1.6; }
+    </style>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body>
+
+<h2>Neural Networks</h2>
+
+<div class="description-box">
+    <h3>The Architecture of Intelligence</h3>
+    <p>
+        A Neural Network is a powerful Machine Learning model designed to identify complex patterns in data. 
+        It is the foundational technology behind modern AI, widely used for <strong>Pattern Recognition</strong> (such as identifying objects in photos), 
+        <strong>Image Generation</strong>, and <strong>Natural Language Processing</strong> (like predicting the next word in a sentence).
+    </p>
+    <p>
+        A Neural Network is one of the few Machine Learning models capable of handling massive amounts of high-dimensional data, 
+        such as millions of pixels in an image or billions of tokens in text. Modern Neural Networks are significantly larger than early AI models, both in terms of 
+        <strong>learnable parameters</strong> (the weights) and the <strong>depth of internal processing</strong> (the number of hidden layers).
+    </p>
+    <p> 
+        Modern Neural Networks require massive computational infrastructure. Training these models on a standard CPU (Central Processing Unit) would take years because CPUs are designed for general-purpose tasks. Instead, modern AI relies on GPUs (Graphics Processing Units) and specialized chips like TPUs (Tensor Processing Units). These processors are built for massive parallelism, allowing them to perform thousands of mathematical calculations simultaneously.
+    </p>
+</div>
+
+<div class="description-box">
+    <h3>From Linear Regression to Stacks of Logistic Units</h3>
+    <p>
+        Linear and Logistic Regression, as seen in earlier chapters, take inputs, multiply them by weights, and produce an output. 
+        A Neural Network is a "multi-layer" stack of linear and logistic regression units. This multi-layer structure allows the model to process data in stages, where each layer leads to the creation of new <strong>features</strong> and features given to cost function which computes probabilities of the output values. 
+
+    </p>
+	
+	 <h3>The Learning Cycle</h3>
+    <p>Training a Neural Network broadly involves four distinct phases. Later in the sections explore the mechanics of each phase in the following sections:</p>
+    <ol class="process-list">
+        <li><strong>Forward Pass:</strong> Data is fed through the network to generate predictions (detailed in Sections 1-4).</li>
+        <li><strong>Loss Calculation:</strong> A function measures how far off the predictions were from the true labels (Section 5).</li>
+        <li><strong>Backpropagation:</strong> The error is propagated backward to compute gradients.</li>
+        <li><strong>Weight Update:</strong> An optimizer (like Adam) uses gradients to update weights.</li>
+    </ol>
+    </div>
+	
+	<div class="image-container">
+        <img src="NeuralNetworkDiagram.png" alt="Neural Network Layer Diagram" class="network-image">
+    </div>
+
+<div class="tutorial-content">
+    <ul>
+        <li class="section-item">
+            <span class="section-title">1. As shown in the figure The Inputs (Layer L=0): The Feature Vector</span>
+            <p>The first layer is where your "raw features" live. Each neuron ($n_1, n_2, n_3$) represents a measurable attribute, like "Tail Length" or "Whiskers" in a cat classifier. These are the only values grounded in direct reality before the abstraction begins.</p>
+        </li>
+		
+        <li class="section-item">
+            <span class="section-title">2. The Weights ($W_{jk}^{(l)}$): Trust and Influence</span>
+            <p>Weights represent the "influence" one neuron has on the next. A positive weight is a vote of confidence, while a negative weight acts as a "veto."</p>
+        </li>
+
+        <li class="section-item">
+            <span class="section-title">3. The Weighted Sum: The Linear Core</span>
+            <p>Before the activation happens, each neuron performs a linear regression step, accumulating incoming signals plus a <strong>Bias ($b$)</strong> which acts as the intercept:</p>
+            <div class="math-display">
+                $$a_j^{(l)} = \sum_{k} (w_{jk}^{(l-1)} \cdot n_k^{(l-1)}) + b_j^{(l)}...(1),$$
+				()
+            </div>
+        </li>
+
+        <li class="section-item">
+            <span class="section-title">4. The Activation Function: The Non-Linear Step</span>
+            <p>
+      The Linear Regression step calculation step 3 is transformed using Activation. By using functions like <strong>ReLU</strong> or <strong>Sigmoid</strong> (denoted by $h$), 
+    the activation is represented as:
+    $$a_j^{(l)} = h(z_j^{(l)}) \dots (2)$$.
+</p>
+
+<p>
+    For <strong>Sigmoid</strong> Activation, we represent the layers as:
+    $$n_1^{(2)} = \sigma\left(W_{11}^{(1)}n_1^{(1)} + b_1^{(2)}\right), \qquad n_1^{(3)} = \sigma\left(W_{11}^{(2)}n_1^{(2)} + b_1^{(3)}\right) \dots (3)$$
+</p>
+
+<p>
+    For <strong>ReLU</strong> Activation, we represent the layers as:
+    $$n_1^{(2)} = \text{ReLU}\left(W_{11}^{(1)}n_1^{(1)} + b_1^{(2)}\right), \qquad n_1^{(3)} = \text{ReLU}\left(W_{11}^{(2)}n_1^{(2)} + b_1^{(3)}\right)$$
+</p>
+
+<p>
+    Combining these for a deeper network, we can write the nested activation for $n_1^{(4)}$ as:
+    $$n_1^{(4)} = \text{ReLU}\left(W_{11}^{(3)} \cdot \text{ReLU}\left(W_{11}^{(2)} \cdot \text{ReLU}\left(W_{11}^{(1)} \cdot n_1^{(1)} + b_1^{(2)}\right) + b_1^{(3)}\right) + b_1^{(4)}\right) \dots (4)$$
+</p>
+			
+			By using Activation Functions we allow the network to "bend" the rules, enabling it to learn relationships that aren't just straight lines. These hidden layers automatically combine raw inputs into high-level features.<div class="note-box" style="background-color: #fff5f5; border-left: 4px solid #e53e3e; padding: 10px; margin-top: 10px;">
+			<div class="formula-box" style="text-align: center; margin: 20px 0; background: #f8fafc; padding: 15px; border-radius: 8px;">
+			
+			
+		
+		The entire layer processing is given as 
+    </div>
+        <strong>The "Linear Collapse" Rule:</strong> 
+        Mathematically, the composition of linear functions is always just another linear function:
+        <div style="text-align: center; margin: 10px 0;">
+            $$f(g(x)) = W_2(W_1x) = (W_2W_1)x = W_{combined}x$$
+        </div>
+        Without non-linearity, your deep network with millions of parameters would have the same "expressive power" 
+        as a single-layer Linear Regression—unable to learn curves, circles, or complex decision boundaries.
+		<div class="description-box">
+    <h3>Scaling to Deep Neural Networks (DNNs): From Scalars to Tensors</h3>
+    <p>
+        While shallow networks use individual scalar indices (like $n_1^{(l)}$), a general <strong>Deep Neural Network (DNN)</strong> scales this architecture across arbitrary depth ($L$ layers) and width ($d_l$ neurons) using full <strong>matrix and vector operations</strong>.
+    </p>
+    <p>
+        For any hidden layer $l$, the entire layer's linear pre-activation vector $\mathbf{z}^{(l)}$ is computed simultaneously via matrix multiplication:
+    </p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$$
+    </div>
+    <p>
+        Where $\mathbf{W}^{(l)} \in \mathbb{R}^{d_l \times d_{l-1}}$ is the weight matrix mapping the previous layer's outputs to the current layer, $\mathbf{b}^{(l)}$ is the bias vector, and $\mathbf{a}^{(l)} = f(\mathbf{z}^{(l)})$ applies the non-linear activation element-wise. This tensor-based formulation allows modern hardware (GPUs/TPUs) to process millions of parameters concurrently.
+    </p>
+</div>
+    </div></p>
+        </li>
+
+	<li class="section-item" style="list-style-type: none; margin-bottom: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <span class="section-title" style="font-size: 1.4rem; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db;">
+	
+        5. Final Layer (L4) & Loss Evaluation
+    </span>
+    
+    
+    <p style="line-height: 1.6; color: #333; margin-top: 15px;">
+        Before the final output is emitted, the weighted sums (<strong>Logits or $Z$ values</strong>) are passed through a non-linear activation function $f(\mathbf{z})$. This function "interprets" the raw scores to match the mathematical requirements of the specific task:
+    </p>
+
+    <ul style="line-height: 1.8; color: #555;">
+        <li><strong>Multi-Class Classification (e.g., Softmax):</strong> Maps $Z$ values to a categorical probability distribution where $\sum P_i = 1$. This is used when classes are mutually exclusive.</li>
+        <li><strong>Binary Classification (Sigmoid):</strong> Squashes a single $Z$ value into a $(0, 1)$ range, representing the probability of the positive class.</li>
+        <li><strong>Regression (Identity/Linear):</strong> A pass-through activation used when the goal is to predict a continuous scalar value (e.g., price or coordinate).</li>
+    </ul>
+
+    <p style="line-height: 1.6; color: #333;">
+        In the architectural flow, L4 outputs values represented as <strong>$y_i$</strong> (the Network Prediction). The <strong>Loss Function</strong>, denoted as $f(y_i, t_i)$, measures the discrepancy between these predictions and the <strong>Target Output ($t_i$)</strong>.
+    </p>
+
+    <p style="line-height: 1.6; color: #333;">
+        The Loss Function is parameterized by the weight values $w_i$, often expressed as $L(y_i, t_i; w_i)$. It determines the "cost" or deviation of the network output from the expected target. The mathematical formulation of this error depends strictly on the nature of the problem, as summarized in the table below:
+    </p>
+	<img src="loss_landscape.png" alt="3D Loss Landscape" style="max-width: 100%; height: auto; border-radius: 5px;">	
+
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-family: sans-serif;">
+    <thead>
+        <tr style="background-color: #34495e; color: white; text-align: left;">
+            <th style="padding: 12px; border: 1px solid #ddd;">Loss Function</th>
+            <th style="padding: 12px; border: 1px solid #ddd;">Output Characteristics</th>
+            <th style="padding: 12px; border: 1px solid #ddd;">Primary Use Case</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd;">
+                <strong>Mean Squared Error (MSE)</strong>
+                <div class="math-display" style="margin-top: 8px;">
+                    $$L(w) = \frac{1}{n} \sum_{i=1}^{n} (y_i - t_i)^2$$
+                </div>
+            </td>
+            <td style="padding: 12px; border: 1px solid #ddd;">A positive scalar representing average squared distance. Penalizes large errors heavily.</td>
+            <td style="padding: 12px; border: 1px solid #ddd;"><strong>Regression:</strong> Predicting house prices or coordinates.</td>
+        </tr>
+        <tr style="background-color: #f9f9f9;">
+            <td style="padding: 12px; border: 1px solid #ddd;">
+                <strong>Mean Absolute Error (MAE)</strong>
+                <div class="math-display" style="margin-top: 8px;">
+                    $$L(w) = \frac{1}{n} \sum_{i=1}^{n} |y_i - t_i|$$
+                </div>
+            </td>
+            <td style="padding: 12px; border: 1px solid #ddd;">A positive scalar representing average absolute distance.</td>
+            <td style="padding: 12px; border: 1px solid #ddd;"><strong>Regression:</strong> Use when data contains many <strong>outliers</strong>.</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd;">
+                <strong>Binary Cross-Entropy (BCE)</strong>
+                <div class="math-display" style="margin-top: 8px;">
+                    $$L(w) = -\frac{1}{n} \sum_{i=1}^{n} [t_i \ln y_i + (1 - t_i) \ln(1 - y_i)]$$
+                </div>
+            </td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Measures the distance between two probability distributions (0 or 1).</td>
+            <td style="padding: 12px; border: 1px solid #ddd;"><strong>Binary Classification:</strong> Yes/No, Spam detection.</td>
+        </tr>
+        <tr style="background-color: #f9f9f9;">
+            <td style="padding: 12px; border: 1px solid #ddd;">
+                <strong>Categorical Cross-Entropy</strong>
+                <div class="math-display" style="margin-top: 8px;">
+                    $$L(w) = -\sum_{i=1}^{n} \sum_{j=1}^{C} t_{i,j} \ln y_{i,j}$$
+                </div>
+            </td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Compares predicted class distribution against one-hot encoded targets.</td>
+            <td style="padding: 12px; border: 1px solid #ddd;"><strong>Multi-Class:</strong> Image recognition (MNIST, CIFAR) or LLMs.</td>
+        </tr>
+    </tbody>
+</table>
+</li>
+</div>
+<div class="description-box">
+    <h3>Gradient and Back Propogation</h3>
+	<div class="tutorial-content">
+	<p class="description-box">
+    Loss function is a surface with several minimums. Some of these minimums are called 
+    <strong>global minimums</strong> and <strong>local minimums</strong>. A core of the 
+    Neural Network training is finding these points. A minimum corresponds to a point where 
+    <strong>$$\nabla L(w) = 0 ...(5)$$.</strong> 
+    where $\nabla L(w)$ is the gradient of the Loss Function.Rather than using a single equation to solve (5) for weights, a repetitive, step-by-step method locates the lowest point of error, much like walking down a hill This gradient is computed 
+    by differentiating $L(w)$ with respect to weights ($w$).The most straightforward way to use gradient information is to update weights by taking a small step in the opposite direction of the gradient. This is calculated using the formula:$$w(\tau) = w(\tau-1) - \eta \nabla L(w(\tau-1))....(6)$$.In this equation, the positive value $\eta$ is called the learning rate.The symbol $\tau$ represents a discrete time index, representing the specific iteration count within the sequence of weight updates. After each update, the gradient is calculated again for the new weights, and the process repeats. Because the weights constantly move toward the sharpest possible drop in error, this method is known as <a href="BP2.html"><strong>gradient descent or steepest descent</strong></a>. 
+	<div class="algorithm-box" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <strong class="label" style="color: #0369a1; display: block; margin-bottom: 10px; font-size: 1.05rem;">AutoGrad for Back Propogation</strong>
+    <p style="margin: 0; line-height: 1.7; color: #1e293b;">
+        While gradient descent is theoretically driven by backpropagation via the chain rule, modern deep learning libraries implement this through <strong>Autograd</strong>—an automatic differentiation engine that programmatically computes exact analytical derivatives to yield the precise parameter gradients $\mathbf{g}_t = \nabla L(\theta_t)$ required for loss minimization. To accomplish this, the engine dynamically constructs a computation graph during the forward pass—recording every intermediate tensor operation along with its local derivative function—which is then traversed in reverse during the backward pass to evaluate local Jacobians and accumulate gradients. Once these gradients are extracted, they feed directly into AdamW,which is discussed below.
+    </p>
+	<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 1000 480" xmlns="http://www.w3.org/2000/svg" style="max-width: 50%; height: auto;">
+            <defs>
+                <marker id="fwdArrowAG" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#334155" />
+                </marker>
+                <marker id="bwdArrowAG" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#dc2626" />
+                </marker>
+            </defs>
+
+            <text x="500" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Autograd Computational Graph: Forward Build, Backward Chain Rule</text>
+            <text x="500" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#94a3b8">solid slate = forward pass &nbsp;|&nbsp; dashed red = backward pass (autograd)</text>
+
+            <!-- forward nodes -->
+            <rect x="20"  y="70" width="90"  height="50" rx="8" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+            <text x="65" y="100" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#0f172a">x</text>
+
+            <rect x="190" y="70" width="150" height="60" rx="8" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+            <text x="265" y="93" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#4338ca">Layer 1</text>
+            <text x="265" y="110" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">a&#8321;=h(w&#8321;x+b&#8321;)</text>
+
+            <rect x="420" y="70" width="150" height="60" rx="8" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+            <text x="495" y="93" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#0e7490">Layer 2</text>
+            <text x="495" y="110" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">a&#8322;=h(w&#8322;a&#8321;+b&#8322;)</text>
+
+            <rect x="650" y="70" width="150" height="60" rx="8" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
+            <text x="725" y="93" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#db2777">Layer 3 (out)</text>
+            <text x="725" y="110" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">a&#8323;=h(w&#8323;a&#8322;+b&#8323;)</text>
+
+            <rect x="880" y="70" width="100" height="50" rx="8" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+            <text x="930" y="100" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#e11d48">L</text>
+
+            <!-- forward arrows -->
+            <line x1="110" y1="95" x2="186" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#fwdArrowAG)"/>
+            <line x1="340" y1="95" x2="416" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#fwdArrowAG)"/>
+            <line x1="570" y1="95" x2="646" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#fwdArrowAG)"/>
+            <line x1="800" y1="95" x2="876" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#fwdArrowAG)"/>
+
+            <!-- weight nodes, tapped from each layer -->
+            <rect x="225" y="180" width="80" height="34" rx="6" fill="#fff7ed" stroke="#b45309" stroke-width="1.5"/>
+            <text x="265" y="202" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#b45309">w&#8321;, b&#8321;</text>
+
+            <rect x="455" y="180" width="80" height="34" rx="6" fill="#fff7ed" stroke="#b45309" stroke-width="1.5"/>
+            <text x="495" y="202" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#b45309">w&#8322;, b&#8322;</text>
+
+            <rect x="685" y="180" width="80" height="34" rx="6" fill="#fff7ed" stroke="#b45309" stroke-width="1.5"/>
+            <text x="725" y="202" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#b45309">w&#8323;, b&#8323;</text>
+
+            <!-- backward pass: main chain, right to left -->
+            <line x1="880" y1="130" x2="800" y2="180" stroke="#dc2626" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#bwdArrowAG)"/>
+            <text x="870" y="150" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#dc2626">&#8706;L/&#8706;a&#8323;</text>
+
+            <line x1="650" y1="145" x2="570" y2="145" stroke="#dc2626" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#bwdArrowAG)"/>
+            <text x="610" y="160" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;a&#8322; = &#8706;L/&#8706;a&#8323;&middot;h'(z&#8323;)&middot;w&#8323;</text>
+
+            <line x1="420" y1="145" x2="340" y2="145" stroke="#dc2626" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#bwdArrowAG)"/>
+            <text x="380" y="160" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;a&#8321; = &#8706;L/&#8706;a&#8322;&middot;h'(z&#8322;)&middot;w&#8322;</text>
+
+            <line x1="190" y1="145" x2="110" y2="145" stroke="#dc2626" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#bwdArrowAG)"/>
+            <text x="150" y="160" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;x = &#8706;L/&#8706;a&#8321;&middot;h'(z&#8321;)&middot;w&#8321;</text>
+
+            <!-- weight gradient taps -->
+            <line x1="725" y1="130" x2="725" y2="178" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#bwdArrowAG)"/>
+            <text x="820" y="235" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;w&#8323; = &#8706;L/&#8706;a&#8323;&middot;h'(z&#8323;)&middot;a&#8322;</text>
+
+            <line x1="495" y1="130" x2="495" y2="178" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#bwdArrowAG)"/>
+            <text x="590" y="235" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;w&#8322; = &#8706;L/&#8706;a&#8322;&middot;h'(z&#8322;)&middot;a&#8321;</text>
+
+            <line x1="265" y1="130" x2="265" y2="178" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#bwdArrowAG)"/>
+            <text x="355" y="235" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#dc2626">&#8706;L/&#8706;w&#8321; = &#8706;L/&#8706;a&#8321;&middot;h'(z&#8321;)&middot;x</text>
+
+            <text x="500" y="280" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#334155">Every dashed edge is the chain rule applied once: (upstream gradient) &times; (this node's local derivative)</text>
+            <text x="500" y="300" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#334155">Weight taps (&#8706;L/&#8706;w&#8321;, &#8706;L/&#8706;w&#8322;, &#8706;L/&#8706;w&#8323;) are exactly what Eq. (6) uses to update each weight.</text>
+        </svg>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+            <em>The forward pass (top, solid) computes $a_1, a_2, a_3, L$ left to right, and remembers every operation used. The backward pass (dashed red) walks the same graph right to left exactly once, and at each node multiplies the gradient handed to it from downstream by that node's own local derivative &mdash; the chain rule, applied mechanically. This single backward sweep is what fills in every $\partial L/\partial w_i$ used by Eq. (6).</em>
+        </p>
+    </div>
+</div>
+
+<div class="description-box">
+    <h3>Vanishing and Exploding Gradients: A Consequence of the Chain Rule</h3>
+    <p style="line-height: 1.6; color: #333;">
+        The backward sweep above multiplies local derivatives together, layer after layer. For a weight sitting near the input of an $L$-layer network, that gradient is a product of roughly $L$ terms:
+    </p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$\frac{\partial L}{\partial w^{(1)}} \;=\; \frac{\partial L}{\partial a^{(L)}} \cdot \prod_{l=2}^{L} \Big( h'\big(z^{(l)}\big)\cdot w^{(l)} \Big)$$
+    </div>
+    <p style="line-height: 1.6; color: #333;">
+        If each of those $L-1$ factors is, on average, smaller than 1 — which is almost guaranteed with <strong>Sigmoid</strong> (whose derivative $f(z)(1-f(z))$ maxes out at $0.25$) or <strong>Tanh</strong> — the product shrinks <em>geometrically</em> with depth. A 10-layer Sigmoid network can easily see gradients at layer 1 that are $0.25^{10} \approx 10^{-6}$ times the gradient at the output: the earliest layers effectively stop learning at all, even though nothing in Eq. (6) is technically broken. This is the <strong>vanishing gradient</strong> problem, and it's precisely what makes the "Vanishing Gradient?" column in the activation-function table below so important. The mirror-image failure, <strong>exploding gradients</strong>, happens when those factors are consistently greater than 1 (e.g. large weights): the product grows geometrically instead, producing huge, unstable weight updates and — in the worst case — loss values that jump to <code>NaN</code>.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        This is not a separate bug to patch — it's a direct, structural consequence of stacking many layers, which is exactly why ReLU's constant derivative of 1 (discussed in the Mathematical Deep Dives section) helps so much, and why the next two sections — <strong>principled weight initialization</strong> and <strong>Batch Normalization</strong> — exist: both are specifically designed to keep the magnitude of $h'(z^{(l)})\cdot w^{(l)}$ close to 1 at every layer, so this product neither vanishes nor explodes as depth increases.
+    </p>
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="max-width: 75%; height: auto;">
+            <text x="450" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Gradient Magnitude vs. Depth (schematic, log scale)</text>
+            <text x="450" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#94a3b8">walking backward from the output layer (right) toward the input layer (left)</text>
+
+            <line x1="120" y1="380" x2="800" y2="380" stroke="#64748b" stroke-width="1.5"/>
+            <text x="800" y="400" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">Layer (backward &#8592;)</text>
+            <line x1="120" y1="380" x2="120" y2="55" stroke="#64748b" stroke-width="1.5"/>
+            <text x="70" y="65" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">Gradient</text>
+            <text x="70" y="79" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">Magnitude</text>
+
+            <text x="130" y="393" font-family="Segoe UI, sans-serif" font-size="10" fill="#64748b">L (output)</text>
+            <text x="765" y="393" font-family="Segoe UI, sans-serif" font-size="10" fill="#64748b">1 (input)</text>
+
+            <!-- exploding (weights too large) -->
+            <path d="M 130,150 L 258,110 L 386,80 L 514,60 L 642,45 L 770,35" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+            <text x="770" y="25" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#dc2626">Exploding (Sigmoid/Tanh, large $w$)</text>
+
+            <!-- stable (ReLU + He init) -->
+            <path d="M 130,150 L 258,152 L 386,148 L 514,155 L 642,150 L 770,153" fill="none" stroke="#15803d" stroke-width="2.5"/>
+            <text x="770" y="168" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#15803d">Stable (ReLU + He init / BatchNorm)</text>
+
+            <!-- vanishing -->
+            <path d="M 130,150 L 258,210 L 386,270 L 514,320 L 642,355 L 770,375" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+            <text x="770" y="358" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#2563eb">Vanishing (Sigmoid/Tanh, small $w$)</text>
+
+            <circle cx="130" cy="150" r="5" fill="#0f172a"/>
+        </svg>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+            <em>All three curves start from the same gradient magnitude at the output layer. Each subsequent step backward multiplies by one more $h'(z^{(l)})\cdot w^{(l)}$ factor — repeatedly below 1 (blue) shrinks it toward zero within a handful of layers, repeatedly above 1 (red) blows it up, and keeping that factor near 1 (green) is the target that initialization and normalization schemes below are built to hit.</em>
+        </p>
+    </div>
+</div>
+
+	<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+    <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="max-width: 75%; height: auto;">
+        <defs>
+            <marker id="lossArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#e11d48" />
+            </marker>
+        </defs>
+        <text x="450" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">3D Parameterized Loss Surface — Gradient Descent to the Minimum</text>
+        <text x="450" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#94a3b8">(top-down contour view: darker green = lower loss)</text>
+        <ellipse cx="480" cy="235" rx="300" ry="145" fill="#fecaca"/>
+        <ellipse cx="480" cy="235" rx="255" ry="122" fill="#fed7aa"/>
+        <ellipse cx="480" cy="235" rx="205" ry="98"  fill="#fef08a"/>
+        <ellipse cx="480" cy="235" rx="155" ry="74"  fill="#d9f99d"/>
+        <ellipse cx="480" cy="235" rx="105" ry="50"  fill="#bbf7d0"/>
+        <ellipse cx="480" cy="235" rx="55"  ry="26"  fill="#4ade80"/>
+        <ellipse cx="480" cy="235" rx="18"  ry="9"   fill="#15803d"/>
+        <line x1="150" y1="380" x2="820" y2="380" stroke="#64748b" stroke-width="1.5"/>
+        <text x="800" y="398" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">θ<tspan baseline-shift="sub" font-size="9">2</tspan></text>
+        <line x1="150" y1="380" x2="150" y2="60" stroke="#64748b" stroke-width="1.5"/>
+        <text x="120" y="70" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">θ<tspan baseline-shift="sub" font-size="9">1</tspan></text>
+        <path d="M 730,150 Q 640,105 545,260 Q 505,320 475,255 Q 462,232 480,235" fill="none" stroke="#e11d48" stroke-width="2.5" stroke-dasharray="6,5" marker-end="url(#lossArrow)"/>
+        <circle cx="730" cy="150" r="6" fill="#e11d48"/>
+        <circle cx="545" cy="260" r="5" fill="#e11d48"/>
+        <circle cx="475" cy="255" r="4.5" fill="#e11d48"/>
+        <circle cx="480" cy="235" r="5" fill="#0f172a"/>
+        <text x="770" y="140" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7f1d1d">Start: θ₀</text>
+        <text x="770" y="155" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#7f1d1d">(random init)</text>
+        <text x="480" y="285" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#14532d">Global Minimum θ*</text>
+        <text x="480" y="300" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#14532d">(lowest loss)</text>
+        <text x="600" y="120" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#e11d48">Gradient Descent Path (−∇L)</text>
+        <text x="150" y="35" font-family="Segoe UI, sans-serif" font-size="10" fill="#7f1d1d">High Loss</text>
+        <rect x="150" y="42" width="18" height="10" fill="#fecaca"/><rect x="168" y="42" width="18" height="10" fill="#fed7aa"/><rect x="186" y="42" width="18" height="10" fill="#fef08a"/><rect x="204" y="42" width="18" height="10" fill="#d9f99d"/><rect x="222" y="42" width="18" height="10" fill="#bbf7d0"/><rect x="240" y="42" width="18" height="10" fill="#4ade80"/><rect x="258" y="42" width="18" height="10" fill="#15803d"/>
+        <text x="282" y="35" font-family="Segoe UI, sans-serif" font-size="10" fill="#14532d">Low Loss</text>
+    </svg> <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em>Each dashed segment is one optimizer step: the gradient ∇L points toward steepest increase in loss, so the update moves the opposite direction, −∇L, shrinking the loss a little at a time until the parameters settle near the bottom of the bowl — the same θ₁, θ₂ here stand in for any two of the model's billions of weights, with every other weight held fixed for this 2D slice.</em>
+    </p></div>
+	
+	
+	
+	 <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 900 440" xmlns="http://www.w3.org/2000/svg" style="max-width: 75%; height: auto;">
+            <defs>
+                <marker id="descentArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#dc2626" />
+                </marker>
+            </defs>
+
+            <text x="450" y="26" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Gradient Descent on the 3D Loss Surface</text>
+            <text x="450" y="44" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#94a3b8">(each step follows Eq. 6: $w(\tau) = w(\tau-1) - \eta\nabla L$)</text>
+
+            <!-- Rim -->
+            <ellipse cx="450" cy="150" rx="290" ry="72" fill="none" stroke="#dc2626" stroke-width="2"/>
+            <path d="M 160,150 C 190,270 320,340 450,344" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+            <path d="M 740,150 C 710,270 580,340 450,344" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+
+            <!-- same funnel rings -->
+            <ellipse cx="450" cy="176" rx="245" ry="60" fill="url(#bowlShade1)" opacity="0.18" stroke="#f59e0b" stroke-width="1.5"/>
+            <ellipse cx="450" cy="202" rx="200" ry="48" fill="url(#bowlShade1)" opacity="0.28" stroke="#facc15" stroke-width="1.5"/>
+            <ellipse cx="450" cy="228" rx="155" ry="38" fill="url(#bowlShade1)" opacity="0.4"  stroke="#a3e635" stroke-width="1.5"/>
+            <ellipse cx="450" cy="254" rx="110" ry="28" fill="url(#bowlShade1)" opacity="0.55" stroke="#4ade80" stroke-width="1.5"/>
+            <ellipse cx="450" cy="278" rx="65"  ry="18" fill="url(#bowlShade1)" opacity="0.75" stroke="#22c55e" stroke-width="1.5"/>
+            <ellipse cx="450" cy="298" rx="28"  ry="8"  fill="#15803d" opacity="0.9" stroke="#14532d" stroke-width="1.5"/>
+            <circle cx="450" cy="300" r="5" fill="#0f172a"/>
+
+            <!-- gradient descent path: spiraling down the funnel wall, step by step -->
+            <path d="M 700,158 Q 620,178 610,200 Q 560,215 555,232 Q 500,244 495,258 Q 470,268 468,280 Q 455,292 452,298"
+                  fill="none" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="6,5" marker-end="url(#descentArrow)"/>
+
+            <circle cx="700" cy="158" r="6" fill="#dc2626"/>
+            <circle cx="610" cy="200" r="5" fill="#dc2626"/>
+            <circle cx="555" cy="232" r="4.5" fill="#dc2626"/>
+            <circle cx="495" cy="258" r="4" fill="#dc2626"/>
+            <circle cx="468" cy="280" r="3.5" fill="#dc2626"/>
+
+            <text x="740" y="140" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7f1d1d">$w(0)$</text>
+            <text x="740" y="153" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#7f1d1d">(random init)</text>
+
+            <text x="450" y="330" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#14532d">$w(\tau) \to$ Minimum</text>
+
+            <text x="640" y="205" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#dc2626">$-\eta\nabla L(w)$ each step</text>
+
+            <!-- axes -->
+            <line x1="450" y1="380" x2="450" y2="150" stroke="#64748b" stroke-width="1.5"/>
+            <text x="465" y="160" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">L (Loss)</text>
+            <line x1="450" y1="380" x2="150" y2="410" stroke="#64748b" stroke-width="1.5"/>
+            <text x="120" y="418" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">w<tspan baseline-shift="sub" font-size="9">1</tspan></text>
+            <line x1="450" y1="380" x2="770" y2="410" stroke="#64748b" stroke-width="1.5"/>
+            <text x="775" y="418" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">w<tspan baseline-shift="sub" font-size="9">2</tspan></text>
+        </svg>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+            <em>Starting from a random $w(0)$ near the rim, each dashed segment is one update from Eq. (6) &mdash; a step of size $\eta$ in the direction $-\nabla L(w)$. Repeating this shrinks the loss a little at a time, tracing a path down the bowl wall until the weights settle at the global minimum.</em>
+        </p>
+		
+    </div>
+
+    
+</div>
+
+    <div class="description-box">
+        <h3>Reality Check: The Loss Surface Is Not a Single Smooth Bowl</h3>
+        <p style="line-height: 1.6; color: #333;">
+            The bowl-shaped surfaces above are a useful first picture, but they describe a <strong>convex</strong> loss — one with exactly one minimum. Real Neural Networks, especially deep ones with millions of parameters, have <strong>non-convex</strong> loss surfaces: the $(w_1, w_2, \ldots)$ landscape is folded into many separate basins. Each basin bottom satisfies $\nabla L(w) = 0$ just like Eq. (5), but only the single deepest basin is the <strong>global minimum</strong>; every other basin is a <strong>local minimum</strong> &mdash; a point that is locally "lowest" but not the best solution available anywhere on the surface. Flat, saddle-shaped regions (where the gradient is also near zero but the point is neither a peak nor a true valley) add further difficulty, often slowing training more than local minima do in practice.
+        </p>
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+            <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg" style="max-width: 85%; height: auto;">
+                <defs>
+                    <marker id="gdArrowMulti" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                        <path d="M0,0 L8,4 L0,8 Z" fill="#e11d48" />
+                    </marker>
+                </defs>
+
+                <text x="450" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Non-Convex Loss Surface: Local Minima vs. the Global Minimum</text>
+                <text x="450" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#94a3b8">(top-down contour view: darker green = lower loss)</text>
+
+                <!-- overall high-loss background terrain -->
+                <ellipse cx="450" cy="300" rx="420" ry="225" fill="#fecaca"/>
+                <ellipse cx="450" cy="300" rx="390" ry="205" fill="#fed7aa" opacity="0.6"/>
+
+                <!-- Local Minimum 1 (shallow, upper-left) -->
+                <ellipse cx="190" cy="190" rx="120" ry="85" fill="#fed7aa"/>
+                <ellipse cx="190" cy="190" rx="90"  ry="63" fill="#fef08a"/>
+                <ellipse cx="190" cy="190" rx="60"  ry="42" fill="#d9f99d"/>
+                <ellipse cx="190" cy="190" rx="30"  ry="20" fill="#bbf7d0"/>
+                <circle  cx="190" cy="190" r="6" fill="#166534"/>
+                <text x="190" y="150" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7f1d1d">Local Minimum</text>
+                <text x="190" y="228" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#374151">(shallow basin — higher loss than $w^*$)</text>
+
+                <!-- Local Minimum 2 (medium depth, upper-right) -->
+                <ellipse cx="690" cy="155" rx="130" ry="90" fill="#fed7aa"/>
+                <ellipse cx="690" cy="155" rx="100" ry="68" fill="#fef08a"/>
+                <ellipse cx="690" cy="155" rx="70"  ry="47" fill="#d9f99d"/>
+                <ellipse cx="690" cy="155" rx="42"  ry="28" fill="#bbf7d0"/>
+                <ellipse cx="690" cy="155" rx="18"  ry="12" fill="#4ade80"/>
+                <circle  cx="690" cy="155" r="6" fill="#166534"/>
+                <text x="690" y="112" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7f1d1d">Local Minimum</text>
+                <text x="690" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#374151">(deeper, but still not the best)</text>
+
+                <!-- Local Minimum 3 (shallow, lower-left) -->
+                <ellipse cx="255" cy="420" rx="110" ry="75" fill="#fed7aa"/>
+                <ellipse cx="255" cy="420" rx="82"  ry="55" fill="#fef08a"/>
+                <ellipse cx="255" cy="420" rx="54"  ry="36" fill="#d9f99d"/>
+                <ellipse cx="255" cy="420" rx="26"  ry="17" fill="#bbf7d0"/>
+                <circle  cx="255" cy="420" r="6" fill="#166534"/>
+                <text x="255" y="458" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7f1d1d">Local Minimum</text>
+
+                <!-- Saddle point between Local Minimum 2 and the Global Minimum -->
+                <path d="M 590,250 Q 640,235 690,250 Q 640,265 590,250 Z" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+                <text x="640" y="230" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#92400e">Saddle Point</text>
+                <text x="640" y="278" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-style="italic" fill="#92400e">($\nabla L \approx 0$, but not a minimum)</text>
+
+                <!-- GLOBAL MINIMUM (deepest basin, center) -->
+                <ellipse cx="480" cy="360" rx="200" ry="130" fill="#fed7aa"/>
+                <ellipse cx="480" cy="360" rx="165" ry="107" fill="#fef08a"/>
+                <ellipse cx="480" cy="360" rx="130" ry="85"  fill="#d9f99d"/>
+                <ellipse cx="480" cy="360" rx="95"  ry="62"  fill="#bbf7d0"/>
+                <ellipse cx="480" cy="360" rx="62"  ry="41"  fill="#4ade80"/>
+                <ellipse cx="480" cy="360" rx="32"  ry="21"  fill="#15803d"/>
+                <ellipse cx="480" cy="360" rx="12"  ry="8"   fill="#052e16"/>
+                <!-- star marker on the true global minimum -->
+                <path d="M480,352 L483,359 L491,359 L484.5,364 L487,371 L480,367 L473,371 L475.5,364 L469,359 L477,359 Z" fill="#fde047" stroke="#78350f" stroke-width="0.7"/>
+                <text x="480" y="410" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#052e16">Global Minimum $w^*$</text>
+                <text x="480" y="426" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#166534">(lowest loss anywhere on the surface)</text>
+
+                <!-- Two gradient descent trajectories from different random initializations -->
+                <path d="M 120,60 Q 155,100 175,150 Q 183,172 190,190" fill="none" stroke="#e11d48" stroke-width="2.2" stroke-dasharray="6,5" marker-end="url(#gdArrowMulti)"/>
+                <circle cx="120" cy="60" r="5" fill="#e11d48"/>
+                <text x="105" y="45" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-weight="bold" fill="#7f1d1d">$w(0)_A$</text>
+
+                <path d="M 620,470 Q 560,440 520,405 Q 500,385 484,364" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-dasharray="6,5" marker-end="url(#gdArrowMulti)"/>
+                <circle cx="620" cy="470" r="5" fill="#2563eb"/>
+                <text x="640" y="490" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-weight="bold" fill="#1e3a8a">$w(0)_B$</text>
+
+                <!-- axes -->
+                <line x1="60" y1="500" x2="850" y2="500" stroke="#64748b" stroke-width="1.5"/>
+                <text x="835" y="516" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">θ<tspan baseline-shift="sub" font-size="9">2</tspan></text>
+                <line x1="60" y1="500" x2="60" y2="55" stroke="#64748b" stroke-width="1.5"/>
+                <text x="30" y="65" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">θ<tspan baseline-shift="sub" font-size="9">1</tspan></text>
+
+                <!-- legend -->
+                <text x="60" y="20" font-family="Segoe UI, sans-serif" font-size="10" fill="#7f1d1d">High Loss</text>
+                <rect x="140" y="12" width="16" height="9" fill="#fecaca"/><rect x="156" y="12" width="16" height="9" fill="#fed7aa"/><rect x="172" y="12" width="16" height="9" fill="#fef08a"/><rect x="188" y="12" width="16" height="9" fill="#d9f99d"/><rect x="204" y="12" width="16" height="9" fill="#bbf7d0"/><rect x="220" y="12" width="16" height="9" fill="#4ade80"/><rect x="236" y="12" width="16" height="9" fill="#15803d"/><rect x="252" y="12" width="16" height="9" fill="#052e16"/>
+                <text x="272" y="20" font-family="Segoe UI, sans-serif" font-size="10" fill="#052e16">Low Loss</text>
+            </svg>
+            <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+                <em>Trajectory $w(0)_A$ (red) starts near a shallow basin and gradient descent settles it into a <strong>local minimum</strong> &mdash; the gradient is zero there, so plain gradient descent has no signal telling it to keep moving. Trajectory $w(0)_B$ (blue) starts closer to the deep basin and reaches the <strong>global minimum $w^*$</strong>, marked with a star. In practice, deep networks have so many parameters that most local minima found in practice turn out to have loss values close to the global minimum, and techniques like momentum, Adam (below), and random-restart initialization all help the optimizer avoid getting permanently stuck in a poor basin or a saddle point.</em>
+            </p>
+        </div>
+    </div>
+
+    <!-- Advanced Optimizers Extension: Adam & AdamW as part of Gradient Descent -->
+    <p style="margin-top: 15px;">While standard Gradient Descent uses a fixed learning rate uniformly across all parameters, advanced adaptive variants like <strong>Adam (Adaptive Moment Estimation)</strong> enhance gradient descent by combining momentum (tracking exponential moving averages of past gradients to smooth trajectories) with adaptive scaling (adjusting step sizes per parameter based on historical variances). The update rule incorporates first ($m_t$) and second ($v_t$) moment estimates:</p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$m_t = \beta_1 m_{t-1} + (1 - \beta_1) \nabla L(w), \quad v_t = \beta_2 v_{t-1} + (1 - \beta_2) (\nabla L(w))^2$$
+    </div>
+	
+
+    <div class="algorithm-box">
+        <strong class="label">Advanced Gradient Descent: Adam and AdamW Optimization</strong>
+        <ul>
+            <li><strong>The Role of Adam in Gradient Descent:</strong> Adam builds upon standard gradient descent by addressing noisy gradients and varying scales across parameters. By computing biased-corrected moment estimates, it dynamically scales the effective learning rate for each weight, enabling rapid convergence through ravines and plateaus in the loss landscape.</li>
+            <li><strong>The Limitation with Standard Weight Decay in Adam:</strong> When trying to apply L2 regularization (weight decay) to prevent overfitting within standard Adam, the penalty term is coupled directly into the gradient calculation. Because Adam divides updates by $\sqrt{v_t}$, parameters with large historical gradients receive disproportionately smaller regularization penalties compared to infrequently updated parameters.</li>
+            <li><strong>AdamW (Decoupled Weight Decay):</strong> AdamW fixes this discrepancy by decoupling the weight decay step entirely from the adaptive gradient calculations. It computes the momentum and scaling steps strictly using the loss gradients, and then applies a direct weight decay penalty ($\lambda w$) independently at the final update phase:
+                <div class="math-display" style="text-align: center; margin: 8px 0;">
+                    $$w_t = w_{t-1} - \eta \left( \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon} + \lambda w_{t-1} \right)$$
+                </div>
+            This clean separation ensures consistent regularization across all network parameters, making AdamW the standard optimization engine for training robust deep neural networks and large language models.</li>
+        </ul>
+    </div>
+</div>
+
+    <div class="description-box">
+        <h3>Weight Initialization: Picking the Starting Point</h3>
+        <ul style="line-height: 1.8; color: #444;">
+            <li>When we use an algorithm like Gradient Descent to train a model, we have to pick a starting value for all the weights (parameters). Think of this as the "starting position" of your hiker on the 3D loss mountain we discussed.</li>
+            <li><strong>Why it matters:</strong> Where you start has a huge impact. It determines how fast the model learns and how accurate it will be on new, unseen data — and, as the previous section showed, a careless choice of initial weight scale is one of the most direct ways to trigger vanishing or exploding gradients before training even gets going.</li>
+            <li><strong>The Problem:</strong> There isn't a single mathematical "rulebook" that tells us the globally optimal place to start.</li>
+        </ul>
+        <p style="line-height: 1.6; color: #333;">
+            That said, initialization is not pure guesswork either. The guiding principle behind modern schemes is to pick the variance of the initial weights so that the variance of activations (forward pass) and gradients (backward pass) stays roughly constant from layer to layer — i.e. so the factor $h'(z^{(l)})\cdot w^{(l)}$ from the vanishing/exploding discussion above starts out close to 1, rather than leaving it to chance:
+        </p>
+        <div class="math-display" style="text-align: center; margin: 10px 0;">
+            $$\text{Xavier / Glorot (for Sigmoid, Tanh):} \quad \text{Var}(w) = \frac{2}{n_{in} + n_{out}} \qquad\qquad \text{He (for ReLU):} \quad \text{Var}(w) = \frac{2}{n_{in}}$$
+        </div>
+        <p style="line-height: 1.6; color: #333;">
+            Here $n_{in}$ and $n_{out}$ are the number of incoming and outgoing connections of a layer (the "fan-in" and "fan-out"). <strong>Xavier/Glorot initialization</strong> is derived assuming a roughly linear, zero-centered activation like Tanh, and balances variance across both directions. <strong>He initialization</strong> uses only $n_{in}$ and doubles the variance relative to a naive symmetric choice, specifically to compensate for ReLU zeroing out roughly half of its inputs on every pass — without that correction, activations would silently shrink toward zero as they pass through a deep ReLU network. In both cases, weights are typically drawn from a Normal$(0, \text{Var}(w))$ or a matched Uniform distribution; biases are simply initialized to zero.
+        </p>
+        <p style="line-height: 1.6; color: #333;">
+            <em>The Reality:</em> matching the initialization scheme to the activation function (He with ReLU, Xavier with Sigmoid/Tanh) is now standard practice in every major deep learning library — but it is still a well-reasoned heuristic, not a proof of optimality, so some trial-and-error alongside it remains normal.
+        </p>
+    </div>
+
+<div class="description-box">
+    <h3>Batch Normalization: Stabilizing What Each Layer Sees</h3>
+    <p style="line-height: 1.6; color: #333;">
+        Good initialization only controls the <em>starting</em> distribution of activations. As training proceeds and weights in earlier layers update, the distribution of values arriving at every later layer keeps shifting underneath it — each layer is perpetually chasing a moving target, which slows training and compounds the vanishing/exploding problem above. <strong>Batch Normalization (BatchNorm)</strong> addresses this directly by re-centering and re-scaling the pre-activation values within every mini-batch, at every layer, throughout training.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        For a mini-batch $B$, BatchNorm computes the batch mean $\mu_B$ and variance $\sigma_B^2$ of $z_j^{(l)}$ across the examples in that batch, normalizes to zero mean and unit variance, and then applies a <strong>learnable</strong> scale $\gamma_j$ and shift $\beta_j$:
+    </p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$\hat{z}_j^{(l)} = \frac{z_j^{(l)} - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}, \qquad \text{BN}\big(z_j^{(l)}\big) = \gamma_j \hat{z}_j^{(l)} + \beta_j$$
+    </div>
+    <p style="line-height: 1.6; color: #333;">
+        The learnable $\gamma_j, \beta_j$ matter: they let the network undo the normalization if that turns out to be better for a particular neuron, so BatchNorm never strictly reduces what the network is capable of representing — it only removes the <em>uncontrolled</em> drift in scale that would otherwise happen for free. BatchNorm is applied to the <strong>pre-activation</strong> $z_j^{(l)}$, before the nonlinearity — the opposite side of the activation from where Dropout was applied earlier in this page. A typical layer therefore runs: <strong>Linear ($z$) &rarr; BatchNorm &rarr; Activation ($h$) &rarr; Dropout &rarr; next layer</strong>.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        Like Dropout, BatchNorm behaves differently at test time: instead of using the current mini-batch's $\mu_B, \sigma_B^2$ (a single test example may not even come in a batch), it uses a running average of the mean and variance accumulated during training. Using mini-batch statistics (rather than the true population statistics) also injects a small amount of noise into training, which gives BatchNorm a mild regularizing side-effect — but stabilizing gradient flow through deep networks, not regularization, is its primary purpose.
+    </p>
+</div>
+
+<div class="description-box">
+    <h3>Regularization: Keeping the Network from Memorizing</h3>
+    <p style="line-height: 1.6; color: #333;">
+        A large Neural Network has enough parameters to fit its training data almost perfectly — including the noise. When this happens, training loss keeps falling while performance on new, unseen data gets worse; this gap is <strong>overfitting</strong>. <strong>Regularization</strong> is the collective name for techniques that trade a small amount of training accuracy for better generalization, effectively keeping the model on the smoother, simpler side of what it's capable of representing.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        To even notice this gap, the available data is normally split into three disjoint sets: a <strong>training set</strong> (used to compute $L(w)$ and update weights via Eq. (6)), a <strong>validation set</strong> (never used for weight updates — only to check, after each epoch, whether the model is starting to overfit), and a <strong>test set</strong> (touched exactly once, at the very end, to report a final, unbiased performance number). Early stopping, mentioned below, is defined entirely in terms of the validation set: it is the rising validation loss — while training loss keeps falling — that signals it's time to stop.
+    </p>
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="max-width: 75%; height: auto;">
+            <defs>
+                <marker id="stopArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#7c3aed" />
+                </marker>
+            </defs>
+            <text x="450" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Training vs. Validation Loss: Underfitting, the Sweet Spot, and Overfitting</text>
+
+            <line x1="100" y1="360" x2="820" y2="360" stroke="#64748b" stroke-width="1.5"/>
+            <text x="820" y="380" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">Training Epochs &#8594;</text>
+            <line x1="100" y1="360" x2="100" y2="55" stroke="#64748b" stroke-width="1.5"/>
+            <text x="60" y="65" font-family="Segoe UI, sans-serif" font-size="12" fill="#475569">Loss</text>
+
+            <!-- underfitting zone -->
+            <rect x="100" y="55" width="150" height="305" fill="#fef3c7" opacity="0.4"/>
+            <text x="175" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#92400e">Underfitting</text>
+            <!-- good fit zone -->
+            <rect x="250" y="55" width="130" height="305" fill="#d9f99d" opacity="0.5"/>
+            <text x="315" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#3f6212">Good Fit</text>
+            <!-- overfitting zone -->
+            <rect x="380" y="55" width="440" height="305" fill="#fecaca" opacity="0.35"/>
+            <text x="600" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#991b1b">Overfitting</text>
+
+            <!-- training loss curve: monotonically decreasing -->
+            <path d="M 100,330 C 160,250 220,190 300,155 C 400,115 550,85 820,55" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+            <text x="700" y="90" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#2563eb">Training Loss</text>
+
+            <!-- validation loss curve: decreases then rises after ~x=315 -->
+            <path d="M 100,345 C 160,270 220,210 300,175 C 340,163 360,160 380,160 C 480,175 650,240 820,320" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+            <text x="700" y="300" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#dc2626">Validation Loss</text>
+
+            <!-- early stopping marker -->
+            <line x1="380" y1="360" x2="380" y2="55" stroke="#7c3aed" stroke-width="1.8" stroke-dasharray="5,4"/>
+            <circle cx="380" cy="160" r="6" fill="#7c3aed"/>
+            <text x="380" y="400" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#7c3aed">Early Stopping Point</text>
+            <text x="380" y="415" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#7c3aed">(validation loss is about to turn upward)</text>
+        </svg>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+            <em>Early on, both curves fall together — the model is still <strong>underfitting</strong> (too simple relative to the pattern). Past the marked point, training loss keeps improving but validation loss turns back up: the model has started memorizing training-set noise (<strong>overfitting</strong>) instead of learning the general pattern. <strong>Early stopping</strong> simply means keeping the weights from the point where validation loss was lowest, rather than the weights from the final epoch. Everything else in this section — L1/L2 penalties, Dropout — is aimed at pushing that upturn later, or removing it, without needing to stop early at all.</em>
+        </p>
+    </div>
+    <p style="line-height: 1.6; color: #333;">
+        The most direct approach adds a penalty term on the weights themselves to the loss function, discouraging any single weight from growing too large:
+    </p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$L_{reg}(w) = L(w) + \lambda \sum_i w_i^2 \quad \text{(L2 / "weight decay")}, \qquad L_{reg}(w) = L(w) + \lambda \sum_i |w_i| \quad \text{(L1 / sparsity)}$$
+    </div>
+    <p style="line-height: 1.6; color: #333;">
+        L2 regularization shrinks weights smoothly toward zero (it is exactly the $\lambda w$ term AdamW applies at the update step above); L1 regularization pushes many weights to exactly zero, producing a sparser network. These penalty-based methods are the classical form of regularization, and they are also what a <strong>shallow network</strong> (a single hidden layer, or even plain Logistic Regression) typically relies on: with far fewer parameters and no depth to exploit, shallow models are less prone to the extreme overfitting deep networks can exhibit, so L1/L2 weight penalties, keeping the hidden layer narrow, and <strong>early stopping</strong> (halting training once validation loss stops improving) are usually enough on their own.
+    </p>
+    <h4 style="color: #2c3e50; margin-top: 18px;">Dropout: Regularization Built for Depth</h4>
+    <p style="line-height: 1.6; color: #333;">
+        <strong>Dropout</strong> is the regularization technique most associated with deep networks specifically, because it exploits something shallow networks don't have much of: many redundant paths through many hidden units across many layers. On every forward pass during training, each neuron in a layer is independently "dropped" — its output forced to zero — with some fixed probability $p$ (commonly 0.2–0.5):
+    </p>
+    <div class="math-display" style="text-align: center; margin: 10px 0;">
+        $$\tilde{a}_j^{(l)} = m_j^{(l)} \cdot a_j^{(l)}, \qquad m_j^{(l)} \sim \text{Bernoulli}(1-p)$$
+    </div>
+    <p style="line-height: 1.6; color: #333;">
+        Because a different random subset of neurons is silenced on every pass, no single neuron can become over-specialized or overly dependent on a handful of specific other neurons always being present — the network is forced to learn redundant, distributed representations of the same feature. This is often described as training a different "thinned" sub-network on every mini-batch and implicitly averaging over an enormous ensemble of them. At test time, dropout is turned off and every neuron is active; to keep the expected output magnitude consistent with training, activations are scaled by $(1-p)$ (or, equivalently, scaled by $1/(1-p)$ during training — "inverted dropout" — so no rescaling is needed at inference).
+    </p>
+
+    <h4 style="color: #2c3e50; margin-top: 18px;">What $m_j^{(l)}$ Actually Is, and Exactly When Dropout Fires</h4>
+    <p style="line-height: 1.6; color: #333;">
+        $m_j^{(l)}$ is simply a coin flip attached to neuron $j$ in layer $l$: it is a random variable that takes the value <strong>1 ("keep") with probability $1-p$</strong> and <strong>0 ("drop") with probability $p$</strong>. There is one independent $m_j^{(l)}$ per neuron, and — critically — a brand-new set of these coin flips is drawn <strong>every single forward pass</strong>, i.e. for every mini-batch of every epoch, starting from the very first batch of the very first epoch. Dropout is not "warmed up" or skipped early in training; it is active on step 1 exactly as it is on step 10,000. The only time it switches off is when the model is put into evaluation/inference mode (e.g. <code>model.eval()</code>), at which point every $m_j^{(l)}=1$ and the $(1-p)$ rescaling (or the inverted-dropout scaling already baked in during training) takes over so the outputs stay consistent.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        So the mechanics happen strictly inside the <strong>forward pass</strong>: for each hidden layer being regularized, (1) compute the pre-activation $z_j^{(l)}$ as usual, (2) apply the activation function to get $a_j^{(l)} = h(z_j^{(l)})$, (3) sample the mask $m_j^{(l)}$ fresh, and (4) multiply it in to get $\tilde{a}_j^{(l)} = m_j^{(l)} \cdot a_j^{(l)}$, which is what actually gets passed forward to layer $l+1$. Backpropagation then simply routes gradients through the same mask: any neuron with $m_j^{(l)}=0$ on that pass also gets zero gradient, since it contributed nothing to the loss on that particular pass.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        On the ordering question — dropout is defined on the layer's <em>output</em> $a_j^{(l)} = h(z_j^{(l)})$, so strictly speaking the activation function runs first and dropout is applied to what it produces, not the other way around. There is one special case worth knowing: because $m_j^{(l)}\in\{0,1\}$ and $\text{ReLU}(0)=0$, for ReLU specifically it makes no numerical difference whether you mask before or after the activation — $\text{ReLU}(m \cdot z) = m \cdot \text{ReLU}(z)$ for a 0/1 mask. That equivalence is <strong>ReLU-specific</strong>: it does not hold for activations like Sigmoid or Tanh, where $h(0) \neq 0$ (e.g. $\sigma(0)=0.5$), so masking before the activation would silently inject a constant $0.5$ instead of a true zero. That's why the general definition — and any framework's actual implementation — always masks the post-activation output.
+    </p>
+
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg" style="max-width: 90%; height: auto;">
+            <defs>
+                <marker id="dropoutArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#334155" />
+                </marker>
+            </defs>
+            <text x="450" y="22" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">Dropout Flow — One Layer, One Forward Pass (Training Mode)</text>
+
+            <rect x="15" y="60" width="140" height="70" rx="8" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+            <text x="85" y="88" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#4338ca">Pre-activation</text>
+            <text x="85" y="106" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" fill="#475569">$z_j^{(l)} = w_j a^{(l-1)} + b_j$</text>
+
+            <rect x="195" y="60" width="140" height="70" rx="8" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+            <text x="265" y="88" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#0e7490">Activation</text>
+            <text x="265" y="106" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" fill="#475569">$a_j^{(l)} = h(z_j^{(l)})$, e.g. ReLU</text>
+
+            <rect x="375" y="35" width="150" height="55" rx="8" fill="#fff7ed" stroke="#b45309" stroke-width="1.8" stroke-dasharray="4,3"/>
+            <text x="450" y="57" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#b45309">Sample fresh mask</text>
+            <text x="450" y="74" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" fill="#b45309">$m_j^{(l)}\sim\text{Bernoulli}(1{-}p)$</text>
+            <line x1="450" y1="90" x2="450" y2="112" stroke="#b45309" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#dropoutArrow)"/>
+
+            <rect x="375" y="112" width="150" height="70" rx="8" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
+            <text x="450" y="140" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#db2777">Apply mask</text>
+            <text x="450" y="158" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" fill="#475569">$\tilde{a}_j^{(l)} = m_j^{(l)} \cdot a_j^{(l)}$</text>
+
+            <rect x="595" y="60" width="150" height="70" rx="8" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
+            <text x="670" y="88" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#15803d">To layer $l{+}1$</text>
+            <text x="670" y="106" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" fill="#475569">$\tilde{a}_j^{(l)}$ passed forward</text>
+
+            <rect x="775" y="60" width="105" height="70" rx="8" fill="#fef2f2" stroke="#b91c1c" stroke-width="2"/>
+            <text x="827" y="88" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#b91c1c">Eval mode</text>
+            <text x="827" y="105" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#7f1d1d">$m_j^{(l)}\!\equiv\!1$</text>
+            <text x="827" y="119" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#7f1d1d">(no dropout)</text>
+
+            <line x1="155" y1="95" x2="191" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#dropoutArrow)"/>
+            <line x1="335" y1="95" x2="371" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#dropoutArrow)"/>
+            <line x1="525" y1="147" x2="560" y2="147" stroke="#334155" stroke-width="2"/>
+            <line x1="560" y1="147" x2="560" y2="95" stroke="#334155" stroke-width="2"/>
+            <line x1="560" y1="95" x2="591" y2="95" stroke="#334155" stroke-width="2" marker-end="url(#dropoutArrow)"/>
+
+            <text x="450" y="205" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#64748b">A new $m_j^{(l)}$ is drawn on every training forward pass, from epoch 1 onward — it is only removed in eval/inference mode.</text>
+        </svg>
+    </div>
+
+    <p style="line-height: 1.6; color: #333;">
+        Dropout is rarely applied to shallow networks for a simple reason: with only one hidden layer and few units, randomly zeroing neurons removes too large a fraction of the model's total capacity on every step, making training unstable or simply throwing away signal the model can't afford to lose. It becomes effective precisely when there is depth and width to spare — which is why, alongside L2 weight decay, Dropout (and its relatives, like DropConnect and Stochastic Depth) is a default ingredient in training modern deep networks, CNNs, and Transformers.
+    </p>
+</div>
+
+<div class="description-box">
+    <h3>Universal Approximation capabilities of Neural Networks</h3>
+
+<p style="line-height: 1.6; color: #333;">
+    Before stating the theorem, it's worth being precise about <em>what</em> is being approximated. Recall from the "Scaling to Deep Neural Networks" section that a single layer computes $\mathbf{a}^{(l)} = h\left(\mathbf{W}^{(l)}\mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}\right)$. Write that whole layer as one function, $f^{(l)}(\cdot) = h\left(\mathbf{W}^{(l)}(\cdot) + \mathbf{b}^{(l)}\right)$. An entire $L$-layer Multi-Layer Perceptron is nothing more than these per-layer functions composed end to end, output of one feeding straight into the input of the next:
+</p>
+<div class="math-display" style="text-align: center; margin: 10px 0;">
+    $$F(x) \;=\; f^{(L)}\Big(f^{(L-1)}\big(\cdots f^{(2)}\left(f^{(1)}(x)\right)\cdots\big)\Big)$$
+</div>
+<p style="line-height: 1.6; color: #333;">
+    This single nested expression, $F(x)$, <em>is</em> the neural network — every weight, bias, and activation on this page exists only to shape this one composite function. Training (Sections 1–5 above) is the process of searching over $F$'s parameters so that $F(x)$ matches the unknown true mapping from inputs $x$ to targets $t$ as closely as possible, as measured by $L(w)$. The Universal Approximation Theorem is a formal statement about exactly this $F$:
+</p>
+<p style="line-height: 1.6; color: #333;">
+    It has been mathematically proven (most notably by Cybenko and Hornik) that Neural Networks are Universal Approximators. Using a property known as the 'density' of continuous functions, they proved that a single hidden layer can mimic any continuous relationship between inputs and outputs. While we won't go through the formal proof—which involves complex functional analysis—the takeaway is clear: if a logical pattern exists in your data, a Neural Network is theoretically capable of learning it.
+</p>
+<p style="line-height: 1.6; color: #333;">
+    One subtlety worth flagging: the theorem guarantees this for a network with just <strong>one</strong> hidden layer ($L=2$ in the notation above, counting the output layer), given enough width. Depth — stacking many $f^{(l)}$, as the Deep Neural Network section describes — doesn't unlock any function that a wide-enough shallow network couldn't theoretically also represent. What depth buys in practice is <em>efficiency</em>: reaching a comparably good approximation of $F(x)$ with far fewer total parameters than an extremely wide single layer would need, since each additional layer can reuse and recombine the features the previous layers already built.
+</div>
+
+<div class="description-box" style="overflow-x: auto;">
+
+    <h3 style="color: #2c3e50;">Comparison of Common Activation Functions</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; background-color: white;">
+        <thead>
+            <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e0;">
+                <th style="padding: 12px; text-align: left;">Function</th>
+                <th style="padding: 12px; text-align: center;">Visual Graph</th>
+                <th style="padding: 12px; text-align: left;">Range</th>
+                <th style="padding: 12px; text-align: left;">Differentiation ($f'(z)$)</th>
+                <th style="padding: 12px; text-align: left;">Vanishing Gradient?</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px;"><strong>Sigmoid</strong></td>
+                <td style="padding: 12px; text-align: center; min-width: 100px;">
+                    <span style="color: #0056b3; font-size: 1.2rem;">S-Curve</span>
+                </td>
+                <td style="padding: 12px;">(0, 1)</td>
+                <td style="padding: 12px;">$f(z)(1 - f(z))$</td>
+                <td style="padding: 12px; color: #e53e3e; font-weight: bold;">High Risk</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px;"><strong>Tanh</strong></td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="color: #0056b3; font-size: 1.2rem;">Zero-Centered S</span>
+                </td>
+                <td style="padding: 12px;">(-1, 1)</td>
+                <td style="padding: 12px;">$1 - f(z)^2$</td>
+                <td style="padding: 12px; color: #dd6b20;">Medium Risk</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px;"><strong>ReLU</strong></td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="color: #38a169; font-size: 1.2rem;">L-Shape (Hinge)</span>
+                </td>
+                <td style="padding: 12px;">[0, $\infty$)</td>
+                <td style="padding: 12px;">1 if $z > 0$, else 0</td>
+                <td style="padding: 12px; color: #38a169;">Low Risk</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px;"><strong>Leaky ReLU</strong></td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="color: #38a169; font-size: 1.2rem;">Bent Line</span>
+                </td>
+                <td style="padding: 12px;">(-$\infty$, $\infty$)</td>
+                <td style="padding: 12px;">1 if $z > 0$, else $\alpha$</td>
+                <td style="padding: 12px; color: #38a169;">Minimal</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="description-box">
+    <h3>Mathematical Deep Dives</h3>
+    
+    <div class="section-item">
+        <span class="section-title">The Calculus of ReLU: Why the Gradient is 1</span>
+        <p>For all values where $z > 0$, ReLU acts as the identity function ($f(z) = z$), meaning its derivative is exactly 1. This allows the "error signal" to pass through the neuron unchanged during training, though if $z < 0$, the gradient becomes 0—a state known as the "Dying ReLU" problem.</p>
+    </div>
+
+    <div style="border-left: 5px solid #2ecc71; background: #f0fff4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h4 style="margin-top: 0; color: #27ae60;">Architectural Math: Parameter Counting</h4>
+        <p>To calculate the complexity of a Dense Layer, we multiply the input dimension by the output dimension.</p>
+        <div style="background: white; padding: 10px; border: 1px dashed #27ae60; font-family: monospace;">
+            Input Size ($L_1$): n <br>
+            Output Size ($L_2$): n - 4 <br>
+            -------------------------- <br>
+            <strong>Connection Count:</strong> n * (n - 4) = n² - 4n
+        </div>
+        <p style="font-size: 0.85rem; margin-top: 15px;">
+            <em>Note:</em> In Large Language Models, $n$ is often 4096 or higher, leading to millions of connections per layer.
+        </p>
+    </div>
+</div>
+
+<div class="description-box">
+    <h3>Putting It All Together: The Full Training Loop</h3>
+    <p style="line-height: 1.6; color: #333;">
+        Every mechanism on this page — initialization, BatchNorm, Dropout, the loss surface, backprop, Adam/AdamW, early stopping — is a piece of one single loop. It's worth seeing them assembled in the order they actually fire. Weight initialization (He/Xavier) happens exactly <strong>once</strong>, before training begins — it is not repeated per epoch. Everything after that is a nested loop: an outer loop over <strong>epochs</strong>, and an inner loop over <strong>mini-batches</strong> within each epoch. Within a single mini-batch's forward pass, BatchNorm and Dropout sit on opposite sides of the activation function at every layer: BatchNorm normalizes the pre-activation $z^{(l)}$, then the activation $h(\cdot)$ runs, then Dropout randomly zeroes out the resulting $a^{(l)}$ before it moves to the next layer.
+    </p>
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 900 790" xmlns="http://www.w3.org/2000/svg" style="max-width: 88%; height: auto;">
+            <defs>
+                <marker id="loopArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#334155" />
+                </marker>
+                <marker id="loopArrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#15803d" />
+                </marker>
+                <marker id="loopArrowRed" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#b91c1c" />
+                </marker>
+            </defs>
+            <text x="450" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">The Full Neural Network Training Loop</text>
+
+            <!-- Weight Init -->
+            <rect x="330" y="42" width="240" height="46" rx="8" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+            <text x="450" y="61" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#4338ca">Weight Initialization</text>
+            <text x="450" y="76" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#4338ca">(He / Xavier &mdash; once, before training)</text>
+            <line x1="450" y1="88" x2="450" y2="108" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+
+            <!-- Epoch loop outer box -->
+            <rect x="55" y="108" width="790" height="440" rx="10" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="7,5"/>
+            <text x="75" y="128" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#64748b">For each EPOCH (repeat until stopped)</text>
+
+            <!-- Mini-batch loop inner box -->
+            <rect x="90" y="150" width="720" height="270" rx="10" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-dasharray="5,4"/>
+            <text x="110" y="170" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#4338ca">For each MINI-BATCH (repeat)</text>
+
+            <!-- Forward Pass box -->
+            <rect x="115" y="185" width="230" height="150" rx="8" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+            <text x="230" y="205" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#0e7490">1. Forward Pass</text>
+            <text x="230" y="226" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">(per layer, in order:)</text>
+            <text x="230" y="245" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">$z^{(l)} = W^{(l)}a^{(l-1)}+b^{(l)}$</text>
+            <text x="230" y="264" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#b45309">&darr; BatchNorm($z^{(l)}$)</text>
+            <text x="230" y="283" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">&darr; $a^{(l)} = h(z^{(l)})$, e.g. ReLU</text>
+            <text x="230" y="302" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#db2777">&darr; Dropout($a^{(l)}$)</text>
+            <text x="230" y="321" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#64748b">&rarr; passed to layer $l{+}1$</text>
+
+            <line x1="345" y1="260" x2="378" y2="260" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+
+            <!-- Loss box -->
+            <rect x="383" y="220" width="140" height="80" rx="8" fill="#fdf4ff" stroke="#a21caf" stroke-width="2"/>
+            <text x="453" y="245" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#a21caf">2. Compute Loss</text>
+            <text x="453" y="265" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#334155">$L(w)$</text>
+            <text x="453" y="282" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#64748b">predictions vs. targets</text>
+
+            <line x1="523" y1="260" x2="556" y2="260" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+
+            <!-- Backward Pass box -->
+            <rect x="561" y="220" width="140" height="80" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+            <text x="631" y="245" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#dc2626">3. Backward Pass</text>
+            <text x="631" y="265" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">chain rule / Autograd</text>
+            <text x="631" y="282" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">computes every $\partial L/\partial w$</text>
+
+            <line x1="631" y1="300" x2="631" y2="333" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+
+            <!-- Weight Update box -->
+            <rect x="561" y="338" width="140" height="65" rx="8" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
+            <text x="631" y="360" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#15803d">4. Weight Update</text>
+            <text x="631" y="378" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">SGD / Adam / AdamW</text>
+            <text x="631" y="393" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#64748b">Eq. (6)</text>
+
+            <!-- loop back to forward pass for next mini-batch -->
+            <path d="M 561,370 C 400,405 250,405 230,338" fill="none" stroke="#334155" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#loopArrow)"/>
+            <text x="400" y="416" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-style="italic" fill="#475569">next mini-batch</text>
+
+            <!-- arrow down out of mini-batch loop to validation check -->
+            <line x1="450" y1="420" x2="450" y2="463" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+            <text x="450" y="440" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-style="italic" fill="#64748b">(all mini-batches done)</text>
+
+            <!-- Validation check diamond -->
+            <polygon points="450,463 570,508 450,553 330,508" fill="#fffbeb" stroke="#b45309" stroke-width="2"/>
+            <text x="450" y="502" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#92400e">Validation loss</text>
+            <text x="450" y="516" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#92400e">still improving?</text>
+
+            <!-- Yes -> loop to next epoch -->
+            <path d="M 570,508 C 720,508 780,300 780,175 C 780,140 620,110 452,88" fill="none" stroke="#15803d" stroke-width="2.2" marker-end="url(#loopArrowGreen)"/>
+            <text x="740" y="300" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#15803d">Yes &rarr; next epoch</text>
+
+            <!-- No -> early stop -->
+            <line x1="450" y1="553" x2="450" y2="596" stroke="#b91c1c" stroke-width="2.2" marker-end="url(#loopArrowRed)"/>
+            <text x="475" y="578" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#b91c1c">No &rarr; stop</text>
+
+            <!-- Early stop box -->
+            <rect x="310" y="601" width="280" height="55" rx="8" fill="#fef2f2" stroke="#b91c1c" stroke-width="2"/>
+            <text x="450" y="623" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#b91c1c">Early Stop</text>
+            <text x="450" y="640" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#7f1d1d">keep the weights from the best epoch</text>
+
+            <line x1="450" y1="656" x2="450" y2="686" stroke="#334155" stroke-width="2" marker-end="url(#loopArrow)"/>
+
+            <!-- Inference box -->
+            <rect x="230" y="691" width="440" height="80" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+            <text x="450" y="713" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#0f172a">Inference / Test Time</text>
+            <text x="450" y="733" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">Dropout OFF ($m_j \equiv 1$) &nbsp;&bull;&nbsp; BatchNorm uses running $\mu,\sigma^2$</text>
+            <text x="450" y="750" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" fill="#334155">a single forward pass through the frozen, trained network</text>
+        </svg>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+            <em>The outer dashed box is the epoch loop; the inner dashed box is the mini-batch loop nested inside it. Steps 1&ndash;4 repeat for every mini-batch, every epoch, until the validation-loss check says to stop &mdash; at which point the frozen weights are used for inference, with Dropout switched off and BatchNorm switched to its running statistics.</em>
+        </p>
+    </div>
+</div>
+<!-- =========================================================================
+     SECTION: Network Pruning
+     Paste this fragment into generic_nn.html at the desired section number.
+     Assumes the page's existing style.css classes (.intuition-box,
+     .algorithm-box, .data-table, section heading styles) and the standard
+     MathJax <head> config are already present on the page.
+     Adjust the section number ("X") and any cross-link hrefs
+     (CNN.html, decision-trees.html, mlp backprop page) to match your
+     actual file names / anchors.
+     ========================================================================= -->
+
+<section id="pruning" class="tutorial-section">
+
+<h2>X. Network Pruning: Removing Redundant Parameters</h2>
+
+<p>
+Modern neural networks are almost always <strong>overparameterized</strong>: far more
+weights are learned than are strictly necessary to represent the function the
+network converges to. This raises a natural question we left open on the
+CNN page when discussing dead ReLUs and ResNet's identity shortcut &mdash;
+if a residual block can learn to contribute (near) nothing, and if a large
+fraction of ReLU units end up permanently inactive, how much of a trained
+network's parameter budget is actually load-bearing? <strong>Pruning</strong> is the
+family of techniques that identifies and removes the weights (or units,
+filters, or attention heads) that contribute least to the loss, ideally
+with little or no loss in accuracy.
+</p>
+
+<div class="intuition-box">
+<strong>Intuition.</strong> Think of a trained network as a large, redundant
+committee of feature detectors. Many committee members are saying almost
+the same thing, or aren't being listened to at all (their output gets
+multiplied by a tiny weight downstream). Pruning asks: which members can we
+fire without changing the committee's decision? The hard part is that
+"contributes little" is not the same as "has a small weight" &mdash; a weight
+can be numerically small yet sit at a point where the loss surface is very
+steep, so removing it hurts a lot. Making this precise is exactly what the
+saliency derivations below do.
+</div>
+
+<h3>X.1 Pruning as Constrained Optimization</h3>
+
+<p>
+Formally, given a trained weight vector <span>\(\mathbf{w} \in
+\mathbb{R}^{n}\)</span> that (locally) minimizes a loss <span>\(L(\mathbf{w})\)</span>,
+pruning to a target sparsity budget <span>\(k \ll n\)</span> non-zero weights is
+the combinatorial optimization problem
+</p>
+
+$$
+\mathbf{w}^{\*} = \arg\min_{\mathbf{w}'} L(\mathbf{w}') \quad \text{subject to} \quad
+\lVert \mathbf{w}' \rVert_0 \le k. \tag{1}
+$$
+
+<p>
+The <span>\(\ell_0\)</span> "norm" (count of non-zero entries) makes this NP-hard in
+general &mdash; there are <span>\(\binom{n}{k}\)</span> candidate supports. Every
+practical pruning method is therefore a greedy approximation: assign each
+weight (or group of weights) a scalar <strong>saliency</strong> score estimating how
+much removing it would increase the loss, then remove the lowest-saliency
+weights. The methods below differ only in how rigorously that saliency
+score is derived.
+</p>
+
+<h3>X.2 Saliency via Second-Order Taylor Expansion</h3>
+
+<p>
+Consider perturbing the trained weight vector by <span>\(\delta\mathbf{w}\)</span>
+(for pruning, this perturbation will ultimately zero out one or more
+weights). Expanding the loss to second order around <span>\(\mathbf{w}\)</span>:
+</p>
+
+$$
+\delta L \;=\; \underbrace{\mathbf{g}^{\top}\delta\mathbf{w}}_{\text{1st order}}
+\;+\; \underbrace{\tfrac{1}{2}\,\delta\mathbf{w}^{\top} H \,\delta\mathbf{w}}_{\text{2nd order}}
+\;+\; O(\lVert \delta\mathbf{w}\rVert^3), \tag{2}
+$$
+
+<p>
+where <span>\(\mathbf{g} = \nabla_{\mathbf{w}} L\)</span> is the gradient and
+<span>\(H = \nabla^2_{\mathbf{w}} L\)</span> is the Hessian. Two standard assumptions
+convert this into a usable saliency measure:
+</p>
+
+<ul>
+<li><strong>(A1) Trained-to-convergence assumption:</strong> because
+<span>\(\mathbf{w}\)</span> is (near) a local minimum, <span>\(\mathbf{g} \approx
+\mathbf{0}\)</span>, so the first-order term vanishes.</li>
+<li><strong>(A2) Truncation:</strong> higher-order terms
+<span>\(O(\lVert\delta\mathbf{w}\rVert^3)\)</span> are neglected, valid for small
+perturbations.</li>
+</ul>
+
+<p>Under (A1)&ndash;(A2), Eq. (2) reduces to the purely quadratic form</p>
+
+$$
+\delta L \;\approx\; \tfrac{1}{2}\,\delta\mathbf{w}^{\top} H \,\delta\mathbf{w}. \tag{3}
+$$
+
+<p>
+Every method in this section is a different way of solving "minimize Eq. (3)
+subject to some weights being forced to zero," under a different
+approximation of <span>\(H\)</span>.
+</p>
+
+<h3>X.3 Magnitude Pruning (the common heuristic)</h3>
+
+<p>
+The simplest and most widely used criterion skips the Hessian entirely and
+ranks weights purely by <span>\(|w_i|\)</span>, removing the smallest fraction.
+This is not an ad hoc guess &mdash; it is what Eq. (3) reduces to under one more
+assumption: <strong>(A3) isotropic curvature</strong>, i.e. <span>\(H \approx h\,I\)</span>
+for a single scalar <span>\(h\)</span> shared across all weights (a reasonable
+approximation when the network was trained with uniform L2 weight decay,
+which flattens the loss surface similarly in every weight direction). Then
+deleting a single weight <span>\(w_q\)</span> (setting <span>\(\delta w_q = -w_q\)</span>,
+all other <span>\(\delta w_i = 0\)</span>) gives saliency
+</p>
+
+$$
+s_q \;=\; \tfrac{1}{2}\,h\,w_q^2 \;\;\propto\;\; w_q^2, \tag{4}
+$$
+
+<p>
+so ranking by <span>\(w_q^2\)</span> (equivalently <span>\(|w_q|\)</span>) is the correct
+saliency ranking <em>exactly when curvature is uniform</em>. This is the
+weakness of magnitude pruning: whenever curvature is not uniform across
+weights &mdash; e.g. weights near the input of a very deep network, or in
+architectures without weight decay &mdash; a small but high-curvature weight
+gets pruned when it shouldn't be. Optimal Brain Damage and Optimal Brain
+Surgeon exist precisely to correct for this.
+</p>
+
+<h3>X.4 Optimal Brain Damage (LeCun, Denker &amp; Solla, 1990)</h3>
+
+<p>
+OBD keeps assumption (A2) but replaces (A3) with a weaker one:
+<strong>(A3&prime;) diagonal Hessian</strong> &mdash; cross-curvature terms
+<span>\(H_{ij}, i\ne j\)</span> are neglected, but the diagonal
+<span>\(h_{ii} = \partial^2 L/\partial w_i^2\)</span> is computed exactly (or via
+Gauss&ndash;Newton approximation) per weight rather than assumed equal. Eq. (3)
+then decouples into a sum over independent per-weight terms:
+</p>
+
+$$
+\delta L \;\approx\; \tfrac{1}{2}\sum_i h_{ii}\,\delta w_i^2. \tag{5}
+$$
+
+<p>
+Deleting weight <span>\(w_q\)</span> alone (<span>\(\delta w_q = -w_q\)</span>) gives the
+<strong>OBD saliency</strong>
+</p>
+
+$$
+s_q \;=\; \tfrac{1}{2}\,h_{qq}\,w_q^2. \tag{6}
+$$
+
+<p>
+This is Eq. (4) with the shared scalar <span>\(h\)</span> replaced by the weight's
+own curvature <span>\(h_{qq}\)</span> &mdash; a low-magnitude weight sitting in a
+sharp bowl of the loss surface can now correctly rank as more important than
+a larger weight sitting in a flat region.
+</p>
+
+<p>
+<span>\(h_{qq}\)</span> is computed with a backward pass structurally identical to
+ordinary backpropagation (see the backprop derivation page), but propagating
+second derivatives instead of first. Using the same
+<span>\(z^{(l)} = W^{(l)} a^{(l-1)}\)</span>, <span>\(a^{(l)} = f(z^{(l)})\)</span>
+notation established there, and writing the diagonal curvature at a
+pre-activation as <span>\(\ddot{L}_i^{(l)} \equiv \partial^2 L /
+\partial (z_i^{(l)})^2\)</span>, the diagonal Gauss&ndash;Newton recursion is
+</p>
+
+$$
+\ddot{L}_i^{(l)} \;=\; f'\!\left(z_i^{(l)}\right)^2 \sum_k \left(w_{ki}^{(l+1)}\right)^2 \ddot{L}_k^{(l+1)}, \tag{7}
+$$
+
+<p>
+run backward from the output layer (where <span>\(\ddot{L}\)</span> is the exact
+second derivative of the loss w.r.t. the output pre-activation, e.g. for
+softmax + cross-entropy this has a closed form), and then converted to a
+weight-level curvature via
+</p>
+
+$$
+h_{qq} \;=\; \frac{\partial^2 L}{\partial \left(w_{ij}^{(l)}\right)^2} \;=\; \left(a_j^{(l-1)}\right)^2 \ddot{L}_i^{(l)}. \tag{8}
+$$
+
+<div class="intuition-box">
+<strong>Why drop the cross terms and the <span>\(f''\)</span> term?</strong>
+Eq. (7) is the exact recursion minus a term involving
+<span>\(f''(z_i^{(l)}) \cdot \partial L/\partial z_i^{(l)}\)</span> (the
+Gauss&ndash;Newton approximation). Two things justify dropping it: (i) near a
+trained minimum the first-derivative factor is already small by assumption
+(A1), and (ii) dropping it guarantees <span>\(h_{qq}\ge 0\)</span> for every
+weight, so saliency in Eq. (6) is always a valid non-negative "cost of
+removal" &mdash; a property the true Hessian's diagonal is not guaranteed to
+have.
+</div>
+
+<h3>X.5 Optimal Brain Surgeon (Hassibi &amp; Stork, 1993): Dropping the Diagonal Assumption</h3>
+
+<p>
+OBD still ignores off-diagonal curvature, which means it implicitly assumes
+weights don't compensate for each other. OBS removes assumption (A3&prime;)
+entirely and solves Eq. (3) with the <em>full</em> Hessian, which also yields
+a principled way to <em>adjust the surviving weights</em> to compensate for
+the one being deleted, rather than leaving them untouched.
+</p>
+
+<p>
+Deleting weight <span>\(w_q\)</span> is the linear constraint
+<span>\(\mathbf{e}_q^{\top}\delta\mathbf{w} + w_q = 0\)</span>, where
+<span>\(\mathbf{e}_q\)</span> is the <span>\(q\)</span>-th standard basis vector. The
+constrained optimization problem is
+</p>
+
+$$
+\min_{\delta\mathbf{w}} \; \tfrac{1}{2}\,\delta\mathbf{w}^{\top} H\, \delta\mathbf{w}
+\quad \text{s.t.} \quad \mathbf{e}_q^{\top}\delta\mathbf{w} + w_q = 0. \tag{9}
+$$
+
+<p>Introducing a Lagrange multiplier <span>\(\lambda\)</span>:</p>
+
+$$
+\mathcal{L}(\delta\mathbf{w}, \lambda) \;=\; \tfrac{1}{2}\,\delta\mathbf{w}^{\top} H\, \delta\mathbf{w} \;+\; \lambda\left(\mathbf{e}_q^{\top}\delta\mathbf{w} + w_q\right). \tag{10}
+$$
+
+<p>Stationarity w.r.t. <span>\(\delta\mathbf{w}\)</span>:</p>
+
+$$
+\frac{\partial \mathcal{L}}{\partial \delta\mathbf{w}} = H\,\delta\mathbf{w} + \lambda\, \mathbf{e}_q = \mathbf{0}
+\;\;\Longrightarrow\;\;
+\delta\mathbf{w} = -\lambda\, H^{-1}\mathbf{e}_q. \tag{11}
+$$
+
+<p>Substituting back into the constraint <span>\(\mathbf{e}_q^{\top}\delta\mathbf{w} = -w_q\)</span>:</p>
+
+$$
+-\lambda\, \mathbf{e}_q^{\top} H^{-1}\mathbf{e}_q = -w_q
+\;\;\Longrightarrow\;\;
+\lambda = \frac{w_q}{\left[H^{-1}\right]_{qq}}. \tag{12}
+$$
+
+<p>Giving the full <strong>OBS weight update</strong> (Eq. 11 with Eq. 12 substituted):</p>
+
+$$
+\delta\mathbf{w} \;=\; -\,\frac{w_q}{\left[H^{-1}\right]_{qq}}\, H^{-1}\mathbf{e}_q, \tag{13}
+$$
+
+<p>
+i.e. every surviving weight <span>\(i\)</span> is nudged by
+<span>\(\delta w_i = -\dfrac{w_q}{[H^{-1}]_{qq}}\,[H^{-1}]_{iq}\)</span>, and the
+resulting increase in loss (substitute Eq. 13 into the objective of Eq. 9) is
+the <strong>OBS saliency</strong>
+</p>
+
+$$
+s_q \;=\; \tfrac{1}{2}\,\frac{w_q^2}{\left[H^{-1}\right]_{qq}}. \tag{14}
+</p>
+
+<p>
+Note the structural parallel: Eq. (14) is exactly the OBD saliency of Eq. (6)
+with <span>\(h_{qq}\)</span> replaced by <span>\(1/[H^{-1}]_{qq}\)</span> &mdash; OBD implicitly
+assumes <span>\(H\)</span> is diagonal, so <span>\([H^{-1}]_{qq} = 1/h_{qq}\)</span> and
+the two formulas coincide. OBS is strictly more accurate but requires
+computing (or approximating, e.g. via the empirical Fisher information or a
+low-rank/block-diagonal surrogate) the inverse Hessian, which is
+<span>\(O(n^2)\)</span> to store for <span>\(n\)</span> weights &mdash; the main reason
+magnitude pruning remains the default in practice despite being the
+crudest of the three.
+</p>
+
+<table class="data-table">
+<caption>Comparison of saliency criteria (all derived from Eq. 3)</caption>
+<thead>
+<tr><th>Method</th><th>Hessian assumption</th><th>Saliency <span>\(s_q\)</span></th><th>Compensates other weights?</th></tr>
+</thead>
+<tbody>
+<tr><td>Magnitude pruning</td><td>Isotropic, <span>\(H \approx hI\)</span></td><td><span>\(\tfrac{1}{2}h\,w_q^2 \propto w_q^2\)</span></td><td>No</td></tr>
+<tr><td>Optimal Brain Damage</td><td>Diagonal</td><td><span>\(\tfrac{1}{2}h_{qq}w_q^2\)</span></td><td>No</td></tr>
+<tr><td>Optimal Brain Surgeon</td><td>Full</td><td><span>\(\tfrac{1}{2}w_q^2/[H^{-1}]_{qq}\)</span></td><td>Yes &mdash; Eq. (13)</td></tr>
+</tbody>
+</table>
+
+<h3>X.6 Unstructured vs. Structured Pruning</h3>
+
+<p>
+Everything above is <strong>unstructured pruning</strong>: individual scalar
+weights are zeroed, producing a sparse but irregular weight matrix. This
+reduces parameter count and (with a sparse storage format) memory, but
+rarely speeds up inference on standard GPU hardware, since dense matrix
+multiply kernels can't exploit arbitrary sparsity patterns. <strong>Structured
+pruning</strong> instead removes entire rows/columns of a weight matrix &mdash; whole
+neurons, convolutional filters, or channels &mdash; so the resulting network is
+simply <em>smaller</em>, with ordinary dense compute.
+</p>
+
+<p>
+The saliency machinery generalizes directly: instead of scoring a scalar
+<span>\(w_q\)</span>, score a group of weights
+<span>\(\mathbf{w}_{\mathcal{G}}\)</span> (e.g. all weights of filter
+<span>\(\mathcal{G}\)</span>) by the loss increase from zeroing the whole group,
+<span>\(\delta L \approx \tfrac{1}{2}\mathbf{w}_{\mathcal{G}}^{\top}
+H_{\mathcal{G}\mathcal{G}} \,\mathbf{w}_{\mathcal{G}}\)</span> under the same
+diagonal-block approximation. In practice, two cheaper proxies dominate:
+</p>
+
+<ul>
+<li><strong>Filter-norm pruning:</strong> rank filters by
+<span>\(\lVert \mathbf{w}_{\mathcal{G}} \rVert_2\)</span> &mdash; the group
+generalization of magnitude pruning.</li>
+<li><strong>Network Slimming (Liu et al., 2017):</strong> exploits the batch
+normalization scale parameter <span>\(\gamma_c\)</span> of channel
+<span>\(c\)</span> (from the BatchNorm section earlier on this page,
+<span>\(\hat{a}_c = \gamma_c \dfrac{a_c - \mu_c}{\sqrt{\sigma_c^2+\epsilon}}
++ \beta_c\)</span>) as a built-in, trainable saliency signal: adding an
+<span>\(\ell_1\)</span> penalty <span>\(\lambda\sum_c |\gamma_c|\)</span> to the
+training loss drives unimportant channels' <span>\(\gamma_c \to 0\)</span>
+during ordinary training, and those channels can then be pruned directly
+with essentially no separate saliency computation needed.</li>
+</ul>
+
+<h3>X.7 Iterative Magnitude Pruning and the Lottery Ticket Hypothesis</h3>
+
+<p>
+Pruning to a large sparsity in a single shot from Eq. (1) tends to damage
+accuracy badly, because saliency estimates computed at one weight
+configuration become stale once several weights have actually been removed
+(the Hessian itself changes). The standard remedy is <strong>iterative
+magnitude pruning (IMP)</strong>:
+</p>
+
+<div class="algorithm-box">
+<strong>Algorithm: Iterative Magnitude Pruning</strong>
+<ol>
+<li>Train the dense network to convergence, weights <span>\(\mathbf{w}_0\)</span>.</li>
+<li>Repeat for <span>\(T\)</span> rounds:
+  <ol type="a">
+    <li>Compute saliency for all remaining weights (Eq. 4, 6, or 14).</li>
+    <li>Prune the lowest-saliency <span>\(p\%\)</span> of remaining weights (mask them to zero).</li>
+    <li>Fine-tune the surviving weights for a few epochs, holding pruned weights at zero.</li>
+  </ol>
+</li>
+<li>Stop when the target sparsity or an accuracy-drop tolerance is reached.</li>
+</ol>
+</div>
+
+<p>
+Running one non-iterative full pass to sparsity <span>\(k/n\)</span> versus
+<span>\(T\)</span> rounds each removing a smaller fraction reliably preserves
+more accuracy at the same final sparsity &mdash; a direct consequence of the
+Taylor expansion in Eq. (2) only being locally valid, so re-linearizing
+after each round of damage keeps the approximation trustworthy.
+</p>
+
+<p>
+Applying IMP to a trained network reveals a striking empirical phenomenon,
+formalized by Frankle &amp; Carbin (2019) as the
+<strong>Lottery Ticket Hypothesis</strong>:
+</p>
+
+<div class="intuition-box">
+<strong>Lottery Ticket Hypothesis.</strong> A randomly-initialized dense
+network contains a subnetwork (the surviving mask found by IMP) that, when
+<em>reset to its original initial weights</em> <span>\(\mathbf{w}_0\)</span>
+(not its trained weights) and retrained in isolation, matches the test
+accuracy of the full network in a comparable number of training iterations.
+The mask alone is not the discovery &mdash; the same sparse mask trained from a
+<em>different</em> random initialization ("random ticket") typically trains
+much worse. The implication is that overparameterized networks work partly
+because they contain many random initializations of a much smaller
+"winning" subnetwork, and gradient descent's job includes finding which one
+to amplify.
+</div>
+
+<h3>X.8 Global vs. Layer-wise Sparsity Budgets</h3>
+
+<p>
+A practical decision IMP must make each round: rank saliencies
+<strong>globally</strong> across the whole network, or set a separate
+threshold <strong>per layer</strong>? Global ranking can starve early layers
+entirely if their weights have systematically smaller magnitude/curvature
+than later layers (common, since early layers often have larger fan-in),
+which can destroy accuracy even at moderate overall sparsity. Layer-wise
+budgets (e.g. prune the same fraction <span>\(p\%\)</span> in every layer, or
+allocate the sparsity budget in proportion to a per-layer sensitivity
+estimate <span>\(\sum_{i\in \text{layer}} s_i\)</span>) are more robust and
+are the default in most published pruning pipelines.
+</p>
+
+<h3>X.9 Where This Connects</h3>
+
+<p>
+This section closes the loop on two things flagged earlier in the series:
+the observation on the CNN page that ResNet's identity shortcut lets a
+residual block "do nothing" (a block whose learned residual saliency is
+near zero is, in the language of this section, a natural pruning
+candidate at the block level), and the informal notion of "dead ReLUs" (a
+unit that is inactive for its entire input distribution has near-zero
+gradient flowing through it, hence near-zero <span>\(h_{qq}\)</span> for its
+outgoing weights, hence near-zero OBD saliency &mdash; magnitude-based and
+curvature-based intuitions agree here). Pruning, quantization (reducing the
+bit-width of the surviving weights), and knowledge distillation are the
+three standard tools for taking an overparameterized trained network down
+to a deployable size; pruning is the only one of the three that directly
+answers "how many of these parameters were ever necessary?"
+</p>
+
+</section>
+
+<div class="description-box">
+    <h3>Transfer Learning: Initializing from What's Already Been Learned</h3>
+    <p style="line-height: 1.6; color: #333;">
+        Weight Initialization above assumes you start from <strong>random</strong> weights. <strong>Transfer Learning</strong> asks a different question: why start from noise at all, if a related task has already been trained on? The idea is old — Lorien Pratt's 1993 <strong>Discriminability-Based Transfer (DBT)</strong> algorithm copied weights from a source network into a target network, then used an information-theoretic score to decide, per hidden unit, whether to keep, shrink, or randomly reset that unit's incoming weights. This was for small, shallow networks, decades before CNNs — the underlying insight (reuse learned weights instead of learning from scratch) is unchanged since then; only the mechanics of <em>how</em> to adapt those weights have evolved.
+    </p>
+    <p style="line-height: 1.6; color: #333;">
+        The modern era simplified DBT's per-weight rescaling into two coarser, far more practical strategies, both starting from a network pretrained on a large source dataset:
+    </p>
+    <ul style="line-height: 1.8; color: #444;">
+        <li><strong>Feature extraction (freeze + new head):</strong> keep the pretrained network's weights fixed, remove its final output layer, attach a new, randomly-initialized "head" for the target task, and train only that head. Cheap, and effective when the target dataset is small.</li>
+        <li><strong>Fine-tuning:</strong> unfreeze some or all of the pretrained layers and continue training on the target task, typically with a much smaller learning rate than training from scratch would use — the network is nudged toward the new task rather than re-learning it. In practice the learning rate is often graded by depth (<strong>discriminative fine-tuning</strong>): a tiny LR for early layers, which Yosinski et al. (2014) showed learn generic, broadly-transferable features, and a somewhat larger LR for later layers, which are more task-specific and benefit from adapting more.</li>
+    </ul>
+
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+        <svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+            <defs>
+                <marker id="tlArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#334155" />
+                </marker>
+                <marker id="tlArrowRed" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#b91c1c" />
+                </marker>
+            </defs>
+            <text x="480" y="22" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Transfer Learning — Generalized, for Any Neural Network</text>
+
+            <!-- SOURCE NETWORK ROW -->
+            <text x="480" y="46" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#1e3a8a">Source Network — Pretrained on Task A (large dataset)</text>
+
+            <g font-family="Segoe UI, sans-serif">
+                <rect x="30" y="58" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+                <text x="105" y="88" text-anchor="middle" font-size="12" fill="#334155">Input</text>
+
+                <rect x="210" y="58" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+                <text x="285" y="88" text-anchor="middle" font-size="12" fill="#334155">Layer L1</text>
+
+                <rect x="390" y="58" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+                <text x="465" y="88" text-anchor="middle" font-size="12" fill="#334155">Layer L2</text>
+
+                <rect x="570" y="58" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+                <text x="645" y="88" text-anchor="middle" font-size="12" fill="#334155">Layer L3</text>
+
+                <rect x="750" y="58" width="160" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+                <text x="830" y="82" text-anchor="middle" font-size="12" fill="#334155">Output</text>
+                <text x="830" y="97" text-anchor="middle" font-size="10" fill="#64748b">(Task A)</text>
+            </g>
+
+            <line x1="180" y1="83" x2="206" y2="83" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+            <line x1="360" y1="83" x2="386" y2="83" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+            <line x1="540" y1="83" x2="566" y2="83" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+            <line x1="720" y1="83" x2="746" y2="83" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+
+            <!-- discard output arrow -->
+            <line x1="850" y1="108" x2="850" y2="130" stroke="#b91c1c" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#tlArrowRed)"/>
+            <rect x="770" y="130" width="160" height="34" rx="5" fill="#fef2f2" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <text x="850" y="151" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#7f1d1d">Discarded — task-specific</text>
+
+            <!-- central transfer arrow -->
+            <line x1="285" y1="108" x2="285" y2="185" stroke="#0e7490" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#tlArrow)"/>
+            <line x1="465" y1="108" x2="465" y2="185" stroke="#0e7490" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#tlArrow)"/>
+            <line x1="645" y1="108" x2="645" y2="185" stroke="#0e7490" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#tlArrow)"/>
+            <text x="480" y="177" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#0e7490">Transfer weights L1, L2, L3 into a new network</text>
+
+            <!-- OPTION 1: FEATURE EXTRACTION -->
+            <text x="30" y="205" font-family="Segoe UI, sans-serif" font-size="12.5" font-weight="bold" fill="#92400e">Option 1 — Feature Extraction: freeze L1&ndash;L3, train only the new head</text>
+
+            <g font-family="Segoe UI, sans-serif">
+                <rect x="30" y="215" width="150" height="50" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+                <text x="105" y="238" text-anchor="middle" font-size="11" fill="#334155">New Input</text>
+                <text x="105" y="252" text-anchor="middle" font-size="9.5" fill="#64748b">(Task B)</text>
+
+                <rect x="210" y="215" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2" stroke-dasharray="3,3"/>
+                <text x="285" y="236" text-anchor="middle" font-size="12" fill="#334155">L1</text>
+                <text x="285" y="252" text-anchor="middle" font-size="9.5" fill="#4338ca">frozen</text>
+
+                <rect x="390" y="215" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2" stroke-dasharray="3,3"/>
+                <text x="465" y="236" text-anchor="middle" font-size="12" fill="#334155">L2</text>
+                <text x="465" y="252" text-anchor="middle" font-size="9.5" fill="#4338ca">frozen</text>
+
+                <rect x="570" y="215" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2" stroke-dasharray="3,3"/>
+                <text x="645" y="236" text-anchor="middle" font-size="12" fill="#334155">L3</text>
+                <text x="645" y="252" text-anchor="middle" font-size="9.5" fill="#4338ca">frozen</text>
+
+                <rect x="750" y="215" width="160" height="50" rx="6" fill="#fff7ed" stroke="#b45309" stroke-width="2"/>
+                <text x="830" y="236" text-anchor="middle" font-size="12" fill="#334155">New Head</text>
+                <text x="830" y="251" text-anchor="middle" font-size="9.5" fill="#b45309">random init, trainable</text>
+            </g>
+            <line x1="180" y1="240" x2="206" y2="240" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+            <line x1="360" y1="240" x2="386" y2="240" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+            <line x1="540" y1="240" x2="566" y2="240" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+            <line x1="720" y1="240" x2="746" y2="240" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+
+            <!-- OPTION 2: FINE-TUNING -->
+            <text x="30" y="308" font-family="Segoe UI, sans-serif" font-size="12.5" font-weight="bold" fill="#15803d">Option 2 — Fine-Tuning: unfreeze L1&ndash;L3 (LR graded by depth) + train new head</text>
+
+            <g font-family="Segoe UI, sans-serif">
+                <rect x="30" y="318" width="150" height="50" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+                <text x="105" y="341" text-anchor="middle" font-size="11" fill="#334155">New Input</text>
+                <text x="105" y="355" text-anchor="middle" font-size="9.5" fill="#64748b">(Task B)</text>
+
+                <rect x="210" y="318" width="150" height="50" rx="6" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
+                <text x="285" y="339" text-anchor="middle" font-size="12" fill="#334155">L1</text>
+                <text x="285" y="355" text-anchor="middle" font-size="9.5" fill="#15803d">tiny LR (generic)</text>
+
+                <rect x="390" y="318" width="150" height="50" rx="6" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
+                <text x="465" y="339" text-anchor="middle" font-size="12" fill="#334155">L2</text>
+                <text x="465" y="355" text-anchor="middle" font-size="9.5" fill="#15803d">small LR</text>
+
+                <rect x="570" y="318" width="150" height="50" rx="6" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
+                <text x="645" y="339" text-anchor="middle" font-size="12" fill="#334155">L3</text>
+                <text x="645" y="355" text-anchor="middle" font-size="9.5" fill="#15803d">larger LR (task-specific)</text>
+
+                <rect x="750" y="318" width="160" height="50" rx="6" fill="#fff7ed" stroke="#b45309" stroke-width="2"/>
+                <text x="830" y="339" text-anchor="middle" font-size="12" fill="#334155">New Head</text>
+                <text x="830" y="354" text-anchor="middle" font-size="9.5" fill="#b45309">random init, trainable</text>
+            </g>
+            <line x1="180" y1="343" x2="206" y2="343" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+            <line x1="360" y1="343" x2="386" y2="343" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+            <line x1="540" y1="343" x2="566" y2="343" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+            <line x1="720" y1="343" x2="746" y2="343" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
+
+            <!-- LEGEND -->
+            <rect x="30" y="405" width="18" height="18" fill="#eef2ff" stroke="#4338ca" stroke-width="2" stroke-dasharray="3,3"/>
+            <text x="55" y="419" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Frozen (pretrained, no gradient update)</text>
+
+            <rect x="380" y="405" width="18" height="18" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
+            <text x="405" y="419" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Fine-tuned (pretrained, LR graded by depth — smaller for early layers)</text>
+
+            <rect x="720" y="405" width="18" height="18" fill="#fff7ed" stroke="#b45309" stroke-width="2"/>
+            <text x="745" y="419" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">New (random init, trained at normal LR)</text>
+
+            <text x="480" y="450" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-style="italic" fill="#64748b">Generalizes to any architecture: replace L1&ndash;L3 with ResNet/VGG conv blocks, a Transformer's encoder</text>
+            <text x="480" y="465" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-style="italic" fill="#64748b">stack, or a pretrained LLM's decoder layers &mdash; the freeze / fine-tune / new-head logic is identical.</text>
+        </svg>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+            <em>The same procedure, applied at whatever granularity the architecture calls for: whole layers for a small MLP, residual blocks for a ResNet, encoder blocks for a Transformer, or attention/MLP sub-layers for LoRA adapters in an LLM.</em>
+        </p>
+    </div>
+
+    <p style="line-height: 1.6; color: #333;">
+        For today's Large Language Models, the same freeze/fine-tune spectrum reappears under new names: <strong>SFT (Supervised Fine-Tuning)</strong>, covered on the LLM Engine page, is full fine-tuning applied to a pretrained LLM's weights; <strong>LoRA (Low-Rank Adaptation)</strong> is a parameter-efficient middle ground — the pretrained weights stay entirely frozen, and a small pair of low-rank matrices is trained alongside each frozen weight matrix to approximate the update, making it possible to adapt a multi-billion-parameter model by training only a tiny fraction of new parameters.
+    </p>
+    <div class="intuition-box">
+        <strong>Why this matters.</strong> Transfer learning is arguably the single biggest reason deep learning became practical at scale. Before it, every new task needed its own network trained from zero, requiring huge labeled datasets few had. CNNs pretrained on ImageNet made it possible to build a strong image classifier from a few hundred labeled photos instead of millions. Transformers and LLMs pushed this further: pretraining on massive unlabeled text builds one general-purpose network, and SFT/LoRA adapt it to a target task or behavior using a tiny fraction of the compute and data pretraining required. Nearly every modern CNN, Transformer, and LLM deployed in practice is a fine-tuned descendant of a pretrained model, not a network trained from scratch.
+    </div>
+</div>
+
+<div class="description-box">
+    <h3>What's Next: Specialized Network Architectures</h3>
+    <p style="line-height: 1.6; color: #333;">
+        Everything on this page — layers, weights, activations, backpropagation, the loss surface, and regularization — applies to the general, <strong>fully-connected</strong> Neural Network. In practice, most modern architectures are variations of this same core machinery, specialized for a particular kind of data:
+    </p>
+    <ul style="line-height: 1.8; color: #555;">
+        <li><strong>Convolutional Neural Networks (CNNs):</strong> specialized for grid-like data such as images, using shared, spatially-local filters instead of dense connections.</li>
+        <li><strong>Recurrent Neural Networks (RNNs):</strong> specialized for sequential data, maintaining a hidden state that carries information forward across time steps.</li>
+        <li><strong>Large Language Models (LLMs) and Transformers:</strong> specialized for language and other sequence modeling tasks, built on the self-attention mechanism rather than recurrence or convolution.</li>
+    </ul>
+    <p style="line-height: 1.6; color: #333;">
+        Each of these deserves — and gets — a dedicated, in-depth discussion on its own page, covering the architecture-specific mechanics that build on the foundations introduced here.
+    </p>
+</div>
+
+</body>
+</html>

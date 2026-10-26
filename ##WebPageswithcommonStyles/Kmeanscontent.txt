@@ -1,0 +1,18 @@
+
+
+K means definition
+
+Clusters are group of similar items. Similar with respect to know features. 
+This is a kind of classifier learning alternative to Supervised learnin
+In k-means, there can k clusters each clusters representing features of same type.
+No two clusters are similar. 
+Each cluster is determined by center point, whose nearest distance from given test point is used as measure of selecting a group
+K means is a two part iterative algorithm. First part uses the output of  second part to further improve condition. 
+
+The K-means cluster algorithm
+
+1. 
+
+
+
+

@@ -1,0 +1,12 @@
+[
+    {
+        "question": "Which activation function is preferred for deep networks to avoid the Vanishing Gradient problem?",
+        "options": ["Sigmoid", "Tanh", "ReLU", "Linear"],
+        "answer": "ReLU"
+    },
+    {
+        "question": "What is the gradient of ReLU when the input z is greater than 0?",
+        "options": ["0", "0.5", "1", "-1"],
+        "answer": "1"
+    }
+]

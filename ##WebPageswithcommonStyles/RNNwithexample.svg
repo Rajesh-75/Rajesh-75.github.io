@@ -1,0 +1,55 @@
+<svg width="900" height="400" viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Professional technical styles -->
+  <style>
+    .node { fill: #ffffff; stroke: #334155; stroke-width: 2; }
+    .label { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #1e293b; font-weight: bold; text-anchor: middle; }
+    .word-label { font-family: 'Segoe UI', sans-serif; font-size: 14px; fill: #0f172a; font-weight: 800; text-anchor: middle; }
+    .weight { font-family: 'serif'; font-size: 15px; font-style: italic; fill: #2563eb; font-weight: bold; }
+    .arrow { stroke: #64748b; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    .prediction { font-family: 'Segoe UI', sans-serif; font-size: 16px; fill: #059669; font-weight: 800; text-anchor: middle; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+    </marker>
+  </defs>
+
+  <!-- Step 1: "The" -->
+  <circle class="node" cx="100" cy="320" r="25" /> <text class="word-label" x="100" y="325">The</text>
+  <circle class="node" cx="100" cy="200" r="25" /> <text class="label" x="100" y="205">h₁</text>
+  <path class="arrow" d="M 100 295 L 100 225" /> <text class="weight" x="85" y="265">U</text>
+
+  <!-- Step 2: "cat" -->
+  <circle class="node" cx="280" cy="320" r="25" /> <text class="word-label" x="280" y="325">cat</text>
+  <circle class="node" cx="280" cy="200" r="25" /> <text class="label" x="280" y="205">h₂</text>
+  <path class="arrow" d="M 280 295 L 280 225" /> <text class="weight" x="265" y="265">U</text>
+  <path class="arrow" d="M 125 200 L 255 200" /> <text class="weight" x="190" y="190">W</text>
+
+  <!-- Step 3: "sat" -->
+  <circle class="node" cx="460" cy="320" r="25" /> <text class="word-label" x="460" y="325">sat</text>
+  <circle class="node" cx="460" cy="200" r="25" /> <text class="label" x="460" y="205">h₃</text>
+  <path class="arrow" d="M 460 295 L 460 225" /> <text class="weight" x="445" y="265">U</text>
+  <path class="arrow" d="M 305 200 L 435 200" /> <text class="weight" x="370" y="190">W</text>
+
+  <!-- Step 4: "on" -->
+  <circle class="node" cx="640" cy="320" r="25" /> <text class="word-label" x="640" y="325">on</text>
+  <circle class="node" cx="640" cy="200" r="25" /> <text class="label" x="640" y="205">h₄</text>
+  <path class="arrow" d="M 640 295 L 640 225" /> <text class="weight" x="625" y="265">U</text>
+  <path class="arrow" d="M 485 200 L 615 200" /> <text class="weight" x="550" y="190">W</text>
+
+  <!-- Step 5: "the" -> Prediction -->
+  <circle class="node" cx="820" cy="320" r="25" /> <text class="word-label" x="820" y="325">the</text>
+  <circle class="node" cx="820" cy="200" r="25" /> <text class="label" x="820" y="205">h₅</text>
+  <path class="arrow" d="M 820 295 L 820 225" /> <text class="weight" x="805" y="265">U</text>
+  <path class="arrow" d="M 665 200 L 795 200" /> <text class="weight" x="730" y="190">W</text>
+
+  <!-- Final Prediction Output -->
+  <circle class="node" cx="820" cy="80" r="25" style="stroke: #059669; stroke-width: 3;" /> 
+  <text class="prediction" x="820" y="45">mat</text>
+  <path class="arrow" d="M 820 175 L 820 105" style="stroke: #059669;" /> 
+  <text class="weight" x="830" y="145" style="fill: #059669;">V</text>
+
+  <!-- Background label for Context -->
+  <text x="450" y="380" class="label" style="fill: #94a3b8; font-style: italic;">Information flows through W matrices to build sentence context</text>
+</svg>

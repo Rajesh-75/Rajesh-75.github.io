@@ -1,0 +1,151 @@
+<div class="widget">
+    <div class="widget-top">
+        <div class="k-control">
+            <label for="svmWeightSlider">w&#8321; = </label>
+            <input type="range" id="svmWeightSlider" min="-2" max="2" step="0.1" value="1">
+            <span class="kval" id="svmWVal">1.0</span>
+        </div>
+        <div class="k-control">
+            <label for="svmBiasSlider">b = </label>
+            <input type="range" id="svmBiasSlider" min="-5" max="5" step="0.2" value="0">
+            <span class="kval" id="svmBVal">0.0</span>
+        </div>
+        <div class="hint">Linear SVM Decision Boundary</div>
+    </div>
+    <div class="widget-body">
+        <div class="plot-box">
+            <svg id="svmSvg" viewBox="0 0 480 380" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <div class="readout">
+            <div id="svmPredictBanner" class="predict-banner">margin: w&#8321;x + w&#8322;y + b = 0</div>
+            <div class="vote-row">
+                <div class="vr-top"><span style="color:var(--class-a)">&#9679; Class +1 Correct</span><span id="svmCorrectPos">0 / 0</span></div>
+                <div class="vr-bar"><div class="vr-fill" id="svmBarPos" style="background:var(--class-a); width:0%;"></div></div>
+            </div>
+            <div class="vote-row">
+                <div class="vr-top"><span style="color:var(--class-b)">&#9679; Class -1 Correct</span><span id="svmCorrectNeg">0 / 0</span></div>
+                <div class="vr-bar"><div class="vr-fill" id="svmBarNeg" style="background:var(--class-b); width:0%;"></div></div>
+            </div>
+            <div class="posterior-line" id="svmAccuracyLine">Accuracy: 0.0%</div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    const svg = document.getElementById('svmSvg');
+    const svgNS = "http://www.w3.org/2000/svg";
+    const W = 480, H = 380;
+    const margin = 40;
+    const plotW = W - 2 * margin, plotH = H - 2 * margin;
+    const xMin = -6, xMax = 6, yMin = -6, yMax = 6;
+
+    function xToPx(x){ return margin + (x - xMin) / (xMax - xMin) * plotW; }
+    function yToPx(y){ return margin + plotH - (y - yMin) / (yMax - yMin) * plotH; }
+
+    function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+    function el(tag, attrs){
+        const e = document.createElementNS(svgNS, tag);
+        for(const k in attrs) e.setAttribute(k, attrs[k]);
+        return e;
+    }
+
+    // Synthetic dataset: points and their true labels (+1 or -1)
+    const points = [
+        {x: -2.5, y:  3.0, label:  1},
+        {x: -1.5, y:  4.2, label:  1},
+        {x: -3.0, y:  2.1, label:  1},
+        {x: -2.0, y:  1.5, label:  1},
+        {x: -3.5, y:  3.5, label:  1},
+        {x: -0.8, y:  2.8, label:  1},
+        {x:  2.5, y: -2.0, label: -1},
+        {x:  3.0, y: -3.5, label: -1},
+        {x:  1.5, y: -2.5, label: -1},
+        {x:  2.0, y: -1.0, label: -1},
+        {x:  3.5, y: -2.8, label: -1},
+        {x:  1.0, y: -3.0, label: -1}
+    ];
+
+    function draw(){
+        const w1 = parseFloat(document.getElementById('svmWeightSlider').value);
+        const b = parseFloat(document.getElementById('svmBiasSlider').value);
+        const w2 = -1.0; // fixed vertical weight for a 2D line representation w1*x + w2*y + b = 0 => y = (w1*x + b) / -w2
+
+        document.getElementById('svmWVal').textContent = w1.toFixed(1);
+        document.getElementById('svmBVal').textContent = b.toFixed(1);
+
+        clearSVG();
+
+        // Draw grid lines
+        for(let gx = xMin; gx <= xMax; gx += 2){
+            svg.appendChild(el('line', {x1:xToPx(gx), y1:margin, x2:xToPx(gx), y2:margin+plotH, stroke:'#e2e8f0', 'stroke-width':'1'}));
+        }
+        for(let gy = yMin; gy <= yMax; gy += 2){
+            svg.appendChild(el('line', {x1:margin, y1:yToPx(gy), x2:margin+plotW, y2:yToPx(gy), stroke:'#e2e8f0', 'stroke-width':'1'}));
+        }
+
+        // Decision boundary line: w1*x + w2*y + b = 0 => y = ( -w1*x - b ) / w2
+        const xA = xMin, yA = (-w1 * xA - b) / w2;
+        const xB = xMax, yB = (-w1 * xB - b) / w2;
+        svg.appendChild(el('line', {x1:xToPx(xA), y1:yToPx(yA), x2:xToPx(xB), y2:yToPx(yB), stroke:'var(--query)', 'stroke-width':'2.5'}))
+
+        // Margin lines (+1 and -1)
+        const yA_pos = (-w1 * xA - b + 1) / w2;
+        const yB_pos = (-w1 * xB - b + 1) / w2;
+        const yA_neg = (-w1 * xA - b - 1) / w2;
+        const yB_neg = (-w1 * xB - b - 1) / w2;
+        svg.appendChild(el('line', {x1:xToPx(xA), y1:yToPx(yA_pos), x2:xToPx(xB), y2:yToPx(yB_pos), stroke:'var(--query)', 'stroke-width':'1', 'stroke-dasharray':'4'}))
+        svg.appendChild(el('line', {x1:xToPx(xA), y1:yToPx(yA_neg), x2:xToPx(xB), y2:yToPx(yB_neg), stroke:'var(--query)', 'stroke-width':'1', 'stroke-dasharray':'4'}))
+
+        // Render points and evaluate classification
+        let correctPos = 0, totalPos = 0;
+        let correctNeg = 0, totalNeg = 0;
+
+        points.forEach(p => {
+            const val = w1 * p.x + w2 * p.y + b;
+            const pred = val >= 0 ? 1 : -1;
+            const isCorrect = (pred === p.label);
+
+            if(p.label === 1){
+                totalPos++;
+                if(isCorrect) correctPos++;
+            } else {
+                totalNeg++;
+                if(isCorrect) correctNeg++;
+            }
+
+            const color = p.label === 1 ? 'var(--class-a)' : 'var(--class-b)';
+            const circle = el('circle', {
+                cx: xToPx(p.x),
+                cy: yToPx(p.y),
+                r: 6,
+                fill: color,
+                stroke: isCorrect ? '#fff' : '#14304D',
+                'stroke-width': isCorrect ? '1.5' : '2.5'
+            });
+            svg.appendChild(circle);
+        });
+
+        // Axes
+        svg.appendChild(el('line', {x1:margin, y1:yToPx(0), x2:margin+plotW, y2:yToPx(0), stroke:'var(--ink)', 'stroke-width':'1.5'}));
+        svg.appendChild(el('line', {x1:xToPx(0), y1:margin, x2:xToPx(0), y2:margin+plotH, stroke:'var(--ink)', 'stroke-width':'1.5'}));
+
+        // Update readouts
+        const totalCorrect = correctPos + correctNeg;
+        const totalPoints = points.length;
+        const accuracy = (totalCorrect / totalPoints) * 100;
+
+        document.getElementById('svmCorrectPos').textContent = `${correctPos} / ${totalPos}`;
+        document.getElementById('svmCorrectNeg').textContent = `${correctNeg} / ${totalNeg}`;
+        document.getElementById('svmBarPos').style.width = `${(correctPos / totalPos) * 100}%`;
+        document.getElementById('svmBarNeg').style.width = `${(correctNeg / totalNeg) * 100}%`;
+        document.getElementById('svmAccuracyLine').textContent = `Classification Accuracy: ${accuracy.toFixed(1)}%`;
+        document.getElementById('svmPredictBanner').innerHTML = `Boundary: <b>${w1.toFixed(1)}x - y + ${b.toFixed(1)} = 0</b>`;
+    }
+
+    document.getElementById('svmWeightSlider').addEventListener('input', draw);
+    document.getElementById('svmBiasSlider').addEventListener('input', draw);
+
+    draw();
+})();
+</script>

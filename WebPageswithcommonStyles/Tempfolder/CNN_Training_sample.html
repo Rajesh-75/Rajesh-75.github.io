@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical Imaging Anomaly Detection: End-to-End PyTorch Pipeline</title>
+<link rel="stylesheet" href="style.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+      ignoreHtmlClass: 'tex2jax_ignore'
+    },
+    startup: {
+      pageReady: () => {
+        return MathJax.startup.defaultPageReady().then(() => {
+          document.body.style.visibility = 'visible';
+        });
+      }
+    }
+  };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+body {
+  visibility: hidden;
+}
+pre.code-block {
+  background: #f5f7f9;
+  border: 1px solid #dde3e8;
+  border-left: 4px solid #0056b3;
+  border-radius: 4px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+code {
+  font-family: Consolas, "Courier New", monospace;
+}
+.task-table th {
+  background: #0056b3;
+  color: #fff;
+}
+.deploy-box {
+  background: #fff4e5;
+  border: 1px solid #f0c988;
+  border-left: 4px solid #d98c1f;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin: 18px 0;
+}
+.toc {
+  background: #f5f7f9;
+  border: 1px solid #dde3e8;
+  border-radius: 4px;
+  padding: 16px 24px;
+}
+.toc ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.toc a {
+  text-decoration: none;
+  color: #0056b3;
+}
+.toc a:hover {
+  text-decoration: underline;
+}
+section {
+  margin-bottom: 40px;
+}
+</style>
+</head>
+<body>
+
+<nav class="nav-bar">
+  <a href="cnn.html">&larr; Back to CNN Tutorial</a>
+</nav>
+
+<main class="tutorial-container">
+
+<h1>Medical Imaging Anomaly Detection: End-to-End PyTorch Pipeline</h1>
+<h2 style="font-weight: normal; color: #555;">Brain Tumor Segmentation + Bounding-Box Localization (BraTS-style MRI)</h2>
+
+<p>This section extends the CNN Training material into a concrete, deployable clinical task:
+finding a tumor/lesion in an image and producing both a pixel-level mask <em>and</em> a bounding
+box. It follows the same train &rarr; evaluate &rarr; deploy arc, with the operational
+considerations (data governance, class imbalance, production risk) called out explicitly rather
+than left implicit.</p>
+
+<div class="toc">
+  <strong>Contents</strong>
+  <ul>
+    <li><a href="#framing">1. Framing the Problem</a></li>
+    <li><a href="#collection">2. Data Collection</a></li>
+    <li><a href="#preprocessing">3. Preprocessing</a></li>
+    <li><a href="#dataset">4. Dataset &amp; DataLoader</a></li>
+    <li><a href="#model">5. Model &mdash; 2D U-Net</a></li>
+    <li><a href="#loss">6. Loss Function</a></li>
+    <li><a href="#training">7. Training Loop</a></li>
+    <li><a href="#bbox">8. From Mask to Bounding Box</a></li>
+    <li><a href="#eval">9. Evaluation</a></li>
+    <li><a href="#deploy">10. Deployment</a></li>
+  </ul>
+</div>
+
+<section id="framing">
+<h2>1. Framing the Problem</h2>
+<p>"Anomaly detection" in medical imaging almost always means one of three things:</p>
+
+<table class="data-table task-table">
+  <thead>
+    <tr><th>Task</th><th>Output</th><th>Typical head</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Classification</td><td>tumor present? yes/no</td><td>Global pooling + FC</td></tr>
+    <tr><td>Segmentation</td><td>pixel-wise tumor mask</td><td>Encoder&ndash;decoder (U-Net)</td></tr>
+    <tr><td>Detection</td><td>bounding box around lesion</td><td>Region proposal / anchor-based head</td></tr>
+  </tbody>
+</table>
+
+<div class="intuition-box">
+<strong>Design choice:</strong> train a U-Net to produce a per-pixel tumor probability mask, then
+<strong>derive the bounding box from the mask</strong> via connected-component analysis, rather
+than training a separate detector (Faster R-CNN / RetinaNet). Medical lesions are usually single,
+contiguous, irregularly-shaped regions &mdash; segmentation gives you the box for free <em>and</em>
+the shape, which matters clinically far more than a box alone. The exception (many small, separate
+lesions per image, e.g. lung nodules) is noted in Section 8.
+</div>
+</section>
+
+<section id="collection">
+<h2>2. Data Collection</h2>
+<p>For brain tumors, the standard public dataset is <strong>BraTS</strong> (Brain Tumor
+Segmentation Challenge). Each patient has 4 co-registered MRI modalities (T1, T1ce, T2, FLAIR) as
+3D NIfTI volumes, plus an expert-labeled segmentation mask (background, edema, non-enhancing/
+necrotic core, enhancing tumor).</p>
+
+<p>Operational concerns worth flagging alongside the algorithmic ones:</p>
+<ul>
+  <li><strong>Patient-level splitting, not slice-level.</strong> A 3D volume yields ~150 axial
+  slices; if slices from the same patient land in both train and test, you leak information and
+  inflate metrics. Split by patient ID before slicing.</li>
+  <li><strong>Severe class imbalance.</strong> Tumor voxels are often &lt;1&ndash;5% of a volume
+  &mdash; this drives the loss function (Section 6) and the sampling strategy (Section 4).</li>
+  <li><strong>De-identification / governance.</strong> Public datasets are pre-de-identified, but
+  real hospital data carries PHI in DICOM headers that must be stripped, with IRB/ethics approval
+  required before training.</li>
+  <li><strong>Protocol variability.</strong> Scanner vendor, field strength, and acquisition
+  protocol differ across sites &mdash; this is why normalization is done per-volume, not with
+  global dataset statistics like ImageNet mean/std.</li>
+</ul>
+</section>
+
+<section id="preprocessing">
+<h2>3. Preprocessing</h2>
+<pre class="code-block"><code>import nibabel as nib
+import numpy as np
+
+def load_and_normalize(path: str) -> np.ndarray:
+    """Load a NIfTI volume and z-score normalize using only nonzero (brain) voxels."""
+    vol = nib.load(path).get_fdata().astype(np.float32)
+    brain_mask = vol > 0
+    mean, std = vol[brain_mask].mean(), vol[brain_mask].std()
+    vol[brain_mask] = (vol[brain_mask] - mean) / (std + 1e-8)
+    return vol
+
+def stack_modalities(t1ce_path, flair_path, t2_path):
+    """Stack modalities as channels -- analogous to RGB channels in a CNN, but here
+    each 'channel' is a different physical measurement, not a different color."""
+    vols = [load_and_normalize(p) for p in (t1ce_path, flair_path, t2_path)]
+    return np.stack(vols, axis=0)  # shape: (C, H, W, D)
+</code></pre>
+
+<p>Two practical decisions worth making explicit for students:</p>
+<ol>
+  <li><strong>2D slices vs 3D volumes.</strong> A full 3D U-Net captures inter-slice context but
+  is memory- and compute-heavy. A 2D U-Net over axial slices is far cheaper and is what's built
+  below; the 3D variant only changes <code>Conv2d</code>&rarr;<code>Conv3d</code> and
+  <code>MaxPool2d</code>&rarr;<code>MaxPool3d</code>.</li>
+  <li><strong>Which slices to keep.</strong> Discard slices with no brain tissue (pure
+  background) &mdash; they add noise to training and worsen the class-imbalance problem.</li>
+</ol>
+</section>
+
+<section id="dataset">
+<h2>4. Dataset &amp; DataLoader</h2>
+<pre class="code-block"><code>import torch
+from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
+
+class BrainTumorSliceDataset(Dataset):
+    def __init__(self, slice_paths, mask_paths, augment=None):
+        self.slice_paths = slice_paths   # each item: path to a pre-extracted (C,H,W) .npy slice
+        self.mask_paths = mask_paths     # matching (H,W) binary mask .npy
+        self.augment = augment
+
+    def __len__(self):
+        return len(self.slice_paths)
+
+    def __getitem__(self, idx):
+        image = np.load(self.slice_paths[idx])   # (C, H, W)
+        mask = np.load(self.mask_paths[idx])     # (H, W), values {0,1}
+
+        if self.augment:
+            image, mask = self.augment(image, mask)
+
+        return torch.from_numpy(image).float(), torch.from_numpy(mask).float().unsqueeze(0)
+
+
+def make_weighted_sampler(mask_paths, tumor_slice_weight=5.0):
+    """Because most slices are tumor-free, oversample the ones that contain tumor
+    so each training batch isn't dominated by background-only examples."""
+    weights = []
+    for p in mask_paths:
+        has_tumor = np.load(p).sum() > 0
+        weights.append(tumor_slice_weight if has_tumor else 1.0)
+    return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
+</code></pre>
+
+<div class="intuition-box">
+<strong>Augmentation</strong> matters more here than in natural-image CNNs because labeled
+medical data is scarce. Use elastic deformation, random rotation/flip, and intensity jitter (via
+<code>torchio</code> or <code>albumentations</code>) &mdash; but never augmentations that change
+anatomical plausibility: no arbitrary color jitter, since MRI intensities are physically
+meaningful.
+</div>
+</section>
+
+<section id="model">
+<h2>5. Model &mdash; 2D U-Net</h2>
+<p>This is the first encoder-<strong>decoder</strong> architecture in the series (the CNN
+tutorial covered plain feedforward conv stacks and ResNet's skip connections within the encoder).
+The new idea: a decoder path that upsamples back to full resolution, with <strong>skip
+connections copying features across</strong> from encoder to decoder at matching resolutions
+&mdash; recovering the fine spatial detail that pooling destroys, which classification CNNs don't
+need but segmentation absolutely does.</p>
+
+<pre class="code-block"><code>import torch.nn as nn
+
+def double_conv(in_ch, out_ch):
+    return nn.Sequential(
+        nn.Conv2d(in_ch, out_ch, 3, padding=1),
+        nn.BatchNorm2d(out_ch),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(out_ch, out_ch, 3, padding=1),
+        nn.BatchNorm2d(out_ch),
+        nn.ReLU(inplace=True),
+    )
+
+class UNet(nn.Module):
+    def __init__(self, in_channels=3, out_channels=1, base=32):
+        super().__init__()
+        self.enc1 = double_conv(in_channels, base)
+        self.enc2 = double_conv(base, base * 2)
+        self.enc3 = double_conv(base * 2, base * 4)
+        self.enc4 = double_conv(base * 4, base * 8)
+        self.pool = nn.MaxPool2d(2)
+
+        self.bottleneck = double_conv(base * 8, base * 16)
+
+        self.up4 = nn.ConvTranspose2d(base * 16, base * 8, 2, stride=2)
+        self.dec4 = double_conv(base * 16, base * 8)
+        self.up3 = nn.ConvTranspose2d(base * 8, base * 4, 2, stride=2)
+        self.dec3 = double_conv(base * 8, base * 4)
+        self.up2 = nn.ConvTranspose2d(base * 4, base * 2, 2, stride=2)
+        self.dec2 = double_conv(base * 4, base * 2)
+        self.up1 = nn.ConvTranspose2d(base * 2, base, 2, stride=2)
+        self.dec1 = double_conv(base * 2, base)
+
+        self.out_conv = nn.Conv2d(base, out_channels, 1)
+
+    def forward(self, x):
+        e1 = self.enc1(x)
+        e2 = self.enc2(self.pool(e1))
+        e3 = self.enc3(self.pool(e2))
+        e4 = self.enc4(self.pool(e3))
+        b = self.bottleneck(self.pool(e4))
+
+        d4 = self.dec4(torch.cat([self.up4(b), e4], dim=1))
+        d3 = self.dec3(torch.cat([self.up3(d4), e3], dim=1))
+        d2 = self.dec2(torch.cat([self.up2(d3), e2], dim=1))
+        d1 = self.dec1(torch.cat([self.up1(d2), e1], dim=1))
+
+        return self.out_conv(d1)   # raw logits, shape (B, 1, H, W)
+</code></pre>
+</section>
+
+<section id="loss">
+<h2>6. Loss Function</h2>
+<p>Plain BCE fails here because of class imbalance &mdash; a model predicting "all background"
+gets &gt;95% pixel accuracy while finding zero tumor. Use <strong>Dice loss</strong> (directly
+optimizes region overlap) combined with BCE (stabilizes early training gradients):</p>
+
+<pre class="code-block"><code>class DiceLoss(nn.Module):
+    def __init__(self, smooth=1e-6):
+        super().__init__()
+        self.smooth = smooth
+
+    def forward(self, logits, target):
+        probs = torch.sigmoid(logits)
+        probs = probs.view(probs.size(0), -1)
+        target = target.view(target.size(0), -1)
+        intersection = (probs * target).sum(dim=1)
+        dice = (2 * intersection + self.smooth) / (
+            probs.sum(dim=1) + target.sum(dim=1) + self.smooth
+        )
+        return 1 - dice.mean()
+
+class DiceBCELoss(nn.Module):
+    def __init__(self, bce_weight=0.5):
+        super().__init__()
+        self.dice = DiceLoss()
+        self.bce = nn.BCEWithLogitsLoss()
+        self.bce_weight = bce_weight
+
+    def forward(self, logits, target):
+        return self.bce_weight * self.bce(logits, target) + (1 - self.bce_weight) * self.dice(logits, target)
+</code></pre>
+</section>
+
+<section id="training">
+<h2>7. Training Loop</h2>
+<pre class="code-block"><code>import torch.optim as optim
+from torch.cuda.amp import autocast, GradScaler
+
+def train_model(model, train_loader, val_loader, epochs=50, lr=1e-4, device="cuda"):
+    model.to(device)
+    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-5)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", patience=5, factor=0.5)
+    criterion = DiceBCELoss()
+    scaler = GradScaler()
+
+    best_val_dice = 0.0
+    for epoch in range(epochs):
+        model.train()
+        train_loss = 0.0
+        for images, masks in train_loader:
+            images, masks = images.to(device), masks.to(device)
+            optimizer.zero_grad()
+
+            with autocast():  # mixed precision -- MRI volumes make full-precision training slow/expensive
+                logits = model(images)
+                loss = criterion(logits, masks)
+
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+            train_loss += loss.item() * images.size(0)
+
+        val_dice = evaluate_dice(model, val_loader, device)
+        scheduler.step(1 - val_dice)
+
+        print(f"Epoch {epoch+1}: train_loss={train_loss/len(train_loader.dataset):.4f}, val_dice={val_dice:.4f}")
+
+        if val_dice &gt; best_val_dice:
+            best_val_dice = val_dice
+            torch.save(model.state_dict(), "best_unet.pt")
+
+    return model
+</code></pre>
+</section>
+
+<section id="bbox">
+<h2>8. From Mask to Bounding Box</h2>
+<pre class="code-block"><code>import numpy as np
+from scipy import ndimage
+
+def mask_to_bboxes(pred_mask: np.ndarray, prob_threshold=0.5, min_area=20):
+    """
+    pred_mask: (H, W) array of sigmoid probabilities.
+    Returns list of (x_min, y_min, x_max, y_max, confidence) -- one per connected region.
+    """
+    binary = (pred_mask &gt; prob_threshold).astype(np.uint8)
+    labeled, n_components = ndimage.label(binary)
+
+    boxes = []
+    for comp_id in range(1, n_components + 1):
+        ys, xs = np.where(labeled == comp_id)
+        if len(xs) &lt; min_area:      # discard noise-sized specks
+            continue
+        confidence = pred_mask[ys, xs].mean()
+        boxes.append((xs.min(), ys.min(), xs.max(), ys.max(), float(confidence)))
+    return boxes
+</code></pre>
+
+<div class="algorithm-box">
+<strong>When to use a true detector instead:</strong> if a dataset has many small, separate
+lesions per image (lung nodules, etc.), connected-component-on-a-mask can merge or miss
+instances. Swap this section for <code>torchvision.models.detection.fasterrcnn_resnet50_fpn</code>
+with the backbone's first conv modified to accept your channel count, trained with box +
+objectness losses instead of Dice/BCE &mdash; a materially different recipe (anchor generation,
+NMS, IoU-based matching), noted here as a forward pointer rather than expanded in full.
+</div>
+</section>
+
+<section id="eval">
+<h2>9. Evaluation</h2>
+<pre class="code-block"><code>def dice_coefficient(pred, target, smooth=1e-6):
+    pred, target = pred.flatten(), target.flatten()
+    intersection = (pred * target).sum()
+    return (2 * intersection + smooth) / (pred.sum() + target.sum() + smooth)
+
+def iou_score(pred, target, smooth=1e-6):
+    pred, target = pred.flatten(), target.flatten()
+    intersection = (pred * target).sum()
+    union = pred.sum() + target.sum() - intersection
+    return (intersection + smooth) / (union + smooth)
+
+def bbox_iou(box_a, box_b):
+    xa, ya = max(box_a[0], box_b[0]), max(box_a[1], box_b[1])
+    xb, yb = min(box_a[2], box_b[2]), min(box_a[3], box_b[3])
+    inter = max(0, xb - xa) * max(0, yb - ya)
+    area_a = (box_a[2]-box_a[0]) * (box_a[3]-box_a[1])
+    area_b = (box_b[2]-box_b[0]) * (box_b[3]-box_b[1])
+    return inter / (area_a + area_b - inter + 1e-6)
+</code></pre>
+
+<div class="intuition-box">
+<strong>Clinical framing:</strong> in screening contexts, <strong>recall/sensitivity is usually
+prioritized over precision</strong> &mdash; a missed tumor (false negative) is far more costly
+than a false alarm a radiologist quickly dismisses. This should shape both the
+<code>prob_threshold</code> choice in Section 8 and how metrics are reported: sensitivity at a
+fixed, clinically-chosen specificity, not just a single Dice score.
+</div>
+</section>
+
+<section id="deploy">
+<h2>10. Deployment</h2>
+
+<h3>Export</h3>
+<pre class="code-block"><code>model.eval()
+example_input = torch.randn(1, 3, 240, 240)
+traced = torch.jit.trace(model, example_input)
+traced.save("unet_tumor_seg.pt")
+
+# or, for cross-framework serving (e.g. via ONNX Runtime / Triton):
+torch.onnx.export(model, example_input, "unet_tumor_seg.onnx",
+                   input_names=["image"], output_names=["mask_logits"],
+                   dynamic_axes={"image": {0: "batch"}, "mask_logits": {0: "batch"}})
+</code></pre>
+
+<h3>Serving</h3>
+<pre class="code-block"><code>from fastapi import FastAPI, UploadFile
+import torch, numpy as np, io
+
+app = FastAPI()
+model = torch.jit.load("unet_tumor_seg.pt").eval()
+
+@app.post("/predict")
+async def predict(file: UploadFile):
+    raw = await file.read()
+    volume = np.load(io.BytesIO(raw))          # expects preprocessed (C,H,W) array
+    tensor = torch.from_numpy(volume).float().unsqueeze(0)
+    with torch.no_grad():
+        logits = model(tensor)
+        probs = torch.sigmoid(logits)[0, 0].numpy()
+    boxes = mask_to_bboxes(probs)
+    return {"mask": probs.tolist(), "boxes": boxes}
+</code></pre>
+
+<div class="deploy-box">
+<strong>Production considerations</strong> &mdash; where "textbook CNN" and "deployed clinical
+software" diverge sharply:
+<ul>
+  <li><strong>Input validation.</strong> Reject scans with wrong orientation, spacing, or
+  modality before they reach the model &mdash; a silently wrong prediction is worse than a
+  rejected input.</li>
+  <li><strong>Data/protocol drift monitoring.</strong> A new scanner or acquisition protocol can
+  silently degrade accuracy; track prediction-confidence distributions over time, not just
+  uptime.</li>
+  <li><strong>Human-in-the-loop by design.</strong> Regulatory frameworks (FDA clearance, CE
+  marking under MDR) generally require the model to function as decision support for a
+  radiologist, not an autonomous diagnostic.</li>
+  <li><strong>Versioning and audit trail.</strong> Every prediction should be traceable to a
+  specific model version and preprocessing pipeline version &mdash; required for debugging and
+  regulatory audits.</li>
+  <li><strong>Containerize</strong> (Docker) and pin exact library versions (torch, CUDA) &mdash;
+  silent numerical drift between library versions is a real failure mode in medical inference
+  pipelines.</li>
+</ul>
+</div>
+</section>
+
+<section id="closing">
+<h2>Where this fits the release plan</h2>
+<p>This slots in as the applied/deployment capstone after the CNN Training section &mdash; it
+reuses the training-loop, batching, and loss-surface framing already established there, and
+extends it with the two things a pure classification CNN example doesn't need: a decoder path
+(U-Net) and a deployment stage. The LR, SVM, and LLM Training sections could each get a shorter
+"deployment considerations" callout in this same style, so all four Training sections share a
+consistent educational arc: <em>train &rarr; evaluate &rarr; deploy responsibly</em>.</p>
+</section>
+
+</main>
+</body>
+</html>

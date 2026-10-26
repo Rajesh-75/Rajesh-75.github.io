@@ -3,23 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
+    <!-- Hide body initially to prevent flickering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+body {
+  visibility: hidden;
+}
+</style>
+    <!-- Load global MathJax configuration first -->
     <title>Machine Learning Tutorial</title>
-    <script type="text/javascript" async
-        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-    </script>
+
     <script>
         window.MathJax = {
             tex: {
-                inlineMath: [['$', '$'], ['\(', '\)']],
-                displayMath: [['$$', '$$'], ['\[', '\]']]
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
             }
         };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
 </head>
 <body>
 
     <div class="header-section">
-        <h1>Probablitiy theory and applications </h1>
+        <h1>Probability Theory and Applications</h1>
     </div>
 
     <div class="description-box">
@@ -40,7 +64,7 @@
         </li>
         <li>
             <span class="school-name">3. Personalistic or Subjective Probability</span> 
-            <span class="school-subtext">(Bayessian Theorem)</span>
+            <span class="school-subtext">(Bayesian Theorem)</span>
         </li>
         <li>
             <span class="school-name">4. Axiomatic Approach to Probability</span> 
@@ -85,10 +109,8 @@
                 </tr>
             </tbody>
         </table>
-<h3>Some Sample problems using idea of Relative Frequency Approach</h3>
-<P>Three unbaied coins are tossed. What is the probability of obtaining (1) All heads (2)two heads (3) one head (4) at least one head (5) atleast two heads (6) all tails.</p> 
 
-<p> Eg. A bag contains <strong>5 white and 6 black balls</strong>. Then the <strong>probability for drawing a white ball is</strong> $\frac{5}{11} $ since favourable number of balls are white and they are 6 the total no of balls is 11 </p>
+        <p> Eg. A bag contains <strong>5 white and 6 black balls</strong>. Then the <strong>probability for drawing a white ball is</strong> $\frac{5}{11} $ since favourable number of balls are white and they are 6 the total no of balls is 11 </p>
     </div>
 	<h2>1. Relative Frequency Theory of Probability</h2>
 <p>
@@ -100,7 +122,9 @@
     This limiting value is defined as the probability of the event A.
     <br><br>
     Therefore, <strong> $P(A) = \lim_{n \to \infty} \frac{f}{n}$ </strong>
-	<div class="example-problem">
+</p>
+
+    <div class="example-problem">
     <div class="problem-header">Sample Problem: Relative Frequency Approach</div>
     
     <div class="problem-content">
@@ -113,9 +137,12 @@
         
         <div class="solution-step">
             <strong>Step 1: Define the Sample Space ($S$)</strong>
-            <p><br>There are four types of card Spade,Clubs, Hearts and Diamond: 
-			Each type of cards has 13 number of items (Jack,King,Queen,Ace,2...10)
-            <br>Hence Total Number of Cases ($N$) = 13 *4 = 52</p>
+            <p>Each coin toss has 2 possible outcomes (Heads or Tails), and there are 3 coins tossed
+            independently, so the total number of outcomes is $2^3 = 8$:</p>
+            <div style="font-family: monospace; font-size: 0.85rem; background: #eee; padding: 10px; text-align: center;">
+                HHH, HHT, HTH, THH, HTT, THT, TTH, TTT
+            </div>
+            <p>Hence Total Number of Cases ($N$) = 8</p>
         </div>
 
         <div class="solution-step">
@@ -139,13 +166,88 @@
                 </tbody>
             </table>
         </div>
+
+        <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0;">
+            <svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+                <defs>
+                    <marker id="treeArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                        <path d="M0,0 L8,4 L0,8 Z" fill="#666"/>
+                    </marker>
+                </defs>
+                <g font-family="Arial, sans-serif" font-size="11">
+                    <circle cx="30" cy="130" r="5" fill="#333"/>
+                    <line x1="35" y1="128" x2="120" y2="65" stroke="#666" stroke-width="1.2" marker-end="url(#treeArrow)"/>
+                    <line x1="35" y1="132" x2="120" y2="195" stroke="#666" stroke-width="1.2" marker-end="url(#treeArrow)"/>
+                    <text x="75" y="90" fill="#333">H (1/2)</text>
+                    <text x="75" y="175" fill="#333">T (1/2)</text>
+
+                    <circle cx="125" cy="65" r="4" fill="#333"/>
+                    <circle cx="125" cy="195" r="4" fill="#333"/>
+                    <line x1="129" y1="63" x2="220" y2="30" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="129" y1="67" x2="220" y2="100" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="129" y1="193" x2="220" y2="160" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="129" y1="197" x2="220" y2="230" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+
+                    <circle cx="225" cy="30" r="3.5" fill="#333"/>
+                    <circle cx="225" cy="100" r="3.5" fill="#333"/>
+                    <circle cx="225" cy="160" r="3.5" fill="#333"/>
+                    <circle cx="225" cy="230" r="3.5" fill="#333"/>
+
+                    <!-- third toss branches, 8 leaves -->
+                    <line x1="229" y1="28" x2="330" y2="10" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="32" x2="330" y2="45" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="98" x2="330" y2="80" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="102" x2="330" y2="115" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="158" x2="330" y2="140" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="162" x2="330" y2="175" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="228" x2="330" y2="210" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="232" x2="330" y2="245" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+
+                    <rect x="335" y="2" width="70" height="18" rx="3" fill="#e8f5e9" stroke="#43a047"/>
+                    <text x="345" y="15" fill="#2e7d32" font-weight="bold">HHH</text>
+                    <rect x="335" y="37" width="70" height="18" rx="3" fill="#fff3e0" stroke="#fb8c00"/>
+                    <text x="345" y="50" fill="#e65100" font-weight="bold">HHT</text>
+                    <rect x="335" y="72" width="70" height="18" rx="3" fill="#fff3e0" stroke="#fb8c00"/>
+                    <text x="345" y="85" fill="#e65100" font-weight="bold">HTH</text>
+                    <rect x="335" y="107" width="70" height="18" rx="3" fill="#e3f2fd" stroke="#1e88e5"/>
+                    <text x="345" y="120" fill="#0d47a1" font-weight="bold">HTT</text>
+                    <rect x="335" y="132" width="70" height="18" rx="3" fill="#fff3e0" stroke="#fb8c00"/>
+                    <text x="345" y="145" fill="#e65100" font-weight="bold">THH</text>
+                    <rect x="335" y="167" width="70" height="18" rx="3" fill="#e3f2fd" stroke="#1e88e5"/>
+                    <text x="345" y="180" fill="#0d47a1" font-weight="bold">THT</text>
+                    <rect x="335" y="202" width="70" height="18" rx="3" fill="#e3f2fd" stroke="#1e88e5"/>
+                    <text x="345" y="215" fill="#0d47a1" font-weight="bold">TTH</text>
+                    <rect x="335" y="237" width="70" height="18" rx="3" fill="#fce4ec" stroke="#d81b60"/>
+                    <text x="345" y="250" fill="#ad1457" font-weight="bold">TTT</text>
+
+                    <rect x="440" y="0" width="300" height="255" rx="8" fill="#fafafa" stroke="#ddd"/>
+                    <text x="455" y="20" font-weight="bold" fill="#333">Legend</text>
+                    <rect x="455" y="30" width="14" height="14" fill="#e8f5e9" stroke="#43a047"/>
+                    <text x="475" y="41" fill="#333">All Heads (1 outcome)</text>
+                    <rect x="455" y="52" width="14" height="14" fill="#fff3e0" stroke="#fb8c00"/>
+                    <text x="475" y="63" fill="#333">Two Heads (3 outcomes)</text>
+                    <rect x="455" y="74" width="14" height="14" fill="#e3f2fd" stroke="#1e88e5"/>
+                    <text x="475" y="85" fill="#333">One Head (3 outcomes)</text>
+                    <rect x="455" y="96" width="14" height="14" fill="#fce4ec" stroke="#d81b60"/>
+                    <text x="475" y="107" fill="#333">All Tails (1 outcome)</text>
+                    <text x="455" y="135" fill="#555" font-size="10.5">Each full path top-to-bottom is one</text>
+                    <text x="455" y="149" fill="#555" font-size="10.5">of the 8 equally-likely outcomes —</text>
+                    <text x="455" y="163" fill="#555" font-size="10.5">multiply along a path's branch</text>
+                    <text x="455" y="177" fill="#555" font-size="10.5">probabilities (1/2 &times; 1/2 &times; 1/2 = 1/8)</text>
+                    <text x="455" y="191" fill="#555" font-size="10.5">to get that outcome's probability.</text>
+                </g>
+            </svg>
+            <p style="font-size:0.85rem; color:#666; margin-top:8px;"><em>Figure: Probability tree for tossing three coins. Each of the three levels branches into Heads/Tails; the eight leaves at the right are the full sample space, color-coded by how many heads they contain.</em></p>
+        </div>
     </div>
+    </div>
+
 	<div class="example-problem">
     <div class="problem-header">Sample Problem: Probability with Two Dice</div>
     
     <div class="problem-content">
         Two unbiased dice are thrown. Find the probability that:
-        <br>(1) Both the dice show the same number, (2) One die shows five, (3) First die shows five, (4) The total of the numbers on the dice is Eight, (5) Total of the numbers on the dice is greater than 8.
+        <br>(1) Both the dice show the same number, (2) Exactly one die shows five, (3) First die shows five, (4) The total of the numbers on the dice is Eight, (5) Total of the numbers on the dice is greater than 8.
     </div>
 
     <div class="solution-content">
@@ -164,8 +266,6 @@
             </div>
             <p>Total Number of Cases ($N$) = 36</p>
         </div>
-
-        
 
         <div class="solution-step">
             <strong>Step 2: Calculate Probabilities</strong>
@@ -186,7 +286,7 @@
                         <td>$6/36 = 1/6$</td>
                     </tr>
                     <tr>
-                        <td>(2) One die shows five</td>
+                        <td>(2) Exactly one die shows five</td>
                         <td>(1,5), (2,5), (3,5), (4,5), (6,5), (5,1), (5,2), (5,3), (5,4), (5,6)</td>
                         <td>10</td>
                         <td>$10/36 = 5/18$</td>
@@ -211,8 +311,11 @@
                     </tr>
                 </tbody>
             </table>
+            <p style="font-size:0.88rem; color:#555;"><em>Note: "exactly one die shows five" (10/36) is a different event from "at least one die shows five" (11/36, which also includes (5,5)) — the wording matters here, since both readings are common but give different answers.</em></p>
         </div>
     </div>
+    </div>
+
 	<div class="example-problem">
     <div class="problem-header">Sample Problem: Probability using Combinations</div>
     
@@ -229,24 +332,22 @@
             <p>Total ways to draw 4 cards from 52 is given by $^{52}C_4$:</p>
             <div style="text-align:center; padding: 10px;">
                 $$ N = \binom{52}{4} = \frac{52 \times 51 \times 50 \times 49}{4 \times 3 \times 2 \times 1} = 270,725 $$
-				<div class="data-type-card">
-    <span class="tag">Mathematical Foundation</span>
-    <h3>The Combination Formula ($^nC_r$)</h3>
-    <p>When drawing multiple items at once without replacement, we use the combination formula to find the number of ways to select $r$ items from a set of $n$:</p>
-    
-    <div class="formula-container">
-        $$ \binom{n}{r} = \frac{n!}{r!(n - r)!} $$
-    </div>
-    
-    <p><strong>Example:</strong> Ways to pick 2 Aces from 4 Aces:</p>
-    <div style="text-align: center;">
-        $$ \binom{4}{2} = \frac{4 \times 3}{2 \times 1} = 6 \text{ ways} $$
-    </div>
-</div>
+            </div>
+            <div class="data-type-card">
+                <span class="tag">Mathematical Foundation</span>
+                <h3>The Combination Formula ($^nC_r$)</h3>
+                <p>When drawing multiple items at once without replacement, we use the combination formula to find the number of ways to select $r$ items from a set of $n$:</p>
+
+                <div class="formula-container">
+                    $$ \binom{n}{r} = \frac{n!}{r!(n - r)!} $$
+                </div>
+
+                <p><strong>Example:</strong> Ways to pick 2 Aces from 4 Aces:</p>
+                <div style="text-align: center;">
+                    $$ \binom{4}{2} = \frac{4 \times 3}{2 \times 1} = 6 \text{ ways} $$
+                </div>
             </div>
         </div>
-
-        
 
         <div class="solution-step">
             <strong>Step 2: Calculate Probabilities</strong>
@@ -261,8 +362,8 @@
                 <tbody>
                     <tr>
                         <td><strong>(a) One of each suit</strong></td>
-                        <td>One from each of 13 c</p suits: <br> $\binom{13}{1} \times \binom{13}{1} \times \binom{13}{1} \times \binom{13}{1}$</td>
-                        <td>$$ \frac{13^4}{^{52}C_4} $$<p>1. The Multiplication Principle (The "AND" Rule)If one task can be done in $m$ ways and a second task can be done in $n$ ways, then the two tasks together can be done in $m \times n$ ways.Here in this problem: First take 1 Spade from among 13 cards AND next 1 Heart AND 1 Diamond AND 1 Club.Action: Multiply the combinations (mxnxpxq).</p</td>
+                        <td>One from each of 13 suits: <br> $\binom{13}{1} \times \binom{13}{1} \times \binom{13}{1} \times \binom{13}{1}$</td>
+                        <td>$$ \frac{13^4}{^{52}C_4} $$<p>Multiplication Principle (the "AND" rule): if one task can be done in $m$ ways and a second task can be done in $n$ ways, the two tasks together can be done in $m \times n$ ways. Here: take 1 Spade AND 1 Heart AND 1 Diamond AND 1 Club, so multiply the four combination counts together.</p></td>
                     </tr>
                     <tr>
                         <td><strong>(b) 2 Spades & 2 Hearts</strong></td>
@@ -288,11 +389,9 @@
             </table>
         </div>
     </div>
-	</div>
-</div>
-</p>
+    </div>
 
-    <h2>2.Fundamental Probability Laws</h2>
+    <h2>2. Fundamental Probability Laws</h2>
     
     <div class="data-type-card highlight-blue">
         <h3>A. The Axioms of Probability</h3>
@@ -308,6 +407,18 @@
         <div class="formula-container">
             $$ P(A^c) = 1 - P(A) $$
         </div>
+
+        <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0; text-align:center;">
+            <svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg" style="max-width:280px; height:auto;">
+                <rect x="10" y="10" width="280" height="160" fill="#f5f5f5" stroke="#999" stroke-width="1.5"/>
+                <circle cx="150" cy="90" r="65" fill="#ef9a9a" fill-opacity="0.55" stroke="#c62828" stroke-width="1.5"/>
+                <text x="150" y="94" text-anchor="middle" font-family="Arial" font-size="14" fill="#7f0000">A</text>
+                <text x="230" y="30" font-family="Arial" font-size="11" fill="#333">S (sample space)</text>
+                <text x="150" y="150" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#555">Shaded = A, unshaded = $A^c$</text>
+            </svg>
+            <p style="font-size:0.85rem; color:#666; margin-top:6px;"><em>Figure: The complement $A^c$ is everything in the sample space $S$ outside the shaded region $A$ — together they cover all of $S$, so $P(A)+P(A^c)=1$.</em></p>
+        </div>
+
 		<div class="example-problem">
             <div class="problem-header">Problem: Complementary & Exhaustive Events</div>
             <div class="problem-content">
@@ -338,6 +449,22 @@
         <div class="formula-container">
             $$ P(A \cup B) = P(A) + P(B) - P(A \cap B) $$
         </div>
+
+        <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0; text-align:center;">
+            <svg viewBox="0 0 340 190" xmlns="http://www.w3.org/2000/svg" style="max-width:320px; height:auto;">
+                <rect x="10" y="10" width="320" height="170" fill="#f5f5f5" stroke="#999" stroke-width="1.5"/>
+                <circle cx="140" cy="95" r="65" fill="#90caf9" fill-opacity="0.55" stroke="#1565c0" stroke-width="1.5"/>
+                <circle cx="200" cy="95" r="65" fill="#a5d6a7" fill-opacity="0.55" stroke="#2e7d32" stroke-width="1.5"/>
+                <text x="105" y="99" text-anchor="middle" font-family="Arial" font-size="14" fill="#0d47a1">A</text>
+                <text x="235" y="99" text-anchor="middle" font-family="Arial" font-size="14" fill="#1b5e20"> B</text>
+                <text x="170" y="99" text-anchor="middle" font-family="Arial" font-size="11" fill="#333">A&#8745;B</text>
+                <text x="290" y="30" font-family="Arial" font-size="11" fill="#333">S</text>
+                <text x="170" y="165" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#555">Overlap counted once in each circle,</text>
+                <text x="170" y="178" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#555">so it's subtracted once to correct the double-count</text>
+            </svg>
+            <p style="font-size:0.85rem; color:#666; margin-top:6px;"><em>Figure: The overlapping region $A \cap B$ gets counted once inside $P(A)$ and once inside $P(B)$ — subtracting it once in the addition rule corrects for that double-count.</em></p>
+        </div>
+
 		<div class="example-problem">
             <div class="problem-header">Example: General Addition Rule</div>
             <div class="problem-content">
@@ -366,7 +493,7 @@
                 </div>
             </div>
         </div>
-		
+	
         <h3>D. Conditional Probability and Statistical Independence</h3>
 <p><strong>Conditional Probability:</strong> The probability of event $A$ occurring given that event $B$ has already occurred.</p>
 <div class="formula-container">
@@ -384,6 +511,7 @@
 <div class="formula-container">
     $$P(A \cap B) = P(A) \cdot P(B)$$
 </div>
+
 		<div class="example-problem">
             <div class="problem-header">Example: Successive Draws Without Replacement</div>
             <div class="problem-content">
@@ -407,8 +535,45 @@
                     <p>$$P(A \cap B) = \frac{35}{2145} = \frac{7}{429}$$</p>
                     <p><strong>Answer:</strong> The probability is <span class="math-highlight">7/429</span>.</p>
                 </div>
+
+                <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0;">
+                    <svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+                        <defs>
+                            <marker id="drawTreeArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                                <path d="M0,0 L8,4 L0,8 Z" fill="#666"/>
+                            </marker>
+                        </defs>
+                        <g font-family="Arial, sans-serif" font-size="11.5">
+                            <rect x="10" y="90" width="120" height="40" rx="6" fill="#eeeeee" stroke="#888"/>
+                            <text x="70" y="106" text-anchor="middle" fill="#333">Bag:</text>
+                            <text x="70" y="122" text-anchor="middle" fill="#333">8R, 5W</text>
+
+                            <line x1="130" y1="100" x2="220" y2="45" stroke="#666" stroke-width="1.3" marker-end="url(#drawTreeArrow)"/>
+                            <line x1="130" y1="120" x2="220" y2="175" stroke="#666" stroke-width="1.3" marker-end="url(#drawTreeArrow)"/>
+
+                            <rect x="225" y="20" width="200" height="50" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+                            <text x="325" y="40" text-anchor="middle" fill="#0d47a1" font-weight="bold">Draw 1: 3 White</text>
+                            <text x="325" y="58" text-anchor="middle" fill="#0d47a1">$P(A)=\binom{5}{3}/\binom{13}{3}=5/143$</text>
+
+                            <rect x="225" y="155" width="200" height="40" rx="6" fill="#f5f5f5" stroke="#999"/>
+                            <text x="325" y="178" text-anchor="middle" fill="#555">(other outcome — not needed)</text>
+
+                            <line x1="425" y1="45" x2="470" y2="45" stroke="#666" stroke-width="1.3" marker-end="url(#drawTreeArrow)"/>
+
+                            <rect x="475" y="15" width="155" height="60" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+                            <text x="552" y="35" text-anchor="middle" fill="#1b5e20" font-weight="bold">Remaining:</text>
+                            <text x="552" y="50" text-anchor="middle" fill="#1b5e20">8R, 2W</text>
+                            <text x="552" y="65" text-anchor="middle" fill="#1b5e20" font-size="10.5">Draw 2: 3 Red</text>
+
+                            <text x="325" y="105" text-anchor="middle" fill="#333" font-size="11">$P(B|A)=\binom{8}{3}/\binom{10}{3}=7/15$</text>
+                            <text x="325" y="135" text-anchor="middle" fill="#333" font-weight="bold">$P(A \cap B) = 5/143 \times 7/15 = 7/429$</text>
+                        </g>
+                    </svg>
+                    <p style="font-size:0.85rem; color:#666; margin-top:8px;"><em>Figure: The bag's composition changes between draws — Draw 2's probability is computed only over the 10 balls remaining after Draw 1 removed 3 white balls. Multiplying along the path gives the joint probability.</em></p>
+                </div>
             </div>
-        </div>   
+        </div>
+
 	<div class="data-type-card highlight-green">
     <span class="tag">Real-World Perspective</span>
     <h3>Where does $P(A)$ come from?</h3>
@@ -437,8 +602,13 @@
     </table>
     <p><em>Note:</em> Modern AI often combines both. A model starts with a <strong>Prior</strong> (belief) and updates it as it sees more <strong>Empirical Data</strong> (frequency).</p>
 </div>
-	<h2>3.Personalistic or Subjective Probability(Bayessian Probability)</h2>
-	<div class container = "XXX"> <p> We shall discusss this school of thought as separate topic under Bayessian classification</p> </div>
+    </div>
+
+	<h2>3. Personalistic or Subjective Probability (Bayesian Probability)</h2>
+<div class="data-type-card">
+    <p>We shall discuss this school of thought as a separate topic under
+    <a href="NaiveBayessian.html">Bayesian classification</a>.</p>
+</div>
 	
 </body>
-</html>			
+</html>

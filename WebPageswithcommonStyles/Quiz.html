@@ -1,52 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Hide body initially to prevent flickering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+body {
+  visibility: hidden;
+}
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 40px;
+  background-color: #f4f7f6;
+}
+.quiz-card {
+  max-width: 650px;
+  margin: auto;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+#timer-container {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  margin: 20px 0;
+  overflow: hidden;
+}
+#timer-bar {
+  width: 100%;
+  height: 100%;
+  background: #48bb78;
+  transition: width 1s linear, background-color 0.3s;
+}
+#timer-text {
+  font-weight: bold;
+  color: #4a5568;
+  float: right;
+  margin-bottom: 5px;
+}
+.option-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  margin: 10px 0;
+  background: #fff;
+  border: 2px solid #edf2f7;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.option-item:hover {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+}
+.option-item input {
+  margin-right: 15px;
+  transform: scale(1.2);
+  cursor: pointer;
+}
+.correct-row {
+  background: #c6f6d5 !important;
+  border-color: #38a169 !important;
+  color: #22543d;
+}
+.wrong-row {
+  background: #fed7d7 !important;
+  border-color: #e53e3e !important;
+  color: #822727;
+}
+.btn {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+  display: inline-block;
+}
+#submit-btn {
+  background: #3182ce;
+  color: white;
+}
+#next-btn {
+  background: #2d3748;
+  color: white;
+}
+#restart-btn {
+  background: #718096;
+  color: white;
+  margin-top: 20px;
+}
+.btn:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+</style>
+    <!-- Load global MathJax configuration first -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neural Networks - Timed Challenge</title>
     <link rel="stylesheet" href="Style.css">
 
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background-color: #f4f7f6; }
-        .quiz-card { max-width: 650px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        
-        /* Timer Styles */
-        #timer-container { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; margin: 20px 0; overflow: hidden; }
-        #timer-bar { width: 100%; height: 100%; background: #48bb78; transition: width 1s linear, background-color 0.3s; }
-        #timer-text { font-weight: bold; color: #4a5568; float: right; margin-bottom: 5px; }
+    
 
-        .option-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            margin: 10px 0;
-            background: #fff;
-            border: 2px solid #edf2f7;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .option-item:hover { border-color: #cbd5e0; background: #f7fafc; }
-        .option-item input { margin-right: 15px; transform: scale(1.2); cursor: pointer; }
-        
-        /* Feedback Classes */
-        .correct-row { background: #c6f6d5 !important; border-color: #38a169 !important; color: #22543d; }
-        .wrong-row { background: #fed7d7 !important; border-color: #e53e3e !important; color: #822727; }
-
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-            display: inline-block;
-        }
-        #submit-btn { background: #3182ce; color: white; }
-        #next-btn { background: #2d3748; color: white; }
-        #restart-btn { background: #718096; color: white; margin-top: 20px; }
-        .btn:disabled { background: #cbd5e0; cursor: not-allowed; }
-    </style>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
 </head>
 <body>
 

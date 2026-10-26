@@ -1,36 +1,65 @@
 import os
+import re
 
-# Your Master Nav Code
-# TIP: If your files are in different folders, ensure your hrefs 
-# point to the correct locations!
-nav_code = """
-<nav style="background: #2c3e50; padding: 10px; text-align: center; margin-bottom: 20px; border-radius: 4px;">
-    <a href="/index.html" style="color: white; margin: 0 15px; text-decoration: none; font-weight: bold;">Home</a>
-    <a href="/Probability/ND.html" style="color: white; margin: 0 15px; text-decoration: none; font-weight: bold;">Normal Distribution</a>
-    <a href="/Probability/MLE.html" style="color: white; margin: 0 15px; text-decoration: none; font-weight: bold;">MLE</a>
-</nav>
-"""
+# The exact working MathJax block provided by you
+TARGET_MATHJAX_BLOCK = """    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+                displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>"""
 
-# The root directory where your tutorial starts
-root_dir = "." 
-
-for subdir, dirs, files in os.walk(root_dir):
-    for filename in files:
+def update_html_files(directory="."):
+    for filename in os.listdir(directory):
         if filename.endswith(".html"):
-            file_path = os.path.join(subdir, filename)
+            filepath = os.path.join(directory, filename)
             
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(filepath, "r", encoding="utf-8") as f:
                 content = f.read()
+
+            # Rule: If the exact target script block is already present, do not change it
+            if "window.MathJax = {" in content and "document.body.style.visibility = 'visible';" in content:
+                print(f"Skipped (already up to date): {filename}")
+                continue
+
+            # Remove old/conflicting MathJax configuration or external references
+            # 1. Remove old mathjax-config.js reference if present
+            content = re.sub(r'\s*<script\b[^>]*src=["\']mathjax-config\.js["\'][^>]*>\s*</script>', '', content)
             
-            # Check if nav is already there to avoid double-pasting
-            if '<nav' not in content:
-                # Find the <body> tag and insert the nav immediately after
-                if '<body>' in content:
-                    new_content = content.replace('<body>', f'<body>\n{nav_code}')
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(new_content)
-                    print(f"✅ Successfully updated: {file_path}")
-                else:
-                    print(f"⚠️ Skipped: {file_path} (No <body> tag found)")
+            # 2. Remove older inline window.MathJax blocks
+            content = re.sub(r'\s*<script\b[^>]*>\s*window\.MathJax\s*=\s*\{.*?\};\s*</script>', '', content, flags=re.DOTALL)
+            
+            # 3. Remove old MathJax CDN script tags
+            content = re.sub(r'\s*<script\b[^>]*src=["\'][^"\']*mathjax@3[^"\']*["\'][^>]*>\s*</script>', '', content)
+
+            # Insert the new working block right before </head>
+            if '</head>' in content:
+                content = content.replace('</head>', f'\n{TARGET_MATHJAX_BLOCK}\n</head>')
+                
+                with open(filepath, "w", encoding="utf-8") as f:
+                    f.write(content)
+                print(f"Updated successfully: {filename}")
             else:
-                print(f"ℹ️ Already exists: {file_path}")
+                print(f"Warning: </head> tag not found in {filename}, skipped.")
+
+if __name__ == "__main__":
+    print("Starting MathJax script updater...")
+    update_html_files()
+    print("Done!")

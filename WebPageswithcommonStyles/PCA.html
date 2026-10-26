@@ -4,66 +4,216 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Principal Component Analysis (PCA) From First Principles</title>
-    <link rel="stylesheet" href="styles.css">
-    
+    <style>body { visibility: hidden; }</style>
     <script>
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                processEscapes: true
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
             },
             options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
                 ignoreHtmlClass: 'tex2jax_ignore',
                 processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
             }
         };
     </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+/* ===== Compatibility layer: PCA page components in the KNN design system =====
+   Uses only variables from styles_common.css (plus the green accent --class-d). */
+:root{
+  --class-d: #3F7D58;
+  --class-d-bg: #DDEBE2;
+}
+
+section h2:not(:first-child){ margin-top: 48px; }
+section > h2:first-child{ margin-top: 0; }
+.derivation-box > :last-child{ margin-bottom: 0; }
+.derivation-box h3{ margin-top: 0; }
+
+.derivation-box{
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--class-a);
+  border-radius: 2px;
+  padding: 18px 22px;
+  margin: 22px 0;
+  font-size: 16px;
+}
+.derivation-box .formula-card{ margin: 14px 0; }
+
+h4{
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 28px 0 8px;
+}
+
+.mono-line{
+  text-align: center;
+  font-family: var(--font-data);
+  font-size: 14px;
+  background: var(--paper);
+  padding: 10px 12px;
+  border-radius: 2px;
+  margin: 10px 0 22px;
+}
+.takeaway{ font-size: 14.5px; color: var(--ink-soft); font-style: italic; }
+
+.two-col{ display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin: 8px 0 24px; }
+.two-col ul{ margin: 0; padding-left: 20px; }
+.two-col li{ margin-bottom: 8px; }
+
+section ul{ line-height: 1.6; }
+@media (max-width: 680px){ .two-col{ grid-template-columns: 1fr; } }
+
+/* ===== PCA animation widget ===== */
+.pcaa{ border:1px solid var(--rule,#B9CADA); background:var(--card,#fff); border-radius:3px; padding:14px 16px 16px; margin:20px 0 8px; }
+.pcaa *{ box-sizing:border-box; }
+.pcaa-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.pcaa-tabs button{ font:inherit; font-size:12.5px; line-height:1.25; text-align:left; cursor:pointer; padding:6px 10px; border-radius:2px;
+  border:1px solid var(--rule,#B9CADA); background:var(--paper,#EDF2F7); color:var(--ink-soft,#3C5A78); }
+.pcaa-tabs button b{ display:block; font-family:var(--font-display,monospace); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint,#6F8AA4); }
+.pcaa-tabs button[aria-selected="true"]{ background:var(--ink,#14304D); border-color:var(--ink,#14304D); color:#fff; }
+.pcaa-tabs button[aria-selected="true"] b{ color:#BFD3E6; }
+.pcaa-main{ display:grid; grid-template-columns:minmax(0,1.55fr) minmax(0,1fr); gap:16px; align-items:start; }
+.pcaa-stage{ position:relative; background:#fff; border:1px solid var(--rule,#B9CADA); border-radius:2px; }
+.pcaa-stage canvas{ display:block; width:100%; height:auto; touch-action:none; cursor:grab; }
+.pcaa-stage canvas:active{ cursor:grabbing; }
+.pcaa-badge{ position:absolute; left:10px; top:8px; font-family:var(--font-data,monospace); font-size:12px; color:var(--ink,#14304D);
+  background:rgba(255,255,255,.88); border:1px solid var(--rule,#B9CADA); border-radius:2px; padding:3px 8px; pointer-events:none; }
+.pcaa-side{ display:flex; flex-direction:column; gap:12px; min-width:0; }
+.pcaa-shapes svg{ display:block; width:100%; height:auto; }
+.pcaa-shapes text{ font-family:var(--font-data,monospace); font-size:10px; fill:var(--ink-soft,#3C5A78); }
+.pcaa-matrix{ font-family:var(--font-data,monospace); font-size:11.5px; color:var(--ink,#14304D); }
+.pcaa-matrix .mt{ font-family:var(--font-display,monospace); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint,#6F8AA4); margin-bottom:4px; }
+.pcaa-matrix table{ border-collapse:collapse; width:100%; font-size:11.5px; }
+.pcaa-matrix th, .pcaa-matrix td{ border:1px solid var(--rule,#B9CADA); padding:3px 5px; text-align:right; font-variant-numeric:tabular-nums; background:var(--card,#fff); }
+.pcaa-matrix th{ background:var(--paper,#EDF2F7); color:var(--ink-soft,#3C5A78); font-weight:600; text-align:center; text-transform:none; letter-spacing:0; font-size:11px; }
+.pcaa-matrix td.dots{ text-align:center; color:var(--ink-faint,#6F8AA4); }
+.pcaa-bars{ font-size:12px; }
+.pcaa-bars .bar{ display:grid; grid-template-columns:42px 1fr 52px; align-items:center; gap:6px; margin:3px 0; font-family:var(--font-data,monospace); }
+.pcaa-bars .track{ height:10px; background:var(--paper,#EDF2F7); border-radius:1px; overflow:hidden; }
+.pcaa-bars .fill{ height:100%; }
+.pcaa-bars .dropped{ opacity:.35; }
+.pcaa-caption{ margin:12px 2px 10px; min-height:3.2em; font-size:15px; color:var(--ink,#14304D); line-height:1.55; }
+.pcaa-controls{ display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; font-size:13px; color:var(--ink-soft,#3C5A78); }
+.pcaa-controls button, .pcaa-controls select{ font:inherit; font-size:13px; padding:5px 12px; border:1px solid var(--ink-faint,#6F8AA4); background:var(--paper,#EDF2F7); color:var(--ink,#14304D); border-radius:2px; cursor:pointer; }
+.pcaa-controls button.primary{ background:var(--ink,#14304D); color:#fff; border-color:var(--ink,#14304D); min-width:84px; }
+.pcaa-controls label{ display:inline-flex; align-items:center; gap:6px; }
+.pcaa-controls input[type=range]{ width:90px; }
+.pcaa-note{ font-size:13px; color:var(--ink-soft,#3C5A78); margin:10px 2px 0; }
+@media (max-width: 820px){ .pcaa-main{ grid-template-columns:1fr; } }
+
+.pcaa-legend{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; padding:7px 10px; border-top:1px solid var(--rule,#B9CADA);
+  font-size:12px; color:var(--ink-soft,#3C5A78); background:var(--paper,#EDF2F7); }
+.pcaa-legend .grad{ display:inline-block; width:90px; height:9px; border-radius:1px; background:linear-gradient(90deg, var(--class-a,#1F6F8B), var(--query,#B23A48)); }
+.pcaa-track{ font-family:var(--font-data,monospace); font-size:11.5px; color:var(--ink,#14304D); border:1px solid var(--rule,#B9CADA); border-left:4px solid var(--class-b,#B4791F); background:var(--card,#fff); padding:7px 10px; line-height:1.55; }
+.pcaa-track .mt{ font-family:var(--font-display,monospace); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint,#6F8AA4); margin-bottom:2px; }
+.pcaa-track .row{ color:var(--ink-faint,#6F8AA4); }
+.pcaa-track .row.on{ color:var(--ink,#14304D); font-weight:700; }
+
+</style>
 </head>
 <body>
 
-    <main class="container" style="max-width: 900px; margin: 0 auto; padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
+    <div class="rail"><span>Machine Learning <span class="dot">&middot;</span> Dimensionality Reduction</span><span>PCA From First Principles</span></div>
+
+    <main class="wrap">
         
-        <section id="pca-introduction">
-            <h2>Principal Component Analysis (PCA)</h2>
-            <p>
-                Principal Component Analysis (PCA) is a powerful statistical technique used to reduce the dimensionality of a dataset (for instance features) while retaining as much structural variance and information as possible. It accomplishes this by transforming a set of correlated features into a new coordinate system of uncorrelated orthogonal axes called principal components.
-            </p>
+        <div class="hero" id="pca-introduction">
+            <h1>Principal Component Analysis (PCA)</h1>
+            <p class="lede">Principal Component Analysis (PCA) is a powerful statistical technique used to reduce the dimensionality of a dataset (for instance features) while retaining as much structural variance and information as possible. It accomplishes this by transforming a set of correlated features into a new coordinate system of uncorrelated orthogonal axes called principal components.</p>
+        </div>
+
+        <section id="pca-animation">
+          <h2>PCA in motion</h2>
+          <p>
+            Take a dataset with <em>n</em> samples and <em>p</em> features, an <em>n</em> &times; <em>p</em> matrix. PCA turns it into an
+            <em>n</em> &times; <em>k</em> matrix, with <em>k</em> &lt; <em>p</em>, by rotating to the directions of greatest variance and keeping only the first <em>k</em>.
+            The demo below uses <em>n</em> = 60 and <em>p</em> = 3 so that every step can be drawn. <strong>Every dot is one sample: a row [x&#8321; x&#8322; x&#8323;] of X, a point in the cube.</strong>
+            Its colour shows how far along the first principal direction (PC1) it lies, from blue (low) to red (high); the colour never changes, so you can follow each sample from the cube to the final <em>n</em> &times; <em>k</em> plot.
+            Press <strong>Play</strong>, click a step, drag the picture to rotate it, and <strong>click any dot</strong> to track that sample.
+          </p>
+          <div class="pcaa" id="pca-anim">
+            <div class="pcaa-tabs" role="tablist" aria-label="PCA steps"></div>
+            <div class="pcaa-main">
+              <div class="pcaa-stage">
+                <canvas width="640" height="500" aria-label="Animated 3-D scatter plot showing the steps of principal component analysis"></canvas>
+                <div class="pcaa-badge" id="pcaa-badge"></div>
+                <div class="pcaa-legend"><span>Each dot = one row [x&#8321; x&#8322; x&#8323;] of X</span><span class="grad" aria-hidden="true"></span><span>colour = PC1 score: low &rarr; high</span></div>
+              </div>
+              <div class="pcaa-side">
+                <div class="pcaa-shapes" id="pcaa-shapes"></div>
+                <div class="pcaa-matrix" id="pcaa-matrix"></div>
+                <div class="pcaa-track" id="pcaa-track"></div>
+                <div class="pcaa-bars" id="pcaa-bars"></div>
+              </div>
+            </div>
+            <p class="pcaa-caption" id="pcaa-caption" aria-live="polite"></p>
+            <div class="pcaa-controls">
+              <button type="button" id="pcaa-prev" aria-label="Previous step">&#9664; Back</button>
+              <button type="button" id="pcaa-play" class="primary">&#9654; Play</button>
+              <button type="button" id="pcaa-next" aria-label="Next step">Next &#9654;</button>
+              <label>keep <em>k</em> =
+                <select id="pcaa-k"><option value="1">1</option><option value="2" selected>2</option></select>
+              </label>
+              <label>speed <input type="range" id="pcaa-speed" min="0.5" max="2" step="0.25" value="1"></label>
+              <label><input type="checkbox" id="pcaa-rot"> auto-rotate</label>
+              <button type="button" id="pcaa-new">New random data</button>
+            </div>
+          </div>
+          <p class="pcaa-note">The data are generated at random with correlated features, so the numbers change with &ldquo;New random data&rdquo;. They are standardized, which is why the eigenvalues always add up to <em>p</em> = 3.</p>
         </section>
+        
 
         <section id="pca-step-1">
-            <h3>1. Data Preparation: Standardization</h3>
+            <h2>1. Data Preparation: Standardization</h2>
             <p>
                 The first crucial step is to standardize the raw dataset. Because PCA is highly sensitive to the absolute physical scales of individual variables, features with larger numeric ranges would naturally dominate the variance calculation. Transforming each feature ensures equal weighting.
             </p>
             
-            <div class="derivation-box" style="border-left: 4px solid #38bdf8; padding-left: 15px; margin: 15px 0;">
+            <div class="derivation-box" style="border-left-color: var(--class-a);">
                 <strong>Mathematical Transformation:</strong><br>
                 We transform the raw data matrix \(X\) to yield the standardized matrix \(Z\), enforcing a mean of 0 and a standard deviation of 1 for each independent feature column:
-                <div class="math-block" style="margin: 10px 0;">
+                <div class="formula-card">
                     $$Z = \frac{X - \mu}{\sigma}$$
                 </div>
-                <span style="color: #64748b; font-size: 0.9rem;">Where \(\mu\) represents the feature mean vector and \(\sigma\) represents the standard deviation vector.</span>
+                <span style="color: var(--ink-soft); font-size: 0.9rem;">Where \(\mu\) represents the feature mean vector and \(\sigma\) represents the standard deviation vector.</span>
             </div>
         </section>
 
         <section id="pca-step-2">
-            <h3>2. Covariance Matrix Calculation</h3>
+            <h2>2. Covariance Matrix Calculation</h2>
             <p>
                 To understand how the features vary together, we construct a covariance matrix. This matrix captures the geometric dispersion and pairwise linear dependencies across the entire standardized feature landscape.
             </p>
 
-            <div class="derivation-box" style="border-left: 4px solid #10b981; padding-left: 15px; margin: 15px 0;">
+            <div class="derivation-box" style="border-left-color: var(--class-d);">
                 <strong>Covariance Matrix Formula:</strong><br>
                 Given a standardized data matrix \(Z\) of size \((N \times D)\), the covariance matrix \(\Sigma\) is a \((D \times D)\) square, symmetric matrix calculated as:
-                <div class="math-block" style="margin: 10px 0;">
+                <div class="formula-card">
                     $$\Sigma = \frac{1}{n-1} Z^T Z$$
                 </div>
                 
                 <p style="margin-top: 15px; margin-bottom: 5px;"><strong>Matrix Structural Anatomy:</strong></p>
                 The diagonal entries express the variance of individual features, while the off-diagonal entries represent the directional covariances between feature pairs:
-                <div class="math-block" style="margin: 10px 0;">
+                <div class="formula-card">
                     $$\Sigma = \begin{bmatrix} 
                     \text{Var}(z_1) & \text{Cov}(z_1, z_2) & \cdots & \text{Cov}(z_1, z_D) \\
                     \text{Cov}(z_2, z_1) & \text{Var}(z_2) & \cdots & \text{Cov}(z_2, z_D) \\
@@ -75,27 +225,27 @@
         </section>
 
         <section id="pca-step-3">
-            <h3>3. Eigenvalue and Eigenvector Decomposition</h3>
+            <h2>3. Eigenvalue and Eigenvector Decomposition</h2>
             <p>
                 By performing an eigen-decomposition on our covariance matrix \(\Sigma\), we unlock the baseline structural orientation of the data. Eigenvectors indicate the specific directional axes of maximum variance, while eigenvalues quantify the density of information stored along those respective axes.
             </p>
 
-            <div class="derivation-box" style="border-left: 4px solid #8b5cf6; padding-left: 15px; margin: 15px 0;">
+            <div class="derivation-box" style="border-left-color: var(--class-c);">
                 <strong>The Characteristic Equation:</strong><br>
                 We solve for the scalar eigenvalues (\(\lambda\)) and non-zero eigenvectors (\(v\)) satisfying:
-                <div class="math-block" style="margin: 10px 0;">
+                <div class="formula-card">
                     $$\Sigma v = \lambda v$$
                 </div>
 
                 <p style="margin-top: 15px; margin-bottom: 5px;"><strong>Eigenvectors Matrix (\(V\)):</strong></p>
                 A \((D \times D)\) matrix where each column is an orthogonal unit vector \(v_i\). These establish our brand new coordinate axes system:
-                <div class="math-block" style="margin: 10px 0;">
+                <div class="formula-card">
                     $$V = [v_1 \mid v_2 \mid \dots \mid v_D]$$
                 </div>
 
                 <p style="margin-top: 15px; margin-bottom: 5px;"><strong>Eigenvalues Matrix (\(\Lambda\)):</strong></p>
                 A \((D \times D)\) diagonal matrix where each entry \(\lambda_i\) corresponds exactly to the raw variance magnitude captured by its matching eigenvector column:
-                <div class="math-block" style="margin: 10px 0;">
+                <div class="formula-card">
                     $$\Lambda = \begin{bmatrix} 
                     \lambda_1 & 0 & \cdots & 0 \\
                     0 & \lambda_2 & \cdots & 0 \\
@@ -107,15 +257,15 @@
         </section>
 
         <section id="pca-step-4">
-            <h3>4. Feature Vector Selection</h3>
+            <h2>4. Feature Vector Selection</h2>
             <p>
                 To compress our dimensions, we sort our calculated eigenvalues in strict descending order: \(\lambda_1 \ge \lambda_2 \ge \dots \ge \lambda_D\). The top eigenvectors containing the highest magnitude of variance are chosen to form our compression gateway.
             </p>
 
-            <div class="derivation-box" style="border-left: 4px solid #f59e0b; padding-left: 15px; margin: 15px 0;">
+            <div class="derivation-box" style="border-left-color: var(--class-b);">
                 <strong>Principal Components Projection Matrix (\(W_k\)):</strong><br>
                 By selecting the first \(k\) columns from our sorted matrix \(V\), we construct a truncated projection matrix \(W_k\) with a condensed dimensional shape of \((D \times k)\):
-                <div class="math-block" style="margin: 10px 0;">
+                <div class="formula-card">
                     $$W_k = \begin{bmatrix} 
                     v_{1,1} & v_{1,2} & \cdots & v_{1,k} \\
                     v_{2,1} & v_{2,2} & \cdots & v_{2,k} \\
@@ -124,42 +274,42 @@
                     \end{bmatrix}$$
                 </div>
             </div>
-        </section>
-<p><strong>Summary of Matrix Dimensions:</strong></p>
-<ul style="line-height: 1.6; padding-left: 20px;">
+        <p><strong>Summary of Matrix Dimensions:</strong></p>
+<ul>
     <li><strong>Original Data Matrix ($Z$):</strong> $N \times D$ (Each item (row) is a sample, and each sample has $D$ features. PCA reduces the number of features from $D$ down to $k$, while the number of samples ($N$) remains completely unchanged</li>
     <li><strong>Covariance Matrix ($\Sigma$):</strong> $D \times D$</li>
     <li><strong>Projection Matrix ($W_k$):</strong> $D \times k$</li>
     <li><strong>Reduced Data Matrix ($Z_{\text{reduced}}$):</strong> $(N \times D) \times (D \times k) = N \times k$. </li>
 </ul>
+        </section>
 
-<section id="pca-matrix-deep-dive" style="margin: 35px 0;">
-    <div style="border-left: 4px solid #8b5cf6; background-color: #faf5ff; padding: 20px; border-radius: 0 8px 8px 0;">
-        <h3 style="color: #6d28d9; margin-top: 0;">💡 Deep Dive: How Do We Actually Get \(\Lambda\) and \(W_k\)?</h3>
+<section id="pca-matrix-deep-dive">
+    <div class="derivation-box" style="border-left-color: var(--class-c); background: var(--class-c-bg);">
+        <h3>💡 Deep Dive: How Do We Actually Get \(\Lambda\) and \(W_k\)?</h3>
         <p>
             When we solve the core eigen-decomposition equation \(\Sigma v = \lambda v\), the linear algebra solver doesn't give us matrices. It gives us a raw list of individual pairs: <strong>\(D\) eigenvalues</strong> (scalars representing strength) and <strong>\(D\) corresponding eigenvectors</strong> (vectors representing direction).
         </p>
         
         <p><strong>Let's use a concrete example:</strong> Suppose we have a dataset with 3 features (\(D = 3\)). Solving the equation yields 3 random unsorted pairs:</p>
-        <ul style="line-height: 1.6; padding-left: 20px;">
+        <ul>
             <li>Pair A: \(\lambda = 0.2\), Vector \(v_A = [0.1, 0.8, 0.5]^T\)</li>
             <li>Pair B: \(\lambda = 4.5\), Vector \(v_B = [0.7, 0.1, 0.7]^T\)</li>
             <li>Pair C: \(\lambda = 1.3\), Vector \(v_C = [0.6, 0.5, 0.1]^T\)</li>
         </ul>
 
-        <h4 style="color: #1e293b; margin-top: 20px; margin-bottom: 5px;">Step 1: The Sorting Rule (The Foundation)</h4>
+        <h4>Step 1: The Sorting Rule (The Foundation)</h4>
         <p style="margin-top: 0;">
             Before building any matrix, we must sort these pairs in <strong>descending order</strong> based on their eigenvalues (\(\lambda\)). This ranks the directions from most informative to least informative:
         </p>
-        <div style="background-color: #ffffff; padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: monospace; font-size: 0.95rem; text-align: center; margin-bottom: 20px;">
+        <div class="mono-line">
             Sorted Order: \(\lambda_1 = 4.5\) (Pair B) &gt; \(\lambda_2 = 1.3\) (Pair C) &gt; \(\lambda_3 = 0.2\) (Pair A)
         </div>
 
-        <h4 style="color: #1e293b; margin-bottom: 5px;">1. How We Construct the Eigenvalue Matrix (\(\Lambda\))</h4>
+        <h4>1. How We Construct the Eigenvalue Matrix (\(\Lambda\))</h4>
         <p style="margin-top: 0;">
             The matrix \(\Lambda\) is simply a structural storage locker for the variance strengths. We place our sorted eigenvalues safely along the <strong>main diagonal</strong> from top-left to bottom-right, and fill all other empty slots with <code>0</code> so they don't interfere during matrix multiplications:
         </p>
-        <div class="math-block" style="margin: 15px 0;">H
+        <div class="formula-card">
             $$\Lambda = \begin{bmatrix} 
             \mathbf{\lambda_1} & 0 & 0 \\ 
             0 & \mathbf{\lambda_2} & 0 \\ 
@@ -170,49 +320,57 @@
             0 & 0 & \mathbf{0.2} 
             \end{bmatrix}$$
         </div>
-        <p style="font-size: 0.9rem; color: #475569; font-style: italic;">
+        <p class="takeaway">
             Takeaway for students: This matrix is just a cleanly organized diagnostic map showing that our first new axis holds 4.5 units of data variance, the second holds 1.3, and the third holds only 0.2.
         </p>
 
-        <h4 style="color: #1e293b; margin-top: 25px; margin-bottom: 5px;">2. How We Construct the Projection Matrix (\(W_k\))</h4>
+        <h4>2. How We Construct the Projection Matrix (\(W_k\))</h4>
         <p style="margin-top: 0;">
             The matrix \(W_k\) is our actual dimensionality reduction gateway. If we want to reduce our data from 3 dimensions down to 2 dimensions, our target is <strong>\(k = 2\)</strong>. 
         </p>
         <p>
             To build it, we look at our sorted list and grab <em>only</em> the first \(k\) eigenvectors. We take those standalone vertical columns and glue them side-by-side to construct a brand new coordinate transformation grid:
         </p>
-        <div class="math-block" style="margin: 15px 0;">
+        <div class="formula-card">
             $$W_k = \begin{bmatrix} \mid & \mid \\ v_1 & v_2 \\ \mid & \mid \end{bmatrix} = \begin{bmatrix} \mid & \mid \\ v_B & v_C \\ \mid & \mid \end{bmatrix} = \begin{bmatrix} \mathbf{0.7} & \mathbf{0.6} \\ \mathbf{0.1} & \mathbf{0.5} \\ \mathbf{0.7} & \mathbf{0.1} \end{bmatrix}$$
-			We selected \mid \\ v_B and \(v_c) as the features, because the highest eigen vectors and ignorning \mid \\(v_A)
         </div>
-        <p style="font-size: 0.9rem; color: #475569; font-style: italic;">
+        <p>We select \(v_B\) and \(v_C\) as the columns of \(W_k\) because they belong to the two largest eigenvalues, and we drop \(v_A\), which belongs to the smallest.</p>
+        <p class="takeaway">
             Takeaway for students: Notice the shape change! The full eigenvector matrix \(V\) was a square \((3 \times 3)\). By cherry-picking only the top \(k=2\) columns, we engineered a non-square \((3 \times 2)\) matrix. This shape mismatch is the mathematical filter that drops the lowest-variance dimension during projection!
         </p>
     </div>
 </section>
         <section id="pca-step-5">
-            <h3>5. Data Transformation (Projection)</h3>
+            <h2>5. Data Transformation (Projection)</h2>
             <p>
                 The final operational step is to project our original standardized observations directly onto the subspace spanned by our chosen principal components matrix.
             </p>
 
-            <div class="derivation-box" style="border-left: 4px solid #ec4899; padding-left: 15px
-			
-			<section id="pca-essence" style="margin: 40px 0; padding: 25px; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-    <h2 style="margin-top: 0; color: #1e293b;">The Essence of PCA</h2>
+            <div class="derivation-box" style="border-left-color: var(--query);">
+                <strong>The Reduced Data Matrix:</strong><br>
+                Multiplying the standardized data matrix \(Z\) by the projection matrix \(W_k\) gives the coordinates of every observation along the \(k\) principal components:
+                <div class="formula-card">
+                    $$Z_{\text{reduced}} = Z \, W_k$$
+                </div>
+                <span style="color: var(--ink-soft); font-size: 0.9rem;">The shapes work out as \((N \times D)(D \times k) = (N \times k)\): the same \(N\) samples, now described by only \(k\) features.</span>
+            </div>
+        </section>
+
+        <section id="pca-essence">
+    <h2>The Essence of PCA</h2>
     
     <div style="margin-bottom: 25px;">
-        <h4 style="color: #0284c7; margin-bottom: 8px; font-size: 1.1rem;">Why It's Unsupervised</h4>
+        <h4>Why It's Unsupervised</h4>
         <p style="margin: 0; line-height: 1.6;">
             PCA operates entirely without labeled output targets or "correct answers" ($y$). It looks solely at the internal distribution of the feature matrix ($X$) to uncover the hidden geometric structure and variance profiles of the data.
         </p>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+    <div class="two-col">
         <div>
-            <h4 style="color: #0f766e; margin-bottom: 10px; font-size: 1.1rem;">Core Functions</h4>
-            <ul style="padding-left: 20px; margin: 0; line-height: 1.6;">
-                <li style="margin-bottom: 8px;">
+            <h4>Core Functions</h4>
+            <ul>
+                <li>
                     <strong>Feature Extraction:</strong> Transforms original, highly correlated variables into a smaller, optimized set of entirely new, uncorrelated Principal Components.
                 </li>
                 <li>
@@ -222,12 +380,12 @@
         </div>
         
         <div>
-            <h4 style="color: #b45309; margin-bottom: 10px; font-size: 1.1rem;">Common Applications</h4>
-            <ul style="padding-left: 20px; margin: 0; line-height: 1.6;">
-                <li style="margin-bottom: 8px;">
+            <h4>Common Applications</h4>
+            <ul>
+                <li>
                     <strong>Exploratory Data Analysis (EDA):</strong> Enables the projection and mapping of high-dimensional datasets into 2D or 3D coordinate planes for human visualization.
                 </li>
-                <li style="margin-bottom: 8px;">
+                <li>
                     <strong>Noise Reduction:</strong> By focusing exclusively on axes with high variance, it naturally filters out random, low-level data fluctuations.
                 </li>
                 <li>
@@ -237,9 +395,376 @@
         </div>
     </div>
 
-    <div style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 20px;">
-        <p style="margin: 0; line-height: 1.6; font-style: italic; color: #475569;">
+    <div style="border-top: 1px solid var(--rule); padding-top: 15px; margin-top: 20px;">
+        <p style="margin: 0; line-height: 1.6; font-style: italic; color: var(--ink-soft);">
             <strong>The Bottom Line:</strong> By mapping the data observations onto these new orthogonal axes—which capture the maximum "spread" or variance of your original features—you effectively reduce complexity while preserving the fundamental geometric relationships hidden within your dataset.
         </p>
     </div>
 </section>
+
+</main>
+<script>
+(function () {
+  'use strict';
+  var root = document.getElementById('pca-anim');
+  if (!root) return;
+  var cv = root.querySelector('canvas'), ctx = cv.getContext('2d');
+  var $ = function (id) { return document.getElementById(id); };
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- palette (taken from the page's CSS variables when present) ---------- */
+  var cs = getComputedStyle(document.documentElement);
+  function v(name, fb) { var s = cs.getPropertyValue(name).trim(); return s || fb; }
+  var C = { ink: v('--ink', '#14304D'), soft: v('--ink-soft', '#3C5A78'), faint: v('--ink-faint', '#6F8AA4'), rule: v('--rule', '#B9CADA'),
+            paper: v('--paper', '#EDF2F7'), a: v('--class-a', '#1F6F8B'), b: v('--class-b', '#B4791F'), c: v('--class-c', '#7B4B94'),
+            q: v('--query', '#B23A48'), d: v('--class-d', '#3F7D58') };
+  var FONT = v('--font-data', "'IBM Plex Mono', monospace"), FONTD = v('--font-display', "'JetBrains Mono', monospace");
+
+  /* ---------- data and PCA ---------- */
+  var N = 60, P = 3, K = 2, SEED = 7;
+  function rng(seed) { var a = seed >>> 0; return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function gauss(r) { var u = 1 - r(), w = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * w); }
+  function eigSym(A) {                                   // Jacobi rotations for a small symmetric matrix
+    var n = A.length, i, j, p, q, k, V = [];
+    A = A.map(function (r) { return r.slice(); });
+    for (i = 0; i < n; i++) { V.push([]); for (j = 0; j < n; j++) V[i].push(i === j ? 1 : 0); }
+    for (var sweep = 0; sweep < 60; sweep++) {
+      var off = 0; for (i = 0; i < n; i++) for (j = i + 1; j < n; j++) off += A[i][j] * A[i][j];
+      if (off < 1e-20) break;
+      for (p = 0; p < n - 1; p++) for (q = p + 1; q < n; q++) {
+        if (Math.abs(A[p][q]) < 1e-15) continue;
+        var th = (A[q][q] - A[p][p]) / (2 * A[p][q]);
+        var t = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th * th + 1)), c = 1 / Math.sqrt(t * t + 1), s = t * c, x, y;
+        for (k = 0; k < n; k++) { x = A[k][p]; y = A[k][q]; A[k][p] = c * x - s * y; A[k][q] = s * x + c * y; }
+        for (k = 0; k < n; k++) { x = A[p][k]; y = A[q][k]; A[p][k] = c * x - s * y; A[q][k] = s * x + c * y; }
+        for (k = 0; k < n; k++) { x = V[k][p]; y = V[k][q]; V[k][p] = c * x - s * y; V[k][q] = s * x + c * y; }
+      }
+    }
+    var idx = []; for (i = 0; i < n; i++) idx.push(i);
+    idx.sort(function (a, b) { return A[b][b] - A[a][a]; });
+    var vals = idx.map(function (i) { return A[i][i]; });
+    var vecs = idx.map(function (col) {                  // each eigenvector as an array; sign: components sum to >= 0
+      var vv = []; for (var r = 0; r < n; r++) vv.push(V[r][col]);
+      var sum = vv.reduce(function (a, b) { return a + b; }, 0);
+      return sum < 0 ? vv.map(function (z) { return -z; }) : vv;
+    });
+    return { vals: vals, vecs: vecs };
+  }
+  var D = {};                                            // everything derived from the data
+  function build() {
+    var r = rng(SEED), i, j, e = [], X = [], means = [50, 20, 100], scales = [12, 4, 30];
+    for (i = 0; i < N; i++) {
+      var u = gauss(r), w = gauss(r), n1 = gauss(r), n2 = gauss(r), n3 = gauss(r);
+      var raw = [u + 0.35 * n1, 0.85 * u + 0.55 * w + 0.30 * n2, 0.45 * u - 0.50 * w + 0.25 * n3];
+      X.push(raw.map(function (z, j) { return means[j] + scales[j] * z; }));
+    }
+    var mu = [0, 0, 0], sd = [0, 0, 0], mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
+    for (j = 0; j < P; j++) {
+      for (i = 0; i < N; i++) { mu[j] += X[i][j] / N; mn[j] = Math.min(mn[j], X[i][j]); mx[j] = Math.max(mx[j], X[i][j]); }
+      for (i = 0; i < N; i++) sd[j] += Math.pow(X[i][j] - mu[j], 2) / (N - 1);
+      sd[j] = Math.sqrt(sd[j]);
+    }
+    var Z = X.map(function (row) { return row.map(function (x, j) { return (x - mu[j]) / sd[j]; }); });
+    var S = []; for (var a = 0; a < P; a++) { S.push([]); for (var b = 0; b < P; b++) { var s = 0; for (i = 0; i < N; i++) s += Z[i][a] * Z[i][b]; S[a].push(s / (N - 1)); } }
+    var eg = eigSym(S), zmax = 0;
+    Z.forEach(function (row) { row.forEach(function (z) { zmax = Math.max(zmax, Math.abs(z)); }); });
+    var scores = Z.map(function (row) { return eg.vecs.map(function (vv) { return row[0] * vv[0] + row[1] * vv[1] + row[2] * vv[2]; }); });
+    var total = eg.vals.reduce(function (p, q) { return p + q; }, 0);
+    sel = 0; scores.forEach(function (sc, ii) { if (sc[0] > scores[sel][0]) sel = ii; });
+    var s1min = 1e9, s1max = -1e9, smax = 0;
+    scores.forEach(function (s) { s1min = Math.min(s1min, s[0]); s1max = Math.max(s1max, s[0]); smax = Math.max(smax, Math.abs(s[0]), Math.abs(s[1])); });
+    D = { X: X, Z: Z, S: S, vals: eg.vals, vecs: eg.vecs, scores: scores, mu: mu, sd: sd, mn: mn, mx: mx, zmax: zmax, zs: zmax * 0.62, total: total, s1min: s1min, s1max: s1max, smax: smax,
+          raw3: X.map(function (row) { return row.map(function (x, j) { return 2 * (x - mn[j]) / (mx[j] - mn[j]) - 1; }); }),
+          z3: Z.map(function (row) { return row.map(function (z) { return z / (zmax * 0.62); }); }) };
+  }
+
+  /* ---------- steps ---------- */
+  var STEPS = [
+    { tab: 'Data', sub: 'X : n × p', title: 'The data matrix X', badge: function () { return 'X : ' + N + ' × ' + P; },
+      cap: function () { return 'Each of the n = ' + N + ' rows [x₁ x₂ x₃] is one sample, drawn as one dot; each of the p = ' + P + ' columns is a feature, one axis of the cube. The features live on very different scales (note the units in the table).'; } },
+    { tab: 'Standardize', sub: 'Z = (X − μ)/σ', title: 'Standardize each column', badge: function () { return 'Z : ' + N + ' × ' + P; },
+      cap: function () { return 'Subtract each column’s mean and divide by its standard deviation. The cloud moves to the origin and every feature now has mean 0 and standard deviation 1, so no feature dominates just because of its units.'; } },
+    { tab: 'Covariance', sub: 'Σ : p × p', title: 'Covariance matrix', badge: function () { return 'Σ : ' + P + ' × ' + P; },
+      cap: function () { return 'Σ = ZᵀZ/(n−1) records how every pair of features moves together. It is a small ' + P + ' × ' + P + ' matrix whatever n is. The wire ellipsoid shows its shape: the cloud is long in some directions and thin in others.'; } },
+    { tab: 'Eigenvectors', sub: 'Σv = λv', title: 'Eigen-decomposition', badge: function () { return 'V : ' + P + ' × ' + P + ',  λ₁ ≥ λ₂ ≥ λ₃'; },
+      cap: function () { var e = D.vals; return 'The eigenvectors of Σ are perpendicular axes along the ellipsoid; the eigenvalues are the variances along them: ' + e.map(function (x) { return x.toFixed(2); }).join(', ') + ' (they add up to ' + P + '). Sorted from largest to smallest, these axes are PC1, PC2, PC3.'; } },
+    { tab: 'Keep k', sub: 'W_k : p × k', title: 'Choose the top k directions', badge: function () { return 'W_k : ' + P + ' × ' + K; },
+      cap: function () { var kept = 0; for (var i = 0; i < K; i++) kept += D.vals[i]; return 'Keep the first k = ' + K + ' eigenvectors as the columns of W_k. They hold ' + (100 * kept / D.total).toFixed(1) + '% of the total variance; the dropped direction' + (P - K > 1 ? 's hold' : ' holds') + ' ' + (100 * (1 - kept / D.total)).toFixed(1) + '%.'; } },
+    { tab: 'Project', sub: 'Z·W_k : n × k', title: 'Project the data', badge: function () { return 'Z_reduced = Z·W_k : ' + N + ' × ' + K; },
+      cap: function () { return 'Every point drops straight onto the ' + (K === 2 ? 'plane' : 'line') + ' spanned by the kept axes. Reading off the coordinates gives Z_reduced = Z·W_k, an n × k matrix, (' + N + ' × ' + P + ')(' + P + ' × ' + K + ') = ' + N + ' × ' + K + ': the same ' + N + ' samples, now described by ' + K + ' feature' + (K > 1 ? 's' : '') + '.'; } }
+  ];
+
+  /* ---------- state ---------- */
+  var stage = 0, prog = 1, playing = false, last = 0, speed = 1, auto = false, sel = 0, lastItems = [];
+  var cam = { yaw: -0.65, pitch: 0.38 }, drag = null;
+  function ease(t) { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); }
+  function clamp01(t) { return Math.max(0, Math.min(1, t)); }
+
+  /* ---------- 3-D helpers ---------- */
+  var W = 640, H = 500, CX = 320, CY = 256, SC = 108;
+  function project(p) {
+    var cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+    var x1 = p[0] * cy + p[2] * sy, z1 = -p[0] * sy + p[2] * cy;
+    var y2 = p[1] * cp - z1 * sp, z2 = p[1] * sp + z1 * cp, f = 3.4 / (3.4 - z2);
+    return [CX + x1 * f * SC, CY - y2 * f * SC, z2];
+  }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function mix(p, q, t) { return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; }
+  function rgb(hex) { var h = hex.replace('#', ''); if (h.length === 3) h = h.replace(/(.)/g, '$1$1'); var n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+  function mixCol(c1, c2, t) { var a = rgb(c1), b = rgb(c2); return 'rgb(' + [0, 1, 2].map(function (i) { return Math.round(lerp(a[i], b[i], t)); }).join(',') + ')'; }
+  function line3(a, b, col, w, alpha, dash) {
+    var p = project(a), q = project(b);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = col; ctx.lineWidth = w; if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); ctx.restore();
+  }
+  function text(s, x, y, col, size, align, weight, font) {
+    ctx.save(); ctx.font = (weight || 400) + ' ' + size + 'px ' + (font || FONT); ctx.textAlign = align || 'left'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 3.5; ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y); ctx.restore();
+  }
+  function arrow3(a, b, col, w, alpha, dash) {
+    var p = project(a), q = project(b), ang = Math.atan2(q[1] - p[1], q[0] - p[0]);
+    line3(a, b, col, w, alpha, dash);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = col; ctx.translate(q[0], q[1]); ctx.rotate(ang);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-11, -4.5); ctx.lineTo(-11, 4.5); ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+  var PCCOL = function () { return [C.q, C.a, C.d]; };
+
+  /* ---------- drawing ---------- */
+  function draw() {
+    if (!D.X) return;
+    ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    var zs = stage > 1 ? 1 : (stage === 1 ? ease(prog) : 0);
+    var ea = stage > 2 ? 0.45 : (stage === 2 ? ease(prog) : 0);
+    var pa = stage > 3 ? 1 : (stage === 3 ? prog : 0);
+    var ks = stage > 4 ? 1 : (stage === 4 ? ease(prog) : 0);
+    var pr = stage > 5 ? 1 : (stage === 5 ? ease(clamp01(prog / 0.5)) : 0);
+    var fl = stage === 5 ? ease(clamp01((prog - 0.5) / 0.5)) : 0;
+    var sc = D.zs;                                         // z-units -> cube units
+    var f3 = 1 - ease(clamp01(fl * 2));                   // 3-D decorations fade out in the first half of the flatten
+    var pcs = D.vecs.map(function (vv, j) { return vv.map(function (z) { return z / sc * 1.0; }); });
+    var cols = PCCOL();
+
+    /* feature axes / cube frame */
+    var frameA = 1 - zs * 0.85;
+    if (fl < 1) {
+      var al = frameA * f3;
+      var e = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]];
+      if (zs < 1) [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]].forEach(function (s) { line3(e[s[0]], e[s[1]], C.rule, 1, 0.55 * (1 - zs) * f3); });
+      var o = [lerp(-1, 0, zs), lerp(-1, 0, zs), lerp(-1, 0, zs)];
+      [[1, 0, 0, 'x₁'], [0, 1, 0, 'x₂'], [0, 0, 1, 'x₃']].forEach(function (a) {
+        var tip = [o[0] + a[0] * 1.15, o[1] + a[1] * 1.15, o[2] + a[2] * 1.15];
+        arrow3(o, tip, C.faint, 1.6, al); var q = project(tip); text(a[3], q[0] + 6, q[1] - 4, C.soft, 13, 'left', 600, FONTD);
+              });
+      if (zs > 0.02) { var oc = project([0, 0, 0]); ctx.save(); ctx.globalAlpha = Math.min(1, zs) * f3; ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(oc[0], oc[1], 3.2, 0, 7); ctx.fill(); ctx.restore(); if (stage < 3) text('mean', oc[0] + 6, oc[1] + 14, C.soft, 11, 'left', 400); }
+    }
+
+    /* covariance ellipsoid (three principal rings) */
+    if (ea > 0.01 && fl < 1) {
+      [[0, 1], [0, 2], [1, 2]].forEach(function (pair, ri) {
+        var ra = Math.sqrt(D.vals[pair[0]]) * 1.3 / sc, rb = Math.sqrt(D.vals[pair[1]]) * 1.3 / sc, pts = [];
+        for (var t = 0; t <= 48; t++) {
+          var th = t / 48 * Math.PI * 2, c = Math.cos(th) * ra, s = Math.sin(th) * rb;
+          pts.push(project([D.vecs[pair[0]][0] * c + D.vecs[pair[1]][0] * s, D.vecs[pair[0]][1] * c + D.vecs[pair[1]][1] * s, D.vecs[pair[0]][2] * c + D.vecs[pair[1]][2] * s]));
+        }
+        ctx.save(); ctx.globalAlpha = ea * f3 * 0.8; ctx.strokeStyle = C.c; ctx.lineWidth = 1.2; ctx.beginPath();
+        pts.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.stroke(); ctx.restore();
+      });
+    }
+
+    /* subspace plane / line */
+    if (ks > 0.01 && fl < 1) {
+      var ext = 1.05;
+      if (K === 2) {
+        var pl = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(function (c) { return project([0, 1, 2].map(function (i) { return (pcs[0][i] * c[0] + pcs[1][i] * c[1]) * ext * 1.1; })); });
+        ctx.save(); ctx.globalAlpha = 0.16 * ks * f3; ctx.fillStyle = C.a; ctx.beginPath();
+        pl.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = 0.55 * ks * f3; ctx.strokeStyle = C.a; ctx.lineWidth = 1.3; ctx.stroke(); ctx.restore();
+      }
+    }
+
+    /* points */
+    var span = Math.max(1e-9, D.s1max - D.s1min), items = [], i;
+    for (i = 0; i < N; i++) {
+      var pRaw = D.raw3[i], pZ = D.z3[i], base = mix(pRaw, pZ, zs), sc2 = D.scores[i], proj = [0, 0, 0];
+      for (var j = 0; j < K; j++) for (var m = 0; m < 3; m++) proj[m] += sc2[j] * D.vecs[j][m] / sc;
+      var p3 = mix(base, proj, pr), s = project(p3), q = project(proj);
+      var tcol = mixCol(C.a, C.q, (sc2[0] - D.s1min) / span), sx = s[0], sy = s[1];
+      if (fl > 0) {                                        // morph to the flat n × k score plot
+        var gx = 70 + (sc2[0] / D.smax * 0.5 + 0.5) * (W - 140);
+        var gy = K === 2 ? 70 + (0.5 - sc2[1] / D.smax * 0.5) * (H - 150) : H / 2 - 20;
+        sx = lerp(s[0], gx, fl); sy = lerp(s[1], gy, fl);
+      }
+      items.push({ i: i, x: sx, y: sy, z: s[2], col: tcol });
+    }
+    items.sort(function (a, b) { return a.z - b.z; });
+    if (stage === 5 && pr > 0.02 && fl < 1) {              // drop lines from original position to the projection
+      for (i = 0; i < N; i++) {
+        var base2 = D.z3[i], pj = [0, 0, 0];
+        for (var jj = 0; jj < K; jj++) for (var mm = 0; mm < 3; mm++) pj[mm] += D.scores[i][jj] * D.vecs[jj][mm] / sc;
+        var A0 = project(base2), A1 = project(pj);
+        ctx.save(); ctx.globalAlpha = 0.28 * f3 * (1 - Math.abs(pr - 0.5) * 0.4); ctx.strokeStyle = C.faint; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(A0[0], A0[1]); ctx.lineTo(lerp(A0[0], A1[0], pr), lerp(A0[1], A1[1], pr)); ctx.stroke(); ctx.restore();
+      }
+    }
+    lastItems = items;
+    items.forEach(function (it) {
+      var r = 3.4 + (it.z + 1) * 0.9;
+      ctx.save(); ctx.globalAlpha = 0.92; ctx.fillStyle = it.col; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.9;
+      ctx.beginPath(); ctx.arc(it.x, it.y, r, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore();
+    });
+    if (sel !== null) {                                    // ring and label for the tracked sample
+      var me = items.filter(function (it) { return it.i === sel; })[0];
+      if (me) {
+        ctx.save(); ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(me.x, me.y, 10, 0, 7); ctx.stroke(); ctx.restore();
+        var lab = stage === 0 ? 'x = [' + D.X[sel].map(function (z) { return z.toFixed(1); }).join(', ') + ']'
+                : (stage < 5 || fl + pr < 0.5 ? 'z = [' + D.Z[sel].map(function (z) { return z.toFixed(2); }).join(', ') + ']'
+                : 'scores = [' + D.scores[sel].slice(0, K).map(function (z) { return z.toFixed(2); }).join(', ') + ']');
+        var lx = Math.min(me.x + 14, W - 150), ly = Math.max(me.y - 14, 16);
+        text('sample #' + (sel + 1), lx, ly - 13, C.ink, 11, 'left', 700, FONTD);
+        text(lab, lx, ly, C.ink, 11, 'left', 400);
+      }
+    }
+
+    /* principal axes */
+    if (pa > 0 && fl < 1) {
+      for (var j2 = 0; j2 < 3; j2++) {
+        var local = clamp01(pa * 3 - j2); if (local <= 0) continue;
+        var dropped = j2 >= K, fade = dropped ? 1 - 0.7 * ks : 1;
+        var tip3 = pcs[j2].map(function (z) { return z * Math.sqrt(D.vals[j2]) * 1.75; });
+        var back = tip3.map(function (z) { return -z * 0.55; });
+        var end = tip3.map(function (z) { return z * local; });
+        arrow3(back.map(function (z) { return z * local; }), end, cols[j2], dropped && ks > 0.5 ? 2 : 3, fade * f3, dropped && ks > 0.5 ? [6, 5] : null);
+        if (local > 0.85) { var lp = project(tip3); text('PC' + (j2 + 1), lp[0] + 7, lp[1] - 5, cols[j2], 13, 'left', 700, FONTD); text('λ = ' + D.vals[j2].toFixed(2), lp[0] + 7, lp[1] + 9, C.soft, 11, 'left', 400);}
+      }
+    }
+
+    /* flat score plot axes */
+    if (fl > 0) {
+      ctx.save(); ctx.globalAlpha = fl;
+      var x0 = 70, x1 = W - 70, y0 = K === 2 ? 70 : H / 2 - 20, y1 = K === 2 ? H - 80 : H / 2 - 20;
+      ctx.strokeStyle = C.faint; ctx.lineWidth = 1.4;
+      if (K === 2) { ctx.beginPath(); ctx.moveTo(x0, (y0 + y1) / 2); ctx.lineTo(x1, (y0 + y1) / 2); ctx.moveTo((x0 + x1) / 2, y0 - 12); ctx.lineTo((x0 + x1) / 2, y1 + 12); ctx.stroke(); }
+      else { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke(); }
+      ctx.restore();
+      ctx.save(); ctx.globalAlpha = fl; text('PC1 →  ' + (100 * D.vals[0] / D.total).toFixed(1) + '% of variance', x1, H - 22, C.q, 12, 'right', 700, FONTD); ctx.restore();
+      if (K === 2) { ctx.save(); ctx.globalAlpha = fl; text('PC2 ↑  ' + (100 * D.vals[1] / D.total).toFixed(1) + '%', x0, 36, C.a, 12, 'left', 700, FONTD); ctx.restore(); }
+          }
+    var b = STEPS[stage].badge(); $('pcaa-badge').textContent = b;
+  }
+
+  /* ---------- side panel ---------- */
+  function f2(x) { return (x < 0 ? '−' : '') + Math.abs(x).toFixed(2); }
+  function table(head, rows) {
+    return '<table><thead><tr>' + head.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      rows.map(function (r) { return r === null ? '<tr><td class="dots" colspan="' + head.length + '">⋮</td></tr>' : '<tr>' + r.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
+  }
+  function sidePanel() {
+    var idxs = [0, 1, 2], s = stage, html = '', i;
+    function rowsOf(M, fmt) { var out = idxs.map(function (i) { return [String(i + 1)].concat(M[i].map(fmt)); }); out.push(null); out.push([String(N)].concat(M[N - 1].map(fmt))); return out; }
+    if (s === 0) html = '<div class="mt">X  (first 3 and last of ' + N + ' rows)</div>' + table(['#', 'x₁', 'x₂', 'x₃'], rowsOf(D.X, function (x) { return x.toFixed(1); }));
+    else if (s === 1) html = '<div class="mt">Z = (X − μ)/σ</div>' + table(['#', 'z₁', 'z₂', 'z₃'], rowsOf(D.Z, f2));
+    else if (s === 2) html = '<div class="mt">Σ = ZᵀZ/(n−1)   (3 × 3, symmetric)</div>' + table(['', 'z₁', 'z₂', 'z₃'], D.S.map(function (r, i) { return ['z' + '₁₂₃'[i]].concat(r.map(f2)); }));
+    else if (s === 3) html = '<div class="mt">V : eigenvectors as columns</div>' + table(['', 'v₁', 'v₂', 'v₃'], [0, 1, 2].map(function (r) { return ['z' + '₁₂₃'[r]].concat(D.vecs.map(function (vv) { return f2(vv[r]); })); })) +
+      '<div style="margin-top:4px;color:' + C.soft + '">eigenvalues  λ = ' + D.vals.map(function (x) { return x.toFixed(2); }).join('  ≥  ') + '</div>';
+    else if (s === 4) html = '<div class="mt">W_k : first k = ' + K + ' columns of V   (3 × ' + K + ')</div>' + table([''].concat(['v₁', 'v₂'].slice(0, K)), [0, 1, 2].map(function (r) { return ['z' + '₁₂₃'[r]].concat(D.vecs.slice(0, K).map(function (vv) { return f2(vv[r]); })); }));
+    else html = '<div class="mt">Z_reduced = Z·W_k   (' + N + ' × ' + K + ')</div>' + table(['#'].concat(['PC1', 'PC2'].slice(0, K)), rowsOf(D.scores.map(function (r) { return r.slice(0, K); }), f2));
+    $('pcaa-matrix').innerHTML = html;
+
+    var tr = '<div class="mt">Tracked sample</div>';
+    if (sel === null) tr += 'Click a dot to follow one sample through the steps.';
+    else {
+      var xr = D.X[sel].map(function (z) { return z.toFixed(1); }).join(', '), zr = D.Z[sel].map(function (z) { return f2(z); }).join(', '),
+          sr = D.scores[sel].slice(0, K).map(function (z) { return f2(z); }).join(', ');
+      tr += '<div style="color:' + C.soft + '">sample #' + (sel + 1) + ' of ' + N + '</div>' +
+        '<div class="row' + (s === 0 ? ' on' : '') + '">X row  = [' + xr + ']</div>' +
+        '<div class="row' + (s >= 1 && s <= 4 ? ' on' : '') + '">Z row  = [' + zr + ']</div>' +
+        '<div class="row' + (s === 5 ? ' on' : '') + '">Z_red  = [' + sr + ']</div>';
+    }
+    $('pcaa-track').innerHTML = tr;
+
+    /* shape strip */
+    var boxes = [{ t: 'X', d: N + '×' + P, w: P, h: 'n' }, { t: 'Z', d: N + '×' + P, w: P, h: 'n' }, { t: 'Σ', d: P + '×' + P, w: P, h: 'p' }, { t: 'W_k', d: P + '×' + K, w: K, h: 'p' }, { t: 'Z_red', d: N + '×' + K, w: K, h: 'n' }];
+    var activeBox = [0, 1, 2, 3, 3, 4][s], x = 6, svg = '';
+    boxes.forEach(function (b, bi) {
+      var bw = b.w * 11 + 6, bh = b.h === 'n' ? 56 : 26, y = 8 + (56 - bh) / 2, on = bi === activeBox, past = bi < activeBox;
+      if (bi === 4 && s < 5) { svg += '<text x="' + (x + 3) + '" y="76" style="opacity:.0">' + b.t + '</text>'; }
+      var fill = on ? C.ink : (past ? C.paper : '#fff'), stroke = on ? C.ink : C.faint, op = (bi === 4 && s < 5) ? 0.35 : 1;
+      svg += '<g opacity="' + op + '"><rect x="' + x + '" y="' + y + '" width="' + bw + '" height="' + bh + '" rx="2" fill="' + fill + '" stroke="' + stroke + '"/>' +
+        '<text x="' + (x + bw / 2) + '" y="' + (y + bh / 2 + 3.5) + '" text-anchor="middle" style="fill:' + (on ? '#fff' : C.ink) + ';font-weight:700">' + b.t + '</text>' +
+        '<text x="' + (x + bw / 2) + '" y="76" text-anchor="middle">' + b.d + '</text></g>';
+      if (bi < 4) svg += '<text x="' + (x + bw + 7) + '" y="40" text-anchor="middle" style="fill:' + C.faint + '">' + (bi === 3 ? '→' : '→') + '</text>';
+      x += bw + 16;
+    });
+    $('pcaa-shapes').innerHTML = '<svg viewBox="0 0 ' + Math.max(x, 230) + ' 84" role="img" aria-label="Shapes of the matrices through the PCA pipeline">' + svg + '</svg>';
+
+    /* variance bars */
+    var bars = '';
+    if (s >= 3) {
+      bars = D.vals.map(function (lv, j) {
+        var pct = 100 * lv / D.total, dropped = s >= 4 && j >= K, c = [C.q, C.a, C.d][j];
+        return '<div class="bar' + (dropped ? ' dropped' : '') + '"><span style="color:' + c + ';font-weight:700">PC' + (j + 1) + '</span><span class="track"><span class="fill" style="display:block;width:' + pct.toFixed(1) + '%;background:' + c + '"></span></span><span>' + pct.toFixed(1) + '%</span></div>';
+      }).join('');
+      bars = '<div class="mt" style="font-family:' + FONTD + ';font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:' + C.faint + ';margin-bottom:2px">Share of variance (λ / Σλ)</div>' + bars;
+    }
+    $('pcaa-bars').innerHTML = bars;
+  }
+
+  /* ---------- UI ---------- */
+  var tabs = root.querySelector('.pcaa-tabs');
+  STEPS.forEach(function (st, i) {
+    var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab');
+    b.innerHTML = '<b>Step ' + (i + 1) + '</b>' + st.tab + ' <span style="opacity:.75">· ' + st.sub + '</span>';
+    b.addEventListener('click', function () { go(i, true); });
+    tabs.appendChild(b);
+  });
+  function refresh() {
+    Array.prototype.forEach.call(tabs.children, function (b, i) { b.setAttribute('aria-selected', i === stage ? 'true' : 'false'); });
+    $('pcaa-caption').textContent = 'Step ' + (stage + 1) + ' of 6 · ' + STEPS[stage].title + '. ' + STEPS[stage].cap();
+    sidePanel(); draw();
+  }
+  function go(i, animate) { stage = Math.max(0, Math.min(5, i)); prog = animate && !reduce ? 0 : 1; last = 0; refresh(); }
+  function setPlaying(on) { playing = on; $('pcaa-play').innerHTML = on ? '&#10074;&#10074; Pause' : '&#9654; Play'; last = 0; if (on) requestAnimationFrame(tick); }
+  var DUR = 3600;                                          // ms per step at speed 1
+  function tick(ts) {
+    if (!last) last = ts; var dt = ts - last; last = ts;
+    if (auto && !drag) cam.yaw += dt * 0.00018;
+    if (playing || prog < 1) {
+      prog += dt * speed / DUR;
+      if (prog >= 1) {
+        prog = 1;
+        if (playing) { if (stage < 5) { stage++; prog = 0; refresh(); } else { setPlaying(false); } }
+      }
+    }
+    draw();
+    if (playing || prog < 1 || auto) requestAnimationFrame(tick);
+  }
+  function kick() { last = 0; requestAnimationFrame(tick); }
+  $('pcaa-play').addEventListener('click', function () { if (!playing) { if (stage === 5 && prog >= 1) go(0, true); else if (prog >= 1 && stage < 5 && false) go(stage + 1, true); setPlaying(true); } else setPlaying(false); });
+  $('pcaa-next').addEventListener('click', function () { setPlaying(false); go(stage + 1, true); kick(); });
+  $('pcaa-prev').addEventListener('click', function () { setPlaying(false); go(stage - 1, true); kick(); });
+  tabs.addEventListener('click', function () { setPlaying(false); kick(); });
+  $('pcaa-k').addEventListener('change', function () { K = +this.value; refresh(); });
+  $('pcaa-speed').addEventListener('input', function () { speed = +this.value; });
+  $('pcaa-rot').addEventListener('change', function () { auto = this.checked; if (auto) kick(); });
+  $('pcaa-new').addEventListener('click', function () { SEED = (SEED * 7919 + 13) % 100000; build(); refresh(); });
+  var down = null;
+  cv.addEventListener('pointerdown', function (e) { down = { x: e.clientX, y: e.clientY }; drag = { x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (_) { } });
+  cv.addEventListener('pointermove', function (e) { if (!drag) return; cam.yaw += (e.clientX - drag.x) * 0.008; cam.pitch = Math.max(-1.2, Math.min(1.2, cam.pitch + (e.clientY - drag.y) * 0.008)); drag = { x: e.clientX, y: e.clientY }; draw(); });
+  cv.addEventListener('pointerup', function (e) {
+    drag = null;
+    if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4) { down = null; return; }
+    var box = cv.getBoundingClientRect(), mx = (e.clientX - box.left) * W / (box.width || W), my = (e.clientY - box.top) * H / (box.height || H), best = null, bd = 18;
+    lastItems.forEach(function (it) { var d = Math.hypot(it.x - mx, it.y - my); if (d < bd) { bd = d; best = it.i; } });
+    down = null; sel = best === sel ? null : (best === null ? sel : best); sidePanel(); draw();
+  });
+  cv.addEventListener('pointercancel', function () { drag = null; });
+  function fit() { var dpr = Math.min(window.devicePixelRatio || 1, 2), w = cv.clientWidth || W; cv.width = Math.round(w * dpr); cv.height = Math.round(w * dpr * H / W); draw(); }
+  window.addEventListener('resize', fit);
+
+  build(); fit(); go(0, false);
+  if (!reduce) { $('pcaa-rot').checked = true; auto = true; kick(); }
+  root.pcaDebug = { select: function (i) { sel = i; sidePanel(); draw(); }, click: function (x, y) { lastItems.forEach(function () { }); return lastItems; }, set: function (s, p, k) { if (k) { K = k; $('pcaa-k').value = String(k); } stage = s; prog = p; refresh(); }, D: function () { return D; }, cam: cam, rebuild: function (seed) { SEED = seed; build(); refresh(); } };
+})();
+</script>
+</body>
+</html>

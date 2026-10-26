@@ -1,164 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Hide body initially to prevent flickering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+body {
+  visibility: hidden;
+}
+:root {
+  --ink: #0f172a;
+  --ink-mid: #334155;
+  --ink-soft: #64748b;
+  --page: #f8fafc;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --accent: #2563eb;
+  --teal-bg: #e1f5ee;
+  --teal-bdr: #1d9e75;
+  --teal-txt: #085041;
+  --coral-bg: #faece7;
+  --coral-bdr:#993c1d;
+  --coral-txt:#4a1b0c;
+  --purple-bg: #eeedfe;
+  --purple-bdr:#534ab7;
+  --purple-txt:#26215c;
+  --amber-bg: #faeeda;
+  --amber-bdr:#ba7517;
+  --amber-txt:#412402;
+  --blue-bg: #e6f1fb;
+  --blue-bdr: #185fa5;
+  --blue-txt: #042c53;
+  --red-bg: #fef2f2;
+  --red-bdr: #ef4444;
+  --red-txt: #7f1d1d;
+  --gray-bg: #f1efe8;
+  --gray-bdr: #b4b2a9;
+  --gray-txt: #2c2c2a;
+  --green-bg: #eaf3de;
+  --green-bdr:#3b6d11;
+  --green-txt:#173404;
+  --pink-bg: #fbeaf0;
+  --pink-bdr: #993556;
+  --pink-txt: #4b1528;
+}
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--ink-mid);
+  background: var(--page);
+}
+.page-wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 36px 80px;
+}
+.page-header .subtitle {
+  margin-top: 12px;
+  color: var(--ink-soft);
+  font-size: 0.97rem;
+  max-width: 700px;
+}
+.section {
+  margin-bottom: 68px;
+}
+h2 {
+  font-size: 1.28rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+h3 {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 26px 0 10px;
+}
+h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 18px 0 8px;
+}
+p {
+  margin-bottom: 14px;
+  color: var(--ink-mid);
+}
+ul, ol {
+  padding-left: 22px;
+  margin-bottom: 14px;
+  color: var(--ink-mid);
+}
+li {
+  margin-bottom: 6px;
+}
+code {
+  background: #e2e8f0;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'Fira Code','Courier New',monospace;
+  font-size: 0.86em;
+  color: #1e3a8a;
+}
+.callout {
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 18px 0;
+  border-left: 4px solid;
+}
+.cl-blue {
+  background:var(--blue-bg);
+  border-color:var(--blue-bdr);
+  color:var(--blue-txt);
+}
+.cl-teal {
+  background:var(--teal-bg);
+  border-color:var(--teal-bdr);
+  color:var(--teal-txt);
+}
+.cl-amber {
+  background:var(--amber-bg);
+  border-color:var(--amber-bdr);
+  color:var(--amber-txt);
+}
+.cl-red {
+  background:var(--red-bg);
+  border-color:var(--red-bdr);
+  color:var(--red-txt);
+}
+.cl-purple {
+  background:var(--purple-bg);
+  border-color:var(--purple-bdr);
+  color:var(--purple-txt);
+}
+.cl-coral {
+  background:var(--coral-bg);
+  border-color:var(--coral-bdr);
+  color:var(--coral-txt);
+}
+.cl-green {
+  background:var(--green-bg);
+  border-color:var(--green-bdr);
+  color:var(--green-txt);
+}
+.cl-pink {
+  background:var(--pink-bg);
+  border-color:var(--pink-bdr);
+  color:var(--pink-txt);
+}
+.cmp-table {
+  width:100%;
+  border-collapse:collapse;
+  margin:20px 0;
+  font-size:0.88rem;
+}
+.cmp-table thead tr {
+  background:#1e3a8a;
+  color:#fff;
+}
+.cmp-table thead th {
+  padding:11px 14px;
+  text-align:left;
+}
+.cmp-table tbody tr:nth-child(even) {
+  background:#f1f5f9;
+}
+.cmp-table tbody tr:nth-child(odd) {
+  background:#fff;
+}
+.cmp-table tbody td {
+  padding:10px 14px;
+  border-bottom:1px solid var(--border);
+  vertical-align:top;
+}
+hr.divider {
+  border:none;
+  border-top:2px solid var(--border);
+  margin:60px 0;
+}
+.label-strip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.ls-green {
+  background: var(--teal-bg);
+  color: var(--teal-txt);
+}
+.ls-purple {
+  background: var(--purple-bg);
+  color: var(--purple-txt);
+}
+.ls-amber {
+  background: var(--amber-bg);
+  color: var(--amber-txt);
+}
+@media (max-width: 640px) {
+  .page-wrap {
+    padding: 0 16px 48px;
+  }
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+}
+</style>
+    <!-- Load global MathJax configuration first -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Full Encoder–Decoder Transformer</title>
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --ink:        #0f172a;
-    --ink-mid:    #334155;
-    --ink-soft:   #64748b;
-    --page:       #f8fafc;
-    --card:       #ffffff;
-    --border:     #e2e8f0;
-    --accent:     #2563eb;
 
-    --teal-bg:    #e1f5ee; --teal-bdr: #1d9e75; --teal-txt: #085041;
-    --coral-bg:   #faece7; --coral-bdr:#993c1d; --coral-txt:#4a1b0c;
-    --purple-bg:  #eeedfe; --purple-bdr:#534ab7;--purple-txt:#26215c;
-    --amber-bg:   #faeeda; --amber-bdr:#ba7517; --amber-txt:#412402;
-    --blue-bg:    #e6f1fb; --blue-bdr: #185fa5; --blue-txt: #042c53;
-    --red-bg:     #fef2f2; --red-bdr:  #ef4444; --red-txt:  #7f1d1d;
-    --gray-bg:    #f1efe8; --gray-bdr: #b4b2a9; --gray-txt: #2c2c2a;
-    --green-bg:   #eaf3de; --green-bdr:#3b6d11; --green-txt:#173404;
-    --pink-bg:    #fbeaf0; --pink-bdr: #993556; --pink-txt: #4b1528;
-  }
-
-  body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-size: 1rem;
-    line-height: 1.75;
-    color: var(--ink-mid);
-    background: var(--page);
-  }
-
-  .page-wrap { max-width: 980px; margin: 0 auto; padding: 0 36px 80px; }
-
-  /* ── Header ── */
-  .page-header {
-    padding: 52px 0 32px;
-    border-bottom: 3px solid var(--accent);
-    margin-bottom: 56px;
-  }
-  .eyebrow {
-    font-size: 0.7rem; font-weight: 700;
-    letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--accent); margin-bottom: 10px;
-  }
-  .page-header h1 {
-    font-size: 2rem; font-weight: 800;
-    color: var(--ink); line-height: 1.15;
-  }
-  .page-header .subtitle {
-    margin-top: 12px; color: var(--ink-soft);
-    font-size: 0.97rem; max-width: 700px;
-  }
-
-  /* ── Sections ── */
-  .section { margin-bottom: 68px; }
-  h2 {
-    font-size: 1.28rem; font-weight: 700;
-    color: var(--ink); margin-bottom: 18px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .sec-num {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px;
-    background: var(--accent); color: #fff;
-    border-radius: 7px; font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
-  }
-  h3 { font-size: 1.02rem; font-weight: 700; color: #1e3a8a; margin: 26px 0 10px; }
-  h4 { font-size: 0.95rem; font-weight: 700; color: var(--ink); margin: 18px 0 8px; }
-  p  { margin-bottom: 14px; color: var(--ink-mid); }
-  ul, ol { padding-left: 22px; margin-bottom: 14px; color: var(--ink-mid); }
-  li { margin-bottom: 6px; }
-  strong { color: var(--ink); }
-  code {
-    background: #e2e8f0; border-radius: 4px;
-    padding: 1px 6px;
-    font-family: 'Fira Code','Courier New',monospace;
-    font-size: 0.86em; color: #1e3a8a;
-  }
-
-  /* ── Callouts ── */
-  .callout {
-    border-radius: 0 8px 8px 0;
-    padding: 16px 20px; margin: 18px 0;
-    border-left: 4px solid;
-  }
-  .callout-title { font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; }
-  .cl-blue   { background:var(--blue-bg);   border-color:var(--blue-bdr);   color:var(--blue-txt); }
-  .cl-teal   { background:var(--teal-bg);   border-color:var(--teal-bdr);   color:var(--teal-txt); }
-  .cl-amber  { background:var(--amber-bg);  border-color:var(--amber-bdr);  color:var(--amber-txt); }
-  .cl-red    { background:var(--red-bg);    border-color:var(--red-bdr);    color:var(--red-txt); }
-  .cl-purple { background:var(--purple-bg); border-color:var(--purple-bdr); color:var(--purple-txt); }
-  .cl-coral  { background:var(--coral-bg);  border-color:var(--coral-bdr);  color:var(--coral-txt); }
-  .cl-green  { background:var(--green-bg);  border-color:var(--green-bdr);  color:var(--green-txt); }
-  .cl-pink   { background:var(--pink-bg);   border-color:var(--pink-bdr);   color:var(--pink-txt); }
-
-  /* ── Figure ── */
-  .fig-wrap {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 28px 20px 16px;
-    margin: 24px 0;
-  }
-  .fig-wrap svg { width: 100%; height: auto; display: block; }
-  .fig-caption {
-    font-style: italic; color: var(--ink-soft);
-    font-size: 0.82rem; margin-top: 12px;
-    text-align: center; line-height: 1.5;
-  }
-
-  /* ── Math ── */
-  .math-block {
-    background: #f1f5f9; border-radius: 8px;
-    padding: 14px 20px; margin: 16px 0;
-    overflow-x: auto; text-align: center;
-  }
-
-  /* ── Table ── */
-  .cmp-table { width:100%; border-collapse:collapse; margin:20px 0; font-size:0.88rem; }
-  .cmp-table thead tr { background:#1e3a8a; color:#fff; }
-  .cmp-table thead th { padding:11px 14px; text-align:left; }
-  .cmp-table tbody tr:nth-child(even) { background:#f1f5f9; }
-  .cmp-table tbody tr:nth-child(odd)  { background:#fff; }
-  .cmp-table tbody td { padding:10px 14px; border-bottom:1px solid var(--border); vertical-align:top; }
-
-  /* ── Divider ── */
-  hr.divider { border:none; border-top:2px solid var(--border); margin:60px 0; }
-
-  /* ── Bridge ── */
-  .bridge {
-    background: linear-gradient(135deg, var(--blue-bg) 0%, var(--purple-bg) 100%);
-    border: 1px solid #c7d2fe; border-radius: 10px;
-    padding: 20px 24px; margin: 28px 0;
-    color: #312e81; font-size: 0.93rem;
-  }
-
-  /* ── highlight label strip ── */
-  .label-strip {
-    display: inline-block;
-    padding: 3px 10px; border-radius: 4px;
-    font-size: 0.78rem; font-weight: 700;
-    letter-spacing: 0.06em; text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .ls-green  { background: var(--teal-bg);   color: var(--teal-txt); }
-  .ls-purple { background: var(--purple-bg); color: var(--purple-txt); }
-  .ls-amber  { background: var(--amber-bg);  color: var(--amber-txt); }
-
-  @media (max-width: 640px) {
-    .page-wrap { padding: 0 16px 48px; }
-    .page-header h1 { font-size: 1.5rem; }
-  }
-</style>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
 </head>
 <body>
 <div class="page-wrap">
@@ -943,6 +1029,82 @@
         </tr>
       </tbody>
     </table>
+	
+	<!-- ══ SECTION X: ENCODER–DECODER INPUT/OUTPUT FLOW ══ -->
+<div class="section">
+  <h2><span class="sec-num">X</span> Encoder–Decoder: Input/Output Flow, Stage by Stage</h2>
+  <p>
+    The table below traces exactly what goes in and comes out at each stage
+    of the full Encoder–Decoder Transformer — including the Decoder's
+    <strong>two separate inputs</strong>, which only meet at the
+    cross-attention step.
+  </p>
+
+  <table class="cmp-table">
+    <thead>
+      <tr>
+        <th>Stage</th>
+        <th>Input</th>
+        <th>Output</th>
+        <th>Further processing</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Encoder input</strong></td>
+        <td>Source tokens → embeddings + positional encoding</td>
+        <td>—</td>
+        <td>Fed into Encoder self-attention</td>
+      </tr>
+      <tr>
+        <td><strong>Encoder self-attention</strong></td>
+        <td>Embedded source sequence</td>
+        <td>N context-aware vectors (one per source token)</td>
+        <td>Passed to next Encoder layer</td>
+      </tr>
+      <tr>
+        <td><strong>Encoder final output</strong></td>
+        <td>(stacked Encoder layers)</td>
+        <td>N context vectors — this is <strong>Decoder Input #2</strong></td>
+        <td>Sent to every Decoder layer's cross-attention (as K, V)</td>
+      </tr>
+      <tr>
+        <td><strong>Decoder Input #1</strong></td>
+        <td>Previously generated tokens → embeddings + positional encoding (shifted right)</td>
+        <td>—</td>
+        <td>Fed into Decoder masked self-attention</td>
+      </tr>
+      <tr>
+        <td><strong>Decoder masked self-attention</strong></td>
+        <td>Embedded target sequence so far</td>
+        <td>Per-position vectors</td>
+        <td>Projected to Query (Q) for cross-attention</td>
+      </tr>
+      <tr>
+        <td><strong>Decoder cross-attention</strong></td>
+        <td>Q (from Decoder self-attn) + K,V (Decoder Input #2, from Encoder's final output)</td>
+        <td>Context-blended Decoder vectors</td>
+        <td>Passed to Decoder's feed-forward sub-layer</td>
+      </tr>
+      <tr>
+        <td><strong>Decoder output</strong></td>
+        <td>Feed-forward output</td>
+        <td>Vector per position</td>
+        <td>Projected to vocab size → softmax → next-token probability</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout cl-teal">
+    <div class="callout-title">The Decoder's two inputs</div>
+    <strong>Decoder Input #1</strong> — the tokens generated so far (its own
+    sequential input, feeding masked self-attention).<br>
+    <strong>Decoder Input #2</strong> — the Encoder's finished output (N
+    context vectors), which only enters the picture at cross-attention,
+    not at the start of the Decoder stack.
+  </div>
+</div>
+
 
     <div class="bridge">
       <strong>The complete progression from RNN to Transformer — in one view:</strong>

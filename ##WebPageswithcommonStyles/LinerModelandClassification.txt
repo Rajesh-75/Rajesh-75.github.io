@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Linear Regression: MLE and Least Squares</title>
+    <style>body{visibility:hidden;}</style>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        options: {
+          // Globally skip tags where math should never be parsed
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+          // Class name you can use to explicitly ignore specific blocks
+          ignoreHtmlClass: 'tex2jax_ignore',
+          processHtmlClass: 'tex2jax_process'
+        },
+        startup: {
+          pageReady: () => {
+            return MathJax.startup.defaultPageReady().then(() => {
+              // Reveal the page body only after MathJax finishes typesetting
+              document.body.style.visibility = 'visible';
+            });
+          }
+        }
+      };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<div class="container">
+
+    <h1 class="detail-title">From Fitting a Line to Modeling the Noise Behind It</h1>
+
+    <p class="detail-description">
+        Ordinary least squares treats fitting a line as a purely geometric/algebraic problem: minimize
+        $\sum_i (y_i - wx_i)^2$, take the derivative, solve. Nothing random involved — it's optimization,
+        not statistics.
+    </p>
+
+    <p class="detail-description">
+        The probabilistic reframing changes the <strong>starting assumption</strong>: instead of just
+        having data points, you assume there's a true underlying relationship, and each observed target
+        is that true value plus random noise:
+    </p>
+
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$t_i = wx_i + \epsilon_i, \qquad \epsilon_i \sim N(0, \sigma^2)$$
+    </div>
+
+    <p class="detail-description">
+        This is a genuinely different object — a <strong>generative model</strong>. It says: "if you gave
+        me the true $w$ and $\sigma^2$, here's the full probability distribution I'd expect to see for
+        $t_i$" — specifically $t_i \sim N(wx_i, \sigma^2)$. Once you have that, you can write a
+        <strong>likelihood</strong> — the probability of the entire observed dataset, as a function of
+        the unknown $w$ — and ask which $w$ makes the data you actually saw most probable. That's MLE.
+    </p>
+
+    <h2>A Real-World Motivating Picture</h2>
+    <p class="detail-description">
+        Before the toy numbers, here's the general shape of the problem in a setting you'd actually see
+        it: yearly rainfall measurements plotted against year, with a least-squares line fitted through
+        the scatter.
+    </p>
+
+    <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0; text-align:center;">
+        <svg viewBox="0 0 620 400" xmlns="http://www.w3.org/2000/svg" style="max-width:600px; height:auto;">
+            <g font-family="Arial, sans-serif" font-size="12">
+                <!-- axes -->
+                <line x1="70" y1="320" x2="560" y2="320" stroke="#333" stroke-width="1.5"/>
+                <line x1="70" y1="320" x2="70" y2="40" stroke="#333" stroke-width="1.5"/>
+                <text x="315" y="365" text-anchor="middle" fill="#333" font-weight="bold">Year</text>
+                <text x="25" y="180" text-anchor="middle" fill="#333" font-weight="bold" transform="rotate(-90,25,180)">Rainfall (cm)</text>
+
+                <!-- y gridlines + labels: 60 to 120 cm -->
+                <line x1="70" y1="320" x2="560" y2="320" stroke="#eee"/>
+                <text x="60" y="324" text-anchor="end" fill="#555">60</text>
+                <line x1="70" y1="277" x2="560" y2="277" stroke="#eee"/>
+                <text x="60" y="281" text-anchor="end" fill="#555">70</text>
+                <line x1="70" y1="234" x2="560" y2="234" stroke="#eee"/>
+                <text x="60" y="238" text-anchor="end" fill="#555">80</text>
+                <line x1="70" y1="190" x2="560" y2="190" stroke="#eee"/>
+                <text x="60" y="194" text-anchor="end" fill="#555">90</text>
+                <line x1="70" y1="147" x2="560" y2="147" stroke="#eee"/>
+                <text x="60" y="151" text-anchor="end" fill="#555">100</text>
+                <line x1="70" y1="104" x2="560" y2="104" stroke="#eee"/>
+                <text x="60" y="108" text-anchor="end" fill="#555">110</text>
+                <line x1="70" y1="60" x2="560" y2="60" stroke="#eee"/>
+                <text x="60" y="64" text-anchor="end" fill="#555">120</text>
+
+                <!-- x tick labels: 2016 - 2026 -->
+                <text x="70" y="338" text-anchor="middle" fill="#555" font-size="11">2016</text>
+                <text x="117" y="338" text-anchor="middle" fill="#555" font-size="11">2017</text>
+                <text x="164" y="338" text-anchor="middle" fill="#555" font-size="11">2018</text>
+                <text x="211" y="338" text-anchor="middle" fill="#555" font-size="11">2019</text>
+                <text x="258" y="338" text-anchor="middle" fill="#555" font-size="11">2020</text>
+                <text x="305" y="338" text-anchor="middle" fill="#555" font-size="11">2021</text>
+                <text x="352" y="338" text-anchor="middle" fill="#555" font-size="11">2022</text>
+                <text x="399" y="338" text-anchor="middle" fill="#555" font-size="11">2023</text>
+                <text x="446" y="338" text-anchor="middle" fill="#555" font-size="11">2024</text>
+                <text x="493" y="338" text-anchor="middle" fill="#555" font-size="11">2025</text>
+                <text x="540" y="338" text-anchor="middle" fill="#555" font-size="11">2026</text>
+
+                <!-- least squares fitted line -->
+                <line x1="70" y1="224.9" x2="540" y2="82.7" stroke="#1565c0" stroke-width="2.5"/>
+
+                <!-- scatter points: (year, rainfall in cm) -->
+                <circle cx="70"  cy="211.7" r="5" fill="#c62828"/>
+                <circle cx="117" cy="181.3" r="5" fill="#c62828"/>
+                <circle cx="164" cy="242.0" r="5" fill="#c62828"/>
+                <circle cx="211" cy="168.3" r="5" fill="#c62828"/>
+                <circle cx="258" cy="198.7" r="5" fill="#c62828"/>
+                <circle cx="305" cy="138.0" r="5" fill="#c62828"/>
+                <circle cx="352" cy="159.7" r="5" fill="#c62828"/>
+                <circle cx="399" cy="103.3" r="5" fill="#c62828"/>
+                <circle cx="446" cy="125.0" r="5" fill="#c62828"/>
+                <circle cx="493" cy="81.7"  r="5" fill="#c62828"/>
+
+                <!-- legend -->
+                <rect x="410" y="50" width="150" height="55" fill="#fafafa" stroke="#ddd"/>
+                <circle cx="425" cy="65" r="5" fill="#c62828"/>
+                <text x="438" y="69" fill="#333" font-size="11">Observed rainfall</text>
+                <line x1="418" y1="90" x2="432" y2="90" stroke="#1565c0" stroke-width="2.5"/>
+                <text x="438" y="94" fill="#333" font-size="11">Least-squares fit</text>
+            </g>
+        </svg>
+        <p style="font-size:0.85rem; color:#666; margin-top:8px;"><em>Figure: Ten years of (illustrative) rainfall measurements with the least-squares fitted line $\hat{y} = a + bx$ drawn through the scatter — content and discussion to be added.</em></p>
+    </div>
+
+    <p class="detail-description" style="font-size:0.92rem; color:#555;">
+        <em>A passing note: the fitted line above is a degree-1 polynomial in $x$. Nothing stops us from
+        fitting a higher-degree polynomial instead — degree 9 through these 10 points would pass through
+        every single one, driving the training error to zero. That's not actually better: a curve that
+        contorts itself to hit every noisy point exactly stops representing the underlying trend and
+        starts memorizing the noise, performing badly on any year it wasn't fit to. This is the same
+        underfitting/overfitting trade-off from the ML Pipeline page's Model Training section — degree
+        here plays the same role "model complexity" does there.</em>
+    </p>
+
+    <h2>A Tiny Concrete Example</h2>
+    <p class="detail-description">
+        Say you have three points: $(x_1,y_1)=(1,3)$, $(x_2,y_2)=(2,5)$, $(x_3,y_3)=(3,6)$, and a model
+        with no intercept: $y_i = wx_i + \epsilon_i$, where $\epsilon_i \sim N(0,\sigma^2)$.
+    </p>
+
+    <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0; text-align:center;">
+        <svg viewBox="0 0 420 300" xmlns="http://www.w3.org/2000/svg" style="max-width:400px; height:auto;">
+            <g font-family="Arial, sans-serif" font-size="12">
+                <line x1="50" y1="250" x2="380" y2="250" stroke="#333" stroke-width="1.5"/>
+                <line x1="50" y1="250" x2="50" y2="30" stroke="#333" stroke-width="1.5"/>
+                <text x="215" y="278" text-anchor="middle" fill="#333">x</text>
+                <text x="20" y="140" text-anchor="middle" fill="#333" transform="rotate(-90,20,140)">y</text>
+
+                <!-- gridlines / ticks -->
+                <text x="130" y="265" text-anchor="middle" fill="#555">1</text>
+                <text x="210" y="265" text-anchor="middle" fill="#555">2</text>
+                <text x="290" y="265" text-anchor="middle" fill="#555">3</text>
+                <text x="38" y="210" text-anchor="end" fill="#555">3</text>
+                <text x="38" y="130" text-anchor="end" fill="#555">5</text>
+                <text x="38" y="90" text-anchor="end" fill="#555">6</text>
+
+                <!-- candidate line y = 2x, from (0,0) to (3,6) -->
+                <line x1="50" y1="250" x2="290" y2="90" stroke="#1565c0" stroke-width="2"/>
+                <text x="300" y="85" fill="#0d47a1" font-weight="bold">y = 2x</text>
+
+                <!-- data points -->
+                <circle cx="130" cy="210" r="5" fill="#c62828"/>
+                <circle cx="210" cy="130" r="5" fill="#c62828"/>
+                <circle cx="290" cy="90" r="5" fill="#c62828"/>
+
+                <!-- predicted points on the line (w=2): (1,2),(2,4),(3,6) -->
+                <circle cx="130" cy="170" r="4" fill="#1565c0"/>
+                <circle cx="210" cy="130" r="4" fill="#1565c0"/>
+                <circle cx="290" cy="90" r="4" fill="#1565c0"/>
+
+                <!-- residual segments -->
+                <line x1="130" y1="210" x2="130" y2="170" stroke="#e65100" stroke-width="2" stroke-dasharray="4,3"/>
+                <text x="140" y="192" fill="#e65100" font-size="11">$\epsilon_1=1$</text>
+
+                <line x1="210" y1="130" x2="210" y2="130" stroke="#e65100" stroke-width="2"/>
+                <text x="220" y="150" fill="#e65100" font-size="11">$\epsilon_2=1$</text>
+
+                <text x="300" y="110" fill="#e65100" font-size="11">$\epsilon_3=0$</text>
+
+                <rect x="255" y="20" width="14" height="14" fill="#c62828"/>
+                <text x="273" y="32" fill="#333" font-size="11">observed $y_i$</text>
+                <rect x="255" y="40" width="14" height="14" fill="#1565c0"/>
+                <text x="273" y="52" fill="#333" font-size="11">predicted $wx_i$ ($w=2$)</text>
+            </g>
+        </svg>
+        <p style="font-size:0.85rem; color:#666; margin-top:8px;"><em>Figure: The candidate line $y=2x$ against the three observed points. The dashed segments are the residuals $\epsilon_i = y_i - wx_i$ that a Gaussian noise assumption converts into probability densities.</em></p>
+    </div>
+
+    <h3>Step 1 — What Does "Probability of the Data" Even Mean Here?</h3>
+    <p class="detail-description">
+        Pick a candidate value, say $w=2$. Under that guess, the <em>predicted</em> values are $2, 4, 6$.
+        The <em>actual</em> observed values were $3, 5, 6$. So the noise that "must have happened," under
+        this candidate $w$, is: $\epsilon_1=1$, $\epsilon_2=1$, $\epsilon_3=0$.
+    </p>
+    <p class="detail-description">
+        Now — we assumed $\epsilon \sim N(0,\sigma^2)$. That assumption tells us exactly how probable each
+        of those specific noise values is. The Gaussian density function gives us a number for "how
+        likely is a noise value of exactly 1" versus "how likely is a noise value of exactly 0." That's
+        the whole trick: <strong>the noise assumption converts a residual into a probability (density)
+        value.</strong>
+    </p>
+
+    <h3>Step 2 — Multiply Them Together</h3>
+    <p class="detail-description">
+        For a given point, the density of observing $y_i$ given $x_i$ and $w$ is:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$N(y_i; wx_i, \sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y_i-wx_i)^2}{2\sigma^2}\right)$$
+    </div>
+    <p class="detail-description">
+        Assuming the three data points are independent, the probability of seeing <em>all three</em>
+        together is the product of their individual densities:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$L(w) = \prod_{i=1}^{3} N(y_i; wx_i,\sigma^2)$$
+    </div>
+    <p class="detail-description">
+        This product, as a function of $w$, is the <strong>likelihood</strong>. Different candidate
+        $w$'s give different residuals, which give different density values, which give a different
+        overall product. MLE says: find the $w$ that makes this product as large as possible.
+    </p>
+
+    <h3>Step 3 — Where the Squared Error Actually Comes From</h3>
+    <p class="detail-description">
+        Taking the log of that product (logs turn products into sums, and don't change where the maximum
+        sits):
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\log L(w) = \sum_{i=1}^{3} \left[-\frac{1}{2}\log(2\pi\sigma^2) - \frac{(y_i-wx_i)^2}{2\sigma^2}\right]$$
+    </div>
+    <p class="detail-description">
+        The first term inside the brackets doesn't depend on $w$ at all — it's just a constant that shifts
+        every candidate $w$'s score equally, so it can't affect <em>which</em> $w$ wins. Strip it out, and
+        maximizing what's left is:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\max_w \left(-\frac{1}{2\sigma^2}\sum_i (y_i-wx_i)^2\right) \;\equiv\; \min_w \sum_i (y_i-wx_i)^2$$
+    </div>
+    <p class="detail-description">
+        That last step — maximizing a negative thing is the same as minimizing the positive thing inside
+        it — is the entire punchline. <strong>The sum-of-squared-residuals term didn't get inserted by
+        hand; it fell straight out of the algebra, purely because we chose a Gaussian for the
+        noise.</strong> If you'd instead assumed the noise followed a Laplace distribution (density
+        $\propto e^{-|\epsilon|/b}$), the exact same three steps would have landed you minimizing
+        $\sum_i |y_i - wx_i|$ instead — absolute error, not squared error. The loss function isn't a free
+        design choice; it's a <em>consequence</em> of what you assumed about the noise.
+    </p>
+
+    <h3>The One Thing MLE Gets That Pure Least Squares Never Asks For</h3>
+    <p class="detail-description">
+        Notice $\sigma^2$ was sitting there the whole derivation, but least squares never needed it — it
+        dropped out of the equation entirely once we started minimizing. MLE, if you also take the
+        derivative of the log-likelihood with respect to $\sigma^2$ and set <em>that</em> to zero, hands
+        you a second answer for free:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\hat{\sigma}^2 = \frac{1}{N}\sum_i(y_i - \hat{w}x_i)^2$$
+    </div>
+    <p class="detail-description">
+        — literally the average squared residual, using the best-fit $\hat{w}$ you just found.
+        <strong>That's the noise-level estimate least squares has no mechanism to produce, because it
+        never had a probabilistic noise model to begin with.</strong>
+    </p>
+
+    <div class="intuition-box" style="background-color: #fdf2e9; border-left: 4px solid #e67e22; padding: 15px 20px; margin: 20px 0;">
+        <strong>LS vs. MLE, in one line:</strong> LS picks a criterion and directly optimizes it. MLE
+        starts one level deeper — with an assumption about how the noise behaves — and that assumption
+        happens to hand you the same criterion LS was using all along, plus a noise estimate LS never
+        had access to.
+    </div>
+
+    <h2>"If MLE Gives the Same $\hat{w}$, Why Bother With It At All?"</h2>
+    <p class="detail-description">
+        Fair question — and worth asking directly, since we just showed the two methods tie on the fitted
+        line itself. The answer is that the probability model behind MLE gives you things pure LS
+        structurally cannot, even when the fitted line matches:
+    </p>
+
+    <div style="background: #f8f9fa; border: 1px solid #e1e8ed; border-radius: 6px; padding: 18px 22px; margin: 16px 0;">
+        <ol style="margin: 0; padding-left: 22px;">
+            <li style="margin-bottom: 12px;">
+                <strong>It explains <em>why</em> squared error is the right loss.</strong> LS just assumes
+                it; MLE derives it from the Gaussian noise assumption. Change that assumption (e.g., to
+                Laplace noise) and MLE derives a <em>different</em> loss instead — squared error was
+                never a law, just a consequence of one particular noise assumption.
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>It estimates the noise itself</strong> ($\hat{\sigma}^2$) — needed for confidence
+                intervals, hypothesis tests on individual weights, and model-comparison scores (AIC/BIC),
+                none of which plain LS can produce.
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>It gives a full predictive distribution, not just a point.</strong>
+                $N(\hat{w}x_{\text{new}}, \hat{\sigma}^2)$ instead of a bare number, so you can say
+                "95% of the time the true value falls in this range."
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>It makes regularization principled instead of ad hoc.</strong> Put a prior on $w$
+                (e.g., $w\sim N(0,\tau^2)$) and Ridge regression falls out as the MAP estimate, with
+                $\lambda$ meaning something concrete ($\sigma^2/\tau^2$) instead of being an arbitrary
+                knob.
+            </li>
+            <li style="margin-bottom: 0;">
+                <strong>It's the exact same machine reused everywhere downstream.</strong> Logistic
+                Regression, Gaussian Naive Bayes, GMM/EM, even the SFT cross-entropy loss on the LLM
+                Engine page are all "assume a generative model &rarr; write the likelihood &rarr; maximize
+                it." Learning MLE here, where it happens to reduce to something familiar, is what makes
+                every later derivation feel like reapplication instead of a brand-new trick each time.
+            </li>
+        </ol>
+    </div>
+
+</div>
+
+</body>
+</html>

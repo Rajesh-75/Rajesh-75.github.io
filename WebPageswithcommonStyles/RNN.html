@@ -5,38 +5,178 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recurrent Neural Networks</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Hide body initially to prevent flickering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+body {
+  visibility: hidden;
+}
+.ed-scope {
+  font-family: 'Segoe UI', sans-serif;
+  color: #1e293b;
+}
+.ed-scope .section-block {
+  margin: 30px 0;
+}
+.ed-scope .sec-num {
+  display: inline-block;
+  min-width: 26px;
+  padding: 2px 6px;
+  margin-right: 6px;
+  background: #1e3a8a;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 5px;
+  text-align: center;
+  vertical-align: middle;
+}
+.ed-scope h2 {
+  color: #1e3a8a;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 8px;
+}
+.ed-scope .step-pill {
+  display: inline-block;
+  background: #eeedfe;
+  color: #3c3489;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  margin-right: 8px;
+}
+.ed-scope .callout {
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin: 16px 0;
+  border: 1px solid;
+}
+.ed-scope .callout-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.ed-scope .callout-blue {
+  background:#eff6ff;
+  border-color:#93c5fd;
+}
+.ed-scope .callout-green {
+  background:#f0fdf4;
+  border-color:#86efac;
+}
+.ed-scope .callout-purple {
+  background:#f5f3ff;
+  border-color:#c4b5fd;
+}
+.ed-scope .callout-amber {
+  background:#fffbeb;
+  border-color:#fcd34d;
+}
+.ed-scope .callout-red {
+  background:#fef2f2;
+  border-color:#fca5a5;
+}
+.ed-scope .fig-wrap {
+  margin: 20px 0;
+  text-align: center;
+}
+.ed-scope .fig-wrap svg {
+  width: 100%;
+  max-width: 700px;
+  height: auto;
+}
+.ed-scope .fig-caption {
+  font-style: italic;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+.ed-scope .math-block {
+  overflow-x: auto;
+  margin: 15px 0;
+}
+.ed-scope .divider {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 32px 0;
+}
+.ed-scope .code-block {
+  background-color: #0f172a;
+  color: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+  font-family: 'Fira Code','Courier New',monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  margin: 20px 0;
+  border-left: 4px solid #10b981;
+}
+.ed-scope .code-block .ch {
+  color: #64748b;
+  font-style: italic;
+}
+.ed-scope .code-block .cc {
+  color: #64748b;
+  font-style: italic;
+}
+.ed-scope table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin: 15px 0;
+}
+.ed-scope table th, .ed-scope table td {
+  padding: 8px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+.ed-scope table thead tr {
+  border-bottom: 2px solid #cbd5e1;
+  background: #f8fafc;
+}
+.ed-scope .bridge {
+  background: #1e3a8a;
+  color: #f8fafc;
+  padding: 22px 24px;
+  border-radius: 10px;
+  margin: 30px 0;
+  line-height: 1.7;
+}
+.ed-scope .bridge strong {
+  color: #93c5fd;
+}
+</style>
+    <!-- Load global MathJax configuration first -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <style>
-        .derivation-box {
-            background-color: #f8fafc;
-            border-left: 4px solid #2563eb;
-            padding: 20px;
-            margin: 25px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        .derivation-step {
-            margin-bottom: 20px;
-        }
-        .derivation-step:last-child {
-            margin-bottom: 0;
-        }
-        .code-block {
-            background-color: #0f172a;
-            color: #f8fafc;
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Fira Code', 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            overflow-x: auto;
-            margin: 20px 0;
-            border-left: 4px solid #10b981;
-        }
-        .code-keyword { color: #f43f5e; font-weight: bold; }
-        .code-comment { color: #64748b; font-style: italic; }
-        .code-var { color: #38bdf8; }
-    </style>
+    
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
 </head>
 <body>
 
@@ -838,47 +978,7 @@ For Epoch = 1 To MaxEpochs:
     
 
 <section id="rnn-encoder-decoder-mt" class="ed-scope">
-<style>
-  .ed-scope { font-family: 'Segoe UI', sans-serif; color: #1e293b; }
-  .ed-scope .section-block { margin: 30px 0; }
-  .ed-scope .sec-num {
-    display: inline-block; min-width: 26px; padding: 2px 6px; margin-right: 6px;
-    background: #1e3a8a; color: #fff; font-size: 0.75rem; font-weight: 700;
-    border-radius: 5px; text-align: center; vertical-align: middle;
-  }
-  .ed-scope h2 { color: #1e3a8a; border-bottom: 2px solid #3b82f6; padding-bottom: 8px; }
-  .ed-scope .step-pill {
-    display: inline-block; background: #eeedfe; color: #3c3489; font-size: 0.8rem;
-    font-weight: 700; padding: 2px 10px; border-radius: 999px; margin-right: 8px;
-  }
-  .ed-scope .callout { border-radius: 8px; padding: 16px 18px; margin: 16px 0; border: 1px solid; }
-  .ed-scope .callout-title { font-weight: 700; margin-bottom: 6px; }
-  .ed-scope .callout-blue   { background:#eff6ff; border-color:#93c5fd; }
-  .ed-scope .callout-green  { background:#f0fdf4; border-color:#86efac; }
-  .ed-scope .callout-purple { background:#f5f3ff; border-color:#c4b5fd; }
-  .ed-scope .callout-amber  { background:#fffbeb; border-color:#fcd34d; }
-  .ed-scope .callout-red    { background:#fef2f2; border-color:#fca5a5; }
-  .ed-scope .fig-wrap { margin: 20px 0; text-align: center; }
-  .ed-scope .fig-wrap svg { width: 100%; max-width: 700px; height: auto; }
-  .ed-scope .fig-caption { font-style: italic; color: #64748b; font-size: 0.85rem; margin-top: 8px; }
-  .ed-scope .math-block { overflow-x: auto; margin: 15px 0; }
-  .ed-scope .divider { border: none; border-top: 1px solid #e2e8f0; margin: 32px 0; }
-  .ed-scope .code-block {
-    background-color: #0f172a; color: #f8fafc; padding: 20px; border-radius: 8px;
-    font-family: 'Fira Code','Courier New',monospace; font-size: 0.9rem; line-height: 1.5;
-    overflow-x: auto; margin: 20px 0; border-left: 4px solid #10b981;
-  }
-  .ed-scope .code-block .ch { color: #64748b; font-style: italic; }
-  .ed-scope .code-block .cc { color: #64748b; font-style: italic; }
-  .ed-scope table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 15px 0; }
-  .ed-scope table th, .ed-scope table td { padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
-  .ed-scope table thead tr { border-bottom: 2px solid #cbd5e1; background: #f8fafc; }
-  .ed-scope .bridge {
-    background: #1e3a8a; color: #f8fafc; padding: 22px 24px; border-radius: 10px;
-    margin: 30px 0; line-height: 1.7;
-  }
-  .ed-scope .bridge strong { color: #93c5fd; }
-</style>
+
 
   <h2>10. RNN Encoder&ndash;Decoder for Machine Translation</h2>
   <p>

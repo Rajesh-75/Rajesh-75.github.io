@@ -1,0 +1,120 @@
+
+git ls-files  //to see all the files currently being tracked by Git in your local copy of the repository is:
+git clone <repository_url> my-custom-folder
+git status - //Shows the state of your working directory.
+git 
+git push origin main
+# OR, if you used 'master' as your branch name:
+git push origin master
+git log //git log --since="last sunday" --oneline
+git fetch origin //git fetch downloads the latest history, branches, and tags from GitHub to your local computer, but it does not change any of your actual code files.
+git diff main origin/main //To see exactly which lines of code or text are different between your current local work and the GitHub version:
+git remote -v
+git remote add origin https://github.com/Sankar/MyPage.git
+git checkout origin/master -- style.css //Run this command to pull the GitHub version into your working folder.
+
+
+For adding repository to your github (make the repository folder - mkdir LLMSource and change to the folder- cd LLMSource) then do the following.
+# 1.
+git init
+
+# 2. Add your index file to the staging area
+git add index.html
+
+# 3. Create your first commit
+git commit -m "Initial commit for GitHub Pages"
+
+# 4. Ensure your main branch is named 'main'
+git branch -M main
+
+# 5. Link your local folder to your new GitHub repository
+git remote add origin https://github.com/Rajesh-75/Rajesh-75.github.io.git
+
+# 6. Push the code to GitHub
+git push -u origin main
+
+
+Explanation
+Steps 1–3 (Preparation): You are initializing the "brain" of your project (git init) and telling Git which files to track (git add and git commit). At this stage, everything is strictly local to your machine.
+
+Step 4 (Branching): git branch -M main ensures your default branch is named main. This is the standard naming convention now used by GitHub to avoid confusion with older naming practices (like master).
+
+Step 5 (The Link): git remote add origin is the critical step. It acts as a pointer, creating a shortcut so that when you type origin in the future, Git knows to look at that specific URL at github.com.
+
+Step 6 (The Sync): git push -u origin main uploads your commits to the GitHub cloud. The -u flag stands for "upstream," which links your local main branch to the main branch on GitHub permanently. After this, you can just type git push without any extra flags.
+
+
+git checkout -b feature-llm-codes
+
+
+
+
+To fix bugs while keeping your `main` project stable, follow this "branch-and-fix" workflow. This ensures you are always working on the most recent version of your code from GitHub.
+
+### Step 1: Sync with the latest GitHub code
+
+Before creating a new branch, ensure your local `main` branch is perfectly in sync with what is currently on GitHub.
+
+```bash
+# Switch to main
+git checkout main
+
+# Get the latest updates from GitHub
+git fetch origin
+
+# Update your local main to match the remote version
+git pull origin main
+
+```
+
+---
+
+### Step 2: Create a dedicated "Bug Fix" branch
+
+Create a new branch specifically for these fixes. This keeps your `main` branch clean until the bugs are confirmed as solved.
+
+```bash
+# Create and switch to the fix branch
+git checkout -b fix-bugs-june-2026
+
+```
+
+---
+
+### Step 3: Fix the bugs
+
+Now, perform your coding work. Open your files, make the necessary changes, and save them. Once the bugs are resolved, save your progress:
+
+```bash
+# Stage the fixed files
+git add .
+
+# Commit the fixes with a descriptive message
+git commit -m "Fixed identified bugs in code modules"
+
+```
+
+---
+
+### Step 4: Push to GitHub and Merge
+
+Now that your branch is ready, push it to GitHub.
+
+```bash
+# Push the new branch to GitHub
+git push -u origin fix-bugs-june-2026
+
+```
+
+#### Final Step: Merge back to Main
+
+Once you have tested your code and confirmed the bugs are gone:
+
+1. Go to your repository on [GitHub.com](https://github.com).
+2. You will see a yellow banner stating **"fix-bugs-june-2026 had recent pushes"**.
+3. Click the **Compare & pull request** button.
+4. Click **Create pull request**, then click **Merge pull request**.
+
+This is the professional standard for managing bugs. By using this process, you prevent broken code from ever affecting your primary `main` branch.
+
+**Is there a specific file or bug you are currently working on that you would like help debugging before you perform the merge?**

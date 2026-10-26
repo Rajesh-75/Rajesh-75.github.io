@@ -3,26 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estimation Theory - Likelihood & Efficiency</title>
+    <title>Estimation Theory - Likelihood &amp; Efficiency</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<!-- Hide body until MathJax has typeset the page (a fallback below shows it anyway) -->
+<style>
+body {
+  visibility: hidden;
+}
+</style>
+    <!-- Load global MathJax configuration first -->
 
     <script>
-    window.MathJax = {
-        tex: {
-            inlineMath: [['$', '$'], ['\\(', '\\)']],
-            displayMath: [['$$', '$$']],
-            processEscapes: true
-        }
-    };
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
     </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        /* Fallback: if MathJax cannot load (offline, blocked CDN), do not leave the page blank */
+        setTimeout(function () { document.body.style.visibility = 'visible'; }, 4000);
+    </script>
 </head>
 <body>
 
     <h2>Estimation Theory and Applications</h2>
     
     <p>
-        Predicting Indian elections is one of the most complex applications of estimation because the "Truth" (the actual vote of 900+ million people) is only revealed on counting day. Until then, pollsters must rely on <strong>"Snapshots"</strong> (Opinion and Exit Polls).
+        Predicting Indian elections is one of the most complex applications of estimation because the "Truth" (the actual choice of 900+ million eligible voters) is only revealed on counting day. Until then, pollsters must rely on <strong>"Snapshots"</strong> (Opinion and Exit Polls).
     </p>
 
     <div class="intuition-box">
@@ -33,7 +61,7 @@
     <p>In statistics, there are two widely used types of estimations:</p>
     <ul>
         <li><strong>(1) Point Estimate:</strong> Provides a single specific number. <br><em>Example: "Our model predicts 285 seats."</em></li>
-        <li><strong>(2) Interval Estimate:</strong> Provides a range and confidence interval. <br><em>Example: "We are 95% confident the result is between 272 and 298 seats."</em></li>
+        <li><strong>(2) Interval Estimate:</strong> Provides a range of plausible values together with a confidence level. <br><em>Example: "We are 95% confident the result is between 272 and 298 seats."</em></li>
     </ul>
 
     <h3>Criteria for a Good Estimator</h3>
@@ -41,7 +69,7 @@
         <thead>
             <tr>
                 <th>Criteria</th>
-                <th>Necessary & Sufficient Conditions</th>
+                <th>Defining Condition</th>
                 <th>Real-World Example (The "Story")</th>
                 <th>Key Insight</th>
             </tr>
@@ -50,21 +78,21 @@
             <tr>
                 <td style="font-weight: bold;">Unbiasedness</td>
                 <td>$$E[\hat{\theta}] = \theta$$</td>
-                <td><strong>The Port Depth:</strong> An unbiased sonar reads 17.8m and 18.2m; the average hits the true 18m exactly.</td>
+                <td><strong>The Port Depth:</strong> An unbiased sonar's repeated readings (e.g. 17.8m and 18.2m) scatter around the true 18m, so their long-run average is exactly 18m.</td>
                 <td>No systematic "offset" in the tool.</td>
             </tr>
             <tr>
                 <td style="font-weight: bold;">Consistency</td>
-                <td>$$\lim_{n \to \infty} P(|\hat{\theta}_n - \theta| < \epsilon) = 1$$</td>
+                <td>$$\lim_{n \to \infty} P(|\hat{\theta}_n - \theta| < \epsilon) = 1 \quad \text{for every } \epsilon > 0$$</td>
                 <td><strong>Exit Polling:</strong> Predictions converge tightly to the truth as more voters are counted.</td>
-                <td>As sample size ($n$) grows, the probability that your estimate $(\hat{\theta}_n)$ stays within a tiny distance $(\epsilon)$ of the absolute truth $(\theta)$ becomes a 100% certainty. In other words, Estimate "collapses" onto truth as data grows.</td>
+                <td>As sample size ($n$) grows, the probability that your estimate $(\hat{\theta}_n)$ stays within a tiny distance $(\epsilon)$ of the absolute truth $(\theta)$ approaches 1 (certainty). In other words, the estimate "collapses" onto the truth as data grows.</td>
             </tr>
             <tr>
                 <td style="font-weight: bold;">Efficiency</td>
-                <td>$$Var(\hat{\theta}) = \frac{1}{I(\theta)}$$</td>
-                <td><strong>Ship Tracking:</strong> Algorithm A has 5-min variance; Algorithm B has 20-min. A is more efficient.</td>
-                <td>This signifies that the estimator has reached the 'speed limit' of precision. It is impossible for any other unbiased estimator to have a smaller variance than this.Achieves the Cramer-Rao Lower Bound. Efficient estimator must be unbiased. <ul>
-				<li>$Var(\hat{\theta})$: The "wobbliness" or uncertainty of our estimate.$I(\theta)$: The "Information" available in the data.</li>
+                <td>$$Var(\hat{\theta}) = \frac{1}{I(\theta)} \quad \left(\text{in general, } Var(\hat{\theta}) \ge \frac{1}{I(\theta)}\right)$$</td>
+                <td><strong>Ship Tracking:</strong> Algorithm A has a variance of 5 min&sup2;; Algorithm B has 20 min&sup2;. A is more efficient (relative efficiency 20/5 = 4).</td>
+                <td>This signifies that the estimator has reached the 'speed limit' of precision. It is impossible for any other unbiased estimator to have a smaller variance than this. It achieves the Cram&eacute;r&ndash;Rao Lower Bound, and an efficient estimator must be unbiased. <ul>
+				<li>$Var(\hat{\theta})$: The "wobbliness" or uncertainty of our estimate. $I(\theta)$: The "Information" (Fisher information) available in the data, $I(\theta)=E\left[\left(\frac{\partial \ln L}{\partial \theta}\right)^2\right]$.</li>
 				<li>The Inverse Relationship: As Information ($I$) increases, the minimum possible Variance ($1/I$) decreases.</li>
 				<li>This specific value ($1/I$) is known as the Cramér-Rao Lower Bound (CRLB). An estimator that hits this bound is called Efficient.</li>
 				</ul></td>
@@ -72,8 +100,14 @@
             <tr>
                 <td style="font-weight: bold;">Sufficiency</td>
                 <td>$$f(x|\theta) = g(T(x), \theta) \cdot h(x)$$</td>
-                <td><strong>Income Tax:</strong> You only need the <em>sum</em> of incomes to estimate total wealth, not individual names.</td>
-                <td>Captures 100% of the useful information.In the factorization formula $L(\theta) = g(T(x), \theta) \cdot h(x)$, information is "useful" only if it interacts with $\theta$.The function $g$ contains both your statistic $T(x)$ and $\theta$.Because $h(x)$ does not contain $\theta$, any variation in that part of the data is just "noise" that doesn't change your estimate of the truth.</td>
+                <td><strong>Income Tax:</strong> To estimate the average income you only need the <em>sum</em> of incomes (and the head-count), not who earned what.</td>
+                <td>Captures 100% of the useful information about $\theta$.
+                    <ul>
+                        <li>In the factorization formula $f(x|\theta) = g(T(x), \theta) \cdot h(x)$ (written $L_1 \cdot L_2$ below), information is "useful" only if it interacts with $\theta$.</li>
+                        <li>The function $g$ contains both your statistic $T(x)$ and $\theta$.</li>
+                        <li>Because $h(x)$ does not contain $\theta$, any variation in that part of the data is just "noise" that does not change your estimate of the truth.</li>
+                    </ul>
+                </td>
             </tr>
         </tbody>
     </table>
@@ -82,11 +116,11 @@
 
     <h3>Example: Sample Mean is Unbiased Estimator</h3>
     <div class="intuition-box">
-        <strong>Context:</strong> To find the average height ($\mu$) of every adult in Kerala, we take a sample ($x_i$) at Vizhinjam Port.
+        <strong>Context:</strong> To estimate the average height ($\mu$) of all adults in Kerala, we take a random sample of $n$ adults ($x_1, \dots, x_n$) drawn from across the state. (A sample taken only at Vizhinjam Port would not be representative and could itself be biased.)
     </div>
     <p><strong>The Derivation:</strong></p>
-    $$E[\bar{x}] = E\left[ \frac{1}{n} \sum x_i \right] = \frac{1}{n} \sum E[x_i] = \frac{1}{n} (n\mu) = \mu$$
-    <p>This proves $E[\bar{x}] = \mu$, meaning the sample mean is "aimed" perfectly at the truth.</p>
+    $$E[\bar{x}] = E\left[ \frac{1}{n} \sum_{i=1}^{n} x_i \right] = \frac{1}{n} \sum_{i=1}^{n} E[x_i] = \frac{1}{n} (n\mu) = \mu$$
+    <p>Since every observation has $E[x_i] = \mu$, linearity of expectation gives $E[\bar{x}] = \mu$ (independence is not even needed here), meaning the sample mean is "aimed" perfectly at the truth.</p>
 
     <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
 
@@ -97,17 +131,17 @@
     </p>
 
     <ul>
-        <li><strong>Definition:</strong> For a set of independent observations $x_1, x_2, \dots, x_n$, the Likelihood Function is the joint probability density viewed as a function of the parameter $\theta$:
+        <li><strong>Definition:</strong> For independent, identically distributed observations $x_1, x_2, \dots, x_n$, the Likelihood Function is the joint probability density (or mass function) viewed as a function of the parameter $\theta$:
             $$L(\theta) = \prod_{i=1}^{n} f(x_i | \theta)$$
         </li>
         <li><strong>The "Reverse" Logic:</strong> In our Port Depth example, if we measure 17.5m, the Likelihood Function tells us how "plausible" it is that the true depth $\theta$ is 18m versus 15m.</li>
-        <li><strong>Not a Distribution:</strong> Unlike a probability distribution, the area under a Likelihood Function does <em>not</em> necessarily sum to 1.</li>
+        <li><strong>Not a Distribution:</strong> Unlike a probability distribution, the area under a Likelihood Function, $\int L(\theta)\,d\theta$, does <em>not</em> in general equal 1.</li>
     </ul>
 
     <div class="intuition-box">
-        <strong>Finding a Sufficient Estimator:</strong>
+        <strong>Finding a Sufficient Statistic:</strong>
         <p>
-            To identify a <strong>Sufficient Statistic</strong> $T(x)$, we use the Fisher-Neyman Factorization Theorem. This requires us to write the Likelihood Function as a product of two distinct functions, $L_1$ and $L_2$:
+            To identify a <strong>Sufficient Statistic</strong> $T(x)$, we use the Fisher-Neyman Factorization Theorem. This requires us to write the Likelihood Function as a product of two distinct functions, $L_1$ and $L_2$ (written $g$ and $h$ in the table above):
         </p>
         <p style="text-align: center; font-size: 1.2rem;">
             $$L(\theta) = L_1(T(x), \theta) \cdot L_2(x)$$
@@ -123,14 +157,14 @@
 
     <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
 
-    <h3>Example:Sample Mean is a Consistent Estimator</h3>
+    <h3>Example: Sample Mean is a Consistent Estimator</h3>
     
     <p>We want to show that the mean of a sample ($\bar{x}$) taken from a normal population is a <strong>Consistent Estimator</strong> of the population mean ($\mu$).</p>
 
-    <h3>The Mathematical Derivation</h3>
+    <h4>The Mathematical Derivation</h4>
 
     <p><strong>Step 1: Properties of the Sample Mean</strong></p>
-    <p>Given a normal population where each observation has $E(x_i) = \mu$ and $V(x_i) = \sigma^2$:</p>
+    <p>Given independent observations from a normal population, each with $E(x_i) = \mu$ and $V(x_i) = \sigma^2$ (independence is what gives the variance formula below):</p>
     <ul>
         <li>Expected Value: $E(\bar{x}) = \mu$</li>
         <li>Variance: $V(\bar{x}) = \frac{\sigma^2}{n}$</li>
@@ -146,13 +180,14 @@
 
     <p>Now, we take the limit as the sample size $n$ approaches infinity:</p>
     $$\lim_{n \to \infty} P(|\bar{x} - \mu| \ge \epsilon) \le \lim_{n \to \infty} \frac{\sigma^2}{n \epsilon^2} = 0$$
+    <p>A probability cannot be negative, so the left-hand side is squeezed to 0. Equivalently, $\lim_{n \to \infty} P(|\bar{x} - \mu| < \epsilon) = 1$, which is exactly the definition of consistency in the table above.</p>
     <p>
-        As $n$ increases, the probability of the sample mean ($\bar{x}$) differing from the true mean ($\mu$) by any amount vanishes. This mathematically proves that $\bar{x}$ is a <strong>consistent estimator</strong> of $\mu$.
+        As $n$ increases, the probability of the sample mean ($\bar{x}$) differing from the true mean ($\mu$) by more than any fixed $\epsilon > 0$ vanishes. This mathematically proves that $\bar{x}$ is a <strong>consistent estimator</strong> of $\mu$.
     </p>
 
     <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
 
-    <h3>Example:Efficient Estimator</h3>
+    <h3>Example: Efficient Estimator</h3>
 
     <div class="intuition-box">
         <strong>The Problem:</strong>
@@ -163,14 +198,14 @@
         </ul>
     </div>
 
-    <p><strong>Step 1</strong>: Check for Unbiasedness
+    <p><strong>Step 1</strong>: Check for Unbiasedness</p>
     <p>For an estimator to be compared fairly, we check if $E(t) = \mu$. Since $E(x_1) = E(x_2) = E(x_3) = \mu$:</p>
     <ul>
         <li>$E(t_1) = E[3x_1 + 2x_2 - 4x_3] = 3\mu + 2\mu - 4\mu = \mu$ (Unbiased)</li>
         <li>$E(t_2) = E[3x_1 - 5x_2 + 3x_3] = 3\mu - 5\mu + 3\mu = \mu$ (Unbiased)</li>
     </ul>
 
-    <p><strong>Step 2</strong>: Calculate Variances
+    <p><strong>Step 2</strong>: Calculate Variances</p>
     <p>Since the observations are independent, $V(ax + by) = a^2V(x) + b^2V(y)$. Given $V(x_i) = \sigma^2$:</p>
     
     <p><strong>For $t_1$:</strong></p>
@@ -179,18 +214,21 @@
     <p><strong>For $t_2$:</strong></p>
     $$V(t_2) = 3^2\sigma^2 + (-5)^2\sigma^2 + 3^2\sigma^2 = (9 + 25 + 9)\sigma^2 = 43\sigma^2$$
 
-    <p><strong>Step 3</strong>: Determine Relative Efficiency
+    <p><strong>Step 3</strong>: Determine Relative Efficiency</p>
     <p>Relative Efficiency (RE) is the ratio of the variances. We calculate $RE(t_1, t_2)$ as:</p>
     $$RE(t_1, t_2) = \frac{V(t_2)}{V(t_1)} = \frac{43\sigma^2}{29\sigma^2} \approx 1.48$$
 
     <div class="intuition-box">
           <p>
-            An estimator is more efficient if it has a **lower variance**. 
+            An estimator is more efficient if it has a <strong>lower variance</strong>. 
             Since $V(t_1) = 29\sigma^2$ and $V(t_2) = 43\sigma^2$, <strong>$t_1$ is more efficient than $t_2$.</strong>
         </p>
         <p>The relative efficiency of 1.48 indicates that $t_1$ is roughly 48% more efficient than $t_2$.</p>
     </div>
-	<h2>Example: Sufficiency of the Sample Mean</h2>
+
+    <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
+
+    <h3>Example: Sufficiency of the Sample Mean</h3>
 
     <p>
         <strong>Statement:</strong> If $\bar{x}$ is the mean of a random sample drawn from a population following $N(\mu, \sigma^2)$, show that $\bar{x}$ is a <strong>sufficient estimator</strong> of $\mu$ when $\sigma$ is known.
@@ -200,10 +238,10 @@
         <strong>The Goal:</strong> 
         We must factor the Likelihood Function $L(\mu)$ into two parts: 
         $L(\mu) = L_1(\bar{x}, \mu) \cdot L_2(x_1, \dots, x_n)$. 
-        If $L_1$ depends on the data only through $\bar{x}$, then $\bar{x}$ is sufficient.
+        If $L_1$ depends on the data only through $\bar{x}$ and $L_2$ does not involve $\mu$, then $\bar{x}$ is sufficient.
     </div>
 
-    <h3>The Step-by-Step Proof</h3>
+    <h4>The Step-by-Step Proof</h4>
 
     <p><strong>Step 1: Write the Likelihood Function</strong></p>
     <p>For a sample from a Normal distribution, the joint PDF (Likelihood) is:</p>
@@ -217,7 +255,7 @@
     <p>Substituting this identity back into our Likelihood equation, we get:</p>
     $$L(\mu) = \underbrace{\exp \left[ -\frac{n(\bar{x} - \mu)^2}{2\sigma^2} \right]}_{L_1(\bar{x}, \mu)} \cdot \underbrace{\left( \frac{1}{2\pi\sigma^2} \right)^{n/2} \exp \left[ -\frac{\sum (x_i - \bar{x})^2}{2\sigma^2} \right]}_{L_2(x_1, \dots, x_n)}$$
 
-    <h3>Conclusion</h3>
+    <h4>Conclusion</h4>
     <ul>
         <li><strong>$L_1(\bar{x}, \mu)$:</strong> This part contains the parameter $\mu$ and the statistic $\bar{x}$.</li>
         <li><strong>$L_2(x_1, \dots, x_n)$:</strong> Since $\sigma$ is known, this part does <strong>not</strong> depend on $\mu$. It is purely a function of the sample data.</li>
@@ -229,7 +267,7 @@
 
     <div class="intuition-box">
         <strong>Key Insight for Students:</strong> 
-        This means if you know the sample mean ($\bar{x}$), keeping the individual $x_i$ measurements (the raw heights of every person at the port) provides no additional information about the true population mean ($\mu$). The mean $\bar{x}$ has "exhausted" the information in the sample.
+        This means if you know the sample mean ($\bar{x}$), keeping the individual $x_i$ measurements (the raw heights of every person in the sample) provides no additional information about the true population mean ($\mu$). The mean $\bar{x}$ has "exhausted" the information in the sample.
     </div>
 <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
 
@@ -267,13 +305,19 @@
     </strong>
 </p>
 
+</div>
+
 <div class="intuition-box">
     <strong>Breaking down the components:</strong>
     <ul>
         <li>$\bar{x}$: The sample mean (our point estimator).</li>
         <li>$\sigma/\sqrt{n}$: The Standard Error, which represents the standard deviation of the sampling distribution.</li>
-        <li>$z_{\alpha/2}$: The critical value from the standard normal distribution corresponding to the level of significance $\alpha$.</li>
+        <li>$z_{\alpha/2}$: The critical value from the standard normal distribution leaving an area of $\alpha/2$ in each tail. For $\alpha = 0.05$, $z_{0.025} = 1.96$, which gives the familiar 95% interval $\bar{x} \pm 1.96\,\sigma/\sqrt{n}$.</li>
     </ul>
+</div>
+
+<div class="intuition-box">
+    <strong>Interpretation:</strong> "95% confidence" describes the <em>method</em>: if we repeated the sampling many times, about 95% of the intervals built this way would contain the true $\mu$. It does not mean that $\mu$ has a 95% chance of lying in one particular, already-computed interval ($\mu$ is fixed; the interval is what varies from sample to sample).
 </div>
 </body>
 </html>

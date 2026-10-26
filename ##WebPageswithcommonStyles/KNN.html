@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Hide body initially to prevent flickering -->
+    <style>body { visibility: hidden; }</style>
+    <!-- Load global MathJax configuration first -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Nearest Neighbours &mdash; From Density Estimation to a Classification Rule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+  :root{
+    --paper: #EDF2F7;
+    --paper-grid: #D6E1EC;
+    --ink: #14304D;
+    --ink-soft: #3C5A78;
+    --ink-faint: #6F8AA4;
+    --card: #FFFFFF;
+    --rule: #B9CADA;
+    --class-a: #1F6F8B;
+    --class-a-bg: #DCEBF0;
+    --class-b: #B4791F;
+    --class-b-bg: #F3E6D2;
+    --class-c: #7B4B94;
+    --class-c-bg: #E9E0EF;
+    --query: #B23A48;
+    --query-bg: #F6DEE1;
+    --font-display: 'JetBrains Mono', 'Courier New', monospace;
+    --font-body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --font-data: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background: #FFFFFF;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
+  a{ color: var(--class-a); }
+
+  .wrap{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 28px 120px;
+  }
+
+  /* ---------- top rail ---------- */
+  .rail{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 28px;
+    max-width: 880px;
+    margin: 0 auto;
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .rail span.dot{ color: var(--query); }
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding: 40px 0 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  h1{
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: clamp(32px, 5vw, 48px);
+    line-height: 1.12;
+    margin: 0 0 20px;
+    letter-spacing: -0.01em;
+  }
+  .lede{
+    font-size: 19px;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin-bottom: 34px;
+  }
+
+  .hero-diagram{
+    margin: 0 0 8px;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 10px;
+  }
+  .hero-diagram svg{ display:block; width:100%; height:auto; }
+  .hero-cap{
+    font-family: var(--font-data);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    padding: 10px 4px 30px;
+    border-bottom: none;
+  }
+
+  /* ---------- section shell ---------- */
+  section{ padding: 56px 0; border-bottom: 1px solid var(--rule); }
+  section:last-of-type{ border-bottom: none; }
+
+  .tag{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--card);
+    background: var(--ink);
+    padding: 4px 10px;
+    border-radius: 2px;
+    margin-bottom: 18px;
+  }
+  .tag.num::before{
+    content: attr(data-n);
+    color: var(--query);
+    font-weight: 700;
+  }
+
+  h2{
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 28px;
+    margin: 0 0 20px;
+    letter-spacing: -0.005em;
+  }
+  h3{
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 20px;
+    margin: 34px 0 12px;
+    color: var(--ink);
+  }
+  p{ margin: 0 0 16px; }
+  ul, ol{ margin: 0 0 16px; padding-left: 22px; }
+  li{ margin-bottom: 8px; }
+
+  .callout{
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--class-a);
+    border-radius: 2px;
+    padding: 18px 22px;
+    margin: 22px 0;
+    font-size: 16px;
+  }
+  .callout.warn{ border-left-color: var(--query); }
+  .callout .k{ font-family: var(--font-data); color: var(--query); font-weight: 500; }
+
+  .formula-card{
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 22px 26px;
+    margin: 20px 0;
+    text-align: center;
+    overflow-x: auto;
+  }
+  .formula-card .label{
+    display:block;
+    text-align: left;
+    font-family: var(--font-data);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+    letter-spacing: 0.02em;
+  }
+
+  .grid-3{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 22px 0;
+  }
+  .spec-card{
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 16px 18px;
+  }
+  .spec-card .swatch{
+    width: 14px; height:14px;
+    border-radius: 50%;
+    display:inline-block;
+    margin-right: 8px;
+    vertical-align: -2px;
+  }
+  .spec-card h4{
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing:0.04em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+  }
+  .spec-card .val{ font-family: var(--font-data); font-size: 15px; color: var(--ink-soft); }
+
+  code, .mono{ font-family: var(--font-data); font-size: 0.94em; }
+  .algorithm-box{
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 18px 22px 18px 10px;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .algorithm-box ol.code-lines{
+    margin: 0;
+    padding-left: 3.2em;
+    font-family: var(--font-data);
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--ink);
+  }
+  .algorithm-box ol.code-lines li{
+    white-space: pre;
+    padding-left: 12px;
+    border-left: 1px solid var(--rule);
+  }
+  .algorithm-box ol.code-lines li::marker{
+    color: var(--query);
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .algorithm-box ol.code-lines li:hover{
+    background-color: var(--paper);
+  }
+  .algorithm-box .cm{ color: var(--ink-faint); font-style: italic; }
+  .algorithm-box .kw{ color: var(--class-a); }
+  .algorithm-box .hl{ color: var(--query); font-weight: 600; }
+
+  /* ---------- widget ---------- */
+  .widget{
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 22px;
+    margin: 24px 0 10px;
+  }
+  .widget-top{
+    display:flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+  .k-control{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    font-family: var(--font-data);
+    font-size: 14px;
+  }
+  .k-control input[type=range]{
+    width: 220px;
+    accent-color: var(--query);
+  }
+  .k-control .kval{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width: 30px; height: 30px;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+  .hint{
+    font-family: var(--font-data);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+  .widget-body{
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 20px;
+  }
+  .plot-box{
+    border: 1px solid var(--paper-grid);
+    border-radius: 3px;
+    background: #F8FAFC;
+    touch-action: none;
+  }
+  .readout{
+    display:flex;
+    flex-direction: column;
+    gap: 14px;
+    justify-content: center;
+  }
+  .vote-row{ }
+  .vote-row .vr-top{
+    display:flex; justify-content: space-between;
+    font-family: var(--font-data);
+    font-size: 13px;
+    margin-bottom: 5px;
+  }
+  .vote-row .vr-bar{
+    height: 14px;
+    background: var(--paper-grid);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .vote-row .vr-fill{
+    height: 100%;
+    width: 0%;
+    transition: width 120ms ease-out;
+  }
+  .posterior-line{
+    font-family: var(--font-data);
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    padding-top: 4px;
+    border-top: 1px dashed var(--rule);
+  }
+  .predict-banner{
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    border-radius: 3px;
+    background: var(--paper-grid);
+    border: 1px solid var(--rule);
+  }
+  .predict-banner b{ font-family: var(--font-data); }
+
+  @media (max-width: 680px){
+    .widget-body{ grid-template-columns: 1fr; }
+    .grid-3{ grid-template-columns: 1fr; }
+    h1{ font-size: 30px; }
+  }
+
+  footer{
+    padding: 40px 0 10px;
+    font-family: var(--font-data);
+    font-size: 13px;
+    color: var(--ink-faint);
+    display:flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+</style>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body>
+
+<div class="rail"><span>Classical ML <span class="dot">&middot;</span> Nonparametric Methods</span><span>K&mdash;Nearest Neighbours</span></div>
+
+<div class="wrap">
+
+  <!-- ============ SECTION 1: INTRODUCTION ============ -->
+  <section id="intro">
+    <span class="tag num" data-n="01">Introduction</span>
+    <h1>Non-parametric models</h1>
+
+    <p>Most classifiers you meet first are <strong>parametric</strong>: you assume the data has a particular shape (say, each class is Gaussian), and then fit a small, fixed number of parameters &mdash; a mean and a covariance per class, for instance. Once fitted, the training data itself can be thrown away; only those few numbers are kept, and they're used to answer every future query. The catch is that the whole model lives or dies by that shape assumption. If the real data isn't Gaussian-shaped, a Gaussian classifier will misfit it in a systematic, uncorrectable way, no matter how much data you feed it.</p>
+
+    <strong>Non-parametric models</strong> make no rigid a priori structural or distributional assumptions about the underlying data-generation process, distinguishing them from parametric architectures such as Support Vector Machines or artificial neural networks(ANN). Consequently, they bypass explicit parameter optimization via empirical risk minimization, objective cost functions, and gradient-based optimization algorithms. Instead of fitting a fixed formula, they let the training data itself stand in for the model &mdash; predictions are made by directly examining the training points near the query, and the effective complexity can grow as more data arrives. <strong>K-NN</strong> is a non-parametric method in exactly this sense: nothing is "trained" and thrown away; the entire labelled set is kept, and every prediction re-examines it from scratch. The general formula below is the starting point for this whole family of non parametric methods.</p>
+
+    <p>K-NN (and KDE alongside it) is built on a geometric concept: for a small region of volume &mdash; the sphere shown below &mdash; <span class="mono">V</span> around a point, containing <span class="mono">K</span> of <span class="mono">N</span> total training samples,</p>
+    <div class="formula-card">
+      <span class="label">the general estimator follows the formula</span>
+      \[ p(x) \approx \frac{K}{NV} \]
+      <p style="margin: 10px 0 0; font-size: 14px; color: var(--ink-soft); text-align: left;">where <span class="mono">K</span> is the number of points enclosed within the volume, and <span class="mono">V</span> is the volume of the sphere.</p>
+    </div>
+
+    <p>This single formula has two parameters to control, <span class="mono">V</span> and <span class="mono">K</span>. Holding either one fixed and solving for the other gives a different named method: fix <span class="mono">V</span> and you get KDE; fix <span class="mono">K</span> and you get K-NN. K-NN is our point of discussion here, but it's worth briefly studying the other method first: seeing what it fixes, and where that choice runs into trouble, is exactly what motivates why K-NN fixes the <em>other</em> variable instead. Without that contrast, "K-NN fixes K" reads as an arbitrary design decision rather than a deliberate fix.</p>
+
+    <div class="callout">
+      <p style="margin-bottom:0;"><strong>Kernel density estimation (KDE), briefly:</strong> pick a fixed window size <span class="mono">V</span> &mdash; a bandwidth <span class="mono">h</span> &mdash; and slide it around the space. At any point, <span class="mono">K</span> is simply however many of the <span class="mono">N</span> samples happen to land inside that fixed window. Plug that count into <span class="mono">p(x) &#8776; K/(NV)</span> and you have a density estimate at every point, without ever assuming the density has a particular shape (Gaussian, uniform, etc.).</p>
+    </div>
+
+    <p>Kernel density estimation fixes <span class="mono">V</span> and reads off whatever <span class="mono">K</span> falls inside. But a single fixed window size is a problem: in a dense region it's too coarse and blurs real structure, and in a sparse region it may catch very few or zero points, making the estimate noisy or collapse to zero. This is exactly the shortcoming K-NN density estimation is built to fix: it does the reverse, fixing <span class="mono">K</span> and growing a sphere until it contains exactly that many points, whatever volume <span class="mono">V</span> that takes &mdash; so the window automatically shrinks in dense regions and expands in sparse ones. That's the version we'll build on next, applied once per class within the same sphere, to get an actual classifier.</p>
+  </section>
+
+   <div class="hero">
+    <h2>K-Nearest Neighbour Classification</h2>
+    <p class="lede">K-Nearest Neighbours starts from a simple idea: to decide what a new point is, look at the labelled points sitting closest to it and let them vote. Picture the new point as unlabelled &mdash; shown in red just because its class isn't known yet. Grow a sphere around it and see which colour surrounds it most: if most of the nearby points are <span style="color:var(--class-a); font-weight:600;">teal</span>, the new point is likely teal; if most are <span style="color:var(--class-c); font-weight:600;">violet</span>, it's likely violet; if most are <span style="color:var(--class-b); font-weight:600;">gold</span>, it's likely gold. Fig. 0 below shows exactly this &mdash; a sphere grown around a query point <span class="mono">x</span> until it catches its K nearest neighbours, regardless of which class each one belongs to. The rest of this page works out, precisely, how that simple picture turns into an actual estimate of class probability.</p>
+
+    <div class="hero-diagram">
+      <svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg">
+        <!-- decorative static diagram: sphere catching K points across classes -->
+        <g id="heroPts"></g>
+        <circle cx="410" cy="150" r="86" fill="none" stroke="#B23A48" stroke-width="2" stroke-dasharray="5 4"/>
+        <circle cx="410" cy="150" r="4.5" fill="#B23A48"/>
+        <text x="410" y="128" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#B23A48">x</text>
+        <text x="410" y="252" text-anchor="middle" font-family="IBM Plex Mono" font-size="12.5" fill="#6F8AA4">sphere of volume V, grown until it holds K points</text>
+      </svg>
+    </div>
+    <div class="hero-cap">Fig. 0 &mdash; the sphere is fixed in point-count, not in size. Its radius is whatever the local density demands.</div>
+  </div>
+
+  <!-- ============ SECTION 2: SCENARIO ============ -->
+  <section id="scenario">
+
+    <h2>KNN: Real Time classification Problem</h2>
+    <p>A clinic has been recording two measurements from every patient it sees &mdash; say, a metabolic marker and an inflammation marker &mdash; alongside the diagnosis that was eventually confirmed for that patient. Over time this produces a labelled set: <span class="mono">N</span> historical patients, each falling into one of three confirmed classes, <span class="mono">C&#8321;</span>, <span class="mono">C&#8322;</span>, <span class="mono">C&#8323;</span>.</p>
+
+    <p>Each patient is a point plotted using their two feature values &mdash; metabolic marker on one axis, inflammation marker on the other. The classification job is: given those two numbers, decide which of <span class="mono">C&#8321;</span>, <span class="mono">C&#8322;</span>, or <span class="mono">C&#8323;</span> that patient most likely belongs to.</p>
+    <p>Here's how the two features actually get used for that decision, tying back to what's already on the page:</p>
+    <ol>
+      <li>A new patient's two measurements place them at a point <span class="mono">x</span> in that 2D space.</li>
+      <li>A sphere is grown around, shown in the figure below <span class="mono">x</span> using distance computed from those two features &mdash; that's what "closest" means (Euclidean distance between the two coordinate values).</li>
+      <li>The sphere expands until it catches <span class="mono">K</span> historical patients, whichever diagnoses those happen to be.</li>
+      <li>The new patient is assigned to whichever class is most common among those <span class="mono">K</span> neighbours &mdash; <span class="mono">p(C<sub>k</sub> | x) = K<sub>k</sub> / K</span>.</li>
+    </ol>
+    <p>So the two features never disappear or get replaced by anything &mdash; they're what defines "closeness" at every step. <span class="mono">C<sub>1</sub>, C<sub>2</sub>, C<sub>3</sub></span> is just the output, not another input.</p>
+
+    <div class="hero-diagram" style="margin: 20px 0;">
+  <svg viewBox="0 0 640 460" xmlns="http://www.w3.org/2000/svg">
+    <!-- axes -->
+    <line x1="70" y1="30" x2="70" y2="400" stroke="var(--ink)" stroke-width="1.5"/>
+    <line x1="70" y1="400" x2="600" y2="400" stroke="var(--ink)" stroke-width="1.5"/>
+    <polygon points="70,22 65,34 75,34" fill="var(--ink)"/>
+    <polygon points="608,400 596,395 596,405" fill="var(--ink)"/>
+
+    <text x="335" y="440" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="15" fill="var(--ink)">Metabolic marker &#8594;</text>
+    <text x="30" y="215" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="15" fill="var(--ink)" transform="rotate(-90 30 215)">Inflammation marker &#8594;</text>
+
+    <!-- class C1 cluster (teal) -->
+    <circle cx="160" cy="330" r="6" fill="var(--class-a)"/>
+    <circle cx="185" cy="350" r="6" fill="var(--class-a)"/>
+    <circle cx="140" cy="300" r="6" fill="var(--class-a)"/>
+    <circle cx="200" cy="315" r="6" fill="var(--class-a)"/>
+    <circle cx="170" cy="365" r="6" fill="var(--class-a)"/>
+    <circle cx="125" cy="345" r="6" fill="var(--class-a)"/>
+    <circle cx="210" cy="345" r="6" fill="var(--class-a)"/>
+    <circle cx="150" cy="375" r="6" fill="var(--class-a)"/>
+    <text x="168" y="270" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="17" font-weight="700" fill="var(--class-a)">C&#8321;</text>
+
+    <!-- class C2 cluster (gold) -->
+    <circle cx="420" cy="120" r="6" fill="var(--class-b)"/>
+    <circle cx="450" cy="140" r="6" fill="var(--class-b)"/>
+    <circle cx="400" cy="150" r="6" fill="var(--class-b)"/>
+    <circle cx="470" cy="105" r="6" fill="var(--class-b)"/>
+    <circle cx="435" cy="90" r="6" fill="var(--class-b)"/>
+    <circle cx="460" cy="160" r="6" fill="var(--class-b)"/>
+    <circle cx="405" cy="105" r="6" fill="var(--class-b)"/>
+    <circle cx="490" cy="130" r="6" fill="var(--class-b)"/>
+    <text x="445" y="65" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="17" font-weight="700" fill="var(--class-b)">C&#8322;</text>
+
+    <!-- class C3 cluster (violet) -->
+    <circle cx="330" cy="290" r="6" fill="var(--class-c)"/>
+    <circle cx="360" cy="270" r="6" fill="var(--class-c)"/>
+    <circle cx="300" cy="260" r="6" fill="var(--class-c)"/>
+    <circle cx="345" cy="230" r="6" fill="var(--class-c)"/>
+    <circle cx="380" cy="245" r="6" fill="var(--class-c)"/>
+    <circle cx="315" cy="225" r="6" fill="var(--class-c)"/>
+    <circle cx="365" cy="300" r="6" fill="var(--class-c)"/>
+    <circle cx="295" cy="295" r="6" fill="var(--class-c)"/>
+    <text x="330" y="200" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="17" font-weight="700" fill="var(--class-c)">C&#8323;</text>
+
+    <!-- new patient: unlabelled query point -->
+    <circle cx="350" cy="260" r="8" fill="var(--query)" stroke="#fff" stroke-width="2"/>
+    <text x="350" y="245" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" fill="var(--query)">x</text>
+    <text x="365" y="278" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--query)">new patient, class unknown</text>
+  </svg>
+</div>
+  </section>
+
+  <!-- ============ SECTION 3: PER-CLASS DENSITY ============ -->
+  <section id="perclass">
+
+    <h2>Probabilistic Aspects of K-NN</h2>
+    <p>Suppose the historical set has <span class="mono">N</span> patients in total, with <span class="mono">N<sub>k</sub></span> of them confirmed as class <span class="mono">C<sub>k</sub></span>, so that <span class="mono">&#931;<sub>k</sub> N<sub>k</sub> = N</span>. To classify the new point <span class="mono">x</span>, draw a single sphere centred on <span class="mono">x</span> and let it grow &mdash; ignoring class labels entirely &mdash; until it contains precisely <span class="mono">K</span> points in total. Call the resulting volume <span class="mono">V</span>.</p>
+    <p>Now look inside that same sphere and count by class: it contains <span class="mono">K<sub>k</sub></span> points belonging to class <span class="mono">C<sub>k</sub></span>. Three quantities fall out of this one construction:</p>
+
+    <div class="grid-3">
+      <div class="spec-card">
+        <h4><span class="swatch" style="background:var(--class-a)"></span>Class-conditional</h4>
+        <div class="val">p(x | C<sub>k</sub>) = K<sub>k</sub> / (N<sub>k</sub> V)</div>
+      </div>
+      <div class="spec-card">
+        <h4><span class="swatch" style="background:var(--class-b)"></span>Unconditional</h4>
+        <div class="val">p(x) = K / (N V)</div>
+      </div>
+      <div class="spec-card">
+        <h4><span class="swatch" style="background:var(--class-c)"></span>Class prior</h4>
+        <div class="val">p(C<sub>k</sub>) = N<sub>k</sub> / N</div>
+      </div>
+    </div>
+
+    <p>Nothing new is being assumed here. The class-conditional density is just the ordinary K-NN density estimate, run only on the <span class="mono">N<sub>k</sub></span> patients who belong to class <span class="mono">C<sub>k</sub></span>, evaluated using the same volume <span class="mono">V</span> that the shared sphere happened to need. The prior is simply the historical class frequency. All three share the one sphere drawn around <span class="mono">x</span>.</p>
+  </section>
+
+  <!-- ============ SECTION 4: BAYES ============ -->
+  <section id="bayes">
+
+    <h2>Bayes' theorem for K-NN</h2>
+    <p>Plug the three quantities above into Bayes' theorem and watch what cancels:</p>
+    <div class="formula-card">
+      <span class="label">posterior class membership</span>
+      \[ p(C_k \mid x) = \frac{p(x \mid C_k)\, p(C_k)}{p(x)} = \frac{\dfrac{K_k}{N_k V} \cdot \dfrac{N_k}{N}}{\dfrac{K}{NV}} \;=\; \frac{K_k}{K} \]
+    </div>
+    <div class="callout warn">
+      <p style="margin-bottom:0;">Every quantity that depended on where the sphere was drawn &mdash; <span class="k">N</span>, <span class="k">V</span>, even <span class="k">N<sub>k</sub></span> &mdash; cancels out. What survives is embarrassingly simple: <strong>the posterior probability of class <span class="mono">C<sub>k</sub></span> is just the fraction of the <span class="mono">K</span> neighbours that belong to it.</strong> The familiar "majority vote among K nearest neighbours" isn't a heuristic bolted onto K-NN &mdash; it <em>is</em> Bayes' theorem, once the class-conditional densities are estimated this way.</p>
+    </div>
+    <p>This is also the cleanest way to see that K-NN classification is Bayes-<em>derived</em> without being "Bayesian" in the modern sense of the word. There's no prior placed over model parameters and no posterior computed over a parameter space &mdash; there are no parameters here at all. It's a plug-in, nonparametric estimate of class-conditional densities, fed through Bayes' rule exactly once.</p>
+  </section>
+
+  <!-- ============ SECTION 5: WIDGET ============ -->
+  <section id="tryit">
+
+    <h2>Animation showing the KNN Classification</h2>
+    <p>Three historical clusters are plotted below, one colour per class. The dashed circle is <span class="mono">x</span>, the new patient &mdash; drag it anywhere. It grows or shrinks only enough to enclose exactly <span class="mono">K</span> historical points, whatever that radius has to be. The panel on the right recomputes <span class="mono">K<sub>k</sub> / K</span> live for every class, and shows which one wins.</p>
+
+    <div class="widget">
+      <div class="widget-top">
+        <div class="k-control">
+          <label for="kSlider">K = </label>
+          <input type="range" id="kSlider" min="1" max="20" value="9">
+          <span class="kval" id="kVal">9</span>
+        </div>
+        <div class="hint">drag the red point &middot; N = 42 historical patients</div>
+      </div>
+      <div class="widget-body">
+        <div class="plot-box">
+          <svg id="plotSvg" viewBox="0 0 480 380" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <div class="readout">
+          <div id="predictBanner" class="predict-banner">predicted class: &mdash;</div>
+          <div class="vote-row">
+            <div class="vr-top"><span style="color:var(--class-a)">&#9679; Class A</span><span id="countA">0 / 0</span></div>
+            <div class="vr-bar"><div class="vr-fill" id="barA" style="background:var(--class-a)"></div></div>
+          </div>
+          <div class="vote-row">
+            <div class="vr-top"><span style="color:var(--class-b)">&#9679; Class B</span><span id="countB">0 / 0</span></div>
+            <div class="vr-bar"><div class="vr-fill" id="barB" style="background:var(--class-b)"></div></div>
+          </div>
+          <div class="vote-row">
+            <div class="vr-top"><span style="color:var(--class-c)">&#9679; Class C</span><span id="countC">0 / 0</span></div>
+            <div class="vr-bar"><div class="vr-fill" id="barC" style="background:var(--class-c)"></div></div>
+          </div>
+          <div class="posterior-line" id="posteriorLine">p(C&#8342; | x) = K&#8342; / K</div>
+        </div>
+      </div>
+    </div>
+    <div class="hint" style="margin-top:8px;">Notice: near a cluster's centre the sphere stays small and the vote is near-unanimous. Near a boundary between two clusters, the sphere has to reach further, and the vote splits &mdash; the posterior estimate genuinely reflects local uncertainty, not just distance to the single nearest point.</div>
+  </section>
+
+  <!-- ============ SECTION 6: ALGORITHM ============ -->
+  <section id="algorithm">
+
+    <h2>Finally the K-NN Algorithm</h2>
+    <div class="algorithm-box"><ol class="code-lines">
+<li><span class="cm"># Input: training set D = {(x_i, y_i)}, test point x_q, parameter K</span></li>
+<li></li>
+<li><span class="kw">for</span> each (x_i, y_i) <span class="kw">in</span> D:</li>
+<li>&#9;d_i = distance(x_q, x_i)&#9;<span class="cm"># e.g. Euclidean</span></li>
+<li></li>
+<li>sort points by d_i ascending</li>
+<li>N_K(x_q) = the <span class="hl">K</span> points with smallest d_i</li>
+<li></li>
+<li><span class="kw">for</span> each class c:</li>
+<li>&#9;votes[c] = count of points in N_K(x_q) with label c</li>
+<li></li>
+<li>p(C_c | x_q) = votes[c] / <span class="hl">K</span>&#9;<span class="cm"># the derivation above, applied</span></li>
+<li>y_q = argmax_c&nbsp;votes[c]&#9;<span class="cm"># predicted label</span></li>
+<li></li>
+<li><span class="kw">return</span> y_q, p(C_c | x_q) <span class="kw">for all</span> c</li>
+</ol></div>
+    <p>Two implementation notes worth flagging to anyone coding this up: features should be standardised before computing distance, since an unscaled feature with a larger numeric range will dominate the distance calculation regardless of its actual relevance; and there is no training phase &mdash; the sort over distances happens fresh at every query, which is why K-NN is called <em>lazy</em> learning.</p>
+  </section>
+
+  
+
+  <!-- ============ SECTION 8: BEYOND THE CLASSROOM ============ -->
+  <section id="beyond">
+    
+    <h2>K-NN in modern NLP and LLM systems</h2>
+    <p>K-NN is a "classical" method, but the same nearest-neighbour idea shows up directly inside modern language systems &mdash; just with text embeddings standing in for the two clinical markers, and a much larger <span class="mono">N</span>.</p>
+
+    <h3>1. Retrieval-Augmented Generation (RAG)</h3>
+    <p>At its core, the distance-based search engine behind K-NN is the exact same mechanism that powers modern vector retrieval in AI. Text documents and user queries are converted into dense numerical vectors, allowing the system to use Euclidean or cosine distance to find the <span class="mono">K</span> nearest neighbor chunks. Structurally, it shares the familiar K-NN idea of growing a neighborhood around a query point until it catches <span class="mono">K</span> matches; however, because there is no classification label or voting step, these neighbors aren't tallied into a category. Instead, they are retrieved as raw reference text and fed directly into an LLM's context window to ground its response.</p>
+
+    <h3>2. Nearest-neighbour language models (kNN-LM)</h3>
+    <p>K-NN can also directly augment a trained language model. At each generation step, alongside the model's own next-token probabilities, the system performs a K-NN lookup over a huge datastore of (context representation &rarr; next token) pairs built from the training data, and interpolates the model's distribution with the distribution implied by those retrieved neighbours. Notably, this needs no retraining of the underlying model &mdash; a direct illustration of the "lazy learning" property from Section 6: the datastore is just kept and re-examined at inference time, exactly like the training set in ordinary K-NN.</p>
+
+    <p class="hint" style="margin-top: 10px;">References: Lewis et al., <a href="https://arxiv.org/abs/2005.11401" target="_blank" rel="noopener">"Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"</a> (2020) &middot; Khandelwal et al., <a href="https://arxiv.org/abs/1911.00172" target="_blank" rel="noopener">"Generalization through Memorization: Nearest Neighbor Language Models"</a> (2019)</p>
+  </section>
+
+  <footer>
+    <span>Nonparametric Methods &middot; K-Nearest Neighbours</span>
+    <span>Next: comparing K-NN's decision boundary against a parametric classifier</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+
+  // ---------- seeded RNG for reproducible synthetic clusters ----------
+  function mulberry32(seed){
+    return function(){
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  var rand = mulberry32(20260730);
+  function gauss(){
+    var u = 1 - rand(), v = rand();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  // ---------- decorative static hero diagram ----------
+  (function(){
+    var g = document.getElementById('heroPts');
+    var colors = ['#1F6F8B', '#B4791F', '#7B4B94'];
+    var centers = [[280,110],[300,220],[430,235]];
+    var i, c, n, px, py, color;
+    for (c = 0; c < 3; c++){
+      n = 9;
+      for (i = 0; i < n; i++){
+        px = centers[c][0] + gauss() * 26;
+        py = centers[c][1] + gauss() * 26;
+        color = colors[c];
+        var circ = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        circ.setAttribute('cx', px); circ.setAttribute('cy', py);
+        circ.setAttribute('r', 5.5);
+        circ.setAttribute('fill', color);
+        circ.setAttribute('fill-opacity', '0.85');
+        g.appendChild(circ);
+      }
+    }
+    // scatter a few extra "far" points so the sphere clearly excludes something
+    var extras = [[560,90],[610,180],[590,260],[120,240],[150,90]];
+    var ec = ['#1F6F8B','#B4791F','#7B4B94','#1F6F8B','#B4791F'];
+    for (i=0;i<extras.length;i++){
+      var e = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      e.setAttribute('cx', extras[i][0]); e.setAttribute('cy', extras[i][1]);
+      e.setAttribute('r', 5.5);
+      e.setAttribute('fill', ec[i]);
+      e.setAttribute('fill-opacity','0.85');
+      g.appendChild(e);
+    }
+  })();
+
+  // ---------- interactive widget ----------
+  var svg = document.getElementById('plotSvg');
+  var W = 480, H = 380, pad = 26;
+  var classColors = { A: '#1F6F8B', B: '#B4791F', C: '#7B4B94' };
+  var classLabels = ['A','B','C'];
+
+  var points = [];
+  var centers = { A: [130, 120], B: [370, 110], C: [250, 300] };
+  classLabels.forEach(function(cls){
+    var n = 14;
+    for (var i = 0; i < n; i++){
+      var cx = centers[cls][0] + gauss() * 34;
+      var cy = centers[cls][1] + gauss() * 34;
+      cx = Math.max(pad, Math.min(W - pad, cx));
+      cy = Math.max(pad, Math.min(H - pad, cy));
+      points.push({ x: cx, y: cy, cls: cls });
+    }
+  });
+
+  var query = { x: W/2, y: H/2 };
+
+  var ns = 'http://www.w3.org/2000/svg';
+  var sphereEl = document.createElementNS(ns,'circle');
+  sphereEl.setAttribute('fill', 'rgba(178,58,72,0.08)');
+  sphereEl.setAttribute('stroke', '#B23A48');
+  sphereEl.setAttribute('stroke-width','1.6');
+  sphereEl.setAttribute('stroke-dasharray','5 4');
+  svg.appendChild(sphereEl);
+
+  var pointEls = points.map(function(p){
+    var c = document.createElementNS(ns,'circle');
+    c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
+    c.setAttribute('r', 5);
+    c.setAttribute('fill', classColors[p.cls]);
+    svg.appendChild(c);
+    return c;
+  });
+
+  var queryEl = document.createElementNS(ns,'circle');
+  queryEl.setAttribute('r', 7);
+  queryEl.setAttribute('fill', '#B23A48');
+  queryEl.setAttribute('stroke', '#fff');
+  queryEl.setAttribute('stroke-width', '2');
+  queryEl.style.cursor = 'grab';
+  svg.appendChild(queryEl);
+
+  var kSlider = document.getElementById('kSlider');
+  var kVal = document.getElementById('kVal');
+  var predictBanner = document.getElementById('predictBanner');
+  var posteriorLine = document.getElementById('posteriorLine');
+  var barEls = { A: document.getElementById('barA'), B: document.getElementById('barB'), C: document.getElementById('barC') };
+  var countEls = { A: document.getElementById('countA'), B: document.getElementById('countB'), C: document.getElementById('countC') };
+
+  function recompute(){
+    var K = parseInt(kSlider.value, 10);
+    kVal.textContent = K;
+
+    var withDist = points.map(function(p, idx){
+      var dx = p.x - query.x, dy = p.y - query.y;
+      return { idx: idx, d: Math.sqrt(dx*dx + dy*dy), cls: p.cls };
+    });
+    withDist.sort(function(a,b){ return a.d - b.d; });
+
+    var neighbors = withDist.slice(0, K);
+    var radius = neighbors[neighbors.length - 1].d;
+
+    var counts = { A: 0, B: 0, C: 0 };
+    var neighborIdx = {};
+    neighbors.forEach(function(n){ counts[n.cls]++; neighborIdx[n.idx] = true; });
+
+    // render sphere + query
+    sphereEl.setAttribute('cx', query.x);
+    sphereEl.setAttribute('cy', query.y);
+    sphereEl.setAttribute('r', Math.max(radius, 8));
+    queryEl.setAttribute('cx', query.x);
+    queryEl.setAttribute('cy', query.y);
+
+    // render point emphasis
+    pointEls.forEach(function(el, idx){
+      var inside = !!neighborIdx[idx];
+      el.setAttribute('r', inside ? 6.5 : 5);
+      el.setAttribute('fill-opacity', inside ? '1' : '0.28');
+      el.setAttribute('stroke', inside ? '#14304D' : 'none');
+      el.setAttribute('stroke-width', inside ? '1.2' : '0');
+    });
+
+    // readout
+    var best = 'A', bestCount = -1;
+    classLabels.forEach(function(cls){
+      var frac = counts[cls] / K;
+      barEls[cls].style.width = (frac * 100).toFixed(1) + '%';
+      countEls[cls].textContent = counts[cls] + ' / ' + K;
+      if (counts[cls] > bestCount){ bestCount = counts[cls]; best = cls; }
+    });
+
+    predictBanner.innerHTML = 'predicted class: <b style="color:' + classColors[best] + '">Class ' + best + '</b> &nbsp; (' + bestCount + '/' + K + ' of neighbours)';
+    posteriorLine.innerHTML = 'p(C<sub>' + best + '</sub> | x) = ' + bestCount + '/' + K + ' = ' + (bestCount / K).toFixed(2);
+  }
+
+  // drag handling
+  var dragging = false;
+
+  function svgPoint(evt){
+    var rect = svg.getBoundingClientRect();
+    var clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+    var clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+    var x = (clientX - rect.left) / rect.width * W;
+    var y = (clientY - rect.top) / rect.height * H;
+    return { x: Math.max(pad, Math.min(W - pad, x)), y: Math.max(pad, Math.min(H - pad, y)) };
+  }
+
+  function startDrag(evt){ dragging = true; queryEl.style.cursor = 'grabbing'; moveDrag(evt); evt.preventDefault(); }
+  function moveDrag(evt){
+    if (!dragging) return;
+    var p = svgPoint(evt);
+    query.x = p.x; query.y = p.y;
+    recompute();
+    evt.preventDefault();
+  }
+  function endDrag(){ dragging = false; queryEl.style.cursor = 'grab'; }
+
+  queryEl.addEventListener('mousedown', startDrag);
+  svg.addEventListener('mousemove', moveDrag);
+  window.addEventListener('mouseup', endDrag);
+  queryEl.addEventListener('touchstart', startDrag, {passive:false});
+  svg.addEventListener('touchmove', moveDrag, {passive:false});
+  window.addEventListener('touchend', endDrag);
+
+  kSlider.addEventListener('input', recompute);
+
+  recompute();
+})();
+</script>
+
+</body>
+</html>

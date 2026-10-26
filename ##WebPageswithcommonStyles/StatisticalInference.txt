@@ -1,0 +1,41 @@
+<h2 style="margin-top: 40px;">Statistical Inference and Parameter Estimation</h2>
+<p class="detail-description">
+    Statistical inference is the process of drawing conclusions about an underlying population based on a finite sample of data. In the framework of <strong>Parametric Estimation</strong>, we assume that the population data follows a known probability distribution family (such as the Gaussian or Poisson distribution), which is characterized by a fixed but unknown set of parameters, denoted as <strong>&theta;</strong>. The goal is to calculate an estimate, <strong>&theta;&#770;</strong> (theta-hat), using the sample data.
+</p>
+
+<p class="detail-description">
+    A common assumption in this framework is that the data points <em>x<sub>1</sub>, x<sub>2</sub>, ..., x<sub>n</sub></em> are independent and identically distributed (i.i.d.) drawn from a <strong>Normal Population</strong>, denoted as <strong>X ~ N(&mu;, &sigma;<sup>2</sup>)</strong>. Here, the unknown parameters are the population mean <strong>&mu;</strong> and the population variance <strong>&sigma;<sup>2</sup></strong>.
+</p>
+
+<p class="detail-description">
+    Estimation is generally divided into two types:
+</p>
+<ul>
+    <li>
+        <strong>Point Estimation:</strong> Providing a single value as the "best guess" for the parameter. For a Normal population, the Sample Mean (<strong>x&#772;</strong>) is often used as the unbiased point estimator for the population mean (<strong>&mu;</strong>).
+    </li>
+    <li>
+        <strong>Interval Estimation:</strong> Constructing a range of values (Confidence Interval) within which the true parameter <strong>&theta;</strong> is expected to lie with a certain probability (e.g., 95%), acknowledging the uncertainty inherent in sampling.
+    </li>
+</ul>
+
+<h2 style="margin-top: 40px;">Statistical Inference and Parameter Estimation</h2>
+<p class="detail-description">
+    Statistical inference is the process of drawing conclusions about an underlying population based on a finite sample of data. In the framework of <strong>Parametric Estimation</strong>, we assume that the population data follows a known probability distribution family (such as the Gaussian or Poisson distribution), which is characterized by a fixed but unknown set of parameters, denoted as <strong>&theta;</strong>. The goal is to calculate an estimate, <strong>&theta;&#770;</strong> (theta-hat), using the sample data.
+</p>
+
+<p class="detail-description">
+    A common assumption in this framework is that the data points <em>x<sub>1</sub>, x<sub>2</sub>, ..., x<sub>n</sub></em> are independent and identically distributed (i.i.d.) drawn from a <strong>Normal Population</strong>, denoted as <strong>X ~ N(&mu;, &sigma;<sup>2</sup>)</strong>. Here, the unknown parameters are the population mean <strong>&mu;</strong> and the population variance <strong>&sigma;<sup>2</sup></strong>.
+</p>
+
+<p class="detail-description">
+    Estimation is generally divided into two types:
+</p>
+<ul>
+    <li>
+        <strong>Point Estimation:</strong> Providing a single value as the "best guess" for the parameter. For a Normal population, the Sample Mean (<strong>x&#772;</strong>) is often used as the unbiased point estimator for the population mean (<strong>&mu;</strong>).
+    </li>
+    <li>
+        <strong>Interval Estimation:</strong> Constructing a range of values (Confidence Interval) within which the true parameter <strong>&theta;</strong> is expected to lie with a certain probability (e.g., 95%), acknowledging the uncertainty inherent in sampling.
+    </li>
+</ul>

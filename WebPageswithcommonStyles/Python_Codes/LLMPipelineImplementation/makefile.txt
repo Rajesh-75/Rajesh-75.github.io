@@ -1,0 +1,182 @@
+\
+# ==================================================================
+# RLHF PIPELINE Makefile
+# ==================================================================
+# Stage 0   -> sft_training.py
+# Stage A   -> reward_model_training.py
+# Stage B   -> response_generation.py
+# Stage B.5 -> preference_collection.py
+# Stage C   -> ppo_rlhf_training.py
+#
+# REQUIRED FILENAMES (rename your local copies to match — this is
+# not cosmetic: ppo_rlhf_training.py does
+#     from reward_model_training import RewardModel
+# which requires that exact filename in the same directory):
+#     sft_training.py
+#     reward_model_training.py
+#     response_generation.py
+#     preference_collection.py
+#     ppo_rlhf_training.py
+#
+# REQUIRED INPUT DATA (you must supply these — nothing in the
+# pipeline generates them):
+#     data/sft_train.jsonl      {"prompt","response"}   for Stage 0
+#     data/sft_val.jsonl        {"prompt","response"}   for Stage 0
+#     data/rl_prompts.jsonl     {"prompt"}               for Stage B and Stage C
+#
+# Usage:
+#     make all                 # run the full pipeline
+#     make sft                 # run just through Stage 0
+#     make reward_model        # run through Stage A (implies B, B.5)
+#     make BASE_MODEL=meta-llama/Llama-3.2-1B all
+#     make clean                # remove all generated artifacts
+# ==================================================================
+
+PYTHON            ?= python
+
+# --- raw inputs you must supply ---
+BASE_MODEL        ?= meta-llama/Llama-3.2-1B
+SFT_TRAIN_FILE    ?= data/sft_train.jsonl
+SFT_VAL_FILE      ?= data/sft_val.jsonl
+RL_PROMPTS_FILE   ?= data/rl_prompts.jsonl
+
+# --- intermediate / output paths (pipeline-generated) ---
+SFT_CKPT_DIR      ?= checkpoints/sft
+RM_CKPT_DIR       ?= checkpoints/reward_model
+PPO_CKPT_DIR      ?= checkpoints/ppo
+
+GENERATED_FILE    ?= data/generated_completions.jsonl
+PREFERENCES_FILE  ?= data/preferences.jsonl
+RM_TRAIN_FILE     ?= data/rm_train.jsonl
+RM_VAL_FILE       ?= data/rm_val.jsonl
+
+# --- knobs worth exposing at the make CLI ---
+SFT_EPOCHS        ?= 3
+NUM_SAMPLES        ?= 4
+PREF_MODE         ?= rlaif
+KL_COEF           ?= 0.05
+PPO_STEPS         ?= 500
+VAL_FRACTION      ?= 0.1
+SEED              ?= 42
+
+STAMP_DIR         := .stamps
+
+.PHONY: all sft generate preferences reward_model ppo clean clean-stamps help
+
+help:
+	@echo "Targets: sft generate preferences reward_model ppo all clean"
+	@echo "See header comments in this Makefile for required filenames and input data."
+
+all: ppo
+
+$(STAMP_DIR):
+	mkdir -p $(STAMP_DIR)
+	mkdir -p data checkpoints
+
+# ------------------------------------------------------------------
+# Stage 0: SFT
+# ------------------------------------------------------------------
+$(STAMP_DIR)/sft.done: sft_training.py $(SFT_TRAIN_FILE) $(SFT_VAL_FILE) | $(STAMP_DIR)
+	$(PYTHON) sft_training.py \
+		--model_name $(BASE_MODEL) \
+		--train_file $(SFT_TRAIN_FILE) \
+		--val_file $(SFT_VAL_FILE) \
+		--output_dir $(SFT_CKPT_DIR) \
+		--epochs $(SFT_EPOCHS) \
+		--seed $(SEED)
+	touch $@
+
+sft: $(STAMP_DIR)/sft.done
+
+# ------------------------------------------------------------------
+# Stage B: response generation (needs the SFT checkpoint)
+# ------------------------------------------------------------------
+$(STAMP_DIR)/generate.done: response_generation.py $(STAMP_DIR)/sft.done $(RL_PROMPTS_FILE) | $(STAMP_DIR)
+	$(PYTHON) response_generation.py \
+		--model_name $(SFT_CKPT_DIR)/final \
+		--prompt_file $(RL_PROMPTS_FILE) \
+		--output_file $(GENERATED_FILE) \
+		--num_samples_per_prompt $(NUM_SAMPLES) \
+		--seed $(SEED)
+	touch $@
+
+generate: $(STAMP_DIR)/generate.done
+
+# ------------------------------------------------------------------
+# Stage B.5: preference collection (rlaif or human — see PREF_MODE)
+# ------------------------------------------------------------------
+$(STAMP_DIR)/preferences.done: preference_collection.py $(STAMP_DIR)/generate.done | $(STAMP_DIR)
+	$(PYTHON) preference_collection.py \
+		--input_file $(GENERATED_FILE) \
+		--output_file $(PREFERENCES_FILE) \
+		--mode $(PREF_MODE) \
+		--seed $(SEED)
+	touch $@
+
+# Split preferences.jsonl into train/val for Stage A. Split is done
+# by PROMPT GROUP, not by line — pairs sharing a prompt must land on
+# the same side of the split, or the reward model can effectively
+# memorize a prompt from train and get an inflated val accuracy on a
+# near-duplicate pair from the same prompt in val. This is a minimal
+# inline split for course use; anything beyond that deserves its own
+# versioned script rather than a Makefile one-liner.
+$(STAMP_DIR)/pref_split.done: $(STAMP_DIR)/preferences.done | $(STAMP_DIR)
+	$(PYTHON) -c "\
+import json, random; \
+from collections import defaultdict; \
+random.seed($(SEED)); \
+records = [json.loads(l) for l in open('$(PREFERENCES_FILE)') if l.strip()]; \
+by_prompt = defaultdict(list); \
+[by_prompt[r['prompt']].append(r) for r in records]; \
+prompts = list(by_prompt.keys()); \
+random.shuffle(prompts); \
+n_val = max(1, int($(VAL_FRACTION) * len(prompts))); \
+val_prompts = set(prompts[:n_val]); \
+tf = open('$(RM_TRAIN_FILE)', 'w'); \
+vf = open('$(RM_VAL_FILE)', 'w'); \
+[ (vf if p in val_prompts else tf).write(json.dumps(r) + chr(10)) for p, recs in by_prompt.items() for r in recs ]; \
+tf.close(); vf.close(); \
+print(f'Split {len(prompts)} prompts -> {len(prompts) - n_val} train / {n_val} val')"
+	touch $@
+
+preferences: $(STAMP_DIR)/pref_split.done
+
+# ------------------------------------------------------------------
+# Stage A: reward model training (needs the SFT checkpoint + preference split)
+# ------------------------------------------------------------------
+$(STAMP_DIR)/reward_model.done: reward_model_training.py $(STAMP_DIR)/sft.done $(STAMP_DIR)/pref_split.done | $(STAMP_DIR)
+	$(PYTHON) reward_model_training.py \
+		--base_model_name $(SFT_CKPT_DIR)/final \
+		--train_file $(RM_TRAIN_FILE) \
+		--val_file $(RM_VAL_FILE) \
+		--output_dir $(RM_CKPT_DIR) \
+		--seed $(SEED)
+	touch $@
+
+reward_model: $(STAMP_DIR)/reward_model.done
+
+# ------------------------------------------------------------------
+# Stage C: PPO (needs the SFT checkpoint AND the reward model)
+# ------------------------------------------------------------------
+$(STAMP_DIR)/ppo.done: ppo_rlhf_training.py $(STAMP_DIR)/sft.done $(STAMP_DIR)/reward_model.done $(RL_PROMPTS_FILE) | $(STAMP_DIR)
+	$(PYTHON) ppo_rlhf_training.py \
+		--policy_model_name $(SFT_CKPT_DIR)/final \
+		--reward_model_path $(RM_CKPT_DIR)/final \
+		--prompt_file $(RL_PROMPTS_FILE) \
+		--output_dir $(PPO_CKPT_DIR) \
+		--total_ppo_steps $(PPO_STEPS) \
+		--kl_coef $(KL_COEF) \
+		--seed $(SEED)
+	touch $@
+
+ppo: $(STAMP_DIR)/ppo.done
+
+# ------------------------------------------------------------------
+clean:
+	rm -rf $(SFT_CKPT_DIR) $(RM_CKPT_DIR) $(PPO_CKPT_DIR) $(STAMP_DIR)
+	rm -f $(GENERATED_FILE) $(PREFERENCES_FILE) $(RM_TRAIN_FILE) $(RM_VAL_FILE)
+
+# Re-run from a specific stage onward without deleting checkpoints,
+# by clearing only the stamp(s) after that point in the chain.
+clean-stamps:
+	rm -rf $(STAMP_DIR)

@@ -3,33 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
+    <!-- Hide body initially to prevent flickering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+body {
+  visibility: hidden;
+}
+</style>
+    <!-- Load global MathJax configuration first -->
     <title>Machine Learning Tutorial</title>
-    <script type="text/javascript" async
-        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-    </script>
+
     <script>
         window.MathJax = {
             tex: {
-                inlineMath: [['$', '$'], ['\(', '\)']],
-                displayMath: [['$$', '$$'], ['\[', '\]']]
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
             }
         };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
 </head>
 <body>
 
 <div class="backprop-section">
-    <h1 class="detail-title">Backpropagation in MLP</h1>
+    <h1 class="detail-title">Gradient Descent and Derivatives in Machine Learning</h1>
     <p>
-        To understand Backpropagation in an MLP, we need to look at exactly what happens inside one single layer. 
-        <strong>Backpropagation</strong> is the specific algorithm used to compute the derivatives (gradients), 
-        while <strong>Gradient Descent</strong> is the optimization algorithm that uses those derivatives to update the weights and reduce loss. Gradient Descent is the rule that actually changes the weight; it uses the derivative to decide exactly how much to adjust each value to reach the minimum error. In this tutorial, both the logic of Gradient Descent and the step-by-step derivation of differentials at each neuron will be discussed.Gradient Descent is used by many Machine learning algorithms.In the context of Neural Networks, Gradient Descent acts as the "learning engine." Its application extends to every major architecture such as CNN,RNN and LSTMS, Transformers(LLM).Beyond Neural Networks  and Deep learning (DL) Gradient Descent is the  cornerstone of mathematical optimization which itself is backbone of many ML algorithms such as  Linear/Logistic Regression and Support Vector Machines (SVMs). Here in this tutorial we emphasize Gradient Descent from the perspective of Neural Networks and Deep learning.
+        Most machine learning algorithms learn by minimizing a <strong>loss function</strong> $L(\theta)$ that measures how wrong the model is, where $\theta$ denotes the model parameters. Two separate ideas make this work: <strong>(1) computing the derivative</strong> (gradient) of the loss with respect to every parameter, and <strong>(2) Gradient Descent</strong>, the optimization rule that uses those derivatives to update the parameters and reduce the loss. Gradient Descent itself is generic: it only needs $\frac{\partial L}{\partial \theta}$ and does not care which model produced it. How that derivative is obtained depends on the model.
+        <br><br>
+        Gradient Descent is the cornerstone of mathematical optimization and the backbone of many ML algorithms, such as <strong>Linear/Logistic Regression</strong> and <strong>Support Vector Machines (SVMs)</strong>. It is also the "learning engine" of Neural Networks and every major deep learning architecture (CNN, RNN, LSTM, Transformers/LLMs). In this tutorial we first present Gradient Descent in its generic form, then show how the gradient is computed, using Linear/Logistic Regression as simple examples and <strong>Backpropagation</strong> in a neural network layer as the worked example.
     </p>
 
     <h2>Gradient Descent</h2>
-    <p>Based on the optimization framework used in neural network training:</p>
+    <p>The generic optimization framework used to train machine learning models:</p>
     
-    <div class="math-breakdown">
+    <div class="algorithm-box" style="border: 2px solid #2980b9; border-radius: 6px; background-color: #fdfdfd; padding: 15px 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
         <span class="algorithm-title">Overall Gradient Descent Algorithm</span>
         <ul>
             <li><strong>Initialize:</strong>
@@ -56,11 +80,11 @@
 			
 			
         <p>
-    The algorithm above describes <strong>Generic Gradient Descent</strong>. In a Neural Network, the variables represented by $x$ in the formula are actually the <strong>Weights ($W$) and Biases ($b$)</strong>, often represented collectively as the parameter <strong>$\theta$</strong>. Hence, we write the differentiation of the Loss function with respect to this <strong> $\theta$ as $\nabla_\theta L$: </strong>
+    The algorithm above describes <strong>Generic Gradient Descent</strong>. In a machine learning model, the variables represented by $x$ in the formula are the <strong>model parameters</strong>, collectively written as <strong>$\theta$</strong> (for example, the coefficients and intercept in Linear Regression, or the <strong>weights ($W$) and biases ($b$)</strong> in a Neural Network). Hence, we write the differentiation of the Loss function with respect to $\theta$ as <strong>$\nabla_\theta L$</strong>, and the generic update becomes $\theta \leftarrow \theta - \eta \, \nabla_\theta L$.
     
 </p>
     <p>
-        These parameters are the variables of the <strong>Loss Function</strong>. During training, the <strong>Derivative</strong> is computed specifically with respect to these weights. This tells the network exactly how to "nudge" each weight to minimize the error.
+        These parameters are the variables of the <strong>Loss Function</strong>. During training, the <strong>Derivative</strong> is computed specifically with respect to these weights. This tells the model exactly how to "nudge" each parameter to minimize the error.
     </p>
 	
     
@@ -84,8 +108,8 @@
         Because it aggregates information from the whole data collection at once, the resulting gradient is a very stable and accurate representation of the overall error surface. This allows the algorithm to follow a smooth, direct path toward the minimum, avoiding the "jittery" or erratic movements seen in stochastic methods. However, this precision comes at a high cost: it is extremely slow and requires immense memory to store the gradients for the entire dataset simultaneously.
     </p>
 
-    <div class="algorithm-box">
-        <span class="algorithm-title">Pseudo-Algorithm for Batch Gradient Descent</span>
+    <div class="algorithm-box" style="border: 2px solid #2980b9; border-radius: 6px; background-color: #fdfdfd; padding: 15px 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+        <span class="algorithm-title" style="display:block; font-weight:bold; color:#2980b9; margin-bottom:8px;">Pseudo-Algorithm for Batch Gradient Descent</span>
         <ol>
             <li><strong>Initialize</strong> the model parameters $\theta$ (weights and biases) randomly.</li>
             <li><strong>Set</strong> the learning rate $\eta$ and the number of epochs $E$.</li>
@@ -127,8 +151,8 @@
             This makes the algorithm significantly faster and more memory-efficient, especially when dealing with massive datasets that cannot fit into memory. Because the gradient is calculated based on just one sample, the updates are often "noisy"—meaning the loss doesn't always decrease smoothly in every step. However, this randomness is actually a feature: it helps the algorithm "jump out" of local minima or saddle points, often leading to a better overall solution in complex, non-convex landscapes.
         </p>
 
-        <div class="algorithm-box">
-            <span class="algorithm-title">Pseudo-Algorithm for SGD</span>
+        <div class="algorithm-box" style="border: 2px solid #2980b9; border-radius: 6px; background-color: #fdfdfd; padding: 15px 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+            <span class="algorithm-title" style="display:block; font-weight:bold; color:#2980b9; margin-bottom:8px;">Pseudo-Algorithm for SGD</span>
             <ol>
                 <li><strong>Initialize</strong> the model parameters $\theta$ (weights and biases) with random values or zeros.</li>
                 <li><strong>Set</strong> the learning rate $\eta$ and the number of epochs (passes over the data) $E$.</li>
@@ -174,8 +198,8 @@
         Instead of using the entire dataset (which is slow) or just a single data point (which is noisy), this algorithm divides the training data into small, manageable groups called <strong>mini-batches</strong> (typically in powers of two, like 32, 64, or 128). By calculating the gradient based on these small groups, the algorithm benefits from the computational efficiency of vectorized operations on modern hardware like GPUs, while still maintaining enough "noise" to help the model escape local minima. This results in smoother convergence than pure SGD and significantly faster training times than Batch GD.
     </p>
 
-    <div class="algorithm-box">
-        <span class="algorithm-title">Pseudo-Algorithm for Mini-Batch SGD</span>
+    <div class="algorithm-box" style="border: 2px solid #2980b9; border-radius: 6px; background-color: #fdfdfd; padding: 15px 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+        <span class="algorithm-title" style="display:block; font-weight:bold; color:#2980b9; margin-bottom:8px;">Pseudo-Algorithm for Mini-Batch SGD</span>
         <ol>
             <li><strong>Initialize</strong> the model parameters $\theta$ (weights and biases).</li>
             <li><strong>Set</strong> the learning rate $\eta$, the batch size $B$, and the number of epochs $E$.</li>
@@ -210,7 +234,21 @@
     </ul>
 </div>
 
-  <h2> Computation of Derivatives </h2>
+  <h2>Computing the Gradient $\nabla_\theta L$</h2>
+    <p>Gradient Descent needs $\nabla_\theta L$, but it does not say how to compute it. This depends on the model:</p>
+    <table class="data-table">
+        <thead>
+            <tr style="background-color: #f4f4f4;"><th>Model</th><th>Loss $L$</th><th>Gradient $\nabla_\theta L$</th><th>How it is obtained</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Linear Regression</strong></td><td>$\frac{1}{N}\|Xw - y\|^2$</td><td>$\frac{2}{N} X^T (Xw - y)$</td><td>Closed-form derivative</td></tr>
+            <tr><td><strong>Logistic Regression</strong></td><td>Cross-entropy</td><td>$\frac{1}{N} X^T (\sigma(Xw) - y)$</td><td>Closed-form derivative</td></tr>
+            <tr><td><strong>Neural Network</strong></td><td>Any differentiable loss</td><td>$\frac{\partial L}{\partial W_i},\ \frac{\partial L}{\partial b_i}$ for every layer $i$</td><td><strong>Backpropagation</strong> (chain rule, layer by layer)</td></tr>
+        </tbody>
+    </table>
+    <p>A neural network is a long chain of nested functions, so its gradient is not a single closed-form expression. <strong>Backpropagation</strong> applies the chain rule backward through the layers and reuses intermediate results, which gives the derivative for every weight in one backward sweep. Whatever model or method supplies $\nabla_\theta L$, the optimizer (Gradient Descent, SGD, Mini-Batch SGD, Adam, ...) then uses it in the same way. The rest of this section works through Backpropagation for a single layer of a neural network.</p>
+
+  <h2>Worked Example: Backpropagation in a Neural Network</h2>
     <h3>1. The Variables</h3>
     <div class="variable-list">
         <ul>
@@ -263,12 +301,6 @@
         
         <p><strong>Why the Transpose ($T$)?</strong> To align the dimensions of our matrices. For a single weight $w_{jk}$, the gradient is $dZ_j \cdot a_k$. The dot product with a transpose calculates this for every weight in the layer at once.</p>
     </div>
-	<div style="text-align: center; margin: 30px 0; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
-   
-    <p style="font-size: 0.9rem; color: #718096; margin-top: 10px;">
-        <em>Figure: Visualization of Layer $i$ processing. The blue arrows indicate the <strong>Backward Pass</strong> where gradients are calculated.</em>
-    </p>
-</div>
     <div class="derivative-step">
         <span class="tag" style="background:#3498db;">Step C</span>
         <h4>Differentiation for the Next Layer ($\frac{\partial L}{\partial A_{i-1}}$)</h4>
@@ -282,10 +314,112 @@
             <strong>Why the Transpose ($W^T$)?</strong> To move the error backwards, we must use the connection weights in reverse order.
         </div>
     </div>
-	<div style="text-align: center; margin: 30px 0;">
-            <img src="BackPropagGraidenFlow.png" alt="BP Graident Flow Diagram" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px;">
-            <p style="font-size: 0.95rem; color: #666; margin-top: 5px;"><em>Figure shows Gradient flow back to the network</em></p>
+	<div style="text-align: center; margin: 30px 0; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+<svg viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Backward pass through layer i showing the derivative on every connection" style="max-width:100%;height:auto;display:block;margin:0 auto;font-family:'Segoe UI',Arial,sans-serif;">
+<defs>
+<marker id="bp-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f39c12"/></marker>
+<marker id="bp-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e74c3c"/></marker>
+<marker id="bp-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3498db"/></marker>
+<marker id="bp-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8e44ad"/></marker>
+<marker id="bp-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#95a5a6"/></marker>
+</defs><rect width="900" height="500" fill="#ffffff"/>
+<text x="190" y="32" text-anchor="middle" font-size="13" fill="#7f8c8d">Layer i−1 output</text>
+<text x="190" y="53" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">A_(i−1)</text>
+<text x="470" y="32" text-anchor="middle" font-size="13" fill="#7f8c8d">Pre-activation</text>
+<text x="470" y="53" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">Z_i = W_i · A_(i−1) + b_i</text>
+<text x="740" y="32" text-anchor="middle" font-size="13" fill="#7f8c8d">Activation</text>
+<text x="740" y="53" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">A_i = σ(Z_i)</text>
+<path d="M330 82 H640" stroke="#bdc3c7" stroke-width="1.5" marker-end="url(#bp-g)" stroke-dasharray="5 4"/>
+<text x="485" y="77" text-anchor="middle" font-size="11" fill="#95a5a6">forward pass</text>
+<line x1="446" y1="175" x2="214" y2="120" stroke="#f39c12" stroke-width="1.8" marker-end="url(#bp-o)"/>
+<line x1="446" y1="175" x2="214" y2="235" stroke="#f39c12" stroke-width="1.8" marker-end="url(#bp-o)"/>
+<line x1="446" y1="175" x2="214" y2="350" stroke="#f39c12" stroke-width="1.8" marker-end="url(#bp-o)"/>
+<line x1="446" y1="295" x2="214" y2="120" stroke="#f39c12" stroke-width="1.8" marker-end="url(#bp-o)"/>
+<line x1="446" y1="295" x2="214" y2="235" stroke="#f39c12" stroke-width="1.8" marker-end="url(#bp-o)"/>
+<line x1="446" y1="295" x2="214" y2="350" stroke="#f39c12" stroke-width="1.8" marker-end="url(#bp-o)"/>
+<rect x="232" y="124" width="72" height="22" rx="11" fill="#fffaf0" stroke="#f39c12"/>
+<text x="268" y="140" text-anchor="middle" font-size="12.5" font-weight="600" fill="#b9770e">∂L/∂w₁₁</text>
+<rect x="232" y="207" width="72" height="22" rx="11" fill="#fffaf0" stroke="#f39c12"/>
+<text x="268" y="223" text-anchor="middle" font-size="12.5" font-weight="600" fill="#b9770e">∂L/∂w₁₂</text>
+<rect x="232" y="290" width="72" height="22" rx="11" fill="#fffaf0" stroke="#f39c12"/>
+<text x="268" y="306" text-anchor="middle" font-size="12.5" font-weight="600" fill="#b9770e">∂L/∂w₁₃</text>
+<rect x="232" y="158" width="72" height="22" rx="11" fill="#fffaf0" stroke="#f39c12"/>
+<text x="268" y="174" text-anchor="middle" font-size="12.5" font-weight="600" fill="#b9770e">∂L/∂w₂₁</text>
+<rect x="232" y="241" width="72" height="22" rx="11" fill="#fffaf0" stroke="#f39c12"/>
+<text x="268" y="256" text-anchor="middle" font-size="12.5" font-weight="600" fill="#b9770e">∂L/∂w₂₂</text>
+<rect x="232" y="324" width="72" height="22" rx="11" fill="#fffaf0" stroke="#f39c12"/>
+<text x="268" y="339" text-anchor="middle" font-size="12.5" font-weight="600" fill="#b9770e">∂L/∂w₂₃</text>
+<line x1="716" y1="175" x2="494" y2="175" stroke="#e74c3c" stroke-width="2.2" marker-end="url(#bp-r)"/>
+<text x="605.0" y="163" text-anchor="middle" font-size="12.5" font-weight="600" fill="#c0392b">∂L/∂Z₁ = ∂L/∂A₁ · σ′(Z₁)</text>
+<line x1="884" y1="175" x2="768" y2="175" stroke="#8e44ad" stroke-width="2.2" marker-end="url(#bp-p)"/>
+<text x="826" y="165" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6c3483">∂L/∂A₁</text>
+<line x1="716" y1="295" x2="494" y2="295" stroke="#e74c3c" stroke-width="2.2" marker-end="url(#bp-r)"/>
+<text x="605.0" y="283" text-anchor="middle" font-size="12.5" font-weight="600" fill="#c0392b">∂L/∂Z₂ = ∂L/∂A₂ · σ′(Z₂)</text>
+<line x1="884" y1="295" x2="768" y2="295" stroke="#8e44ad" stroke-width="2.2" marker-end="url(#bp-p)"/>
+<text x="826" y="285" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6c3483">∂L/∂A₂</text>
+<text x="826" y="141" text-anchor="middle" font-size="11" fill="#8e44ad">from layer i+1 / loss</text>
+<line x1="162" y1="120" x2="56" y2="120" stroke="#3498db" stroke-width="2.2" marker-end="url(#bp-b)"/>
+<text x="109" y="110" text-anchor="middle" font-size="12.5" font-weight="600" fill="#2471a3">∂L/∂A₁</text>
+<line x1="162" y1="235" x2="56" y2="235" stroke="#3498db" stroke-width="2.2" marker-end="url(#bp-b)"/>
+<text x="109" y="225" text-anchor="middle" font-size="12.5" font-weight="600" fill="#2471a3">∂L/∂A₂</text>
+<line x1="162" y1="350" x2="56" y2="350" stroke="#3498db" stroke-width="2.2" marker-end="url(#bp-b)"/>
+<text x="109" y="340" text-anchor="middle" font-size="12.5" font-weight="600" fill="#2471a3">∂L/∂A₃</text>
+<text x="109" y="86" text-anchor="middle" font-size="11" fill="#3498db">to layer i−1</text>
+<circle cx="190" cy="120" r="24" fill="#ebf5fb" stroke="#3498db" stroke-width="2"/>
+<text x="190" y="125" text-anchor="middle" font-size="15" font-weight="600" fill="#2c3e50">a₁</text>
+<circle cx="190" cy="235" r="24" fill="#ebf5fb" stroke="#3498db" stroke-width="2"/>
+<text x="190" y="240" text-anchor="middle" font-size="15" font-weight="600" fill="#2c3e50">a₂</text>
+<circle cx="190" cy="350" r="24" fill="#ebf5fb" stroke="#3498db" stroke-width="2"/>
+<text x="190" y="355" text-anchor="middle" font-size="15" font-weight="600" fill="#2c3e50">a₃</text>
+<circle cx="470" cy="175" r="24" fill="#fdedec" stroke="#e74c3c" stroke-width="2"/>
+<text x="470" y="180" text-anchor="middle" font-size="15" font-weight="600" fill="#2c3e50">z₁</text>
+<circle cx="740" cy="175" r="24" fill="#f4ecf7" stroke="#8e44ad" stroke-width="2"/>
+<text x="740" y="180" text-anchor="middle" font-size="15" font-weight="600" fill="#2c3e50">a₁</text>
+<circle cx="470" cy="295" r="24" fill="#fdedec" stroke="#e74c3c" stroke-width="2"/>
+<text x="470" y="300" text-anchor="middle" font-size="15" font-weight="600" fill="#2c3e50">z₂</text>
+<circle cx="740" cy="295" r="24" fill="#f4ecf7" stroke="#8e44ad" stroke-width="2"/>
+<text x="740" y="300" text-anchor="middle" font-size="15" font-weight="600" fill="#2c3e50">a₂</text>
+<rect x="95" y="392" width="710" height="56" rx="8" fill="#fdfdfd" stroke="#e5e8e8"/>
+<text x="450" y="415" text-anchor="middle" font-size="13.5" fill="#2c3e50">Orange connection (a_k → z_j):  ∂L/∂w_jk = dZ_j · a_k     ⇒     update  w_jk ← w_jk − η · ∂L/∂w_jk</text>
+<text x="450" y="436" text-anchor="middle" font-size="12" fill="#7f8c8d">Blue gradient returned to a_k sums over its connections:  ∂L/∂A_k = Σ_j w_jk · dZ_j</text>
+<line x1="60" y1="475" x2="86" y2="475" stroke="#8e44ad" stroke-width="2.5" marker-end="url(#bp-p)"/>
+<text x="94" y="479" font-size="12" fill="#566573">Incoming ∂L/∂A</text>
+<line x1="244" y1="475" x2="270" y2="475" stroke="#e74c3c" stroke-width="2.5" marker-end="url(#bp-r)"/>
+<text x="278" y="479" font-size="12" fill="#566573">Step A: ∂L/∂Z</text>
+<line x1="428" y1="475" x2="454" y2="475" stroke="#f39c12" stroke-width="2.5" marker-end="url(#bp-o)"/>
+<text x="462" y="479" font-size="12" fill="#566573">Step B: ∂L/∂W (connections)</text>
+<line x1="692" y1="475" x2="718" y2="475" stroke="#3498db" stroke-width="2.5" marker-end="url(#bp-b)"/>
+<text x="726" y="479" font-size="12" fill="#566573">Step C: ∂L/∂A_(i−1)</text>
+</svg>
+            <p style="font-size: 0.95rem; color: #666; margin-top: 5px;"><em>Figure shows Gradient flow back to the network. Arrows point backward; the label on each connection is the derivative of the loss with respect to it.</em></p>
         </div>
+	<div class="algorithm-box" style="border: 2px solid #2980b9; border-radius: 6px; background-color: #fdfdfd; padding: 15px 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+        <span class="algorithm-title" style="display:block; font-weight:bold; color:#2980b9; margin-bottom:8px;">Pseudo-Algorithm (Python) for Backward Pass through a Layer</span>
+        <pre style="margin:10px 0 0; background:#f8f9fa; border:1px solid #ddd; border-radius:4px; padding:12px 15px; overflow-x:auto; font-size:0.9rem; line-height:1.5;"><code># Backward pass through layer i  (3 inputs a_k -&gt; 2 neurons z_j), as in the figure
+# Inputs : dA      = dL/dA_i from layer i+1 / loss      (purple arrows)
+#          W, b    = layer weights (2x3) and biases (2)
+#          A_prev  = A_{i-1} (3,)   Z = W @ A_prev + b  (2,)
+def backward_layer(dA, W, b, A_prev, Z, eta):
+    # Step A (red): dL/dZ_j = dL/dA_j * sigma'(Z_j)
+    s  = sigmoid(Z)
+    dZ = dA * s * (1 - s)
+
+    # Step B (orange): derivative on every connection a_k -&gt; z_j
+    dW = np.zeros_like(W)
+    for j in range(2):                  # z_j
+        for k in range(3):              # a_k
+            dW[j, k] = dZ[j] * A_prev[k]    # dL/dw_jk
+    db = dZ                             # same as np.outer(dZ, A_prev) for dW
+
+    # Step C (blue): gradient sent back to the previous layer
+    dA_prev = W.T @ dZ                  # dL/dA_k = sum_j w_jk * dZ_j
+
+    # Gradient descent update (uses the derivatives on the connections)
+    W -= eta * dW
+    b -= eta * db
+    return dA_prev                      # becomes dA for layer i-1</code></pre>
+    </div>
+    <p>Each derivative $\frac{\partial L}{\partial w_{jk}}$ on a connection is one component of $\nabla_\theta L$, so the last two lines of the algorithm are exactly the generic update $\theta \leftarrow \theta - \eta \, \nabla_\theta L$ applied to the weights and biases.</p>
     <h3>3. Visualizing the "Chain"</h3>
     <p>Each layer calculates its own local derivative and multiplies it by the one it received:</p>
     <div class="formula-container" style="background: #f8f9fa; padding: 15px; text-align: center;">
@@ -325,7 +459,6 @@
                 <td><strong>Input Grad</strong></td>
                 <td>$\frac{\partial L}{\partial A_{i-1}}$</td>
                 <td><code>dA_prev</code></td>
-                <td>The error signal to be passed backward.</td>
             </tr>
         </tbody>
     </table>

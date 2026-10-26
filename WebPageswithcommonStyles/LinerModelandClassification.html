@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Linear Regression: MLE and Least Squares</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+body {
+  visibility:hidden;
+}
+</style>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        options: {
+          // Globally skip tags where math should never be parsed
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+          // Class name you can use to explicitly ignore specific blocks
+          ignoreHtmlClass: 'tex2jax_ignore',
+          processHtmlClass: 'tex2jax_process'
+        },
+        startup: {
+          pageReady: () => {
+            return MathJax.startup.defaultPageReady().then(() => {
+              // Reveal the page body only after MathJax finishes typesetting
+              document.body.style.visibility = 'visible';
+            });
+          }
+        }
+      };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<div class="container">
+
+    <h1 class="detail-title">Linear Models</h1>
+
+    <h2>The Linear Regression Model</h2>
+    <p class="detail-description">
+        <strong>Regression</strong>, broadly, is the task of predicting a continuous numerical quantity
+        from one or more known inputs — predicting a house's price from its size, a student's exam score
+        from hours studied, or here, a year's rainfall from the year itself. <strong>Linear
+        Regression</strong> is the specific assumption that this relationship can be captured by a
+        straight line (or, with more inputs, a flat plane/hyperplane): the target is assumed to change
+        by a constant amount for every unit change in the input, rather than curving, plateauing, or
+        behaving erratically.
+    </p>
+    <p class="detail-description">
+        This is best understood as a <strong>functional mapping</strong> from input to output: once the
+        line's two numbers are fixed, feeding in any $x$ deterministically produces a corresponding $y$
+        — the model has no other behavior. With a single input variable, that mapping is
+        $y=wx+c$; with several inputs $x_1,\dots,x_p$ (e.g., predicting rainfall from year <em>and</em>
+        average temperature), the same idea extends to $y = w_1x_1+w_2x_2+\cdots+w_px_p+c$ — a weighted
+        sum of the inputs plus one intercept. This page works with a single input to keep the algebra
+        visible, but everything derived below generalizes directly to that multi-input case.
+    </p>
+    <p class="detail-description">
+        Neither the line's slope nor its intercept is known in advance — <strong>determining them from
+        data is the entire learning task.</strong> That's what the rest of this page does: starting from
+        the concrete rainfall-vs-year case below, working out exactly how those two unknown numbers get
+        estimated, and what assumptions that estimation secretly relies on.
+    </p>
+    <p class="detail-description">
+        The model $y = wx + c$ expresses rainfall ($y$, the <strong>dependent variable</strong> — the
+        quantity we want to predict) as a function of year ($x$, the <strong>independent variable</strong>
+        — the quantity we already know). Here $w$ is the <strong>slope</strong>, and $c$ is the
+        <strong>intercept</strong> — called the <strong>bias</strong> in ML/DL terminology.
+    </p>
+
+    <div class="intuition-box" style="background-color: #fdf2e9; border-left: 4px solid #e67e22; padding: 15px 20px; margin: 20px 0;">
+        <strong>A terminology collision worth knowing:</strong> "bias" means two different things
+        depending on context. In <strong>ML/DL</strong>, bias is the intercept term itself — exactly $c$
+        here. In <strong>classical statistics</strong>, the bias <em>of an estimator</em> is something
+        else entirely: $E[\hat\theta]-\theta$, how far an estimation procedure's expected result is from
+        the true parameter on average. Both usages are legitimate; they just aren't the same concept.
+        Also worth being precise about: whether $c=0$ or not is an empirical fact about the specific
+        data being fit, not a general rule — some real relationships genuinely do pass through the
+        origin, others don't.
+    </div>
+
+    <div style="background: #f8f9fa; border: 1px solid #e1e8ed; border-radius: 6px; padding: 18px 22px; margin: 20px 0;">
+        <strong style="color:#0056b3;">The Three Components, for Linear Regression</strong>
+        <p style="margin: 10px 0 0 0;">
+            This page follows the same three-part pattern used for every algorithm in this series
+            (see the ML Pipeline page's Model Training section):
+        </p>
+        <ol style="margin: 8px 0 0 0; padding-left: 22px;">
+            <li style="margin-bottom: 8px;">
+                <strong>Model</strong> — $y = wx + c$, defined above: the hypothesis that rainfall
+                relates to year through a straight line.
+            </li>
+            <li style="margin-bottom: 8px;">
+                <strong>Cost Function (Loss)</strong> — the squared-error criterion
+                $S(w,c)=\sum_n(t_n-wx_n-c)^2$, introduced next, used to judge how good any candidate
+                $(w,c)$ is.
+            </li>
+            <li style="margin-bottom: 0;">
+                <strong>Optimization</strong> — here, solved in <strong>closed form</strong> via the
+                normal equations: differentiate $S(w,c)$, set both partial derivatives to zero, solve
+                directly. No iteration or learning rate is needed — worth noting precisely because it's
+                the exception rather than the rule; most models covered later in this series (starting
+                with Logistic Regression) have no closed-form solution and require iterative
+                optimization instead.
+            </li>
+        </ol>
+    </div>
+
+    <h3>How Good Is a Given $(w, c)$? Measuring Closeness</h3>
+    <p class="detail-description">
+        To choose the values of $w$ and $c$ that give the best-fitting line, we need some way to compare
+        candidates. The best line is the one that passes as close as possible to <em>all</em> $N$ data
+        points $(x_n, t_n)$, $n=1,\dots,N$ — not just one of them. Here $t_n$ denotes the observed target,
+        the true rainfall for year $x_n$ (you'll see $y_n$ used for the same quantity elsewhere on this
+        page; the two are used interchangeably).
+    </p>
+    <p class="detail-description">
+        A common way to measure how close a particular candidate line gets to a <em>single</em> point is
+        the squared difference between the observed value $t_n$ and the value the model predicts,
+        $f(x_n,w,c) = wx_n + c$:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\big(t_n - f(x_n, w, c)\big)^2$$
+    </div>
+    <p class="detail-description">
+        The smaller this number, the closer the model's prediction is to what was actually observed at
+        that point. Squaring does two things here: it makes the quantity non-negative (so an overshoot
+        and an undershoot of equal size both count as errors, rather than cancelling out the way plain
+        differences would), and it penalizes larger errors more than proportionally — a residual twice as
+        large contributes four times the cost, not twice.
+    </p>
+    <p class="detail-description">
+        Judging $(w,c)$ against the whole dataset, rather than one point, just means summing this
+        per-point squared error over all $N$ points. That total is exactly the $S(w,c)$ below, and
+        minimizing it is what Least Squares does.
+    </p>
+
+    <p class="detail-description">
+        Both $w$ and $c$ are unknown and must be estimated from the data — not just $w$. The classical
+        method for doing this is <strong>Least Squares</strong>: choose $(w,c)$ to minimize the sum of
+        squared residuals,
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$S(w,c) = \sum_{i=1}^{N}\big(y_i - wx_i - c\big)^2$$
+    </div>
+    <p class="detail-description">
+        Setting both partial derivatives to zero:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\frac{\partial S}{\partial c} = -2\sum_i (y_i - wx_i - c) = 0 \;\;\Rightarrow\;\; c = \bar{y} - w\bar{x}$$
+        $$\frac{\partial S}{\partial w} = -2\sum_i x_i(y_i - wx_i - c) = 0$$
+    </div>
+    <p class="detail-description">
+        Substituting the first result into the second and solving gives the closed-form estimate for the
+        slope:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$w = \frac{\sum_i (x_i-\bar{x})(y_i-\bar{y})}{\sum_i (x_i-\bar{x})^2}$$
+    </div>
+    <p class="detail-description">
+        This is exactly the calculation behind the fitted line in the rainfall figure below —
+        $w\approx3.28$ cm/year, $c\approx81.95$ cm.
+    </p>
+    <p class="detail-description">
+        Least Squares is the classical way to fit this model, but not the only one: MLE under Gaussian
+        noise (covered below) gives the identical $(w,c)$, and Regularization (covered next on this
+        page) deliberately optimizes a <em>different</em> objective by adding a penalty term. Linear
+        Regression is fundamentally the modeling choice — a straight-line functional mapping from $x$
+        to $y$ — with Least Squares being the most common, but not the sole, way to fit its parameters.
+    </p>
+
+    <p class="detail-description">
+        Ordinary least squares treats fitting a line as a purely geometric/algebraic problem: minimize
+        $\sum_i (y_i - wx_i)^2$, take the derivative, solve. Nothing random involved — it's optimization,
+        not statistics.
+    </p>
+
+    <p class="detail-description">
+        The probabilistic reframing changes the <strong>starting assumption</strong>: instead of just
+        having data points, you assume there's a true underlying relationship, and each observed target
+        is that true value plus random noise:
+    </p>
+
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$t_i = wx_i + \epsilon_i, \qquad \epsilon_i \sim N(0, \sigma^2)$$
+    </div>
+
+    <p class="detail-description">
+        This is a genuinely different object — a <strong>generative model</strong>. It says: "if you gave
+        me the true $w$ and $\sigma^2$, here's the full probability distribution I'd expect to see for
+        $t_i$" — specifically $t_i \sim N(wx_i, \sigma^2)$. Once you have that, you can write a
+        <strong>likelihood</strong> — the probability of the entire observed dataset, as a function of
+        the unknown $w$ — and ask which $w$ makes the data you actually saw most probable. That's MLE.
+    </p>
+
+    <h2>A Real-World Motivating Picture</h2>
+    <p class="detail-description">
+        Before the toy numbers, here's the general shape of the problem in a setting you'd actually see
+        it: yearly rainfall measurements plotted against year, with a least-squares line fitted through
+        the scatter.
+    </p>
+
+    <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0; text-align:center;">
+        <svg viewBox="0 0 620 400" xmlns="http://www.w3.org/2000/svg" style="max-width:600px; height:auto;">
+            <g font-family="Arial, sans-serif" font-size="12">
+                <!-- axes -->
+                <line x1="70" y1="320" x2="560" y2="320" stroke="#333" stroke-width="1.5"/>
+                <line x1="70" y1="320" x2="70" y2="40" stroke="#333" stroke-width="1.5"/>
+                <text x="315" y="365" text-anchor="middle" fill="#333" font-weight="bold">Year</text>
+                <text x="25" y="180" text-anchor="middle" fill="#333" font-weight="bold" transform="rotate(-90,25,180)">Rainfall (cm)</text>
+
+                <!-- y gridlines + labels: 60 to 120 cm -->
+                <line x1="70" y1="320" x2="560" y2="320" stroke="#eee"/>
+                <text x="60" y="324" text-anchor="end" fill="#555">60</text>
+                <line x1="70" y1="277" x2="560" y2="277" stroke="#eee"/>
+                <text x="60" y="281" text-anchor="end" fill="#555">70</text>
+                <line x1="70" y1="234" x2="560" y2="234" stroke="#eee"/>
+                <text x="60" y="238" text-anchor="end" fill="#555">80</text>
+                <line x1="70" y1="190" x2="560" y2="190" stroke="#eee"/>
+                <text x="60" y="194" text-anchor="end" fill="#555">90</text>
+                <line x1="70" y1="147" x2="560" y2="147" stroke="#eee"/>
+                <text x="60" y="151" text-anchor="end" fill="#555">100</text>
+                <line x1="70" y1="104" x2="560" y2="104" stroke="#eee"/>
+                <text x="60" y="108" text-anchor="end" fill="#555">110</text>
+                <line x1="70" y1="60" x2="560" y2="60" stroke="#eee"/>
+                <text x="60" y="64" text-anchor="end" fill="#555">120</text>
+
+                <!-- x tick labels: 2016 - 2026 -->
+                <text x="70" y="338" text-anchor="middle" fill="#555" font-size="11">2016</text>
+                <text x="117" y="338" text-anchor="middle" fill="#555" font-size="11">2017</text>
+                <text x="164" y="338" text-anchor="middle" fill="#555" font-size="11">2018</text>
+                <text x="211" y="338" text-anchor="middle" fill="#555" font-size="11">2019</text>
+                <text x="258" y="338" text-anchor="middle" fill="#555" font-size="11">2020</text>
+                <text x="305" y="338" text-anchor="middle" fill="#555" font-size="11">2021</text>
+                <text x="352" y="338" text-anchor="middle" fill="#555" font-size="11">2022</text>
+                <text x="399" y="338" text-anchor="middle" fill="#555" font-size="11">2023</text>
+                <text x="446" y="338" text-anchor="middle" fill="#555" font-size="11">2024</text>
+                <text x="493" y="338" text-anchor="middle" fill="#555" font-size="11">2025</text>
+                <text x="540" y="338" text-anchor="middle" fill="#555" font-size="11">2026</text>
+
+                <!-- least squares fitted line -->
+                <line x1="70" y1="224.9" x2="540" y2="82.7" stroke="#1565c0" stroke-width="2.5"/>
+
+                <!-- scatter points: (year, rainfall in cm) -->
+                <circle cx="70"  cy="211.7" r="5" fill="#c62828"/>
+                <circle cx="117" cy="181.3" r="5" fill="#c62828"/>
+                <circle cx="164" cy="242.0" r="5" fill="#c62828"/>
+                <circle cx="211" cy="168.3" r="5" fill="#c62828"/>
+                <circle cx="258" cy="198.7" r="5" fill="#c62828"/>
+                <circle cx="305" cy="138.0" r="5" fill="#c62828"/>
+                <circle cx="352" cy="159.7" r="5" fill="#c62828"/>
+                <circle cx="399" cy="103.3" r="5" fill="#c62828"/>
+                <circle cx="446" cy="125.0" r="5" fill="#c62828"/>
+                <circle cx="493" cy="81.7"  r="5" fill="#c62828"/>
+
+                <!-- legend -->
+                <rect x="410" y="50" width="150" height="55" fill="#fafafa" stroke="#ddd"/>
+                <circle cx="425" cy="65" r="5" fill="#c62828"/>
+                <text x="438" y="69" fill="#333" font-size="11">Observed rainfall</text>
+                <line x1="418" y1="90" x2="432" y2="90" stroke="#1565c0" stroke-width="2.5"/>
+                <text x="438" y="94" fill="#333" font-size="11">Least-squares fit</text>
+            </g>
+        </svg>
+        <p style="font-size:0.85rem; color:#666; margin-top:8px;"><em>Figure: Ten years of (illustrative) rainfall measurements with the least-squares fitted line drawn through the scatter — worked out step by step below.</em></p>
+    </div>
+
+    <h2>Numerical Example: Fitting the Rainfall Data</h2>
+    <p class="detail-description">
+        To keep the arithmetic manageable, let $u_n = x_n - 2016$ (so $u=0,1,2,\dots,9$ for years
+        2016–2025) instead of working with the raw year numbers directly. This is just a shift of
+        origin — it doesn't change the slope $w$ at all, since the slope formula only depends on how far
+        each $x_n$ is from the <em>mean</em> $\bar{x}$, and shifting every $x_n$ by the same constant
+        shifts $\bar{x}$ by exactly that constant too, leaving every deviation $(x_n-\bar{x})$ unchanged.
+        Only the intercept $c$ is affected by where you put the origin.
+    </p>
+
+    <table class="data-table" style="border-collapse:collapse; width:100%; max-width:500px; margin:16px auto; font-family:Arial, sans-serif;">
+        <thead>
+            <tr>
+                <th style="border:1px solid #999; padding:8px 12px; background:#f4f4f9;">Year</th>
+                <th style="border:1px solid #999; padding:8px 12px; background:#f4f4f9;">$u_n$</th>
+                <th style="border:1px solid #999; padding:8px 12px; background:#f4f4f9;">Rainfall $t_n$ (cm)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2016</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">0</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">85</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2017</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">1</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">92</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2018</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">78</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2019</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">3</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">95</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2020</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">4</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">88</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2021</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">5</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">102</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2022</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">6</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">97</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2023</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">7</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">110</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2024</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">8</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">105</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2025</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">9</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">115</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Step 1 — Construct the Equation From the Data</h3>
+    <p class="detail-description">
+        Using $S(w,c) = \sum_{n=1}^{10}(t_n - wu_n - c)^2$ from above, plug in the sums needed for the
+        normal equations. From the table: $N=10$, $\sum u_n = 45$, $\sum t_n = 967$,
+        $\sum u_n^2 = 285$, $\sum u_n t_n = 4622$.
+    </p>
+
+    <h3>Step 2 — Differentiate and Equate to Zero</h3>
+    <p class="detail-description">
+        Setting $\partial S/\partial c=0$ and $\partial S/\partial w=0$ (as derived earlier) gives the
+        two normal equations:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\sum t_n = w\sum u_n + Nc \;\;\Rightarrow\;\; 967 = 45w + 10c \qquad \text{(i)}$$
+        $$\sum u_n t_n = w\sum u_n^2 + c\sum u_n \;\;\Rightarrow\;\; 4622 = 285w + 45c \qquad \text{(ii)}$$
+    </div>
+
+    <h3>Step 3 — Determine $w$ and Construct the Model</h3>
+    <p class="detail-description">
+        From (i): $c = 96.7 - 4.5w$. Substituting into (ii):
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$4622 = 285w + 45(96.7 - 4.5w) = 82.5w + 4351.5$$
+        $$w = \frac{270.5}{82.5} \approx 3.28$$
+    </div>
+    <p class="detail-description">
+        Back-substituting: $c = 96.7 - 4.5(3.28) \approx 81.95$. So the fitted model, in terms of
+        $u=\text{year}-2016$, is:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\hat{t} = 3.28u + 81.95, \qquad \text{i.e.} \qquad \hat{t} = 3.28(\text{year}-2016) + 81.95$$
+    </div>
+    <p class="detail-description">
+        This is exactly the blue line drawn through the scatter in the figure above.
+    </p>
+
+    <h3>Step 4 — Find a Year for a Given Rainfall Value</h3>
+    <p class="detail-description">
+        The fitted equation runs both ways: given a year, it predicts rainfall; given a target rainfall,
+        it can be solved for the year that would be expected to reach it. Suppose we want to know when
+        rainfall might first reach 120 cm. Set $\hat{t}=120$ and solve for $u$:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$120 = 3.28u + 81.95 \;\;\Rightarrow\;\; u = \frac{38.05}{3.28} \approx 11.6 \;\;\Rightarrow\;\; \text{year} \approx 2016+11.6 \approx 2028$$
+    </div>
+    <p class="detail-description">
+        <strong>Caution:</strong> the fitted data only covers 2016–2025 ($u=0$ to $9$). $u\approx11.6$
+        falls outside that range, so this is an <strong>extrapolation</strong>, not an interpolation —
+        the line is assumed to keep behaving the same way beyond the data it was fit on, which is a much
+        weaker assumption than predicting a year that falls inside the observed range.
+    </p>
+
+    <h3>Step 5 — A Better Test: Interpolating a Withheld Year</h3>
+    <p class="detail-description">
+        Extrapolating to 2028 has no ground truth to check against — we simply don't know what actually
+        happens there. A more convincing demonstration holds out a year we <em>do</em> have data for,
+        fits the model as if it were missing, predicts it, and then compares the prediction to the real
+        value. This is interpolation, since the withheld year sits inside the range the rest of the data
+        still covers.
+    </p>
+    <p class="detail-description">
+        Remove 2021 ($u=5$, $t=102$) from the fitting data, leaving 9 points. Recomputing the sums:
+        $\sum u_n=40$, $\sum t_n=865$, $\sum u_n^2=260$, $\sum u_nt_n=4112$, $N=9$. Solving the normal
+        equations exactly as before:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$w = \frac{9(4112)-40(865)}{9(260)-40^2} = \frac{2408}{740} \approx 3.254, \qquad c = \frac{865-3.254(40)}{9} \approx 81.65$$
+    </div>
+    <p class="detail-description">
+        Predicting the withheld year, $u=5$:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\hat{t} = 3.254(5) + 81.65 \approx 97.92\text{ cm}$$
+    </div>
+    <p class="detail-description">
+        The <strong>actual observed 2021 rainfall was 102 cm</strong> — a model that never saw 2021 at
+        all landed within about 4 cm of the truth. That's a genuinely checkable result, and it works
+        precisely because 2021 sits well inside the range of years the remaining 9 points still cover —
+        the opposite situation from predicting 2028.
+    </p>
+
+    <p class="detail-description" style="font-size:0.92rem; color:#555;">
+        <em>A passing note: the fitted line above is a degree-1 polynomial in $x$. Nothing stops us from
+        fitting a higher-degree polynomial instead — degree 9 through these 10 points would pass through
+        every single one, driving the training error to zero. That's not actually better: a curve that
+        contorts itself to hit every noisy point exactly stops representing the underlying trend and
+        starts memorizing the noise, performing badly on any year it wasn't fit to. This is the same
+        underfitting/overfitting trade-off from the ML Pipeline page's Model Training section — degree
+        here plays the same role "model complexity" does there.</em>
+    </p>
+
+    <h2>What Is Maximum Likelihood Estimation (MLE)?</h2>
+    <p class="detail-description">
+        <strong>Maximum Likelihood Estimation</strong> is a method for estimating a model's unknown
+        parameters by asking a different question than Least Squares does: instead of directly
+        minimizing a distance criterion, assume a probability distribution for how the data was
+        generated, then pick the parameter values that make the data actually observed the most probable
+        outcome under that distribution.
+    </p>
+
+    <h2>A Tiny Concrete Example</h2>
+    <p class="detail-description">
+        Say you have three points: $(x_1,y_1)=(1,3)$, $(x_2,y_2)=(2,5)$, $(x_3,y_3)=(3,6)$, and a model
+        with no intercept: $y_i = wx_i + \epsilon_i$, where $\epsilon_i \sim N(0,\sigma^2)$.
+    </p>
+
+    <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0; text-align:center;">
+        <svg viewBox="0 0 420 300" xmlns="http://www.w3.org/2000/svg" style="max-width:400px; height:auto;">
+            <g font-family="Arial, sans-serif" font-size="12">
+                <line x1="50" y1="250" x2="380" y2="250" stroke="#333" stroke-width="1.5"/>
+                <line x1="50" y1="250" x2="50" y2="30" stroke="#333" stroke-width="1.5"/>
+                <text x="215" y="278" text-anchor="middle" fill="#333">x</text>
+                <text x="20" y="140" text-anchor="middle" fill="#333" transform="rotate(-90,20,140)">y</text>
+
+                <!-- gridlines / ticks -->
+                <text x="130" y="265" text-anchor="middle" fill="#555">1</text>
+                <text x="210" y="265" text-anchor="middle" fill="#555">2</text>
+                <text x="290" y="265" text-anchor="middle" fill="#555">3</text>
+                <text x="38" y="210" text-anchor="end" fill="#555">3</text>
+                <text x="38" y="130" text-anchor="end" fill="#555">5</text>
+                <text x="38" y="90" text-anchor="end" fill="#555">6</text>
+
+                <!-- candidate line y = 2x, drawn over the plotted x-range 1..3: (1,2)->(3,6) -->
+                <line x1="130" y1="250" x2="290" y2="90" stroke="#1565c0" stroke-width="2"/>
+                <text x="300" y="85" fill="#0d47a1" font-weight="bold">y = 2x</text>
+
+                <!-- data points -->
+                <circle cx="130" cy="210" r="5" fill="#c62828"/>
+                <circle cx="210" cy="130" r="5" fill="#c62828"/>
+                <circle cx="290" cy="90" r="5" fill="#c62828"/>
+
+                <!-- predicted points on the line (w=2): (1,2),(2,4),(3,6) -->
+                <circle cx="130" cy="250" r="4" fill="#1565c0"/>
+                <circle cx="210" cy="170" r="4" fill="#1565c0"/>
+                <circle cx="290" cy="90"  r="4" fill="#1565c0"/>
+
+                <!-- residual segments -->
+                <line x1="130" y1="210" x2="130" y2="250" stroke="#e65100" stroke-width="2" stroke-dasharray="4,3"/>
+                <text x="140" y="235" fill="#e65100" font-size="11">&#949;1 = 1</text>
+
+                <line x1="210" y1="130" x2="210" y2="170" stroke="#e65100" stroke-width="2" stroke-dasharray="4,3"/>
+                <text x="220" y="155" fill="#e65100" font-size="11">&#949;2 = 1</text>
+
+                <text x="300" y="110" fill="#e65100" font-size="11">&#949;3 = 0</text>
+
+                <rect x="255" y="20" width="14" height="14" fill="#c62828"/>
+                <text x="273" y="32" fill="#333" font-size="11">observed y&#7522;</text>
+                <rect x="255" y="40" width="14" height="14" fill="#1565c0"/>
+                <text x="273" y="52" fill="#333" font-size="11">predicted w&#183;x&#7522; (w=2)</text>
+            </g>
+        </svg>
+        <p style="font-size:0.85rem; color:#666; margin-top:8px;"><em>Figure: The candidate line $y=2x$ against the three observed points. The dashed segments are the residuals $\epsilon_i = y_i - wx_i$ that a Gaussian noise assumption converts into probability densities.</em></p>
+    </div>
+
+    <h3>Step 1 — What Does "Probability of the Data" Even Mean Here?</h3>
+    <p class="detail-description">
+        Pick a candidate value, say $w=2$. Under that guess, the <em>predicted</em> values are $2, 4, 6$.
+        The <em>actual</em> observed values were $3, 5, 6$. So the noise that "must have happened," under
+        this candidate $w$, is: $\epsilon_1=1$, $\epsilon_2=1$, $\epsilon_3=0$.
+    </p>
+    <p class="detail-description">
+        Now — we assumed $\epsilon \sim N(0,\sigma^2)$. That assumption tells us exactly how probable each
+        of those specific noise values is. The Gaussian density function gives us a number for "how
+        likely is a noise value of exactly 1" versus "how likely is a noise value of exactly 0." That's
+        the whole trick: <strong>the noise assumption converts a residual into a probability (density)
+        value.</strong>
+    </p>
+
+    <h3>Step 2 — Multiply Them Together</h3>
+    <p class="detail-description">
+        For a given point, the density of observing $y_i$ given $x_i$ and $w$ is:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$N(y_i; wx_i, \sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y_i-wx_i)^2}{2\sigma^2}\right)$$
+    </div>
+    <p class="detail-description">
+        Assuming the three data points are independent, the probability of seeing <em>all three</em>
+        together is the product of their individual densities:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$L(w) = \prod_{i=1}^{3} N(y_i; wx_i,\sigma^2)$$
+    </div>
+    <p class="detail-description">
+        This product, as a function of $w$, is the <strong>likelihood</strong>. Different candidate
+        $w$'s give different residuals, which give different density values, which give a different
+        overall product. MLE says: find the $w$ that makes this product as large as possible.
+    </p>
+
+    <h3>Step 3 — Where the Squared Error Actually Comes From</h3>
+    <p class="detail-description">
+        Taking the log of that product (logs turn products into sums, and don't change where the maximum
+        sits):
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\log L(w) = \sum_{i=1}^{3} \left[-\frac{1}{2}\log(2\pi\sigma^2) - \frac{(y_i-wx_i)^2}{2\sigma^2}\right]$$
+    </div>
+    <p class="detail-description">
+        The first term inside the brackets doesn't depend on $w$ at all — it's just a constant that shifts
+        every candidate $w$'s score equally, so it can't affect <em>which</em> $w$ wins. Strip it out, and
+        maximizing what's left is:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\max_w \left(-\frac{1}{2\sigma^2}\sum_i (y_i-wx_i)^2\right) \;\equiv\; \min_w \sum_i (y_i-wx_i)^2$$
+    </div>
+    <p class="detail-description">
+        That last step — maximizing a negative thing is the same as minimizing the positive thing inside
+        it — is the entire punchline. <strong>The sum-of-squared-residuals term didn't get inserted by
+        hand; it fell straight out of the algebra, purely because we chose a Gaussian for the
+        noise.</strong> If you'd instead assumed the noise followed a Laplace distribution (density
+        $\propto e^{-|\epsilon|/b}$), the exact same three steps would have landed you minimizing
+        $\sum_i |y_i - wx_i|$ instead — absolute error, not squared error. The loss function isn't a free
+        design choice; it's a <em>consequence</em> of what you assumed about the noise.
+    </p>
+
+    <h3>The One Thing MLE Gets That Pure Least Squares Never Asks For</h3>
+    <p class="detail-description">
+        Notice $\sigma^2$ was sitting there the whole derivation, but least squares never needed it — it
+        dropped out of the equation entirely once we started minimizing. MLE, if you also take the
+        derivative of the log-likelihood with respect to $\sigma^2$ and set <em>that</em> to zero, hands
+        you a second answer for free:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\hat{\sigma}^2 = \frac{1}{N}\sum_i(y_i - \hat{w}x_i)^2$$
+    </div>
+    <p class="detail-description">
+        — literally the average squared residual, using the best-fit $\hat{w}$ you just found.
+        <strong>That's the noise-level estimate least squares has no mechanism to produce, because it
+        never had a probabilistic noise model to begin with.</strong>
+    </p>
+
+    <h2>Numerical Example: MLE on the Rainfall Data</h2>
+    <p class="detail-description">
+        This is the same rainfall dataset used for the Least Squares worked example above — the point is
+        to confirm, with real numbers rather than abstract algebra, that MLE reproduces the identical fit
+        and then hands back the extra $\hat\sigma^2$ that Least Squares never computed.
+    </p>
+
+    <h3>Step 1 — Same Normal Equations, Same $(w,c)$</h3>
+    <p class="detail-description">
+        Maximizing the log-likelihood $\log L(w,c,\sigma^2)$ over $w$ and $c$ reduces to the identical
+        minimization of $S(w,c)=\sum_n(t_n-wu_n-c)^2$ shown in Step 3 earlier — the algebra never used the
+        specific data, only the fact that the constant term drops out. So plugging in the same sums from
+        the Least Squares example ($\sum u_n=45$, $\sum t_n=967$, $\sum u_n^2=285$, $\sum u_nt_n=4622$,
+        $N=10$) gives back exactly the same normal equations, and therefore exactly the same answer:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\hat{w} \approx 3.28, \qquad \hat{c} \approx 81.95$$
+    </div>
+    <p class="detail-description">
+        Same fitted line as before — no surprise there, that equivalence was proven algebraically. The
+        new content starts in Step 2.
+    </p>
+
+    <h3>Step 2 — Compute the Residuals</h3>
+    <p class="detail-description">
+        Using $\hat{t}_n = 3.28u_n + 81.95$, the residual at each point is $t_n - \hat{t}_n$:
+    </p>
+    <table class="data-table" style="border-collapse:collapse; width:100%; max-width:560px; margin:16px auto; font-family:Arial, sans-serif; font-size:0.92rem;">
+        <thead>
+            <tr>
+                <th style="border:1px solid #999; padding:6px 10px; background:#f4f4f9;">Year</th>
+                <th style="border:1px solid #999; padding:6px 10px; background:#f4f4f9;">$t_n$</th>
+                <th style="border:1px solid #999; padding:6px 10px; background:#f4f4f9;">$\hat{t}_n$</th>
+                <th style="border:1px solid #999; padding:6px 10px; background:#f4f4f9;">$t_n-\hat{t}_n$</th>
+                <th style="border:1px solid #999; padding:6px 10px; background:#f4f4f9;">$(t_n-\hat{t}_n)^2$</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #999; padding:5px 10px; text-align:center;">2016</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">85</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">81.95</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">3.05</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">9.33</td></tr>
+            <tr><td style="border:1px solid #999; padding:5px 10px; text-align:center;">2017</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">92</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">85.22</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">6.78</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">45.91</td></tr>
+            <tr><td style="border:1px solid #999; padding:5px 10px; text-align:center;">2018</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">78</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">88.50</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">$-$10.50</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">110.31</td></tr>
+            <tr><td style="border:1px solid #999; padding:5px 10px; text-align:center;">2019</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">95</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">91.78</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">3.22</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">10.36</td></tr>
+            <tr><td style="border:1px solid #999; padding:5px 10px; text-align:center;">2020</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">88</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">95.06</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">$-$7.06</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">49.85</td></tr>
+            <tr><td style="border:1px solid #999; padding:5px 10px; text-align:center;">2021</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">102</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">98.34</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">3.66</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">13.40</td></tr>
+            <tr><td style="border:1px solid #999; padding:5px 10px; text-align:center;">2022</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">97</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">101.62</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">$-$4.62</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">21.33</td></tr>
+            <tr><td style="border:1px solid #999; padding:5px 10px; text-align:center;">2023</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">110</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">104.90</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">5.10</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">26.04</td></tr>
+            <tr><td style="border:1px solid #999; padding:5px 10px; text-align:center;">2024</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">105</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">108.18</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">$-$3.18</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">10.09</td></tr>
+            <tr><td style="border:1px solid #999; padding:5px 10px; text-align:center;">2025</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">115</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">111.45</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">3.55</td><td style="border:1px solid #999; padding:5px 10px; text-align:center;">12.57</td></tr>
+        </tbody>
+    </table>
+    <p class="detail-description" style="font-size:0.88rem; color:#666;">
+        The residuals sum to (approximately) zero — a built-in property of the least-squares fit whenever
+        an intercept is included, and a useful arithmetic check that the fit above is correct.
+    </p>
+
+    <h3>Step 3 — Compute $\hat\sigma^2$</h3>
+    <p class="detail-description">
+        Summing the last column: $\sum_n(t_n-\hat{t}_n)^2 \approx 309.2$. Then:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\hat{\sigma}^2 = \frac{309.2}{10} \approx 30.9 \text{ cm}^2, \qquad \hat{\sigma} \approx 5.56\text{ cm}$$
+    </div>
+    <p class="detail-description">
+        This is a genuinely new number — Least Squares never produced it, because minimizing squared
+        error doesn't require knowing $\sigma^2$ at all. It's an estimate of the typical size of a
+        year-to-year deviation from the fitted trend line.
+    </p>
+
+    <h3>Step 4 — Use $\hat\sigma$ for a Prediction Interval (What LS Alone Can't Give You)</h3>
+    <p class="detail-description">
+        This is where "why bother with MLE" gets a concrete answer. Least Squares gives a single-number
+        prediction for a new year; MLE's kept probability model lets that prediction come with a range.
+        For year 2026 ($u=10$):
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\hat{t} = 3.28(10) + 81.95 = 114.75 \text{ cm}$$
+    </div>
+    <p class="detail-description">
+        A Least Squares report stops there: "114.75 cm." MLE's underlying model, $t\sim N(\hat{t},
+        \hat\sigma^2)$, supports an approximate 95% prediction interval of $\hat{t}\pm1.96\hat\sigma$:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$114.75 \pm 1.96(5.56) \;\approx\; 114.75 \pm 10.9 \;\;\Rightarrow\;\; (103.9,\ 125.7)\text{ cm}$$
+    </div>
+    <p class="detail-description">
+        "Somewhere around 115 cm, most likely between about 104 and 126 cm" is a materially more useful
+        statement than a bare point estimate — and it exists <em>only</em> because the probability model
+        was kept around instead of being discarded once $(w,c)$ were found.
+    </p>
+
+    <h3>Step 5 — The Same Interval, But Checkable: Interpolating 2021</h3>
+    <p class="detail-description">
+        The 2026 interval above can't be verified — 2026 hasn't happened yet in this dataset. Using the
+        9-point fit from the interpolation example earlier ($w\approx3.254$, $c\approx81.65$, withholding
+        2021), the same residual calculation gives $\hat\sigma^2\approx32.7\text{ cm}^2$,
+        $\hat\sigma\approx5.72$ cm. Predicting the withheld year:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\hat{t} = 97.92\text{ cm}, \qquad 97.92 \pm 1.96(5.72) \;\approx\; (86.7,\ 109.1)\text{ cm}$$
+    </div>
+    <p class="detail-description">
+        The actual 2021 rainfall, 102 cm, falls comfortably inside this interval — a prediction interval
+        that can actually be checked against reality, and passes. This is also where the earlier
+        $SE_{\text{pred}}$ formula's extra term matters: 2021 ($u=5$) sits very close to the data's
+        center, while 2026 ($u=10$) sits far past its edge, so the <em>true</em> (non-simplified)
+        uncertainty band for 2021 would be noticeably narrower than for 2026 — interpolated predictions
+        aren't just more trustworthy in principle, MLE's own machinery quantifies exactly how much more.
+    </p>
+
+    <div class="intuition-box" style="background-color: #fdf2e9; border-left: 4px solid #e67e22; padding: 15px 20px; margin: 20px 0;">
+        <strong>LS vs. MLE, in one line:</strong> LS picks a criterion and directly optimizes it. MLE
+        starts one level deeper — with an assumption about how the noise behaves — and that assumption
+        happens to hand you the same criterion LS was using all along, plus a noise estimate LS never
+        had access to.
+    </div>
+
+    <h2>"If MLE Gives the Same $\hat{w}$, Why Bother With It At All?"</h2>
+    <p class="detail-description">
+        Fair question — and worth asking directly, since we just showed the two methods tie on the fitted
+        line itself. The answer is that the probability model behind MLE gives you things pure LS
+        structurally cannot, even when the fitted line matches:
+    </p>
+
+    <div style="background: #f8f9fa; border: 1px solid #e1e8ed; border-radius: 6px; padding: 18px 22px; margin: 16px 0;">
+        <ol style="margin: 0; padding-left: 22px;">
+            <li style="margin-bottom: 12px;">
+                <strong>It explains <em>why</em> squared error is the right loss.</strong> LS just assumes
+                it; MLE derives it from the Gaussian noise assumption. Change that assumption (e.g., to
+                Laplace noise) and MLE derives a <em>different</em> loss instead — squared error was
+                never a law, just a consequence of one particular noise assumption.
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>It estimates the noise itself</strong> ($\hat{\sigma}^2$) — needed for confidence
+                intervals, hypothesis tests on individual weights, and model-comparison scores (AIC/BIC),
+                none of which plain LS can produce.
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>It gives a full predictive distribution, not just a point.</strong>
+                $N(\hat{w}x_{\text{new}}, \hat{\sigma}^2)$ instead of a bare number, so you can say
+                "95% of the time the true value falls in this range."
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>It makes regularization principled instead of ad hoc.</strong> Put a prior on $w$
+                (e.g., $w\sim N(0,\tau^2)$) and Ridge regression falls out as the MAP estimate, with
+                $\lambda$ meaning something concrete ($\sigma^2/\tau^2$) instead of being an arbitrary
+                knob.
+            </li>
+            <li style="margin-bottom: 0;">
+                <strong>It's the exact same machine reused everywhere downstream.</strong> Logistic
+                Regression, Gaussian Naive Bayes, GMM/EM, even the SFT cross-entropy loss on the LLM
+                Engine page are all "assume a generative model &rarr; write the likelihood &rarr; maximize
+                it." Learning MLE here, where it happens to reduce to something familiar, is what makes
+                every later derivation feel like reapplication instead of a brand-new trick each time.
+            </li>
+        </ol>
+    </div>
+
+    <h2>Regularization: Preventing Overfitting by Penalizing Large Weights</h2>
+    <p class="detail-description">
+        The passing note earlier warned that higher-order polynomials can drive training error to zero
+        while producing wild, memorized-noise predictions between data points — overfitting. The most
+        direct fix doesn't reduce the model's flexibility (its degree $M$) at all; instead it changes
+        <em>what counts as a good fit</em>, by adding a penalty for large weights directly into the cost
+        function being minimized. This is <strong>L2 (Ridge) regularization</strong>:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$S_{\text{reg}}(w,c) = \sum_{n=1}^{N}(t_n - wx_n - c)^2 \;+\; \lambda w^2$$
+    </div>
+    <p class="detail-description">
+        The new term $\lambda w^2$ grows whenever $|w|$ grows, so the optimizer is no longer purely
+        chasing the smallest residuals — it now trades residual size off against keeping $w$ small.
+        $\lambda \ge 0$ controls how heavily that trade-off is weighted: $\lambda=0$ recovers plain
+        Least Squares exactly, and larger $\lambda$ pulls $w$ progressively toward zero.
+    </p>
+
+    <div class="intuition-box" style="background-color: #fdf2e9; border-left: 4px solid #e67e22; padding: 15px 20px; margin: 20px 0;">
+        <strong>Why only $w$ gets penalized, not $c$:</strong> shrinking $c$ toward zero would make the
+        model's predictions depend on an arbitrary choice — here, we coded years as $u=\text{year}-2016$,
+        so $c$ is tied to that specific choice of origin. Had we instead coded from 2000 or 2020, $c$
+        would come out completely different even though the line itself is the same. Penalizing $w$
+        doesn't have this problem, since the slope is unaffected by where the origin is placed (as
+        established earlier). Penalizing an arbitrary, origin-dependent number would be penalizing a
+        modeling accident, not a genuine property of the fit.
+    </div>
+
+    <h3>Solving the Regularized Problem</h3>
+    <p class="detail-description">
+        Differentiating $S_{\text{reg}}$ with respect to $c$ is unaffected by the new term (it doesn't
+        involve $c$), so $c=\bar{t}-w\bar{u}$ still holds exactly as before. Substituting that back in and
+        writing everything in terms of centered variables $\tilde{u}_n = u_n-\bar{u}$,
+        $\tilde{t}_n=t_n-\bar{t}$:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\frac{\partial S_{\text{reg}}}{\partial w} = -2\sum_n \tilde{u}_n(\tilde{t}_n - w\tilde{u}_n) + 2\lambda w = 0
+        \;\;\Rightarrow\;\; w_{\text{reg}} = \frac{\sum_n \tilde{u}_n\tilde{t}_n}{\sum_n \tilde{u}_n^2 + \lambda}$$
+    </div>
+    <p class="detail-description">
+        Compare this to the unregularized slope derived earlier, $w=\frac{\sum\tilde{u}_n\tilde{t}_n}{\sum\tilde{u}_n^2}$
+        — identical, except $\lambda$ has been added to the denominator. That single added term is the
+        entire mechanism of L2 regularization: a bigger denominator means a smaller $w$, and $\lambda$
+        controls by how much.
+    </p>
+
+    <h3>Shrinkage in Numbers</h3>
+    <p class="detail-description">
+        Using the rainfall data's own sums from the numerical example ($\sum\tilde{u}_n\tilde{t}_n=270.5$,
+        $\sum\tilde{u}_n^2=82.5$), here's what different values of $\lambda$ actually do to the fitted
+        line:
+    </p>
+    <table class="data-table" style="border-collapse:collapse; width:100%; max-width:500px; margin:16px auto; font-family:Arial, sans-serif;">
+        <thead>
+            <tr>
+                <th style="border:1px solid #999; padding:8px 12px; background:#f4f4f9;">$\lambda$</th>
+                <th style="border:1px solid #999; padding:8px 12px; background:#f4f4f9;">$w_{\text{reg}} = 270.5/(82.5+\lambda)$</th>
+                <th style="border:1px solid #999; padding:8px 12px; background:#f4f4f9;">$c = 96.7 - 4.5w_{\text{reg}}$</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">0 (no regularization)</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">3.28</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">81.95</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">50</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">2.04</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">87.51</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">200</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">0.96</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">92.39</td></tr>
+            <tr><td style="border:1px solid #999; padding:6px 12px; text-align:center;">$\to\infty$</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">$\to0$</td><td style="border:1px solid #999; padding:6px 12px; text-align:center;">$\to96.7=\bar{t}$</td></tr>
+        </tbody>
+    </table>
+    <p class="detail-description">
+        As $\lambda\to\infty$, $w_{\text{reg}}\to0$ and $c\to\bar{t}$ — the model collapses to predicting
+        the mean rainfall for every year, completely ignoring the trend. That's the extreme case worth
+        keeping in mind: regularization strength is a dial, not a switch. Too little, and it doesn't
+        meaningfully curb overfitting; too much, and it erases genuine signal the model needs, pushing it
+        toward underfitting.
+    </p>
+
+    <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0; text-align:center;">
+        <svg viewBox="0 0 620 400" xmlns="http://www.w3.org/2000/svg" style="max-width:600px; height:auto;">
+            <g font-family="Arial, sans-serif" font-size="12">
+                <line x1="70" y1="320" x2="560" y2="320" stroke="#333" stroke-width="1.5"/>
+                <line x1="70" y1="320" x2="70" y2="40" stroke="#333" stroke-width="1.5"/>
+                <text x="315" y="365" text-anchor="middle" fill="#333" font-weight="bold">Year</text>
+                <text x="25" y="180" text-anchor="middle" fill="#333" font-weight="bold" transform="rotate(-90,25,180)">Rainfall (cm)</text>
+
+                <text x="60" y="324" text-anchor="end" fill="#555">60</text>
+                <line x1="70" y1="277" x2="560" y2="277" stroke="#eee"/><text x="60" y="281" text-anchor="end" fill="#555">70</text>
+                <line x1="70" y1="234" x2="560" y2="234" stroke="#eee"/><text x="60" y="238" text-anchor="end" fill="#555">80</text>
+                <line x1="70" y1="190" x2="560" y2="190" stroke="#eee"/><text x="60" y="194" text-anchor="end" fill="#555">90</text>
+                <line x1="70" y1="147" x2="560" y2="147" stroke="#eee"/><text x="60" y="151" text-anchor="end" fill="#555">100</text>
+                <line x1="70" y1="104" x2="560" y2="104" stroke="#eee"/><text x="60" y="108" text-anchor="end" fill="#555">110</text>
+                <line x1="70" y1="60" x2="560" y2="60" stroke="#eee"/><text x="60" y="64" text-anchor="end" fill="#555">120</text>
+
+                <text x="70" y="338" text-anchor="middle" fill="#555" font-size="10">2016</text>
+                <text x="211" y="338" text-anchor="middle" fill="#555" font-size="10">2019</text>
+                <text x="352" y="338" text-anchor="middle" fill="#555" font-size="10">2022</text>
+                <text x="493" y="338" text-anchor="middle" fill="#555" font-size="10">2025</text>
+
+                <!-- lambda = 0 line: w=3.28, c=81.95 -->
+                <line x1="70" y1="224.9" x2="540" y2="82.7" stroke="#1565c0" stroke-width="2.5"/>
+                <!-- lambda = 50 line: w=2.04, c=87.51 (recomputed to pass through the shared pivot at u=4.5) -->
+                <line x1="70" y1="200.8" x2="540" y2="112.4" stroke="#f57c00" stroke-width="2.5"/>
+                <!-- lambda = 200 line: w=0.96, c=92.39 (recomputed to pass through the shared pivot at u=4.5) -->
+                <line x1="70" y1="179.6" x2="540" y2="138.0" stroke="#2e7d32" stroke-width="2.5"/>
+
+                <circle cx="70"  cy="211.7" r="4.5" fill="#999"/>
+                <circle cx="117" cy="181.3" r="4.5" fill="#999"/>
+                <circle cx="164" cy="242.0" r="4.5" fill="#999"/>
+                <circle cx="211" cy="168.3" r="4.5" fill="#999"/>
+                <circle cx="258" cy="198.7" r="4.5" fill="#999"/>
+                <circle cx="305" cy="138.0" r="4.5" fill="#999"/>
+                <circle cx="352" cy="159.7" r="4.5" fill="#999"/>
+                <circle cx="399" cy="103.3" r="4.5" fill="#999"/>
+                <circle cx="446" cy="125.0" r="4.5" fill="#999"/>
+                <circle cx="493" cy="81.7"  r="4.5" fill="#999"/>
+
+                <rect x="380" y="45" width="180" height="80" fill="#fafafa" stroke="#ddd"/>
+                <line x1="392" y1="60" x2="410" y2="60" stroke="#1565c0" stroke-width="2.5"/><text x="416" y="64" fill="#333" font-size="11">$\lambda=0$ (unregularized)</text>
+                <line x1="392" y1="82" x2="410" y2="82" stroke="#f57c00" stroke-width="2.5"/><text x="416" y="86" fill="#333" font-size="11">$\lambda=50$</text>
+                <line x1="392" y1="104" x2="410" y2="104" stroke="#2e7d32" stroke-width="2.5"/><text x="416" y="108" fill="#333" font-size="11">$\lambda=200$</text>
+            </g>
+        </svg>
+        <p style="font-size:0.85rem; color:#666; margin-top:8px;"><em>Figure: As $\lambda$ increases, the fitted line flattens and rotates toward the horizontal mean-rainfall level — visibly "shrinking" the slope toward zero, exactly as the table above predicts numerically.</em></p>
+    </div>
+
+    <h3>Choosing $\lambda$: Where the Validation Set Comes In</h3>
+    <p class="detail-description">
+        The normal equations solve for $(w,c)$ directly, in one closed-form calculation — but only once
+        $\lambda$ is already fixed. $\lambda$ itself sits <em>outside</em> that calculation entirely; it's
+        a setting chosen before the normal equations ever run, not something they solve for. That's a
+        genuinely different kind of decision than fitting $(w,c)$, and it needs its own data-driven
+        procedure.
+    </p>
+    <p class="detail-description">
+        This is where a <strong>validation set</strong> comes back in — not to monitor a training curve
+        the way it would for an iterative classifier (there isn't one here), but purely to select
+        $\lambda$:
+    </p>
+    <ol style="padding-left: 22px;">
+        <li style="margin-bottom: 8px;">Split the data into a <strong>training set</strong> and a <strong>validation set</strong>.</li>
+        <li style="margin-bottom: 8px;">For each candidate $\lambda$ (e.g., the $0, 50, 200,\dots$ from the table above), fit $(w,c)$ using <em>only</em> the training set.</li>
+        <li style="margin-bottom: 8px;">Evaluate that fitted model's error on the <strong>validation set</strong> — data it never touched while fitting.</li>
+        <li style="margin-bottom: 0;">Pick whichever $\lambda$ gives the lowest <em>validation</em> error — never the lowest training error, which would trivially always favor $\lambda=0$, the same pitfall that made training error the wrong signal for choosing the polynomial degree $M$ earlier.</li>
+    </ol>
+    <p class="detail-description">
+        A separate <strong>test set</strong>, untouched by both the $(w,c)$ fitting and the $\lambda$
+        selection, is then used exactly once at the end for an honest final performance estimate.
+    </p>
+    <p class="detail-description">
+        With a small dataset — like the 10-point rainfall example — a single fixed validation split
+        wastes too much data and can be noisy just from which points happened to land in which split. In
+        practice, <strong>k-fold cross-validation</strong> is used instead: repeat the whole
+        train-then-validate procedure $k$ times, rotating which slice of the data plays the validation
+        role each time, then average the validation error across all $k$ rounds before comparing
+        candidate $\lambda$ values.
+    </p>
+
+    <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0; text-align:center;">
+        <svg viewBox="0 0 640 380" xmlns="http://www.w3.org/2000/svg" style="max-width:600px; height:auto;">
+            <g font-family="Arial, sans-serif" font-size="12">
+                <text x="320" y="22" text-anchor="middle" font-weight="bold" fill="#333">5-Fold Cross-Validation</text>
+                <text x="320" y="40" text-anchor="middle" fill="#555" font-size="11">Full training data split into 5 equal folds</text>
+
+                <!-- Round 1 -->
+                <text x="60" y="72" text-anchor="end" fill="#333" font-weight="bold">Round 1</text>
+                <rect x="150" y="55" width="80" height="30" fill="#f57c00" stroke="#c85a00"/>
+                <rect x="230" y="55" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="310" y="55" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="390" y="55" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="470" y="55" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+
+                <!-- Round 2 -->
+                <text x="60" y="112" text-anchor="end" fill="#333" font-weight="bold">Round 2</text>
+                <rect x="150" y="95" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="230" y="95" width="80" height="30" fill="#f57c00" stroke="#c85a00"/>
+                <rect x="310" y="95" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="390" y="95" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="470" y="95" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+
+                <!-- Round 3 -->
+                <text x="60" y="152" text-anchor="end" fill="#333" font-weight="bold">Round 3</text>
+                <rect x="150" y="135" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="230" y="135" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="310" y="135" width="80" height="30" fill="#f57c00" stroke="#c85a00"/>
+                <rect x="390" y="135" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="470" y="135" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+
+                <!-- Round 4 -->
+                <text x="60" y="192" text-anchor="end" fill="#333" font-weight="bold">Round 4</text>
+                <rect x="150" y="175" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="230" y="175" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="310" y="175" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="390" y="175" width="80" height="30" fill="#f57c00" stroke="#c85a00"/>
+                <rect x="470" y="175" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+
+                <!-- Round 5 -->
+                <text x="60" y="232" text-anchor="end" fill="#333" font-weight="bold">Round 5</text>
+                <rect x="150" y="215" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="230" y="215" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="310" y="215" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="390" y="215" width="80" height="30" fill="#90caf9" stroke="#1565c0"/>
+                <rect x="470" y="215" width="80" height="30" fill="#f57c00" stroke="#c85a00"/>
+
+                <!-- legend -->
+                <rect x="150" y="255" width="16" height="16" fill="#90caf9" stroke="#1565c0"/>
+                <text x="172" y="267" fill="#333" font-size="11">Training fold</text>
+                <rect x="290" y="255" width="16" height="16" fill="#f57c00" stroke="#c85a00"/>
+                <text x="312" y="267" fill="#333" font-size="11">Validation fold (rotates each round)</text>
+
+                <!-- arrow down to average box -->
+                <line x1="320" y1="285" x2="320" y2="310" stroke="#666" stroke-width="1.5" marker-end="url(#kfoldArrow)"/>
+                <defs>
+                    <marker id="kfoldArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                        <path d="M0,0 L8,4 L0,8 Z" fill="#666"/>
+                    </marker>
+                </defs>
+
+                <rect x="170" y="315" width="300" height="50" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+                <text x="320" y="336" text-anchor="middle" fill="#1b5e20" font-weight="bold">Average validation error</text>
+                <text x="320" y="352" text-anchor="middle" fill="#1b5e20" font-size="11">across all 5 rounds, for this candidate setting</text>
+            </g>
+        </svg>
+        <p style="font-size:0.85rem; color:#666; margin-top:8px;"><em>Figure: In each of the $k$ rounds, one fold takes a turn as the validation set while the rest train the model; the final score for a candidate (here, a candidate $\lambda$) is the average validation error across all $k$ rounds — so every data point is used for validation exactly once, and for training in every other round.</em></p>
+    </div>
+
+    <h3>The Probabilistic View: Regularization as MAP Estimation</h3>
+    <p class="detail-description">
+        Point 4 in the previous section mentioned this in passing — here's the connection made explicit.
+        Put a Gaussian prior directly on the weight, $w\sim N(0,\tau^2)$, expressing a belief that $w$ is
+        probably small unless the data strongly indicates otherwise. Combining this prior with the
+        Gaussian-noise likelihood from earlier and maximizing the resulting posterior (MAP, not plain
+        MLE) leads to <em>exactly</em> the regularized objective $S_{\text{reg}}$ above, with
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\lambda = \frac{\sigma^2}{\tau^2}$$
+    </div>
+    <p class="detail-description">
+        This gives $\lambda$ real meaning instead of being a knob tuned by trial and error: it's the
+        ratio of how noisy the data is ($\sigma^2$) to how strongly we believe $w$ should stay small
+        ($\tau^2$). Noisy data or a strong small-weight belief both push $\lambda$ up; clean data or an
+        indifferent prior ($\tau^2\to\infty$) push $\lambda\to0$, recovering plain Least Squares — the
+        same MLE-with-a-prior pattern used throughout this series, now applied to the model's own
+        parameters instead of its predictions.
+    </p>
+
+    <h2>Logistic Regression</h2>
+    <p class="detail-description">
+        Up to this point, our linear models have focused entirely on <strong>regression</strong>—predicting a continuous, unconstrained numerical quantity like rainfall or temperature. But what happens when the target variable isn't continuous, but a binary choice?
+    </p>
+    <p class="detail-description">
+        <strong>Classification</strong> is the task of predicting discrete categories—such as whether an email is spam ($1$) or not spam ($0$), or whether a medical tumor is malignant ($1$) or benign ($0$). If we try to naively apply standard Linear Regression $y = wx + c$ to a binary problem, the straight line will stretch continuously from $-\infty$ to $+\infty$, making it impossible to interpret the output as a valid probability between $0$ and $1$.
+    </p>
+    <p class="detail-description">
+        The solution is to keep our linear combination $z = wx + c$ (often called the <strong>log-odds</strong> or linear score), but pass it through a non-linear <strong>sigmoid function</strong> $\sigma(z)$ to "squeeze" the output into a strict range between $0$ and $1$:
+    </p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$\hat{y} = \sigma(wx + c) = \frac{1}{1 + e^{-(wx + c)}}$$
+    </div>
+    <p class="detail-description">
+        This single architectural tweak transforms our model from a geometric line fit into a <strong>probabilistic classifier</strong>.
+    </p>
+
+    <h3>Why Least Squares Fails Here (And MLE Takes Over)</h3>
+    <p class="detail-description">
+        In linear regression, minimizing squared error came naturally from a Gaussian noise assumption. But if you plug the non-linear sigmoid prediction into a squared error loss function $\sum (y_i - \sigma(wx_i + c))^2$, the resulting loss surface is no longer a clean bowl. Instead, it becomes non-convex, riddled with local minima where gradient-based optimization can easily get trapped.
+    </p>
+    <p class="detail-description">
+        To fix this, we switch from a Gaussian noise assumption to a <strong>Bernoulli trial</strong> assumption (coin flips with probability $\hat{y}$). Applying Maximum Likelihood Estimation (MLE) to this Bernoulli setup discards the squared error and yields a completely different objective function: <strong>Binary Cross-Entropy Loss</strong>. This loss function turns the optimization landscape back into a smooth, bowl-like convex surface that gradient descent can reliably solve, even though it lacks the clean closed-form normal equations of linear regression.
+    </p>
+
+    <div style="font-family: Arial, sans-serif; max-width: 780px; line-height: 1.5; color: #1f2937;">
+
+      <h3 style="color: #0f172a; margin-bottom: 4px;">Logistic Regression Variants</h3>
+      <p style="margin-top: 0; color: #475569; font-size: 0.95rem;">
+        Logistic regression classifies data by fitting hyperplanes in feature space and mapping linear outputs to class probabilities.
+      </p>
+      <h3>Fitting using Logistic Regression</h3>
+
+      <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #0d9488; border-radius: 4px; padding: 16px; font-family: Arial, sans-serif; color: #1f2937;">
+        <div style="font-weight: bold; color: #115e59; margin-bottom: 6px; font-size: 1rem;">
+          Multinomial Logistic Regression / Softmax Regression (K Classes)
+        </div>
+        <p style="margin: 0 0 10px 0; font-size: 0.88rem; color: #334155; line-height: 1.5;">
+          Generalizes binary classification to <code>K &gt; 2</code> mutually exclusive classes. Maintains a distinct weight vector <code>w<sub>k</sub></code> and bias <code>c<sub>k</sub></code> for every class, normalized into a probability distribution via <strong>Softmax</strong>.
+        </p>
+      </div>
+
+      <h2 style="color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+        Derivation: Softmax + Categorical Cross-Entropy Gradient
+      </h2>
+      <p style="color: #475569; font-size: 0.95rem;">
+        This document proves why the derivative of the Cross-Entropy loss with respect to the input logits simplifies directly to the prediction error:
+        <strong>\(\nabla_{\mathbf{z}} \mathcal{L} = \mathbf{P} - \mathbf{Y}\)</strong>.
+      </p>
+
+      <!-- Step 1 -->
+      <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #2563eb; border-radius: 4px; padding: 16px; margin-top: 16px;">
+        <div style="font-weight: bold; color: #1e3a8a; font-size: 1rem; margin-bottom: 8px;">
+          1. Definitions &amp; Setup
+        </div>
+        <p style="margin: 0 0 8px 0; font-size: 0.9rem;">
+          <strong>Softmax Activation:</strong> For logits \(\mathbf{z} = [z_1, z_2, \dots, z_K]^\top\), the probability for class \(i\) is:
+        </p>
+        \[ P_i = \frac{e^{z_i}}{\sum_{j=1}^K e^{z_j}} \]
+        <p style="margin: 8px 0; font-size: 0.9rem;">
+          <strong>Categorical Cross-Entropy Loss:</strong> For a one-hot encoded vector \(\mathbf{y}\), the loss \(\mathcal{L}\) is:
+        </p>
+        \[ \mathcal{L} = -\sum_{k=1}^K y_k \ln(P_k) \]
+      </div>
+
+      <!-- Step 2 -->
+      <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #0d9488; border-radius: 4px; padding: 16px; margin-top: 16px;">
+        <div style="font-weight: bold; color: #115e59; font-size: 1rem; margin-bottom: 8px;">
+          2. Derivative of Softmax Output (\(\frac{\partial P_k}{\partial z_i}\))
+        </div>
+        <p style="margin: 0 0 8px 0; font-size: 0.9rem;">
+          Using the Quotient Rule \(\left(\frac{u}{v}\right)' = \frac{u'v - uv'}{v^2}\), we consider two cases:
+        </p>
+
+        <p style="margin-bottom: 4px; font-size: 0.9rem;"><strong>Case 1: When \(k = i\)</strong> (Derivative with respect to its own logit):</p>
+        \[
+        \frac{\partial P_i}{\partial z_i} = \frac{e^{z_i} \left(\sum e^{z_j}\right) - e^{z_i}(e^{z_i})}{\left(\sum e^{z_j}\right)^2}
+        = \frac{e^{z_i}}{\sum e^{z_j}} \left(1 - \frac{e^{z_i}}{\sum e^{z_j}}\right) = P_i(1 - P_i)
+        \]
+
+        <p style="margin-bottom: 4px; font-size: 0.9rem;"><strong>Case 2: When \(k \neq i\)</strong> (Derivative with respect to a different logit):</p>
+        \[
+        \frac{\partial P_k}{\partial z_i} = \frac{0 \cdot \left(\sum e^{z_j}\right) - e^{z_k}(e^{z_i})}{\left(\sum e^{z_j}\right)^2}
+        = -\left(\frac{e^{z_k}}{\sum e^{z_j}}\right) \left(\frac{e^{z_i}}{\sum e^{z_j}}\right) = -P_k P_i
+        \]
+      </div>
+
+      <!-- Step 3 -->
+      <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #d97706; border-radius: 4px; padding: 16px; margin-top: 16px;">
+        <div style="font-weight: bold; color: #92400e; font-size: 1rem; margin-bottom: 8px;">
+          3. Applying the Chain Rule to Loss (\(\frac{\partial \mathcal{L}}{\partial z_i}\))
+        </div>
+        <p style="margin: 0 0 8px 0; font-size: 0.9rem;">
+          Differentiating loss \(\mathcal{L}\) with respect to logit \(z_i\):
+        </p>
+        \[
+        \frac{\partial \mathcal{L}}{\partial z_i} = -\sum_{k=1}^K \frac{y_k}{P_k} \frac{\partial P_k}{\partial z_i}
+        \]
+        <p style="margin: 8px 0; font-size: 0.9rem;">
+          Splitting the sum into the \(k = i\) term and all \(k \neq i\) terms:
+        </p>
+        \[
+        \frac{\partial \mathcal{L}}{\partial z_i} = -\left[ \frac{y_i}{P_i} \cdot \frac{\partial P_i}{\partial z_i} + \sum_{k \neq i}^K \frac{y_k}{P_k} \cdot \frac{\partial P_k}{\partial z_i} \right]
+        \]
+        <p style="margin: 8px 0; font-size: 0.9rem;">
+          Substituting Case 1 and Case 2 derivatives:
+        </p>
+        \[
+        \frac{\partial \mathcal{L}}{\partial z_i} = -\left[ \frac{y_i}{P_i} \cdot P_i(1 - P_i) + \sum_{k \neq i}^K \frac{y_k}{P_k} \cdot (-P_k P_i) \right]
+        \]
+        <p style="margin: 8px 0; font-size: 0.9rem;">
+          Canceling out \(P_i\) and \(P_k\) in the numerators/denominators:
+        </p>
+        \[
+        \frac{\partial \mathcal{L}}{\partial z_i} = -y_i(1 - P_i) + \sum_{k \neq i}^K y_k P_i = -y_i + y_i P_i + \sum_{k \neq i}^K y_k P_i
+        \]
+        <p style="margin: 8px 0; font-size: 0.9rem;">
+          Factoring out \(P_i\):
+        </p>
+        \[
+        \frac{\partial \mathcal{L}}{\partial z_i} = -y_i + P_i \left( y_i + \sum_{k \neq i}^K y_k \right) = -y_i + P_i \left( \sum_{k=1}^K y_k \right)
+        \]
+      </div>
+
+      <!-- Step 4 -->
+      <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-left: 5px solid #16a34a; border-radius: 4px; padding: 16px; margin-top: 16px;">
+        <div style="font-weight: bold; color: #15803d; font-size: 1rem; margin-bottom: 8px;">
+          4. Final Simplification
+        </div>
+        <p style="margin: 0 0 8px 0; font-size: 0.9rem;">
+          Since \(\mathbf{y}\) is a one-hot encoded vector, the sum of its components is always 1 (\(\sum_{k=1}^K y_k = 1\)):
+        </p>
+        \[
+        \frac{\partial \mathcal{L}}{\partial z_i} = P_i - y_i
+        \]
+        <p style="margin: 8px 0 0 0; font-size: 0.9rem;">
+          In vector form across all \(K\) classes:
+        </p>
+        \[
+        \mathbf{\nabla_{\mathbf{z}} \mathcal{L} = \mathbf{P} - \mathbf{Y}}
+        \]
+      </div>
+
+      <!-- 1. BINARY LOGISTIC REGRESSION -->
+      <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #2563eb; border-radius: 4px; padding: 16px; margin-top: 16px;">
+        <div style="font-weight: bold; color: #1e3a8a; margin-bottom: 6px; font-size: 1rem;">
+          1. Binary Logistic Regression (2 Classes)
+        </div>
+        <p style="margin: 0 0 10px 0; font-size: 0.88rem; color: #334155;">
+          Uses a single weight vector <code>w</code> and bias <code>c</code> to map inputs to a probability <code>p &isin; (0, 1)</code> via the <strong>Sigmoid</strong> activation function.
+        </p>
+
+        <div style="font-weight: bold; color: #0f172a; margin-bottom: 6px; font-size: 0.88rem;">Algorithm: Binary Training via Gradient Descent</div>
+        <ol style="margin: 0; padding-left: 20px; font-family: monospace; font-size: 0.85rem; color: #334155; line-height: 1.6;">
+          <li><strong>Initialize:</strong> Set weight <code style="color: #0284c7;">w = 0</code>, bias <code style="color: #0284c7;">c = 0</code>, learning rate <code style="color: #0284c7;">&eta;</code>.</li>
+          <li>
+            <strong>Loop</strong> for each training epoch:
+            <ol type="a" style="padding-left: 18px; margin-top: 3px; margin-bottom: 3px;">
+              <li>Reset gradient accumulators: <code style="color: #0284c7;">grad_w = 0</code>, <code style="color: #0284c7;">grad_c = 0</code>.</li>
+              <li>
+                <strong>For each</strong> sample <code style="color: #0284c7;">(x, y)</code> in dataset:
+                <ul style="padding-left: 16px; list-style-type: disc;">
+                  <li>Compute linear score: <code style="color: #0284c7;">z = w * x + c</code></li>
+                  <li>Predict probability: <code style="color: #0284c7;">p = 1 / (1 + e<sup>-z</sup>)</code></li>
+                  <li>Accumulate gradients: <code style="color: #0284c7;">grad_w += (p - y) * x</code>, <code style="color: #0284c7;">grad_c += (p - y)</code></li>
+                </ul>
+              </li>
+              <li>Update parameters: <code style="color: #0284c7;">w = w - &eta; * grad_w</code>, <code style="color: #0284c7;">c = c - &eta; * grad_c</code></li>
+            </ol>
+          </li>
+          <li><strong>Output:</strong> Learned boundary parameter <code style="color: #0284c7;">w</code> and bias <code style="color: #0284c7;">c</code>.</li>
+        </ol>
+      </div>
+
+      <!-- 2. MULTINOMIAL LOGISTIC REGRESSION -->
+      <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #0d9488; border-radius: 4px; padding: 16px; margin-top: 20px;">
+        <div style="font-weight: bold; color: #115e59; margin-bottom: 6px; font-size: 1rem;">
+          2. Multinomial Logistic Regression / Softmax Regression (K Classes)
+        </div>
+        <p style="margin: 0 0 10px 0; font-size: 0.88rem; color: #334155;">
+          Generalizes binary classification to <code>K &gt; 2</code> mutually exclusive classes. Maintains a distinct weight vector <code>w<sub>k</sub></code> and bias <code>c<sub>k</sub></code> for every class, normalized into a probability distribution via <strong>Softmax</strong>.
+        </p>
+
+        <div style="font-weight: bold; color: #0f172a; margin-bottom: 6px; font-size: 0.88rem;">Algorithm: Multiclass Training via Softmax</div>
+        <ol style="margin: 0; padding-left: 20px; font-family: monospace; font-size: 0.85rem; color: #334155; line-height: 1.6;">
+          <li><strong>Initialize:</strong> Set weight matrix <code style="color: #0d9488;">W</code> (size K x features) and bias vector <code style="color: #0d9488;">C</code> to 0. Set learning rate <code style="color: #0d9488;">&eta;</code>.</li>
+          <li>
+            <strong>Loop</strong> for each training epoch:
+            <ol type="a" style="padding-left: 18px; margin-top: 3px; margin-bottom: 3px;">
+              <li>Reset gradient accumulators <code style="color: #0d9488;">grad_W = 0</code> and <code style="color: #0d9488;">grad_C = 0</code>.</li>
+              <li>
+                <strong>For each</strong> sample <code style="color: #0d9488;">(x, y_onehot)</code> in dataset:
+                <ul style="padding-left: 16px; list-style-type: disc;">
+                  <li>Compute linear score vector for all K classes: <code style="color: #0d9488;">Z = W * x + C</code></li>
+                  <li>Compute Softmax probabilities: <code style="color: #0d9488;">P<sub>k</sub> = e<sup>Z<sub>k</sub></sup> / &Sigma; (e<sup>Z<sub>j</sub></sup>)</code> for all classes j</li>
+                  <li>Compute error vector: <code style="color: #0d9488;">error = P - y_onehot</code></li>
+                  <li>Accumulate gradients for each class vector k: <code style="color: #0d9488;">grad_W<sub>k</sub> += error<sub>k</sub> * x</code>, <code style="color: #0d9488;">grad_C<sub>k</sub> += error<sub>k</sub></code></li>
+                </ul>
+              </li>
+              <li>Update matrix: <code style="color: #0d9488;">W = W - &eta; * grad_W</code>, <code style="color: #0d9488;">C = C - &eta; * grad_C</code></li>
+            </ol>
+          </li>
+          <li><strong>Output:</strong> Learned parameter set <code style="color: #0d9488;">W</code> and <code style="color: #0d9488;">C</code> for all K classes.</li>
+        </ol>
+      </div>
+
+    </div>
+
+    <h2>Bias and Variance</h2>
+    <p class="detail-description">
+        Bias and Variance are not properties of a single fitted line — they're properties of a
+        <strong>fitting procedure</strong>, examined by asking a hypothetical question: <em>if this same
+        procedure were repeated on a different sample of training data, how would the result change?</em>
+        This applies across Linear models broadly — Linear Regression, Logistic Regression, Ridge
+        Regression, and Discriminant methods are all fitting procedures that this same question can be asked
+        of, even though each one fits something different (a line, a decision boundary, a set of class
+        scores).
+    </p>
+
+    <h3>Steps to Compute Bias and Variance</h3>
+    <div style="background: #f8f9fa; border: 1px solid #e1e8ed; border-radius: 6px; padding: 18px 22px; margin: 16px 0;">
+        <ol style="margin: 0; padding-left: 22px;">
+            <li style="margin-bottom: 12px;">
+                <strong>Draw many different training datasets.</strong> $D_1, D_2, \dots, D_n$, each sampled
+                independently from the same underlying data-generating process (in the Linear Regression
+                case: the same true rainfall-vs-year relationship, with fresh random noise each time).
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>Fit the model separately on each dataset.</strong> Run the full fitting procedure —
+                for Linear Regression, this means Steps 1–3 from the numerical example (construct the
+                normal equations, differentiate, solve) — once per dataset, completely independently. This
+                produces $n$ different fitted lines, $\hat f_{D_1}, \hat f_{D_2}, \dots, \hat f_{D_n}$, each
+                with its own $(w,c)$.
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>Pick one fixed test point $x_0$.</strong> This point does not change across the rest
+                of the steps — only the training dataset (and therefore the fitted line) changes.
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>Evaluate every fitted line at that same $x_0$.</strong> This gives $n$ predictions
+                for the same point: $\hat f_{D_1}(x_0), \hat f_{D_2}(x_0), \dots, \hat f_{D_n}(x_0)$ — one
+                number from each of the $n$ separately-fitted lines.
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>Average those $n$ predictions.</strong>
+                $$\bar{f}(x_0) = \frac{1}{n}\sum_{i=1}^{n} \hat f_{D_i}(x_0)$$
+                This average is what all those independently-fitted lines agree on, on average, at $x_0$.
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>Compute Bias at $x_0$</strong> — how far that average sits from the true value:
+                $$\text{Bias}(x_0) = \bar{f}(x_0) - f(x_0)$$
+                (In practice, $\text{Bias}(x_0)^2$ is what's reported, matching the decomposition formula.)
+            </li>
+            <li style="margin-bottom: 0;">
+                <strong>Compute Variance at $x_0$</strong> — how spread out the $n$ individual predictions
+                are from their own average (the true value $f(x_0)$ never enters this calculation):
+                $$\text{Variance}(x_0) = \frac{1}{n}\sum_{i=1}^{n}\big(\hat f_{D_i}(x_0) - \bar{f}(x_0)\big)^2$$
+            </li>
+        </ol>
+    </div>
+
+    <p class="detail-description">
+        <strong>For Linear Regression specifically:</strong> Step 2 means many separate straight lines get
+        determined — not one line evaluated at many $x$'s, but many independently-fitted lines, each from
+        its own resampled dataset. Step 5 is the average line's prediction at $x_0$; Step 7's variance is how
+        much the individual lines' predictions at that one point disagree with each other, not with the
+        truth.
+    </p>
+
+    <div class="intuition-box" style="background-color: #fdf2e9; border-left: 4px solid #e67e22; padding: 15px 20px; margin: 20px 0;">
+        <strong>The Real-World Picture: Archery</strong>
+        <p style="margin-top:0;">
+            Imagine several archers, each shooting a group of arrows at a target, where the bullseye is the
+            true relationship you're trying to model:
+        </p>
+        <ul style="margin-bottom:0;">
+            <li><strong>Low bias, low variance:</strong> arrows cluster tightly, right on the bullseye — the good fit.</li>
+            <li><strong>High bias, low variance:</strong> arrows cluster tightly together, but the whole group is off-center — consistent, but consistently wrong.</li>
+            <li><strong>Low bias, high variance:</strong> arrows scatter widely, but their average position is near the bullseye — individually unreliable, even though there's no consistent direction of error.</li>
+            <li><strong>High bias, high variance:</strong> arrows scatter widely <em>and</em> the group is off-center — the worst of both problems at once.</li>
+        </ul>
+    </div>
+
+    <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0; text-align:center;">
+        <svg viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg" style="max-width:480px; height:auto;">
+            <g font-family="Arial, sans-serif" font-size="13">
+
+                <text x="130" y="20" text-anchor="middle" font-weight="bold" fill="#2e7d32">Low Bias, Low Variance</text>
+                <circle cx="130" cy="130" r="90" fill="#fdecea" stroke="#c62828" stroke-width="1"/>
+                <circle cx="130" cy="130" r="60" fill="#fff" stroke="#c62828" stroke-width="1"/>
+                <circle cx="130" cy="130" r="30" fill="#fdecea" stroke="#c62828" stroke-width="1"/>
+                <circle cx="130" cy="130" r="6" fill="#c62828"/>
+                <circle cx="128" cy="128" r="3" fill="#1565c0"/>
+                <circle cx="132" cy="131" r="3" fill="#1565c0"/>
+                <circle cx="129" cy="133" r="3" fill="#1565c0"/>
+                <circle cx="132" cy="127" r="3" fill="#1565c0"/>
+                <circle cx="130" cy="130" r="3" fill="#1565c0"/>
+
+                <text x="390" y="20" text-anchor="middle" font-weight="bold" fill="#e65100">High Bias, Low Variance</text>
+                <circle cx="390" cy="130" r="90" fill="#fdecea" stroke="#c62828" stroke-width="1"/>
+                <circle cx="390" cy="130" r="60" fill="#fff" stroke="#c62828" stroke-width="1"/>
+                <circle cx="390" cy="130" r="30" fill="#fdecea" stroke="#c62828" stroke-width="1"/>
+                <circle cx="390" cy="130" r="6" fill="#c62828"/>
+                <circle cx="450" cy="80" r="3" fill="#1565c0"/>
+                <circle cx="454" cy="83" r="3" fill="#1565c0"/>
+                <circle cx="451" cy="85" r="3" fill="#1565c0"/>
+                <circle cx="454" cy="79" r="3" fill="#1565c0"/>
+                <circle cx="452" cy="82" r="3" fill="#1565c0"/>
+
+                <text x="130" y="280" text-anchor="middle" font-weight="bold" fill="#e65100">Low Bias, High Variance</text>
+                <circle cx="130" cy="390" r="90" fill="#fdecea" stroke="#c62828" stroke-width="1"/>
+                <circle cx="130" cy="390" r="60" fill="#fff" stroke="#c62828" stroke-width="1"/>
+                <circle cx="130" cy="390" r="30" fill="#fdecea" stroke="#c62828" stroke-width="1"/>
+                <circle cx="130" cy="390" r="6" fill="#c62828"/>
+                <circle cx="90" cy="350" r="3" fill="#1565c0"/>
+                <circle cx="175" cy="430" r="3" fill="#1565c0"/>
+                <circle cx="80" cy="410" r="3" fill="#1565c0"/>
+                <circle cx="170" cy="345" r="3" fill="#1565c0"/>
+                <circle cx="130" cy="395" r="3" fill="#1565c0"/>
+
+                <text x="390" y="280" text-anchor="middle" font-weight="bold" fill="#c62828">High Bias, High Variance</text>
+                <circle cx="390" cy="390" r="90" fill="#fdecea" stroke="#c62828" stroke-width="1"/>
+                <circle cx="390" cy="390" r="60" fill="#fff" stroke="#c62828" stroke-width="1"/>
+                <circle cx="390" cy="390" r="30" fill="#fdecea" stroke="#c62828" stroke-width="1"/>
+                <circle cx="390" cy="390" r="6" fill="#c62828"/>
+                <circle cx="450" cy="330" r="3" fill="#1565c0"/>
+                <circle cx="470" cy="290" r="3" fill="#1565c0"/>
+                <circle cx="440" cy="300" r="3" fill="#1565c0"/>
+                <circle cx="480" cy="340" r="3" fill="#1565c0"/>
+                <circle cx="455" cy="310" r="3" fill="#1565c0"/>
+
+                <rect x="10" y="480" width="16" height="16" fill="#c62828"/>
+                <text x="32" y="493" fill="#333">True relationship (bullseye)</text>
+                <circle cx="270" cy="488" r="4" fill="#1565c0"/>
+                <text x="282" y="493" fill="#333">Model fit from one training sample</text>
+            </g>
+        </svg>
+        <p style="font-size:0.85rem; color:#666; margin-top:8px;"><em>Figure: Each blue dot is $\hat f_{D_i}(x_0)$ — one model's prediction at the same fixed point $x_0$, from a line fitted on a different dataset $D_i$. The red bullseye is $f(x_0)$, the true value. Spread among the dots is variance; distance of the group's center from the bullseye is bias.</em></p>
+    </div>
+
+    <p class="detail-description">
+        Back in the rainfall setting already used on this page: a degree-1 line ($M=1$) is the
+        <strong>high-bias, low-variance</strong> corner — it barely changes even if you drop or add a data
+        point (low variance), but if the true rainfall trend actually curves, a straight line can never
+        capture that no matter how much data you feed it (high bias). A degree-9 polynomial through the same
+        10 points is the <strong>low-bias, high-variance</strong> corner — flexible enough to fit any
+        underlying trend on average, but so sensitive to the specific sample that removing or changing even
+        one point (as in the 2021 held-out example above) would swing the fitted curve wildly. Regularization
+        (the $\lambda$ term from earlier) works by deliberately trading a little bias for a large reduction in
+        variance — shrinking an overly flexible model's weights back toward the reliable-but-simpler end of
+        this spectrum.
+    </p>
+
+</div>
+
+</body>
+</html>

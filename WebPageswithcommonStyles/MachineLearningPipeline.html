@@ -3,35 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A tutorial covering the fundamentals of Machine Learning and Deep Learning pipelines, from data ingestion through deployment.">
+    <title>Sampling and Statistical Inference</title>
     <link rel="stylesheet" href="style.css">
-    <title>Machine Learning Tutorial</title>
+    <!-- Hide body initially to prevent flickering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+body {
+  visibility: hidden;
+}
+</style>
+    <!-- Load global MathJax configuration first -->
 
-    <!-- Config must be defined BEFORE the async MathJax loader script,
-         so it is guaranteed to exist before MathJax initializes -->
     <script>
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
                 displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
             }
         };
     </script>
     <script type="text/javascript" async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
-
-    <style>
-        .section-divider { margin: 32px 0; border: none; border-top: 1px solid #ddd; }
-        .mt-20 { margin-top: 20px; }
-        .pipeline-image { max-width: 100%; height: auto; }
-        .flowchart-wrap { max-width: 900px; margin: 16px auto; }
-        .flowchart-wrap svg { width: 100%; height: auto; display: block; }
-        .flow-box { fill: #eef4fb; stroke: #2c6fbb; stroke-width: 1.5; }
-        .flow-text { font-family: inherit; font-size: 14px; fill: #1a1a1a; text-anchor: middle; }
-        .flow-num { font-family: inherit; font-size: 12px; fill: #2c6fbb; font-weight: bold; text-anchor: middle; }
-        .flow-arrow { stroke: #555; stroke-width: 2; marker-end: url(#arrowhead); fill: none; }
-    </style>
 </head>
 <body>
 

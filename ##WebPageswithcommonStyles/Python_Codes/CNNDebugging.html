@@ -1,0 +1,172 @@
+<div class="container">
+    <h1>Mathematical Formulations of CNN Interpretability</h1>
+
+    <p>To establish attribution mappings within deep networks, we use gradients of the network's output with respect to either the input pixels or intermediate feature maps, to quantify spatial and feature importance relative to a target classification decision.</p>
+
+    <h2>1. Vanilla Saliency Maps</h2>
+    <p>Vanilla Saliency measures the sensitivity of a specific input pixel configuration toward a targeted output class logit score. It relies on a first-order (local) Taylor-series approximation of the network's highly non-linear decision function.</p>
+
+    <p>Let $I \in \mathbb{R}^{H \times W \times C}$ be the input image, and let $S_c(I)$ be the unnormalized output score (logit) for class $c$, prior to the softmax activation. The local linear approximation around a specific image $I_0$ is:</p>
+
+    <div class="math-block">
+        $$S_c(I) \approx w^T I + b$$
+    </div>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>What is $S_c(I)$, the "unnormalized output"?</strong></p>
+        <p>In a classification network, the final layer produces one raw real-valued number per class — these are called <strong>logits</strong>. $S_c(I)$ is the logit for class $c$ given input $I$: just one entry of the vector output by the last fully-connected layer, <em>before</em> it passes through softmax.</p>
+        <p>Why "unnormalized" matters: softmax turns the logit vector into a probability distribution via $p_c = e^{S_c}/\sum_{c'} e^{S_{c'}}$ — but that normalization couples every class's probability to every other class's logit; if one logit rises, another class's probability falls even if its own logit didn't change. For saliency/Grad-CAM, we want "what makes the network's raw evidence for class $c$ go up or down," independent of competition from other classes — so we differentiate the pre-softmax logit $S_c$, not the post-softmax probability $p_c$.</p>
+    </div>
+
+    <p>where $w$ is the gradient of the class score with respect to the input, evaluated at $I_0$ — the direction of steepest local change in the score:</p>
+
+    <div class="math-block">
+        $$w = \left. \frac{\partial S_c(I)}{\partial I} \right|_{I = I_0}$$
+    </div>
+
+    <p>To collapse the $H \times W \times C$ gradient tensor $w$ into a single 2D spatial heatmap $M_{\text{Saliency}}$, the maximum absolute gradient magnitude across the channel dimension $C$ is taken at each spatial location:</p>
+
+    <div class="math-block">
+        $$M_{\text{Saliency}}(i, j) = \max_{c'} \left| w_{i,j,c'} \right|$$
+    </div>
+
+    <h2>2. Grad-CAM (Gradient-weighted Class Activation Mapping)</h2>
+    <p>Grad-CAM operates over high-level, coarse feature spaces. Instead of using raw input-pixel gradients, it takes gradients with respect to the feature activation maps of the network's final convolutional layer, which retains more global semantic localization than pixel-space saliency.</p>
+
+    <p>Let $A^k \in \mathbb{R}^{U \times V}$ be the $k$-th feature-map channel produced by the final convolutional layer, where $U$ and $V$ are its spatial dimensions. First, the gradient of the class logit with respect to each activation element is computed:</p>
+
+    <div class="math-block">
+        $$\frac{\partial S_c}{\partial A^k_{i,j}}$$
+    </div>
+
+    <p>These localized gradients are then collapsed into a single per-channel importance weight $\alpha_k^c$ via <strong>Global Average Pooling (GAP)</strong> over the $U \times V$ spatial grid:</p>
+
+    <div class="math-block">
+        $$\alpha_k^c = \frac{1}{U \times V} \sum_{i=1}^{U} \sum_{j=1}^{V} \frac{\partial S_c}{\partial A^k_{i,j}}$$
+    </div>
+
+    <p>Finally, the $K$ feature maps are combined as a weighted sum using $\alpha_k^c$, and passed through a <strong>ReLU</strong> to keep only the features that have a positive influence on class $c$:</p>
+
+    <div class="math-block">
+        $$L_{\text{Grad-CAM}}^c = \text{ReLU}\left( \sum_k \alpha_k^c A^k \right)$$
+    </div>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>Does Grad-CAM happen during or after training?</strong></p>
+        <p><strong>After.</strong> Grad-CAM is a post-hoc interpretability technique, not part of the training loop or loss function.</p>
+        <ol>
+            <li>Train the CNN normally to convergence (or to whichever checkpoint you want to inspect) — training uses ordinary backprop of the <em>loss</em> to update <em>weights</em>.</li>
+            <li>Take a <strong>trained, frozen</strong> model. Pick a specific input image and a target class $c$ (usually the predicted class, or the true class if diagnosing a misclassification).</li>
+            <li>Run one <strong>forward pass</strong> to get the logit $S_c$ and the feature maps $A^k$ at the chosen convolutional layer.</li>
+            <li>Run one <strong>backward pass</strong> — but differentiate $S_c$ with respect to the activations $A^k$, not the loss with respect to the weights. No parameter update happens.</li>
+            <li>Use those gradients to compute $\alpha_k^c$, then the weighted, ReLU'd combination $L^c_{\text{Grad-CAM}}$ — this produces a diagnostic heatmap, not a gradient step.</li>
+        </ol>
+        <p>The superficial similarity to training (both use backprop) is exactly what causes the confusion. The crucial distinction is <em>what</em> is differentiated with respect to <em>what</em>, and that the weights never change — it's the same autograd machinery repurposed for explanation on an already-finished model, not for learning.</p>
+    </div>
+
+    <div class="diagram-box">
+        <svg viewBox="0 0 680 175" role="img" aria-label="Grad-CAM pipeline run after training on a frozen model">
+            <defs>
+                <marker id="arr4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M2 1L8 5L2 9" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+            </defs>
+            <text x="40" y="26" font-size="12" fill="#718096">After training completes &mdash; model weights are frozen</text>
+            <g>
+                <rect x="40" y="50" width="130" height="56" rx="8" fill="#f7fafc" stroke="#a0aec0" stroke-width="1"/>
+                <text x="105" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#2d3748">Trained model</text>
+                <text x="105" y="88" text-anchor="middle" font-size="12" fill="#4a5568">Weights frozen</text>
+            </g>
+            <g>
+                <rect x="190" y="50" width="120" height="56" rx="8" fill="#ebf8ff" stroke="#3182ce" stroke-width="1"/>
+                <text x="250" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#1a365d">Forward pass</text>
+                <text x="250" y="88" text-anchor="middle" font-size="12" fill="#2b6cb0">Get Sc and Ak</text>
+            </g>
+            <g>
+                <rect x="330" y="50" width="130" height="56" rx="8" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+                <text x="395" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#7b341e">Backward pass</text>
+                <text x="395" y="88" text-anchor="middle" font-size="12" fill="#c05621">dSc/dAk only</text>
+            </g>
+            <g>
+                <rect x="480" y="50" width="140" height="56" rx="8" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+                <text x="550" y="70" text-anchor="middle" font-size="14" font-weight="600" fill="#234e52">Weight + ReLU</text>
+                <text x="550" y="88" text-anchor="middle" font-size="12" fill="#285e61">Produce heatmap</text>
+            </g>
+            <line x1="170" y1="78" x2="188" y2="78" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr4)"/>
+            <line x1="310" y1="78" x2="328" y2="78" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr4)"/>
+            <line x1="460" y1="78" x2="478" y2="78" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr4)"/>
+            <text x="40" y="135" font-size="12" fill="#718096">No parameter update happens anywhere in this pipeline</text>
+        </svg>
+        <p class="diagram-caption">Fig. 3 &mdash; Grad-CAM runs after training, on a frozen model, differentiating the logit w.r.t. activations instead of the loss w.r.t. weights</p>
+    </div>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>Grad-CAM pseudocode</strong></p>
+        <p>The backward pass here differentiates the logit $S_c$ with respect to the activations $A^k$, not the loss with respect to the weights &mdash; and nothing gets updated. Two hooks are the whole trick: they tap into a chosen convolutional layer's output and its incoming gradient without changing how the model normally runs.</p>
+        <pre class="code-block"><code>function grad_cam(model, image, target_class, target_layer):
+    model.eval()                        <span class="comment"># freeze: no dropout, no batchnorm updates</span>
+    model.requires_grad_(False)         <span class="comment"># no weight gradients needed at all</span>
+
+    activations = None
+    gradients = None
+
+    <span class="comment"># hook 1: capture the feature maps A^k during the forward pass</span>
+    def forward_hook(module, input, output):
+        nonlocal activations
+        activations = output.detach()
+
+    <span class="comment"># hook 2: capture dSc/dA^k during the backward pass</span>
+    def backward_hook(module, grad_input, grad_output):
+        nonlocal gradients
+        gradients = grad_output[0].detach()
+
+    target_layer.register_forward_hook(forward_hook)
+    target_layer.register_full_backward_hook(backward_hook)
+
+    <span class="comment"># ---- forward pass ----</span>
+    logits = model(image)               <span class="comment"># S_c(I) for every class c</span>
+    score = logits[0, target_class]     <span class="comment"># pick S_c for our target class</span>
+
+    <span class="comment"># ---- backward pass (NOT a training step) ----</span>
+    model.zero_grad()
+    score.backward()                    <span class="comment"># populates `gradients` via the hook</span>
+                                         <span class="comment"># no optimizer.step() is ever called</span>
+
+    <span class="comment"># ---- global average pool the gradients -> alpha_k^c ----</span>
+    weights = gradients.mean(dim=[2, 3])          <span class="comment"># average over H, W per channel k</span>
+
+    <span class="comment"># ---- weighted combination of feature maps, then ReLU ----</span>
+    cam = sum(weights[k] * activations[k] for k in range(len(weights)))
+    cam = relu(cam)
+
+    <span class="comment"># ---- upsample coarse map to input image size for overlay ----</span>
+    cam = resize(cam, size=image.shape[-2:])
+    cam = cam / cam.max()               <span class="comment"># normalize to [0, 1] for visualization</span>
+
+    return cam</code></pre>
+    </div>
+
+    <h3>3. Debugging CNNs with Grad-CAM &amp; Saliency Maps</h3>
+    <div class="summary-card">
+        <ul>
+            <li>
+                <strong>Exposes Data Leakage:</strong> They reveal if the model is "cheating" by focusing on background artifacts like text watermarks, scanner borders, or timestamps instead of the actual target object.
+            </li>
+            <li>
+                <strong>Diagnoses Feature Misattribution:</strong> They show if the model is looking at the wrong part of an image (e.g., surrounding healthy tissue instead of a lesion), indicating it has learned incorrect visual rules.
+            </li>
+            <li>
+                <strong>Detects Pixel-Level Underfitting:</strong> If Vanilla Saliency displays scattered, uniform noise rather than clear object boundaries, it signals that early convolutional layers have failed to learn meaningful spatial shapes.
+            </li>
+            <li>
+                <strong>Validates True Positives:</strong> They help verify whether correct predictions were driven by genuine feature recognition or by spurious background correlations.
+            </li>
+            <li>
+                <strong>Identifies Blind Spots (False Negatives):</strong> They map exactly where the network looked when it missed a target completely, pinpointing whether it was distracted by competing visual elements.
+            </li>
+        </ul>
+        <p style="margin-top:12px; margin-bottom:0;"><em>Note: Grad-CAM's resolution is limited to the spatial size of the final conv layer ($U \times V$, typically much smaller than the input image), so it's upsampled for display — it localizes coarse regions well but isn't pixel-precise. For finer boundaries, it's often paired with Guided Backpropagation (Guided Grad-CAM).</em></p>
+    </div>
