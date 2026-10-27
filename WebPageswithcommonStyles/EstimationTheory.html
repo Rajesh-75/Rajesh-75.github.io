@@ -14,6 +14,13 @@
 body {
   visibility: hidden;
 }
+.rs-box { margin: 14px 0; padding: 10px 14px; border-left: 4px solid #2e8b57; background: rgba(46,139,87,0.08); border-radius: 4px; }
+.rs-tag { display: inline-block; font-weight: bold; color: #2e8b57; margin-right: 6px; }
+.lab { margin: 16px 0; padding: 14px; border: 1px solid #ccc; border-radius: 6px; }
+.lab-ctl { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; margin-bottom: 8px; }
+.lab button { padding: 5px 12px; cursor: pointer; }
+.lab svg { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 auto; }
+.lab-out { font-size: 0.92rem; line-height: 1.5; margin: 8px 0 0; }
 .est-figure { margin: 18px auto; text-align: center; }
 .est-figure svg.est-fig { display: block; width: 100%; max-width: 480px; height: auto; margin: 0 auto; }
 .est-figure figcaption { max-width: 520px; margin: 6px auto 0; font-size: 0.9rem; line-height: 1.4; }
@@ -67,11 +74,29 @@ body {
         <li><strong>(2) Interval Estimate:</strong> Provides a range of plausible values together with a confidence level. <br><em>Example: "We are 95% confident the result is between 272 and 298 seats."</em></li>
     </ul>
 
+    <h3>The Big Idea: Repeated Sampling</h3>
+    <p><strong>An estimate is itself a random number.</strong> Take a different sample and you get a different estimate. Suppose Party A's true vote share in a constituency is 52%, a number nobody knows until counting day. Five polling agencies each survey 1,000 randomly chosen voters and report Party A's share:</p>
+    <table class="data-table">
+        <thead><tr><th>Polling agency</th><th>Voters surveyed</th><th>Estimated share for Party A</th></tr></thead>
+        <tbody>
+            <tr><td>Agency 1</td><td>1,000</td><td>51.2%</td></tr>
+            <tr><td>Agency 2</td><td>1,000</td><td>53.1%</td></tr>
+            <tr><td>Agency 3</td><td>1,000</td><td>49.8%</td></tr>
+            <tr><td>Agency 4</td><td>1,000</td><td>52.4%</td></tr>
+            <tr><td>Agency 5</td><td>1,000</td><td>50.6%</td></tr>
+        </tbody>
+    </table>
+    <p>Same method, five different answers. In real life you see only <em>one</em> of these rows, so the question is never "is my poll exactly right?" (we cannot know until counting day) but <strong>"is my <em>polling method</em> a good one when repeated again and again?"</strong> Every property on this page is a statement about that imagined repetition. We rarely repeat a survey for real; we either reason about it with algebra or simulate it, as in the Estimator Lab at the end of this page.</p>
+    <p>The four "good estimator" properties in the next table are four plain questions about the pile of repeated estimates.</p>
+
     <h3>Criteria for a Good Estimator</h3>
+    <div class="rs-box"><span class="rs-tag">&#8635; Repeated-sampling view</span> Each row of the table below is a statement about what the estimator does <em>over many repeated samples</em>, never about a single sample.</div>
+
     <table class="data-table">
         <thead>
             <tr>
                 <th>Criteria</th>
+                <th>Plain Question &amp; What Repeated Samples Show</th>
                 <th>Defining Condition</th>
                 <th>Real-World Example (The "Story")</th>
                 <th>Key Insight</th>
@@ -80,18 +105,21 @@ body {
         <tbody>
             <tr>
                 <td style="font-weight: bold;">Unbiasedness</td>
+                <td><strong>Is it aimed correctly?</strong> The pile of repeated estimates is centred on the true value.</td>
                 <td>$$E[\hat{\theta}] = \theta$$</td>
                 <td><strong>The Port Depth:</strong> An unbiased sonar's repeated readings (e.g. 17.8m and 18.2m) scatter around the true 18m, so their long-run average is exactly 18m.</td>
                 <td>No systematic "offset" in the tool.</td>
             </tr>
             <tr>
                 <td style="font-weight: bold;">Consistency</td>
+                <td><strong>Does more data help?</strong> The pile narrows onto the truth as $n$ grows.</td>
                 <td>$$\lim_{n \to \infty} P(|\hat{\theta}_n - \theta| < \epsilon) = 1 \quad \text{for every } \epsilon > 0$$</td>
                 <td><strong>Exit Polling:</strong> Predictions converge tightly to the truth as more voters are counted.</td>
                 <td>As sample size ($n$) grows, the probability that your estimate $(\hat{\theta}_n)$ stays within a tiny distance $(\epsilon)$ of the absolute truth $(\theta)$ approaches 1 (certainty). In other words, the estimate "collapses" onto the truth as data grows.</td>
             </tr>
             <tr>
                 <td style="font-weight: bold;">Efficiency</td>
+                <td><strong>Is it steady?</strong> The pile is as narrow as possible (this narrowness is the variance).</td>
                 <td>$$Var(\hat{\theta}) = \frac{1}{I(\theta)} \quad \left(\text{in general, } Var(\hat{\theta}) \ge \frac{1}{I(\theta)}\right)$$</td>
                 <td><strong>Ship Tracking:</strong> Algorithm A has a variance of 5 min&sup2;; Algorithm B has 20 min&sup2;. A is more efficient (relative efficiency 20/5 = 4).</td>
                 <td>This signifies that the estimator has reached the 'speed limit' of precision. It is impossible for any other unbiased estimator to have a smaller variance than this. It achieves the Cram&eacute;r&ndash;Rao Lower Bound, and an efficient estimator must be unbiased. <ul>
@@ -102,6 +130,7 @@ body {
             </tr>
             <tr>
                 <td style="font-weight: bold;">Sufficiency</td>
+                <td><strong>Did we throw away anything useful?</strong> The summary keeps everything the data say about the parameter.</td>
                 <td>$$f(x|\theta) = g(T(x), \theta) \cdot h(x)$$</td>
                 <td><strong>Income Tax:</strong> To estimate the average income you only need the <em>sum</em> of incomes (and the head-count), not who earned what.</td>
                 <td>Captures 100% of the useful information about $\theta$.
@@ -198,9 +227,37 @@ body {
     $$E[\bar{x}] = E\left[ \frac{1}{n} \sum_{i=1}^{n} x_i \right] = \frac{1}{n} \sum_{i=1}^{n} E[x_i] = \frac{1}{n} (n\mu) = \mu$$
     <p>Since every observation has $E[x_i] = \mu$, linearity of expectation gives $E[\bar{x}] = \mu$ (independence is not even needed here), meaning the sample mean is "aimed" perfectly at the truth.</p>
 
+    <div class="rs-box"><span class="rs-tag">&#8635; Repeated-sampling view</span> $E[\bar{x}]=\mu$ says: if we drew sample after sample and averaged all the $\bar{x}$ values, we would land exactly on $\mu$. In the Estimator Lab, choose "Random poll" and watch the red line settle on the dashed line.</div>
+
+    <h4>How Many Samples Are Involved?</h4>
+    <p>Two different numbers are easy to confuse:</p>
+    <ul>
+        <li><strong>Sample size ($n$):</strong> the proof above holds for <em>any</em> $n \ge 1$; even for $n=1$, $\bar{x}=x_1$ and $E[x_1]=\mu$. Unbiasedness does not depend on $n$. Sample size only affects the variance of $\bar{x}$, which is $\sigma^2/n$.</li>
+        <li><strong>Number of samples:</strong> in a real survey you draw <em>one</em> sample and compute one $\bar{x}$. $E[\bar{x}]$ is the average of $\bar{x}$ over <em>all possible</em> samples of size $n$. It describes the long-run behaviour of the method, not something you observe in a single survey.</li>
+    </ul>
+
+    <p><strong>A small check you can do by hand.</strong> Suppose the whole population has just three heights, 150, 160 and 170 cm. Then $\mu = \dfrac{150+160+170}{3} = 160$. Draw samples of size $n=2$ with replacement. There are $3 \times 3 = 9$ equally likely samples, and each cell below shows the sample mean $\bar{x}$:</p>
+    <table class="data-table">
+        <thead>
+            <tr><th>1st draw \ 2nd draw</th><th>150</th><th>160</th><th>170</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>150</strong></td><td>150</td><td>155</td><td>160</td></tr>
+            <tr><td><strong>160</strong></td><td>155</td><td>160</td><td>165</td></tr>
+            <tr><td><strong>170</strong></td><td>160</td><td>165</td><td>170</td></tr>
+        </tbody>
+    </table>
+    <p>The nine means add up to 1440, so $E[\bar{x}] = \dfrac{1440}{9} = 160 = \mu$. Individual samples can miss (150 or 170), but on average there is no systematic error. The same table also confirms the variance formula: the population variance is $\sigma^2 = \dfrac{(-10)^2+0^2+10^2}{3} = 66.7$, and the nine means have variance $\dfrac{300}{9} = 33.3 = \dfrac{\sigma^2}{2} = \dfrac{\sigma^2}{n}$.</p>
+
+    <div class="intuition-box">
+        <strong>But how do we know $\mu = 160$ in advance?</strong> In this toy example we don't need to estimate anything: the population is tiny and completely listed, so $\mu$ can simply be computed. That is what makes it a good classroom check, because we can compare the average of all the $\bar{x}$ values with the true answer. In a real problem $\mu$ is unknown (that is why we estimate it), and we never see all the possible samples. We rely instead on the algebraic proof above, which shows $E[\bar{x}]=\mu$ <em>whatever the value of $\mu$ is</em>. The table only verifies that proof on a case where the answer is known.
+    </div>
+
     <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
 
     <h3>Likelihood Function</h3>
+    <div class="rs-box"><span class="rs-tag">&#8635; Repeated-sampling view</span> <strong>A contrast:</strong> the likelihood works with <em>one</em> observed sample, held fixed, and varies the candidate parameter. Repeated sampling is how we judge the <em>method</em>; the likelihood is how we use the <em>data in hand</em>.</div>
+
     
     <p>
         The <strong>Likelihood Function</strong> $L(\theta)$ is the mathematical bridge that allows us to reverse-engineer our parameters. While "Probability" predicts the data given a fixed parameter, "Likelihood" assesses the parameter given the observed data.
@@ -239,8 +296,21 @@ body {
 <text x="400" y="225" text-anchor="middle" fill="currentColor" font-size="11">20</text>
 <text x="460" y="225" text-anchor="middle" fill="currentColor" font-size="11">21</text>
 </svg>
-        <figcaption><strong>Figure 2.</strong> The likelihood treats the observed data as fixed and varies the parameter. A true depth of 18&nbsp;m is about 20 times more plausible than 15&nbsp;m for a reading of 17.5&nbsp;m. The area under this curve is not required to equal 1.</figcaption>
+        <figcaption><strong>Figure 2.</strong> The reading $x = 17.5$ m is fixed. We try different <em>candidate</em> depths $\theta$ and ask: how likely is this reading if $\theta$ were the true depth? (Measurement error is assumed normal with $\sigma = 1$ m.) The true depth is unknown; 18 m and 15 m are just two candidates being compared. The curve peaks at $\theta = 17.5$, the best-supported value, and its area is not required to equal 1.</figcaption>
     </figure>
+
+    <div class="intuition-box">
+        <strong>Reading Figure 2 step by step:</strong>
+        <ol>
+            <li><strong>The setup:</strong> a sonar reading is the true depth plus random error, with error standard deviation $\sigma = 1$ m. We took one reading and got $x = 17.5$ m. We do <em>not</em> know the true depth $\theta$.</li>
+            <li><strong>The question:</strong> for a candidate depth $\theta$, how probable is a reading like 17.5 m? That is the likelihood: $$L(\theta) = \frac{1}{\sigma\sqrt{2\pi}}\exp\left(-\frac{(x-\theta)^2}{2\sigma^2}\right)$$</li>
+            <li><strong>Candidate $\theta = 18$ m:</strong> the reading is only 0.5 m away, so $L(18) = 0.399 \times e^{-0.125} \approx 0.35$.</li>
+            <li><strong>Candidate $\theta = 15$ m:</strong> the reading is 2.5 m away (a large error), so $L(15) = 0.399 \times e^{-3.125} \approx 0.02$.</li>
+            <li><strong>Comparing:</strong> $\dfrac{L(18)}{L(15)} = e^{3} \approx 20$. The reading we actually saw is about 20 times more likely if the depth were 18 m than if it were 15 m. So 18 m <em>explains the data</em> much better than 15 m. This does not say the depth <em>is</em> 18 m, and it is not yet the probability that the depth is 18 m.</li>
+            <li><strong>The best candidate:</strong> the curve is highest at $\theta = 17.5$, the value that makes the observed reading most likely. This is the idea behind the maximum likelihood estimate.</li>
+        </ol>
+    </div>
+
 
     <div class="intuition-box">
         <strong>Finding a Sufficient Statistic:</strong>
@@ -262,6 +332,8 @@ body {
     <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
 
     <h3>Example: Sample Mean is a Consistent Estimator</h3>
+    <div class="rs-box"><span class="rs-tag">&#8635; Repeated-sampling view</span> Repeat the whole survey with $n=4$, then $n=16$, then $n=64$. Consistency says the pile of repeated estimates squeezes onto $\mu$ as $n$ grows (slide the number of voters polled in the Estimator Lab).</div>
+
     
     <p>We want to show that the mean of a sample ($\bar{x}$) taken from a normal population is a <strong>Consistent Estimator</strong> of the population mean ($\mu$).</p>
 
@@ -311,6 +383,8 @@ body {
     <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
 
     <h3>Example: Efficient Estimator</h3>
+    <div class="rs-box"><span class="rs-tag">&#8635; Repeated-sampling view</span> $V(t_1)$ is the spread of $t_1$ <em>over repeated samples</em>. It is not computed from the three numbers you observed. It comes from the coefficients: for independent $x_i$, $V(ax_1+bx_2+cx_3)=(a^2+b^2+c^2)\sigma^2$, so $V(t_1)=(3^2+2^2+(-4)^2)\sigma^2=29\sigma^2$ and $V(t_2)=(3^2+(-5)^2+3^2)\sigma^2=43\sigma^2$. The symbol $\sigma^2$ (the variance of one reading) cancels in the ratio $43/29$.</div>
+
 
     <div class="intuition-box">
         <strong>The Problem:</strong>
@@ -367,6 +441,8 @@ body {
     <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
 
     <h3>Example: Sufficiency of the Sample Mean</h3>
+    <div class="rs-box"><span class="rs-tag">&#8635; Repeated-sampling view</span> Two different samples with the same $\bar{x}$ lead to exactly the same likelihood curve for $\mu$ (up to a factor that does not involve $\mu$). So once $\bar{x}$ is known, nothing else in the sample helps in estimating $\mu$.</div>
+
 
     <p>
         <strong>Statement:</strong> If $\bar{x}$ is the mean of a random sample drawn from a population following $N(\mu, \sigma^2)$, show that $\bar{x}$ is a <strong>sufficient estimator</strong> of $\mu$ when $\sigma$ is known.
@@ -410,6 +486,8 @@ body {
 <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
 
 <h3>More on Interval Estimation</h3>
+    <div class="rs-box"><span class="rs-tag">&#8635; Repeated-sampling view</span> "95% confidence" is a repeated-sampling statement: build an interval from each of many samples and about 95% of those intervals will contain the true $\mu$ (see Figure 5).</div>
+
 
 <p>
     The technique of interval estimation consists in the determination of two constants $a$ and $b$ such that:
@@ -512,6 +590,103 @@ body {
 </svg>
         <figcaption><strong>Figure 5.</strong> Twenty repeated samples give twenty different intervals. About 95% of them capture the fixed true mean $\mu$ (here 19 of 20; the red one misses). The confidence level describes the method, not any single interval.</figcaption>
     </figure>
+
+
+    <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
+
+    <h3>Estimator Lab: Simulating Many Polls</h3>
+    <p><strong>Scenario.</strong> On counting day Party A gets 52% of the vote, but the pollsters don't know that. Each voter supports Party A with probability 0.52. A "poll" asks $n$ random voters and reports the percentage supporting Party A. The Lab runs many such polls, one per imagined agency, so you can see how the pile of poll results behaves.</p>
+    <div class="intuition-box">
+        <strong>Two numbers to keep apart:</strong>
+        <ul>
+            <li><strong>The slider $n$</strong> is the number of voters asked in <em>one</em> poll. Each poll produces a single result (the percentage supporting Party A). A larger $n$ makes each poll better, so the pile becomes narrower.</li>
+            <li><strong>The buttons</strong> set how many times that poll is repeated. Each repeat uses a fresh set of $n$ voters, like a new agency. Repeating 1000 times gives 1000 poll results, which is just enough to see the shape of the pile. More repeats make the picture smoother but do not make any single poll better.</li>
+        </ul>
+        For example, $n=1000$ with 1000 repeats means 1000 polls of 1000 voters each (a million answers are simulated, but you see 1000 poll results). In real life you would run only one of those polls.
+    </div>
+    <p><strong>How to run it:</strong></p>
+    <ol>
+        <li>Choose a <em>polling method</em> from the drop-down list.</li>
+        <li>Set <em>how many voters are in each poll</em> ($n$) with the slider.</li>
+        <li>Click <b>Run the poll once</b> a few times. Each click is one agency polling $n$ fresh voters: it produces one poll result, adds one count to the bars, and the "Last poll" line shows how many of those voters supported Party A.</li>
+        <li>Click <b>Repeat the poll 1000 times</b> to imagine 1000 agencies, each polling its own fresh $n$ voters. You get 1000 poll results, and the bars now form the pile of repeated estimates.</li>
+        <li>Read the picture: the <em>dashed line</em> is the true 52%, the <em>red line</em> is the average of all poll results, and the numbers below give the bias and the spread.</li>
+        <li>Changing the method or the slider starts a new run. <b>Reset</b> clears the bars.</li>
+    </ol>
+    <div class="lab">
+        <div class="lab-ctl">
+            <label>Polling method
+                <select id="labEst">
+                    <option value="random">Random poll of n voters</option>
+                    <option value="first10">Wasteful: use only the first 10 answers</option>
+                    <option value="urban">Biased: poll city voters only (56% support A)</option>
+                </select>
+            </label>
+            <label>Voters per poll (n) = <input type="range" id="labN" min="10" max="2000" step="10" value="100"> <b id="labNv">100</b></label>
+            <button id="labB1">Run the poll once</button>
+            <button id="labB1000">Repeat the poll 1000 times</button>
+            <button id="labB0">Reset</button>
+        </div>
+        <svg id="labSvg" viewBox="0 0 480 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Histogram of poll results from repeated polls" font-family="sans-serif" font-size="11"></svg>
+        <p class="lab-out" id="labOut">Press "Run the poll once" or "Repeat the poll 1000 times".</p>
+    </div>
+    <p><strong>Experiments to try:</strong></p>
+    <ul>
+        <li><strong>A. Unbiased:</strong> Random poll, $n=100$, repeat the poll 1000 times. The bars centre on 52 and the red line sits on the dashed line. The spread is about 5 points.</li>
+        <li><strong>B. Consistent:</strong> Same method, slide $n$ up to 1000 and repeat the poll 1000 times. The centre stays at 52 but the spread shrinks to about 1.6 points. More voters means a tighter pile.</li>
+        <li><strong>C. Not efficient:</strong> Choose "Wasteful", $n=1000$. The centre is still 52 (unbiased), but the spread is about 16 points because 990 of the 1000 answers are thrown away. Same aim, much less steady.</li>
+        <li><strong>D. Biased:</strong> Choose "city voters only". The pile centres near 56, not 52. Now slide $n$ up: the pile gets narrower but stays at 56. More data cannot fix a biased method.</li>
+    </ul>
+    <script>
+    (function () {
+        var TRUE = 52, est = [], last = null;
+        var E = document.getElementById('labEst'), N = document.getElementById('labN'),
+            NV = document.getElementById('labNv'), SV = document.getElementById('labSvg'), OUT = document.getElementById('labOut');
+        function sum(a) { return a.reduce(function (p, q) { return p + q; }, 0); }
+        function poll() {
+            var n = +N.value, t = E.value, p = (t === 'urban') ? 0.56 : 0.52, m = (t === 'first10') ? 10 : n, c = 0, i;
+            for (i = 0; i < m; i++) if (Math.random() < p) c++;
+            return { n: n, m: m, c: c, r: 100 * c / m };
+        }
+        function sx(v) { return 20 + v / 100 * 440; }
+        function render() {
+            var bins = [], i, b = '', k = est.length;
+            for (i = 0; i < 100; i++) bins.push(0);
+            est.forEach(function (v) { var j = Math.min(99, Math.floor(v)); bins[j]++; });
+            var mx = Math.max.apply(null, bins.concat([1]));
+            for (i = 0; i < 100; i++) { var h = bins[i] / mx * 150; b += '<rect x="' + sx(i) + '" y="' + (180 - h) + '" width="4.4" height="' + h + '" fill="#4a8fd0" fill-opacity="0.75"/>'; }
+            b += '<line x1="20" x2="460" y1="180" y2="180" stroke="currentColor"/>';
+            for (i = 0; i <= 100; i += 20) b += '<text x="' + sx(i) + '" y="196" text-anchor="middle" fill="currentColor">' + i + '%</text>';
+            b += '<line x1="' + sx(TRUE) + '" x2="' + sx(TRUE) + '" y1="20" y2="180" stroke="currentColor" stroke-dasharray="4 3"/><text x="' + sx(TRUE) + '" y="14" text-anchor="middle" fill="currentColor">true share = 52%</text>';
+            var o = 'Press "Run the poll once" or "Repeat the poll 1000 times".';
+            if (k) {
+                var av = sum(est) / k, sd = Math.sqrt(sum(est.map(function (v) { return (v - av) * (v - av); })) / k);
+                b += '<line x1="' + sx(av) + '" x2="' + sx(av) + '" y1="30" y2="180" stroke="#d9534f" stroke-width="2"/><text x="' + sx(av) + '" y="212" text-anchor="middle" fill="#d9534f">average of poll results</text>';
+                o = 'Polls run: <b>' + k + '</b> &nbsp;|&nbsp; average of the poll results: <b>' + av.toFixed(1) + '%</b> &nbsp;|&nbsp; bias (average &minus; 52): <b>' + (av - TRUE).toFixed(1) + '</b> &nbsp;|&nbsp; spread (SD of the poll results): <b>' + sd.toFixed(1) + '</b>';
+                if (E.value === 'random') o += ' &nbsp;(theory: &radic;(0.52&times;0.48/n) = ' + (100 * Math.sqrt(0.52 * 0.48 / +N.value)).toFixed(1) + ')';
+                o += '<br>Last poll: ' + last.n + ' voters asked' + (last.m < last.n ? ', only the first ' + last.m + ' used' : '') + '; ' + last.c + ' supported Party A &rarr; estimate <b>' + last.r.toFixed(1) + '%</b>';
+            }
+            SV.innerHTML = b; OUT.innerHTML = o;
+        }
+        function draw(c) { for (var i = 0; i < c; i++) { last = poll(); est.push(last.r); } render(); }
+        function reset() { est = []; last = null; render(); }
+        N.oninput = function () { NV.textContent = N.value; reset(); };
+        E.onchange = reset;
+        document.getElementById('labB1').onclick = function () { draw(1); };
+        document.getElementById('labB1000').onclick = function () { draw(1000); };
+        document.getElementById('labB0').onclick = reset;
+        render();
+    })();
+    </script>
+
+
+    <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
+
+    <h3>Conclusion: Estimation in Plain Words</h3>
+    <p>Suppose a fruit seller wants to know the average weight of the mangoes in a truckload and weighs a handful to find out. Most people judge such an estimate by the four criteria without naming them. They ask first whether the guess is <strong>aimed correctly</strong>: a scale that reads 20 g too heavy is wrong in the same direction every time, and weighing more mangoes will not fix it (<em>unbiased</em>). They ask whether it is <strong>steady</strong>: two honest scales may both be right on average, but the one that wobbles by 1 g is preferred to the one that wobbles by 20 g (<em>efficient</em>). They ask whether <strong>more effort helps</strong>: weighing 100 mangoes should land closer to the truth than weighing 5 (<em>consistent</em>). And they ask whether the summary <strong>throws away anything useful</strong>: to get an average, the total weight and the number of mangoes are enough, and the order in which the mangoes were weighed adds nothing (<em>sufficient</em>). Estimation theory is these four everyday questions, asked about the <em>method</em> rather than about one handful, and made precise with mathematics.</p>
+    <div class="intuition-box">
+        <strong>A note on normality:</strong> The ideas of estimation (bias, variance, consistency, sufficiency, likelihood) apply to any population. They do not require it to be normal. For example, the sample mean is unbiased for any population with a finite mean, it is consistent by the Law of Large Numbers, and for large $n$ it is approximately normally distributed whatever the population looks like (Central Limit Theorem). Normality matters for the <em>exact</em> small-sample results on this page, such as the exact confidence interval and the fact that $\bar{x}$ is the most efficient and sufficient estimator of $\mu$. For other populations these results hold only approximately, and a different estimator may be better. For a double-exponential (Laplace) population the median beats the mean, and for a very heavy-tailed population such as the Cauchy the sample mean does not even converge.
+    </div>
 
 </body>
 </html>
