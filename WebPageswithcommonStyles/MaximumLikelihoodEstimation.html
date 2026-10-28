@@ -98,10 +98,216 @@ body {
     <h2>5. Why Statisticians Trust MLE</h2>
     <p>MLE is favored because it possesses powerful "asymptotic" properties as the sample size increases:</p>
     <ul>
-        <li><strong>Consistency:</strong> The estimate $\hat{\theta}$ converges to the true value of the parameter.</li>
-        <li><strong>Efficiency:</strong> It achieves the lowest possible variance among all unbiased estimators.</li>
-        <li><strong>Asymptotic Normality:</strong> As you collect more data, the distribution of the estimate starts to look like a Normal Distribution.</li>
+        <li><strong>Consistency:</strong> The estimate $\hat{\theta}$ converges (in probability) to the true value of the parameter. Section 6 explains why.</li>
+        <li><strong>Asymptotic Efficiency:</strong> For large samples its variance reaches the Cramér–Rao lower bound, $1/(n\,I(\theta))$, the smallest possible among (asymptotically) unbiased estimators. In small samples the MLE can be biased.</li>
+        <li><strong>Asymptotic Normality:</strong> As you collect more data, $\sqrt{n}(\hat{\theta}-\theta_0)$ approaches a Normal distribution, so the distribution of the estimate starts to look like a Normal Distribution.</li>
     </ul>
+    <h2>6. How Does the MLE Converge to the True Parameter?</h2>
+    <p>Section 5 states that $\hat{\theta}$ converges to the true value $\theta_0$. This section explains <em>why</em> that happens, how <em>fast</em> it happens, and where the claim needs care. The idea rests on two facts: the Law of Large Numbers, and the fact that the true parameter is the unique maximiser of the <em>expected</em> log-likelihood.</p>
+
+    <h3>6.1 Intuition: Repeated Sampling</h3>
+    <p>Consider an opinion poll before a state election. Suppose the true vote share of a party is $p_0 = 0.4$. We poll $n$ voters and record the fraction $\hat{p} = k/n$ who say they will vote for the party. This $\hat{p}$ is the MLE of a Bernoulli parameter.</p>
+    <p>If we ran the poll again with a fresh random sample, we would get a slightly different $\hat{p}$. So the estimate is itself a <strong>random variable</strong>, and what matters is how its distribution behaves as $n$ grows. Its spread shrinks like $\sqrt{p_0(1-p_0)/n}$:</p>
+
+    <table class="data-table">
+        <tr><th>Voters polled ($n$)</th><th>Standard error of $\hat{p}$</th></tr>
+        <tr><td>100</td><td>$\sqrt{0.24/100}\approx 0.049$ (about 4.9 percentage points)</td></tr>
+        <tr><td>1,000</td><td>$\sqrt{0.24/1000}\approx 0.015$ (about 1.5 percentage points)</td></tr>
+        <tr><td>10,000</td><td>$\sqrt{0.24/10000}\approx 0.005$ (about 0.5 percentage points)</td></tr>
+    </table>
+
+    <div class="grid-note">
+        <strong>Note:</strong> The error shrinks like $1/\sqrt{n}$, so you need <strong>four times</strong> the data to halve the error. The distribution of estimates piles up ever more tightly around $p_0$. That is what "converges to the true value" means.
+    </div>
+
+    <h3>6.2 Why It Happens: A Three-Step Argument</h3>
+
+    <p><strong>Step 1: the sample log-likelihood converges to a fixed curve.</strong> The <em>average</em> log-likelihood is</p>
+    <div class="formula-display">
+        $$\frac{1}{n}\,\ell_n(\theta)=\frac{1}{n}\sum_{i=1}^{n}\log f(x_i;\theta).$$
+    </div>
+    <p>This is an average of iid terms. By the Law of Large Numbers, for each fixed $\theta$ it converges to</p>
+    <div class="formula-display">
+        $$\ell(\theta)=E_{\theta_0}\big[\log f(X;\theta)\big],$$
+    </div>
+    <p>where the expectation is taken under the <em>true</em> distribution, with parameter $\theta_0$.</p>
+
+    <p><strong>Step 2: that limiting curve peaks at the true parameter.</strong> Compare it with its value at $\theta_0$:</p>
+    <div class="formula-display">
+        $$\ell(\theta)-\ell(\theta_0)=E_{\theta_0}\!\left[\log\frac{f(X;\theta)}{f(X;\theta_0)}\right]=-\,\mathrm{KL}\big(f_{\theta_0}\,\|\,f_{\theta}\big)\;\le\;0 .$$
+    </div>
+    <p>The KL divergence is never negative, and it is zero only when $f_\theta = f_{\theta_0}$. So if different parameter values give different distributions (<strong>identifiability</strong>), $\theta_0$ is the <em>unique</em> maximiser of $\ell(\theta)$.</p>
+
+    <p><strong>Step 3: the peak of the sample curve follows the peak of the limit curve.</strong> The curve $\frac{1}{n}\ell_n(\theta)$ is a noisy version of $\ell(\theta)$, and the noise shrinks as $n$ grows. Under regularity conditions (for example, uniform convergence over a compact parameter set), the maximiser $\hat{\theta}_n$ is pulled to the maximiser of $\ell(\theta)$, which is $\theta_0$. This is <strong>consistency</strong>:</p>
+    <div class="formula-display">
+        $$\hat{\theta}_n \xrightarrow{\;p\;} \theta_0 .$$
+    </div>
+
+    <h3>6.3 How Fast: Asymptotic Normality and the Cramér–Rao Bound</h3>
+    <p>At the maximum the score is zero, $\ell_n'(\hat{\theta})=0$. A first-order Taylor expansion of the score around $\theta_0$ gives</p>
+    <div class="formula-display">
+        $$\hat{\theta}-\theta_0\;\approx\;-\frac{\ell_n'(\theta_0)}{\ell_n''(\theta_0)} .$$
+    </div>
+    <ul>
+        <li><strong>Numerator:</strong> $\ell_n'(\theta_0)$ is a sum of $n$ iid score terms with mean zero and variance $n\,I(\theta_0)$, where $I(\theta_0)$ is the <strong>Fisher information</strong>. By the Central Limit Theorem it is approximately normal.</li>
+        <li><strong>Denominator:</strong> $\ell_n''(\theta_0)\approx -n\,I(\theta_0)$, by the Law of Large Numbers again.</li>
+    </ul>
+    <p>Putting the two together:</p>
+    <div class="formula-display">
+        $$\sqrt{n}\,\big(\hat{\theta}-\theta_0\big)\;\xrightarrow{\;d\;}\;N\!\left(0,\;\frac{1}{I(\theta_0)}\right).$$
+    </div>
+    <p>This is the asymptotic normality listed in Section 5. The variance $1/I(\theta_0)$ is the <strong>Cramér–Rao lower bound</strong>, which is why MLE is called asymptotically efficient.</p>
+
+    <div class="example-box">
+        <strong>Check with the poll:</strong> For a Bernoulli parameter, $I(p)=\dfrac{1}{p(1-p)}$, so the limiting variance of $\hat{p}$ is $p(1-p)/n$. This reproduces the standard errors in the table above.<br><br>
+        <strong>Check with a Gaussian mean:</strong> $\hat{\mu}=\bar{x}$ has variance $\sigma^2/n$, again equal to $1/(n\,I(\mu))$ with $I(\mu)=1/\sigma^2$.
+    </div>
+
+    <h3>6.4 Caveats</h3>
+    <ul>
+        <li><strong>Convergence is in probability.</strong> For any $\varepsilon>0$, $P\big(|\hat{\theta}_n-\theta_0|>\varepsilon\big)\to 0$. A particular sample can still land far from $\theta_0$; it just becomes increasingly unlikely.</li>
+        <li><strong>Identifiability is required.</strong> If two different parameter values give the same distribution, Step 2 has no unique peak, and there is no single true value to converge to.</li>
+        <li><strong>Regularity conditions are required.</strong> Consistency can fail when the number of parameters grows with $n$. A classic case is the Neyman–Scott problem: with one unknown mean per pair of observations and a shared variance $\sigma^2$, the MLE of $\sigma^2$ converges to $\sigma^2/2$, not $\sigma^2$.</li>
+        <li><strong>Efficiency is an asymptotic statement.</strong> In finite samples the MLE can be biased. The Gaussian variance MLE, which divides by $n$, has expectation $\frac{n-1}{n}\sigma^2$. It is the large-$n$ behaviour that is unbiased and attains the Cramér–Rao bound.</li>
+    </ul>
+
+    <h3>6.5 Interactive Lab: Watch the Poll Estimate Close In on the Truth</h3>
+    <p>Choose the true vote share $p_0$ and the number of voters polled $n$. The lab runs 500 independent polls and plots their estimates $\hat{p}$ (top). The red curve is the Normal approximation with variance $p_0(1-p_0)/n$ from Section 6.3. The bottom chart shows Steps 1 and 2 for one of those polls: its average log-likelihood curve (blue) against the limiting curve $\ell(p)$ (grey), whose peak sits exactly at $p_0$.</p>
+
+    <style>
+        .conv-lab { border: 1px solid #cfd8dc; border-radius: 8px; padding: 16px; margin: 16px 0 24px; background: #fafcff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+        .conv-lab .cl-controls { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin-bottom: 10px; }
+        .conv-lab label { font-size: 0.92rem; color: #263238; }
+        .conv-lab input[type=range] { vertical-align: middle; width: 170px; }
+        .conv-lab button { background: #1565c0; color: #fff; border: 0; border-radius: 5px; padding: 7px 14px; cursor: pointer; font-size: 0.9rem; }
+        .conv-lab button:hover { background: #0d47a1; }
+        .conv-lab .cl-stats { font-size: 0.9rem; color: #263238; background: #eef3f8; border-radius: 6px; padding: 8px 12px; margin: 8px 0 10px; line-height: 1.6; }
+        .conv-lab svg { width: 100%; height: auto; display: block; background: #fff; border: 1px solid #e0e6ea; border-radius: 6px; margin-bottom: 10px; }
+        .conv-lab .cl-cap { font-size: 0.85rem; color: #455a64; margin: 0 0 6px; }
+    </style>
+
+    <div class="conv-lab" id="conv-lab">
+        <div class="cl-controls">
+            <label>True share p₀ = <span id="cl-pv">0.40</span><br>
+                <input type="range" id="cl-p" min="0.1" max="0.9" step="0.05" value="0.4"></label>
+            <label>Voters polled n = <span id="cl-nv">100</span><br>
+                <input type="range" id="cl-n" min="0" max="9" step="1" value="4"></label>
+            <button type="button" id="cl-run">Run 500 new polls</button>
+        </div>
+        <div class="cl-stats" id="cl-stats"></div>
+        <p class="cl-cap"><strong>Distribution of the estimate p̂ over 500 repeated polls</strong> (bars) with the Normal approximation (red) and the true p₀ (green dashed).</p>
+        <svg id="cl-hist" viewBox="0 0 640 240" role="img" aria-label="Histogram of repeated poll estimates"></svg>
+        <p class="cl-cap"><strong>Average log-likelihood of one poll</strong> (blue) versus its limit ℓ(p) = p₀ log p + (1−p₀) log(1−p) (grey). Dashed lines mark p̂ (blue) and p₀ (green).</p>
+        <svg id="cl-ll" viewBox="0 0 640 200" role="img" aria-label="Sample and limiting average log-likelihood curves"></svg>
+    </div>
+
+    <script>
+    (function () {
+        var NS = [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
+        var R = 500, BINS = 100;
+        function el(id) { return document.getElementById(id); }
+        function binom(n, p) { var k = 0; for (var i = 0; i < n; i++) { if (Math.random() < p) k++; } return k; }
+        function f2(x) { return x.toFixed(3); }
+
+        function drawHist(est, p0, th) {
+            var W = 640, H = 240, L = 44, Rm = 12, T = 12, B = 30;
+            var pw = W - L - Rm, ph = H - T - B;
+            var counts = new Array(BINS).fill(0), i;
+            for (i = 0; i < est.length; i++) { counts[Math.min(BINS - 1, Math.floor(est[i] * BINS))]++; }
+            var ymax = Math.max.apply(null, counts);
+            var curve = [], p, d, y;
+            var peak = (1 / (th * Math.sqrt(2 * Math.PI))) * (1 / BINS) * R;
+            ymax = Math.max(ymax, peak) * 1.1;
+            function X(v) { return L + v * pw; }
+            function Y(c) { return T + ph - (c / ymax) * ph; }
+            var s = '';
+            for (i = 0; i <= 5; i++) {
+                s += '<line x1="' + X(i / 5) + '" y1="' + (T + ph) + '" x2="' + X(i / 5) + '" y2="' + (T + ph + 4) + '" stroke="#78909c"/>';
+                s += '<text x="' + X(i / 5) + '" y="' + (H - 10) + '" font-size="11" text-anchor="middle" fill="#455a64">' + (i / 5).toFixed(1) + '</text>';
+            }
+            var ticks = 4;
+            for (i = 0; i <= ticks; i++) {
+                var v = (ymax * i) / ticks;
+                s += '<line x1="' + L + '" y1="' + Y(v) + '" x2="' + (L + pw) + '" y2="' + Y(v) + '" stroke="#eceff1"/>';
+                s += '<text x="' + (L - 6) + '" y="' + (Y(v) + 4) + '" font-size="11" text-anchor="end" fill="#455a64">' + Math.round(v) + '</text>';
+            }
+            var bw = pw / BINS;
+            for (i = 0; i < BINS; i++) {
+                if (counts[i] > 0) {
+                    s += '<rect x="' + (X(i / BINS) + 0.3) + '" y="' + Y(counts[i]) + '" width="' + Math.max(bw - 0.6, 0.5) + '" height="' + (T + ph - Y(counts[i])) + '" fill="#90caf9"/>';
+                }
+            }
+            for (p = 0; p <= 1.0001; p += 0.0025) {
+                d = Math.exp(-0.5 * Math.pow((p - p0) / th, 2)) / (th * Math.sqrt(2 * Math.PI));
+                y = d * (1 / BINS) * R;
+                curve.push(X(p).toFixed(1) + ',' + Y(y).toFixed(1));
+            }
+            s += '<polyline points="' + curve.join(' ') + '" fill="none" stroke="#c62828" stroke-width="2"/>';
+            s += '<line x1="' + X(p0) + '" y1="' + T + '" x2="' + X(p0) + '" y2="' + (T + ph) + '" stroke="#2e7d32" stroke-width="2" stroke-dasharray="5 4"/>';
+            s += '<line x1="' + L + '" y1="' + (T + ph) + '" x2="' + (L + pw) + '" y2="' + (T + ph) + '" stroke="#78909c"/>';
+            s += '<text x="' + (L + pw / 2) + '" y="' + (H - 0) + '" font-size="11" text-anchor="middle" fill="#455a64"></text>';
+            el('cl-hist').innerHTML = s;
+        }
+
+        function drawLL(ph0, p0) {
+            var W = 640, H = 200, L = 44, Rm = 12, T = 12, B = 28;
+            var pw = W - L - Rm, ph = H - T - B;
+            function ll(a, p) { return a * Math.log(p) + (1 - a) * Math.log(1 - p); }
+            var ps = [], p;
+            for (p = 0.01; p <= 0.9901; p += 0.005) { ps.push(p); }
+            var top = -Infinity, i;
+            for (i = 0; i < ps.length; i++) { top = Math.max(top, ll(ph0, ps[i]), ll(p0, ps[i])); }
+            var bot = top - 1.6;
+            function X(v) { return L + v * pw; }
+            function Y(v) { return T + ph - ((v - bot) / (top - bot)) * ph; }
+            var s = '<defs><clipPath id="cl-clip"><rect x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph + '"/></clipPath></defs>';
+            for (i = 0; i <= 5; i++) {
+                s += '<line x1="' + X(i / 5) + '" y1="' + (T + ph) + '" x2="' + X(i / 5) + '" y2="' + (T + ph + 4) + '" stroke="#78909c"/>';
+                s += '<text x="' + X(i / 5) + '" y="' + (H - 10) + '" font-size="11" text-anchor="middle" fill="#455a64">' + (i / 5).toFixed(1) + '</text>';
+            }
+            var a = [], b = [];
+            for (i = 0; i < ps.length; i++) {
+                a.push(X(ps[i]).toFixed(1) + ',' + Y(ll(p0, ps[i])).toFixed(1));
+                b.push(X(ps[i]).toFixed(1) + ',' + Y(ll(ph0, ps[i])).toFixed(1));
+            }
+            s += '<g clip-path="url(#cl-clip)">';
+            s += '<polyline points="' + a.join(' ') + '" fill="none" stroke="#90a4ae" stroke-width="3"/>';
+            s += '<polyline points="' + b.join(' ') + '" fill="none" stroke="#1565c0" stroke-width="2"/>';
+            s += '</g>';
+            s += '<line x1="' + X(p0) + '" y1="' + T + '" x2="' + X(p0) + '" y2="' + (T + ph) + '" stroke="#2e7d32" stroke-width="2" stroke-dasharray="5 4"/>';
+            s += '<line x1="' + X(ph0) + '" y1="' + T + '" x2="' + X(ph0) + '" y2="' + (T + ph) + '" stroke="#1565c0" stroke-width="1.5" stroke-dasharray="2 3"/>';
+            s += '<line x1="' + L + '" y1="' + (T + ph) + '" x2="' + (L + pw) + '" y2="' + (T + ph) + '" stroke="#78909c"/>';
+            s += '<text x="' + (L - 6) + '" y="' + (T + 10) + '" font-size="11" text-anchor="end" fill="#455a64">peak</text>';
+            el('cl-ll').innerHTML = s;
+        }
+
+        function run() {
+            var p0 = parseFloat(el('cl-p').value);
+            var n = NS[parseInt(el('cl-n').value, 10)];
+            el('cl-pv').textContent = p0.toFixed(2);
+            el('cl-nv').textContent = n;
+            var est = [], sum = 0, r, k, i;
+            for (r = 0; r < R; r++) { k = binom(n, p0); est.push(k / n); sum += k / n; }
+            var mean = sum / R, v = 0, near = 0;
+            for (i = 0; i < R; i++) {
+                v += (est[i] - mean) * (est[i] - mean);
+                if (Math.abs(est[i] - p0) <= 0.02) near++;
+            }
+            var sd = Math.sqrt(v / R), th = Math.sqrt(p0 * (1 - p0) / n);
+            el('cl-stats').innerHTML =
+                'Mean of the 500 estimates: <strong>' + f2(mean) + '</strong> (true p₀ = ' + p0.toFixed(2) + ') &nbsp;|&nbsp; ' +
+                'Observed spread: <strong>' + f2(sd) + '</strong> vs theory √(p₀(1−p₀)/n) = <strong>' + f2(th) + '</strong><br>' +
+                'Polls landing within ±0.02 of p₀: <strong>' + Math.round(100 * near / R) + '%</strong>';
+            drawHist(est, p0, th);
+            drawLL(est[0], p0);
+        }
+        el('cl-p').addEventListener('input', run);
+        el('cl-n').addEventListener('input', run);
+        el('cl-run').addEventListener('click', run);
+        run();
+    })();
+    </script>
+
 </div>
 <section id="mle-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
             <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Quiz on Probability Theory, Random Variables and Expectations, Normal Distribution and MLE</h2>
