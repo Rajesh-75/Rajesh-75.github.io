@@ -1331,6 +1331,79 @@ body {
     </div>
 
 </div>
+<section id="svm-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Timed Support Vector Machine(SVM) Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "How does an SVM fundamentally differ from generative classifiers such as LDA or Naive Bayes?",
+              a: "It solves for the boundary (<b>w</b>, b) directly, without estimating p(<b>x</b>|y) or p(y)",
+              w: ["It first estimates class-conditional densities and then applies Bayes&rsquo; theorem", "It classifies by comparing posteriors p(y|<b>x</b>) across classes", "It models the joint distribution of <b>x</b> and y, but with fewer parameters"] },
+            { q: "When the constraints are y<sub>i</sub>(<b>w</b>&middot;<b>x</b><sub>i</sub>+b) &ge; 1, what is the margin width, and what does maximising it amount to?",
+              a: "2/||<b>w</b>||, so maximising the margin is equivalent to minimising ||<b>w</b>||&sup2;",
+              w: ["||<b>w</b>||&sup2;/2, so maximising the margin means making ||<b>w</b>|| as large as possible", "1/(2||<b>w</b>||), so maximising the margin means minimising the bias b", "2||<b>w</b>||, so the margin grows whenever the weights grow"] },
+            { q: "Why is a wide margin preferred over just any separating hyperplane?",
+              a: "Points closest to the boundary are the least confidently classified, so a wide margin makes the classifier robust to noisy perturbations (and lowers its capacity)",
+              w: ["It guarantees zero training error even on non-separable data", "It makes every training point a support vector", "It removes the need to choose the hyperparameter C"] },
+            { q: "What does &ldquo;Vapnik&rsquo;s principle&rdquo; say, and how does SVM follow it?",
+              a: "Don&rsquo;t solve a harder, more general problem (such as density estimation) as an intermediate step when only the classification boundary is needed",
+              w: ["Always estimate the full probability distribution first, because it is the most general solution", "Always use the highest-dimensional feature space available", "Always train with as many support vectors as possible"] },
+            { q: "Which training points end up with a non-zero Lagrange multiplier &alpha;<sub>i</sub> &gt; 0?",
+              a: "Points that lie exactly on the margin or violate it (the support vectors)",
+              w: ["Only the points that are misclassified", "The points farthest from the decision boundary", "Every training point, with equal weight"] },
+            { q: "According to the KKT conditions, what does &alpha;<sub>i</sub> = C tell you about a point?",
+              a: "It is a margin violator &ndash; inside the margin or misclassified &ndash; and receives the maximum penalty",
+              w: ["It lies exactly on the margin with zero slack", "It is far from the margin and has no influence on the boundary", "It lies at the centre of its class"] },
+            { q: "In the soft-margin SVM, what is the effect of the parameter C?",
+              a: "A smaller C allows a wider margin with more violations; a larger C gives a narrower margin with fewer violations",
+              w: ["A larger C widens the margin and tolerates more misclassifications", "C sets the degree of the polynomial kernel", "C controls how far the influence of a single training point reaches"] },
+            { q: "Setting &part;L/&part;<b>w</b> = 0 in the Lagrangian gives which result?",
+              a: "<b>w</b> = &sum;&alpha;<sub>i</sub>y<sub>i</sub><b>x</b><sub>i</sub>, so <b>w</b> is built from the training points weighted by their multipliers",
+              w: ["&sum;&alpha;<sub>i</sub>y<sub>i</sub> = 0, an equality constraint on the multipliers", "&alpha;<sub>i</sub> + &mu;<sub>i</sub> = C, which bounds the multipliers", "<b>w</b> = 0, so the hyperplane passes through the origin"] },
+            { q: "Why does the dual problem carry the constraint 0 &le; &alpha;<sub>i</sub> &le; C?",
+              a: "Because &part;L/&part;&xi;<sub>i</sub> = C &minus; &alpha;<sub>i</sub> &minus; &mu;<sub>i</sub> = 0 and &mu;<sub>i</sub> &ge; 0, which forces &alpha;<sub>i</sub> &le; C",
+              w: ["Because &part;L/&part;b = 0 forces every &alpha;<sub>i</sub> to be at most C", "Because the margin must be at least C for every point", "Because C is the number of support vectors allowed"] },
+            { q: "Why does SVM go through the dual formulation instead of running Gradient Descent on <b>w</b> as in linear regression?",
+              a: "The dual exposes the data only through pairwise dot products <b>x</b><sub>i</sub>&middot;<b>x</b><sub>j</sub>, which can be replaced by a kernel function",
+              w: ["The dual removes all constraints and makes the problem non-convex", "The dual makes <b>w</b> explicit even in infinite-dimensional feature spaces", "The dual needs no optimiser at all, since it has a closed-form solution"] },
+            { q: "In SVM training, what is the order of events once the dual QP (e.g. via SMO) is set up?",
+              a: "SMO searches for the &alpha;<sub>i</sub> values; only afterwards are <b>w</b> and b computed directly from them &ndash; no search over <b>w</b> is ever done",
+              w: ["Gradient Descent iterates on <b>w</b>, and the &alpha;<sub>i</sub> are read off afterwards", "The support vectors are chosen first, and the &alpha;<sub>i</sub> are fitted to them afterwards", "<b>w</b> and b are optimised iteratively together with the &alpha;<sub>i</sub> at every SMO step"] },
+            { q: "What does the kernel trick achieve?",
+              a: "It returns &Phi;(<b>x</b><sub>i</sub>)&middot;&Phi;(<b>x</b><sub>j</sub>) through one function call on the original vectors, without ever constructing the high-dimensional feature space",
+              w: ["It explicitly maps every point into the high-dimensional space and stores the coordinates", "It reduces the dimension of the data before training", "It replaces the margin objective with a probabilistic one"] },
+            { q: "Which statement about the RBF kernel and its parameter &gamma; is correct?",
+              a: "RBF similarity decays smoothly with Euclidean distance, and &gamma; defines how far the influence of a single training example reaches",
+              w: ["RBF measures raw dot-product alignment, and &gamma; is the penalty on slack variables", "RBF captures higher-order feature interactions, and &gamma; is the polynomial degree", "RBF similarity grows with distance, and &gamma; sets the number of support vectors"] },
+            { q: "The polynomial kernel (<b>x</b><sub>i</sub>&middot;<b>x</b><sub>j</sub> + 1)<sup>d</sup> implicitly works in a feature space of what dimension (n = original dimension)?",
+              a: "C(n+d, d) &ndash; computed through a single fast calculation in the original space",
+              w: ["n<sup>d</sup>, and it must be stored explicitly", "n &times; d, the same as a linear kernel repeated d times", "Exactly n, since a kernel never changes the dimension"] },
+            { q: "How is a new point classified by a trained kernel SVM?",
+              a: "sign(&sum;<sub>i&isin;SV</sub> &alpha;<sub>i</sub>y<sub>i</sub>K(<b>x</b><sub>i</sub>, <b>x</b><sub>new</sub>) + b) &ndash; how strongly it resembles each support vector",
+              w: ["sign(<b>w</b>&middot;<b>x</b><sub>new</sub> + b) with an explicit <b>w</b> in the feature space", "The majority class among the k nearest training points", "The class with the larger posterior p(y|<b>x</b><sub>new</sub>)"] },
+            { q: "Why is SVM training guaranteed to reach the global optimum, unlike neural-network training?",
+              a: "It is a convex quadratic program, so any local optimum is automatically the global optimum",
+              w: ["Its loss landscape has many local minima, but SMO always escapes them", "It uses random initialisation and learning-rate schedules that find the best minimum", "It has no constraints, so the loss surface is a simple bowl"] },
+            { q: "What were the main reasons SVM lost ground to deep learning on large problems?",
+              a: "The O(N&sup2;) kernel (Gram) matrix does not scale to millions of examples, and SVM relies on hand-engineered features or a hand-chosen kernel",
+              w: ["Its training problem is non-convex and unreliable", "It cannot use kernels on image or text data at all", "It needs fewer labelled examples than deep networks, which made it unattractive"] },
+            { q: "In the playground, a Linear kernel cannot separate the &ldquo;Circular&rdquo; dataset, but an RBF kernel can. Why?",
+              a: "No straight line separates the circular classes; the RBF kernel implicitly maps them to a space where a linear hyperplane works, giving a curved boundary in the original space",
+              w: ["The linear kernel needs a larger C, after which a straight line separates the circle", "RBF removes the inner cluster from the training set", "RBF makes every point a support vector, so the boundary can pass through all of them"] },
+            { q: "What is the Neural Tangent Kernel (NTK) connection between SVM theory and deep learning?",
+              a: "Infinitely wide neural networks trained with gradient descent provably behave like kernel methods",
+              w: ["Every trained neural network is exactly an SVM with an RBF kernel", "Transformers replace the NTK with the softmax so kernel theory never applies", "NTK shows that deep networks have convex loss surfaces like SVMs"] }
+        ]
+            });
+            </script>
+        </section>
 
 </body>
 </html>
