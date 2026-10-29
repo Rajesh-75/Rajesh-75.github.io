@@ -668,6 +668,112 @@ body {
 
     <p><strong>Reading the tree as a business rule:</strong> "If vibration is Normal, don't worry. Otherwise, if the machine is also running hot, escalate immediately &mdash; unless it's still low-vibration with a clean error log, in which case check again after the next reading." That sentence is literally what the trained tree encodes, and it's exactly the kind of rule a reliability engineer can audit, question, and trust before wiring it into an automated shutdown or maintenance-ticket system &mdash; a very different trust story than handing the same decision to an uninterpretable model.</p>
 </div>
+<section id="decision-tree-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Decision Trees Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "Theory: What do the internal nodes, branches and leaves of a decision tree represent?",
+              a: "Internal nodes are tests on features, branches are the outcomes of a test, and leaves hold the final class label or value",
+              w: ["Internal nodes are class labels, branches are features, and leaves are tests", "Internal nodes are training samples, branches are features, and leaves are thresholds", "Internal nodes hold weights, branches hold biases, and leaves hold the loss"] },
+            { q: "Theory: Which splitting criteria do ID3/C4.5 and CART use?",
+              a: "ID3/C4.5 use Information Gain based on entropy; CART uses Gini Impurity for classification and Mean Squared Error for regression",
+              w: ["ID3 uses Gini Impurity, and CART uses entropy", "Both use Mean Squared Error for classification", "ID3 uses Mean Squared Error, and CART uses entropy for both tasks"] },
+            { q: "Theory: For C classes, what are the minimum and maximum of entropy, and what is the entropy of a 50/50 binary node?",
+              a: "0 (pure) up to log<sub>2</sub>C; a 50/50 binary node has entropy 1.0",
+              w: ["0 up to 1 for any C; a 50/50 binary node has entropy 0.5", "0 up to C; a 50/50 binary node has entropy 2", "&minus;1 up to 1; a 50/50 binary node has entropy 0"] },
+            { q: "Theory: For the tennis data, the parent set has 9 &ldquo;Yes&rdquo; and 5 &ldquo;No&rdquo;. What is its entropy?",
+              a: "&minus;(9/14)log<sub>2</sub>(9/14) &minus; (5/14)log<sub>2</sub>(5/14) &asymp; 0.940",
+              w: ["9/14 &asymp; 0.643, the fraction of &ldquo;Yes&rdquo;", "1.0, because there are two classes", "0.5, the maximum for two classes under Gini"] },
+            { q: "Theory: How is Information Gain defined?",
+              a: "The parent&rsquo;s entropy minus the weighted average of the children&rsquo;s entropies",
+              w: ["The sum of the children&rsquo;s entropies", "The weighted average of the children&rsquo;s entropies alone", "The parent&rsquo;s entropy divided by the number of children"] },
+            { q: "Theory: Which attribute does ID3 choose as the root of the tennis tree, and how does it branch?",
+              a: "Outlook, with Information Gain 0.246 (the highest), branching into all three of its values in a single step",
+              w: ["Temperature, because its weighted entropy 0.911 is the highest", "Humidity, with Information Gain 0.151", "Wind, with Information Gain 0.048"] },
+            { q: "Theory: Why does the Overcast branch of the ID3 tree become a leaf immediately?",
+              a: "All 4 Overcast days are &ldquo;Yes&rdquo;, so the node is pure (entropy 0) and no further split is needed",
+              w: ["Overcast has the lowest Information Gain of the three values", "The Overcast branch was removed by cost-complexity pruning", "The tree has run out of attributes at that node"] },
+            { q: "Theory: What is Gini Impurity, and what are its minimum and maximum?",
+              a: "Gini = 1 &minus; &sum;P<sub>c</sub>&sup2;, the probability that a randomly chosen item is misclassified when labelled at random by the class distribution; 0 when pure, up to 1 &minus; 1/C (0.5 for two classes)",
+              w: ["Gini = &minus;&sum;P<sub>c</sub> log<sub>2</sub> P<sub>c</sub>; 0 when pure, up to log<sub>2</sub>C", "Gini = &sum;P<sub>c</sub>&sup2;; 1 when pure and 0 at maximum disorder", "Gini = 1 &minus; &sum;P<sub>c</sub>, which is always 0"] },
+            { q: "Theory: Why is Gini the default in most libraries (for example scikit-learn), and how does it compare with entropy?",
+              a: "It avoids logarithms, so it is cheaper to evaluate at every candidate split; both peak at p = 0.5 and vanish at 0 and 1, so in practice they give essentially the same splits",
+              w: ["It always gives a deeper tree than entropy", "It is the only measure that works for regression", "Its maximum is 1.0 for two classes, so it is easier to interpret"] },
+            { q: "Theory: For Outlook with three values (Sunny, Overcast, Rain), how many binary groupings must CART test?",
+              a: "3: {Sunny} vs. {Overcast, Rain}, {Overcast} vs. {Sunny, Rain} and {Rain} vs. {Sunny, Overcast}",
+              w: ["1, because CART splits on the most frequent value only", "2, one per branch of the root", "6, one for every ordering of the values"] },
+            { q: "Theory: What is the trade-off of CART&rsquo;s binary-only splitting in the tennis example?",
+              a: "CART needs 4 levels and reuses Outlook, against ID3&rsquo;s 2 levels, but every node asks one uniform yes/no question, which keeps pruning and the regression extension straightforward",
+              w: ["CART needs only 2 levels, while ID3 needs 4, because binary splits are more expressive", "Both need 2 levels, and they differ only in pruning", "CART needs 4 levels because it uses entropy instead of Gini"] },
+            { q: "Theory: What is the Gini Impurity of the tennis parent node (9 Yes, 5 No)?",
+              a: "1 &minus; (9/14)&sup2; &minus; (5/14)&sup2; &asymp; 0.459",
+              w: ["0.940, which is its entropy", "0.5, the maximum for two classes", "0.357, the weighted Gini of the best Outlook split"] },
+            { q: "Theory: How does a tree handle a multi-feature problem such as balls with a Circumference and a Color?",
+              a: "The target classes stay fixed; each feature is scored independently over its thresholds or groupings, and the single best (feature, threshold) pair is applied; features are never merged into combined classes",
+              w: ["It creates compound classes such as &ldquo;Red Large&rdquo; and splits on those", "It merges the features into one combined variable before scoring", "It splits on all features simultaneously at every node"] },
+            { q: "Theory: For a numerical feature, how are candidate splits generated?",
+              a: "Every threshold Val present in the data is tested, splitting into &le; Val and &gt; Val, and the one with the best gain is kept",
+              w: ["Only the median value is tested", "Only the 25th, 50th and 75th percentiles are tested", "Each feature is cut into exactly 10 equal-width bins"] },
+            { q: "Theory: Why does an unconstrained tree overfit?",
+              a: "It keeps splitting until every leaf is pure, so it memorises noise &ndash; even one mildly noisy row could grow an extra branch just to isolate it",
+              w: ["It cannot fit noisy data at all", "It always stops at depth 2", "It uses gradients that never converge"] },
+            { q: "Theory: In cost-complexity pruning, R<sub>&alpha;</sub>(T) = R(T) + &alpha;|T|, what happens as &alpha; increases?",
+              a: "Each additional leaf becomes more expensive, so more branches are pruned back and the tree shrinks; &alpha; is chosen by cross-validation, like &lambda; in L2 regularisation",
+              w: ["The tree grows larger, because the penalty applies to impurity", "&alpha; sets the depth at which pre-pruning stops", "&alpha; is the learning rate of the greedy search"] },
+            { q: "Theory: How do pre-pruning and post-pruning differ?",
+              a: "Pre-pruning halts growth during construction through stopping conditions; post-pruning grows the full tree first and then prunes it back",
+              w: ["Pre-pruning runs after training, and post-pruning runs during construction", "Both grow the full tree first and differ only in the metric", "Pre-pruning removes features, and post-pruning removes samples"] },
+            { q: "Theory: Where does the mapping of Decision Trees onto Model &rarr; Cost Function &rarr; Optimisation break down?",
+              a: "There is no global objective (the greedy split search is myopic), the parameters are discrete so there are no gradients, and there is no backward pass or iterative refinement",
+              w: ["A tree minimises one global differentiable loss through backpropagation", "A tree trains for many epochs, repeatedly refining the same splits", "A tree has continuous parameters like weights that are updated by SGD"] },
+            { q: "Theory: Why do ID3, C4.5 and CART use a greedy heuristic instead of searching for the best tree?",
+              a: "Finding the globally optimal decision tree is NP-hard (Hyafil &amp; Rivest, 1976)",
+              w: ["Dynamic programming finds the optimal tree quickly, but greedy search is simpler", "Greedy search is provably optimal for decision trees", "Gradients are unavailable only for regression trees"] },
+            { q: "Theory: Why is ensembling described as implicit regularisation for trees?",
+              a: "A single deep tree has high variance; Random Forests average many trees built on bootstrapped samples with random feature subsets, while Gradient Boosted Trees build shallow trees sequentially, each correcting the previous residual error",
+              w: ["A single deep tree has high bias, so ensembles make each tree deeper", "Random Forests build trees sequentially, and boosting averages them in parallel", "Ensembles remove the need for any impurity measure"] },
+            { q: "Practical: A reliability team wants a model for sensor data that engineers can audit like a checklist, handles mixed numeric and categorical readings, and can run on an edge device beside the machine. Why does a decision tree fit?",
+              a: "It is interpretable, needs no feature scaling, handles mixed data natively, and inference is just a handful of comparisons",
+              w: ["It has the highest accuracy on every dataset", "It trains with backpropagation, which is cheap on edge hardware", "It automatically learns features from raw images"] },
+            { q: "Practical: In the predictive-maintenance example, which root split wins, and with what Gini gain?",
+              a: "{Normal vibration} vs. {High, Low vibration}, with a Gini gain of 0.102",
+              w: ["{Temperature = High} vs. {Normal}, with a gain of 0.092", "{Error Code = Yes} vs. {No}, with a gain of 0.031", "The best grouping of Hours Since Maintenance, with a gain of 0.016"] },
+            { q: "Practical: Trace Day 14 (Rain, Mild, High, Strong) through the tennis tree. What does it predict?",
+              a: "Outlook = Rain &rarr; Wind = Strong &rarr; No, which matches the recorded label",
+              w: ["Outlook = Rain &rarr; Wind = Strong &rarr; Yes", "Outlook = Rain &rarr; Humidity = High &rarr; No", "Outlook = Overcast &rarr; Yes, without checking any other feature"] },
+            { q: "Practical: A tree reaches 100% training accuracy but performs poorly on new data. What are sensible fixes?",
+              a: "Limit growth (for example max_depth or min_samples_leaf), apply cost-complexity pruning with &alpha; chosen by cross-validation, or move to a Random Forest or boosted ensemble",
+              w: ["Grow the tree deeper until every leaf is pure", "Remove min_samples_leaf so that noisy points get their own leaves", "Standardise all the features"] },
+            { q: "Practical: The sensor features have very different units (vibration in mm/s, temperature in &deg;C, hours). Do you need to standardise them before training a tree?",
+              a: "No &ndash; a tree compares each feature against thresholds on its own scale, so it needs no feature scaling",
+              w: ["Yes, otherwise the largest-scale feature dominates every split", "Yes, but only the numeric features need min-max scaling", "Only for the root split"] },
+            { q: "Hyperparameter: Leaves would be pure at depth 7, but you set max_depth = 3. What happens?",
+              a: "Growth stops at 3 levels regardless of purity, so some leaves stay impure and take the majority class; this curbs overfitting, but too small a depth underfits",
+              w: ["The tree still grows to depth 7, because purity overrides max_depth", "The tree is pruned afterwards using cost-complexity pruning", "The tree is retrained with a different splitting criterion"] },
+            { q: "Hyperparameter: How do min_samples_split and min_samples_leaf differ?",
+              a: "min_samples_split stops a node with too few samples from being split (it becomes a leaf even if impure); min_samples_leaf rejects any candidate split that would leave a child with too few samples",
+              w: ["min_samples_split limits the number of leaves, and min_samples_leaf limits the depth", "min_samples_leaf stops a node from being split, and min_samples_split rejects a child that is too small", "They are two names for the same setting"] },
+            { q: "Hyperparameter: What does min_impurity_decrease do?",
+              a: "It rejects a split unless it reduces impurity (Gini or entropy gain) by at least the given amount &ndash; a generalised version of the flowchart&rsquo;s &ldquo;Best Gain &lt; 0?&rdquo; check",
+              w: ["It stops the tree once the impurity of the root drops below the value", "It sets the minimum impurity a node must have to become a leaf", "It scales the impurity of each child by the given amount"] },
+            { q: "Hyperparameter: How do max_leaf_nodes and the cost-complexity parameter &alpha; differ?",
+              a: "max_leaf_nodes is a hard cap on total leaves applied during growth, whereas &alpha; is a soft per-leaf penalty used after growth to prune the full tree",
+              w: ["max_leaf_nodes is applied after growth, and &alpha; caps the leaves during growth", "Both are hard caps applied during growth", "max_leaf_nodes sets the depth, and &alpha; sets the number of features"] },
+            { q: "Hyperparameter: What is the difference between a tree&rsquo;s parameters and its hyperparameters?",
+              a: "Parameters are the learned split choices (which feature and threshold at each node); hyperparameters (max_depth, min_samples_leaf, &alpha;, &hellip;) are set before training and tuned, for example by cross-validation",
+              w: ["Parameters are max_depth and &alpha;, and hyperparameters are the learned thresholds", "Both are learned by gradient descent during training", "Parameters are the training rows, and hyperparameters are the test rows"] }
+        ]
+            });
+            </script>
+        </section>
 
 </body>
 </html>

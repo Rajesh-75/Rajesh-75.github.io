@@ -720,6 +720,7 @@ body {
     <p style="line-height: 1.6; color: #333;">
         Because a different random subset of neurons is silenced on every pass, no single neuron can become over-specialized or overly dependent on a handful of specific other neurons always being present — the network is forced to learn redundant, distributed representations of the same feature. This is often described as training a different "thinned" sub-network on every mini-batch and implicitly averaging over an enormous ensemble of them. At test time, dropout is turned off and every neuron is active; to keep the expected output magnitude consistent with training, activations are scaled by $(1-p)$ (or, equivalently, scaled by $1/(1-p)$ during training — "inverted dropout" — so no rescaling is needed at inference).
     </p>
+	<p> A more detailed discussion about Drop out is mentioned  <a href="Dropout.html">here</a>
 
     <h4 style="color: #2c3e50; margin-top: 18px;">What $m_j^{(l)}$ Actually Is, and Exactly When Dropout Fires</h4>
     <p style="line-height: 1.6; color: #333;">
@@ -1557,6 +1558,112 @@ answers "how many of these parameters were ever necessary?"
         Each of these deserves — and gets — a dedicated, in-depth discussion on its own page, covering the architecture-specific mechanics that build on the foundations introduced here.
     </p>
 </div>
+<section id="nn-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Neural Networks Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "How does the page describe a Neural Network in relation to linear and logistic regression?",
+              a: "As a multi-layer stack of linear and logistic regression units, where each layer creates new features for the next",
+              w: ["As a single logistic regression unit with a very large number of inputs", "As linear regression with a decision tree placed at every layer", "As linear regression followed by one non-linear layer at the very end"] },
+            { q: "In what order do the four phases of the learning cycle run?",
+              a: "Forward pass &rarr; loss calculation &rarr; backpropagation &rarr; weight update",
+              w: ["Loss calculation &rarr; forward pass &rarr; weight update &rarr; backpropagation", "Backpropagation &rarr; forward pass &rarr; loss calculation &rarr; weight update", "Forward pass &rarr; weight update &rarr; loss calculation &rarr; backpropagation"] },
+            { q: "What roles do the sign of a weight and the bias play in a neuron&rsquo;s weighted sum?",
+              a: "A positive weight is a vote of confidence, a negative weight acts as a veto, and the bias plays the role of the intercept",
+              w: ["A positive weight scales the output, a negative weight resets it, and the bias sets the learning rate", "The sign of a weight is irrelevant, and the bias is the neuron&rsquo;s activation function", "A positive weight is a veto, a negative weight is a vote of confidence, and the bias is the loss"] },
+            { q: "Why can a deep network built only from linear layers do no more than a single linear layer?",
+              a: "A composition of linear functions is itself linear: W<sub>2</sub>(W<sub>1</sub>x) = (W<sub>2</sub>W<sub>1</sub>)x",
+              w: ["Because the gradients vanish whenever every activation is linear", "Because linear layers have no bias term to shift the output", "Because linear layers cannot be trained with gradient descent"] },
+            { q: "For layer l with d<sub>l&minus;1</sub> inputs and d<sub>l</sub> neurons, what is the shape of W<sup>(l)</sup> in z<sup>(l)</sup> = W<sup>(l)</sup>a<sup>(l&minus;1)</sup> + b<sup>(l)</sup>?",
+              a: "d<sub>l</sub> &times; d<sub>l&minus;1</sub>",
+              w: ["d<sub>l&minus;1</sub> &times; d<sub>l</sub>", "d<sub>l</sub> &times; d<sub>l</sub>", "d<sub>l&minus;1</sub> &times; 1"] },
+            { q: "A network must pick exactly one of 10 mutually exclusive classes. Which final activation fits, and why?",
+              a: "Softmax, because it maps the logits to a categorical distribution whose probabilities sum to 1",
+              w: ["Sigmoid on each output, because that forces the ten outputs to sum to 1", "Identity, because the logits are already probabilities", "ReLU, because the outputs only need to be non-negative"] },
+            { q: "Which loss does the page recommend for regression data with many outliers, and why?",
+              a: "Mean Absolute Error &ndash; it grows linearly with the error, so a few extreme outliers do not dominate",
+              w: ["Mean Squared Error &ndash; squaring shrinks large errors", "Binary Cross-Entropy &ndash; it compares two probability distributions", "Categorical Cross-Entropy &ndash; it uses one-hot targets"] },
+            { q: "Which loss is used with a softmax output for recognising MNIST digits?",
+              a: "Categorical cross-entropy, comparing the predicted class distribution with one-hot encoded targets",
+              w: ["Mean squared error, since digits are numbers", "Binary cross-entropy on a single sigmoid output", "Mean absolute error, to stay robust to outliers"] },
+            { q: "In the update w(&tau;) = w(&tau;&minus;1) &minus; &eta;&nabla;L(w(&tau;&minus;1)), why is there a minus sign?",
+              a: "The gradient points toward the steepest increase of the loss, so the step goes in the opposite direction",
+              w: ["The gradient points toward the minimum, so the minus sign reverses the learning rate", "The minus sign keeps the weights positive", "The minus sign makes the step size shrink over time"] },
+            { q: "How does an autograd engine obtain the gradients used in backpropagation?",
+              a: "It records every operation and its local derivative in a computation graph during the forward pass, then walks the graph in reverse applying the chain rule",
+              w: ["It approximates each derivative by finite differences, perturbing one weight at a time", "It uses a hand-written symbolic derivative of the whole network", "It repeats the forward pass many times with random weights and averages the loss"] },
+            { q: "Why do the earliest layers of a 10-layer Sigmoid network almost stop learning?",
+              a: "Their gradient is a product of many factors involving derivatives of at most 0.25, roughly 0.25<sup>10</sup> &asymp; 10<sup>&minus;6</sup> of the output gradient",
+              w: ["Sigmoid&rsquo;s derivative is at least 1, so the gradients explode and are clipped to zero", "The learning rate is reduced automatically layer by layer", "The early layers have fewer weights than the later layers"] },
+            { q: "Why does ReLU&rsquo;s derivative help against vanishing gradients?",
+              a: "For z &gt; 0 it is exactly 1, so the error signal passes through unchanged instead of being scaled down at every layer",
+              w: ["It equals 0.25, like Sigmoid&rsquo;s, but constant", "It is 1 for all z, including negative z", "It is zero-centred, so the gradients cancel exactly"] },
+            { q: "Why can plain gradient descent stall on a non-convex loss surface?",
+              a: "The gradient is also near zero at local minima and in flat saddle regions, so it gives no signal to keep moving",
+              w: ["Non-convex surfaces have no minima at all", "Gradients are undefined on non-convex surfaces", "The learning rate becomes negative near the basins"] },
+            { q: "What does Adam add to plain gradient descent?",
+              a: "Momentum (a moving average of past gradients) plus a per-parameter adaptive step size based on the second-moment estimate",
+              w: ["A fixed learning rate for every weight, plus the Hessian", "Random perturbations of the gradients to escape local minima", "Dropout applied to the gradient"] },
+            { q: "Why was AdamW introduced?",
+              a: "With an L2 penalty inside Adam&rsquo;s gradient, weights with large past gradients are divided by &radic;v<sub>t</sub> and get weaker regularisation; AdamW applies the decay &lambda;w separately at the update step",
+              w: ["Adam cannot use momentum with weight decay, so AdamW removes the momentum", "AdamW lowers the learning rate automatically as training proceeds", "AdamW applies dropout to the weights at every step"] },
+            { q: "Why does He initialisation use Var(w) = 2/n<sub>in</sub>, double a naive symmetric choice?",
+              a: "ReLU zeroes out about half of its inputs, so the variance is doubled to keep activations from shrinking toward zero in a deep network",
+              w: ["ReLU outputs are always positive, so the variance is doubled to make them zero-centred", "He initialisation uses both n<sub>in</sub> and n<sub>out</sub>, which doubles the sum", "Biases start at zero, which halves the variance unless it is doubled"] },
+            { q: "Why does BatchNorm include the learnable parameters &gamma;<sub>j</sub> and &beta;<sub>j</sub> after normalising?",
+              a: "They let the network undo the normalisation if that is better for a neuron, so BatchNorm never reduces what the network can represent",
+              w: ["They set the batch size automatically during training", "They are used only at test time, to replace the running averages", "They keep the weights from becoming negative"] },
+            { q: "According to the page, what is the order of operations in a typical layer?",
+              a: "Linear (z) &rarr; BatchNorm &rarr; Activation (h) &rarr; Dropout &rarr; next layer",
+              w: ["Linear &rarr; Activation &rarr; BatchNorm &rarr; Dropout &rarr; next layer", "Linear &rarr; Dropout &rarr; Activation &rarr; BatchNorm &rarr; next layer", "BatchNorm &rarr; Linear &rarr; Dropout &rarr; Activation &rarr; next layer"] },
+            { q: "Training loss keeps falling while validation loss starts to rise. What does this mean, and what does early stopping do?",
+              a: "The model is overfitting, memorising training noise; early stopping keeps the weights from the epoch with the lowest validation loss",
+              w: ["The model is underfitting; early stopping lowers the learning rate", "The test set should now be used to update the weights", "The model is converging; training should continue until the training loss reaches zero"] },
+            { q: "How do L2 and L1 regularisation differ?",
+              a: "L2 shrinks weights smoothly toward zero (weight decay), while L1 pushes many weights to exactly zero, giving a sparser network",
+              w: ["L2 produces a sparse network, while L1 shrinks weights smoothly", "Both set the same weights to zero, but L1 squares them first", "L1 penalises the gradients, while L2 penalises the activations"] },
+            { q: "When are dropout masks drawn, and what happens at test time?",
+              a: "A fresh mask is drawn on every forward pass, from the very first batch; at test time dropout is off and the outputs are kept consistent through (1&minus;p) scaling or inverted dropout",
+              w: ["One mask is drawn at initialisation and reused for the whole of training", "Dropout is skipped in the first epochs and switched on once the loss stabilises", "At test time dropout stays on, and predictions are averaged over many masks"] },
+            { q: "Why is dropout applied to the post-activation output a<sub>j</sub> = h(z<sub>j</sub>) and not to z<sub>j</sub>?",
+              a: "For ReLU the order makes no difference, but for Sigmoid or Tanh h(0) &ne; 0 (&sigma;(0) = 0.5), so masking z would inject a constant instead of a true zero",
+              w: ["Masking z would change ReLU&rsquo;s gradient", "Post-activation masking saves memory", "Dropout on z would drop only the bias term"] },
+            { q: "What does the Universal Approximation Theorem guarantee, and what does depth add?",
+              a: "A single hidden layer with enough width can approximate any continuous function; depth adds efficiency, reaching a comparable approximation with far fewer parameters",
+              w: ["Gradient descent is guaranteed to find the approximating weights; depth is needed for any non-linear function", "Shallow networks can only represent linear functions, so depth is required", "A wide shallow network is guaranteed to be more parameter-efficient than a deep one"] },
+            { q: "A dense layer has n inputs and n &minus; 4 outputs. How many connections (weights) does it have for n = 10?",
+              a: "10 &times; 6 = 60, since the count is n(n &minus; 4) = n&sup2; &minus; 4n",
+              w: ["36, which is 6 &times; 6", "100, which is 10 &times; 10", "16, which is 10 + 6"] },
+            { q: "Why can magnitude pruning remove the wrong weight, and how does Optimal Brain Damage (OBD) address this?",
+              a: "Magnitude pruning assumes uniform curvature (H &asymp; hI); OBD uses each weight&rsquo;s own curvature, s<sub>q</sub> = &frac12;h<sub>qq</sub>w<sub>q</sub>&sup2;, so a small weight in a sharp region can outrank a large one in a flat region",
+              w: ["Magnitude pruning ignores the sign of weights, so OBD ranks weights by their sign", "Magnitude pruning removes whole filters, while OBD removes single weights", "Magnitude pruning uses the full inverse Hessian, which OBD replaces with random scores"] },
+            { q: "What does Optimal Brain Surgeon (OBS) add compared with OBD, and what is its main drawback?",
+              a: "It uses the full Hessian and adjusts the surviving weights to compensate for the deleted one; it needs the inverse Hessian, which takes O(n&sup2;) to store",
+              w: ["It ranks weights by magnitude only; its drawback is that it cannot compensate", "It prunes entire layers at once; its drawback is the loss of accuracy", "It ignores curvature entirely; its drawback is that it needs labelled data"] },
+            { q: "Why does structured pruning speed up inference more reliably than unstructured pruning?",
+              a: "It removes whole neurons, filters or channels, so the network is simply smaller and still uses dense compute, whereas irregular sparsity rarely speeds up standard GPU kernels",
+              w: ["Unstructured pruning removes fewer parameters, so it is slower", "Structured pruning keeps every weight but lowers its bit-width", "Structured pruning needs no fine-tuning after pruning"] },
+            { q: "What does the Lottery Ticket Hypothesis claim?",
+              a: "A dense network contains a sparse subnetwork that, reset to its original initial weights and retrained, matches the full network; the same mask on a different random initialisation trains much worse",
+              w: ["A pruned network should be retrained from its trained weights, never from the initial ones", "Any random sparse mask of the same size will match the dense network", "The largest-magnitude weights can be re-initialised randomly with no loss of accuracy"] },
+            { q: "How do feature extraction and fine-tuning differ in transfer learning?",
+              a: "Feature extraction freezes the pretrained weights and trains only a new head; fine-tuning unfreezes some or all layers and continues training, usually with a much smaller learning rate",
+              w: ["Feature extraction trains every layer from scratch, while fine-tuning freezes everything", "Fine-tuning uses a larger learning rate than training from scratch, while feature extraction uses a smaller one", "Both re-initialise all layers randomly except the output layer"] },
+            { q: "In the full training loop, which statement is correct?",
+              a: "Weights are initialised once before training; epochs form the outer loop and mini-batches the inner loop; at inference Dropout is off and BatchNorm uses its running statistics",
+              w: ["Weights are re-initialised at the start of every epoch", "Dropout and BatchNorm behave exactly the same at inference as in training", "The mini-batch loop is the outer loop and the epoch loop is the inner one"] }
+        ]
+            });
+            </script>
+        </section>
 
 </body>
 </html>

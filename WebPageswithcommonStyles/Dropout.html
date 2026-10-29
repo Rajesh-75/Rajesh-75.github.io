@@ -1,65 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Hide body initially to prevent flickering -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles_common.css">
-<style>
-body {
-  visibility: hidden;
-}
-</style>
-    <!-- Load global MathJax configuration first -->
-    <script src="mathjax-config.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"><script type="text/javascript" async
-        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropout: Training vs Inference</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles_common.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- Hide body until MathJax has typeset the page (a fallback below shows it anyway) -->
+    <style>
+        body { visibility: hidden; }
+        .dp-ctl { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 8px; }
+        .dp-ctl button { padding: 5px 12px; cursor: pointer; }
+        .dp-tbl { border-collapse: collapse; margin: 8px auto 0; font-size: 12px; text-align: center; }
+        .dp-tbl th, .dp-tbl td { border: 1px solid #ccc; padding: 3px 7px; }
+        .dp-tbl th:first-child { text-align: left; }
+    </style>
     <script>
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
                 displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
             }
         };
     </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        /* Fallback: if MathJax cannot load, do not leave the page blank */
+        setTimeout(function () { document.body.style.visibility = 'visible'; }, 4000);
+    </script>
+</head>
+<body>
+
+<div class="content-wrapper">
 
 <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
 <h3>Deep Learning Training: The Dropout Mechanism</h3>
 <p class="detail-description">
-    Dropout is not a static architectural change or a one-time initialization; it is a <strong>dynamic stochastic process</strong> that occurs during the training loop. It prevents co-adaptation by forcing the network to treat every forward pass as a unique sub-architecture.
+    Dropout is not a static architectural change or a one-time initialization; it is a <strong>dynamic stochastic process</strong> that occurs during the training loop. In every forward pass, each neuron of a chosen layer is <em>dropped</em> (set to 0) independently with probability $p$ and <em>kept</em> with probability $1-p$. This prevents co-adaptation by forcing the network to treat every forward pass as a unique sub-architecture.
 </p>
 
-<div style="display: flex; gap: 20px; margin: 20px 0;">
-    <div style="flex: 1; background: #f0f4f8; padding: 15px; border-radius: 4px; border-top: 4px solid #0056b3;">
+<div style="display: flex; flex-wrap: wrap; gap: 20px; margin: 20px 0;">
+    <div style="flex: 1 1 280px; background: #f0f4f8; padding: 15px; border-radius: 4px; border-top: 4px solid #0056b3;">
         <strong>Continuous Weights</strong>
         <p style="font-size: 0.85rem; color: #555;">
-            Learnable parameters ($\mathbb{R}$) that define connection strength. These are initialized once (e.g., Xavier) and adjusted via gradients. Whereas the Weights are continuous, learnable parameters (floating point numbers like $0.25$, $-1.1$, etc.). 
+            Learnable parameters ($\mathbb{R}$) that define connection strength. They are continuous floating-point numbers (such as $0.25$ or $-1.1$), initialized once (e.g., Xavier) and adjusted via gradients.
         </p>
     </div>
-    <div style="flex: 1; background: #fff9db; padding: 15px; border-radius: 4px; border-top: 4px solid #fcc419;">
+    <div style="flex: 1 1 280px; background: #fff9db; padding: 15px; border-radius: 4px; border-top: 4px solid #fcc419;">
         <strong>Binary Dropout Mask</strong>
         <p style="font-size: 0.85rem; color: #555;">
-            A non-learnable, <strong>binary switch</strong> ($0$ or $1$) generated every batch. It acts as a gate, not a parameter.The Dropout Mask, however, is a non-learnable, binary stochastic vector that acts like a switch.The Mathematical OperationIf $H$ is the output vector of a layer, and $M$ is the Bernoulli mask, the operation is the Hadamard Product (element-wise multiplication):$$H_{output} = H \odot M$$Where each element $m_i$ in the mask $M$ is:$$m_i \in \{0, 1\}$$.In modern AI frameworks like PyTorch or TensorFlow, this isn't done one-by-one because that would be too slow. Instead, it happens as a Vectorized Operation on the GPU:Generate Random Tensor: A tensor of the same shape as the layer's output is filled with random numbers.Thresholding: A binary comparison is performed across the whole tensor at once.The Result: You get a Binary Mask ($m$) that looks like this: $[1, 0, 0, 1, 1, 0, \dots]$.3. The Hadamard Product (The "Kill" Step)Once the mask is created, it is applied to the neuron activations ($h$) via the Hadamard Product ($\odot$):$$h_{dropped} = h \odot m$$When $m_i = 1$: $h_i \times 1 = h_i$ (Signal passes through unchanged).When $m_i = 0$: $h_i \times 0 = 0$ (Signal is blocked/killed).
+            A non-learnable, <strong>binary stochastic vector</strong> ($0$ or $1$) generated afresh on every forward pass. It acts as a gate (a switch), not a parameter. If $h$ is the output vector of a layer and $M$ is the Bernoulli mask with $P(m_i = 1) = 1-p$, the operation is the <strong>Hadamard product</strong> (element-wise multiplication):
+        </p>
+        $$h_{dropped} = h \odot M, \qquad m_i \in \{0, 1\}$$
+        <ul style="font-size: 0.85rem; color: #555; margin-top: 0;">
+            <li>When $m_i = 1$: $h_i \times 1 = h_i$ (signal passes through unchanged).</li>
+            <li>When $m_i = 0$: $h_i \times 0 = 0$ (signal is blocked, "killed").</li>
+        </ul>
+        <p style="font-size: 0.85rem; color: #555;">
+            Frameworks such as PyTorch and TensorFlow do not loop over neurons one by one. They run a vectorized GPU operation: (1) generate a random tensor with the same shape as the layer output, (2) threshold it against $p$ in a single comparison, giving a mask such as $[1, 0, 0, 1, 1, 0, \dots]$, and (3) multiply it with the activations.
         </p>
     </div>
 </div>
 
-
+<h4>See It in Action: Dropout Demo</h4>
+<p class="detail-description">
+    The hidden layer below has 8 neurons with fixed activations $h$. Each click on <b>Resample mask</b> is one new training iteration: neurons are dropped at random with probability $p$, and the surviving signals are scaled up by $\frac{1}{1-p}$. Move the slider to change $p$, or switch to <b>Inference</b> to see dropout turned off.
+</p>
+<div style="border: 1px solid #ccc; border-radius: 6px; padding: 14px; margin: 16px 0;">
+    <div class="dp-ctl">
+        <label>Drop probability $p$ = <input type="range" id="dpP" min="0" max="0.9" step="0.1" value="0.5"> <b id="dpPv">0.5</b></label>
+        <label><input type="radio" name="dpMode" value="train" checked> Training (dropout ON)</label>
+        <label><input type="radio" name="dpMode" value="infer"> Inference (dropout OFF)</label>
+        <button id="dpNew">Resample mask</button>
+        <button id="dpAuto">Auto-play</button>
+    </div>
+    <svg id="dpSvg" viewBox="0 0 460 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Neural network with dropout applied to the hidden layer" style="display:block; width:100%; max-width:560px; height:auto; margin:0 auto;" font-family="sans-serif" font-size="11"></svg>
+    <div id="dpTable"></div>
+    <p id="dpStat" style="font-size: 0.92rem; line-height: 1.5; margin: 10px 0 0;"></p>
+</div>
+<p class="detail-description">
+    <strong>What to notice:</strong> a single training pass can give a sum that is far from the inference sum (some passes lose a lot of signal, others are inflated by the scaling). But the <em>average</em> of the scaled sum over many passes settles on the inference sum. Press <b>Auto-play</b> for a minute and watch the average converge. That is exactly why dropout can be switched off at test time without changing the expected size of the signals.
+</p>
 
 <h4>1. The Step-by-Step Training Mechanism</h4>
 <p class="detail-description">
     Inside the algorithm, the following sequence occurs for every single training step (iteration):
 </p>
 <ul>
-    <li><strong>Generate a Mask:</strong> For a layer of $N$ neurons, the algorithm generates a random vector of 0s and 1s, known as a <strong>Bernoulli Mask</strong> ($m$).</li>
-    <li><strong>Element-wise Multiplication:</strong> The layer output ($h$) is multiplied by this binary mask: $h_{active} = h \odot m$. If a mask value is 0, that neuron's signal is "killed" for that specific pass.</li>
+    <li><strong>Generate a Mask:</strong> For a layer of $N$ neurons, the algorithm draws $m_i \sim \text{Bernoulli}(1-p)$ independently for each neuron, giving a random vector of 0s and 1s known as the <strong>Bernoulli Mask</strong> ($m$). A fresh mask is drawn for every forward pass (and, in standard implementations, separately for every example in the batch).</li>
+    <li><strong>Element-wise Multiplication and Rescaling:</strong> The layer output ($h$) is multiplied by the mask and scaled: $h_{active} = \dfrac{h \odot m}{1-p}$. If a mask value is 0, that neuron's signal is "killed" for that specific pass.</li>
     <li><strong>Forward Pass:</strong> The data propagates only through the "active" neurons to calculate the loss.</li>
-    <li><strong>Backpropagation:</strong> Gradients <u>only</u> flow back through the neurons that were active. The "dropped" neurons' weights remain unchanged during that specific gradient update.</li>
-    <li><strong>Iteration:</strong> In the next batch, a new random mask is generated, ensuring a different set of neurons is tested.</li>
+    <li><strong>Backpropagation:</strong> Gradients flow back <u>only</u> through the neurons that were active. For a dropped neuron the gradient is zero for that example, so the weights into and out of it receive no update from that example. Because each example has its own mask, those weights can still be updated by other examples in the same batch.</li>
+    <li><strong>Iteration:</strong> In the next pass, a new random mask is generated, ensuring a different set of neurons is tested.</li>
 </ul>
+
+<h4>Worked Example: Why the Scaling Works</h4>
+<div style="background: #f8f9fa; border-left: 4px solid #0056b3; padding: 12px 16px; margin: 12px 0;">
+    <p style="margin-top: 0;">Let $p = 0.5$ (so the scale factor is $\frac{1}{1-p} = 2$) and let four neurons output $h = (2, 4, 6, 8)$. Without dropout the total signal is $2+4+6+8 = 20$.</p>
+    <ul>
+        <li><strong>Mask $m = (1, 0, 1, 0)$:</strong> $h \odot m = (2, 0, 6, 0)$, scaled by 2: $(4, 0, 12, 0)$, total $16$.</li>
+        <li><strong>Mask $m = (0, 1, 1, 1)$:</strong> $h \odot m = (0, 4, 6, 8)$, scaled by 2: $(0, 8, 12, 16)$, total $36$.</li>
+        <li><strong>All 16 possible masks:</strong> each neuron is kept in exactly half of them, so the scaled value of neuron $i$ averages $\tfrac12 \times 2h_i = h_i$. The average total over all masks is exactly $20$.</li>
+    </ul>
+    <p style="margin-bottom: 0;">In symbols: $E\!\left[\dfrac{m_i h_i}{1-p}\right] = \dfrac{(1-p)\,h_i}{1-p} = h_i$. Individual passes are noisy, but on average the layer sends the same signal as the no-dropout layer. That is why, at inference time, we can simply use all neurons with no mask and no scaling.</p>
+</div>
 
 <h4>2. Implementation: Training vs. Inference</h4>
 <p class="detail-description">
@@ -78,23 +139,94 @@ body {
         <tr>
             <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Training</td>
             <td style="padding: 10px; border: 1px solid #ddd;">Dropout ON</td>
-            <td style="padding: 10px; border: 1px solid #ddd;">Signals are randomly cut and remaining signals are <strong>scaled up</strong> by $1/(1-p)$ to maintain total expected sum.</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Signals are randomly cut and remaining signals are <strong>scaled up</strong> by $1/(1-p)$ to maintain the total expected sum.</td>
         </tr>
         <tr>
             <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Inference</td>
             <td style="padding: 10px; border: 1px solid #ddd;">Dropout OFF</td>
-            <td style="padding: 10px; border: 1px solid #ddd;">All neurons are active. This provides a stable, "averaged" prediction from the ensemble of sub-networks learned during training.</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">All neurons are active, with no mask and no scaling. This is a cheap approximation to averaging the predictions of the many sub-networks seen during training (the "weight-scaling" rule).</td>
         </tr>
     </tbody>
 </table>
 
+<pre style="background: #f4f4f4; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 0.85rem;"><code># Inverted dropout in NumPy (what nn.Dropout does for you)
+def dropout(h, p=0.5, training=True):
+    if not training or p == 0:
+        return h                           # inference: identity
+    keep = np.random.rand(*h.shape) >= p   # keep each neuron with prob 1-p
+    return h * keep / (1 - p)              # kill dropped, scale the survivors
 
+# PyTorch
+layer = nn.Dropout(p=0.5)
+model.train()   # dropout ON  (random masks, scaling)
+model.eval()    # dropout OFF (identity)</code></pre>
 
 <div class="example-section" style="border-left: 4px solid #28a745; background-color: #f8fff8;">
     <span class="example-header" style="color: #28a745;">Architect's Note:</span>
     <p class="detail-description" style="margin-bottom: 0;">
-        This "scaling" ensures that the neuron outputs at test-time have the same <strong>Expected Value</strong> as they did during the training phase. Without this, the next layer would be overwhelmed by the sudden increase in total signal magnitude when all neurons are switched back on.
+        This "scaling" ensures that the neuron outputs at test-time have the same <strong>Expected Value</strong> as they did during the training phase. Without this, the next layer would be overwhelmed by the sudden increase in total signal magnitude when all neurons are switched back on. Two equivalent conventions exist: <strong>inverted dropout</strong> (used by PyTorch and TensorFlow) scales up during training so that inference needs no change, while the original dropout paper left training unscaled and multiplied the weights by $1-p$ at test time.
     </p>
+</div>
+
+<script>
+(function () {
+    var H = [0.8, 1.2, 0.5, 1.6, 0.9, 1.1, 0.7, 1.4], N = H.length;
+    var SUMH = H.reduce(function (a, b) { return a + b; }, 0);
+    var P = document.getElementById('dpP'), PV = document.getElementById('dpPv'), SV = document.getElementById('dpSvg'),
+        TB = document.getElementById('dpTable'), ST = document.getElementById('dpStat'), AUTO = document.getElementById('dpAuto');
+    var mask = [], acc = 0, cnt = 0, last = 0, timer = null;
+    function mode() { return document.querySelector('input[name="dpMode"]:checked').value; }
+    function f1(v) { return v.toFixed(1); }
+    function resample() {
+        var p = +P.value, i, s = 0;
+        if (mode() === 'infer') { mask = H.map(function () { return 1; }); last = SUMH; cnt = 0; acc = 0; draw(); return; }
+        mask = H.map(function () { return Math.random() >= p ? 1 : 0; });
+        for (i = 0; i < N; i++) s += H[i] * mask[i];
+        last = s / (1 - p); acc += last; cnt++;
+        draw();
+    }
+    function reset() { acc = 0; cnt = 0; resample(); }
+    function draw() {
+        var p = +P.value, tr = mode() === 'train', sc = tr ? 1 / (1 - p) : 1, b = '', i, j;
+        var ix = 50, hx = 230, ox = 410, iy = [100, 145, 190], oy = [120, 170];
+        function hy(k) { return 40 + k * 32; }
+        for (i = 0; i < N; i++) {
+            var on = mask[i] === 1;
+            for (j = 0; j < 3; j++) b += '<line x1="' + ix + '" y1="' + iy[j] + '" x2="' + hx + '" y2="' + hy(i) + '" stroke="currentColor" stroke-opacity="' + (on ? 0.3 : 0.06) + '"/>';
+            for (j = 0; j < 2; j++) b += '<line x1="' + hx + '" y1="' + hy(i) + '" x2="' + ox + '" y2="' + oy[j] + '" stroke="currentColor" stroke-opacity="' + (on ? 0.3 : 0.06) + '"/>';
+        }
+        for (j = 0; j < 3; j++) b += '<circle cx="' + ix + '" cy="' + iy[j] + '" r="12" fill="#9ec5e8"/><text x="' + ix + '" y="' + (iy[j] + 4) + '" text-anchor="middle" fill="#123">x' + (j + 1) + '</text>';
+        for (j = 0; j < 2; j++) b += '<circle cx="' + ox + '" cy="' + oy[j] + '" r="12" fill="#8ccfae"/><text x="' + ox + '" y="' + (oy[j] + 4) + '" text-anchor="middle" fill="#123">y' + (j + 1) + '</text>';
+        for (i = 0; i < N; i++) {
+            if (mask[i] === 1) b += '<circle cx="' + hx + '" cy="' + hy(i) + '" r="13" fill="#2f78c4"/><text x="' + hx + '" y="' + (hy(i) + 4) + '" text-anchor="middle" fill="#fff" font-size="10">' + f1(H[i] * sc) + '</text>';
+            else b += '<circle cx="' + hx + '" cy="' + hy(i) + '" r="13" fill="none" stroke="#d9534f" stroke-width="1.5" stroke-dasharray="3 2"/><text x="' + hx + '" y="' + (hy(i) + 4) + '" text-anchor="middle" fill="#d9534f">&#10005;</text>';
+        }
+        b += '<text x="' + ix + '" y="14" text-anchor="middle" fill="currentColor">Input</text><text x="' + hx + '" y="14" text-anchor="middle" fill="currentColor">Hidden layer (dropout here)</text><text x="' + ox + '" y="14" text-anchor="middle" fill="currentColor">Output</text>';
+        b += '<text x="230" y="284" text-anchor="middle" fill="currentColor" font-size="10">' + (tr ? 'number in a kept neuron = h &divide; (1 &minus; p) (scaled up); &#10005; = dropped' : 'inference: every neuron active, values = h (no scaling)') + '</text>';
+        SV.innerHTML = b;
+        var r1 = '<tr><th>Neuron</th>', r2 = '<tr><th>Activation h</th>', r3 = '<tr><th>Mask m</th>', r4 = '<tr><th>h &#8857; m</th>', r5 = '<tr><th>' + (tr ? 'Scaled: h &#8857; m &divide; (1 &minus; p)' : 'Value passed on') + '</th>';
+        var s4 = 0;
+        for (i = 0; i < N; i++) {
+            r1 += '<th>' + (i + 1) + '</th>'; r2 += '<td>' + f1(H[i]) + '</td>';
+            r3 += '<td style="background:' + (mask[i] ? '#d8ecff' : '#fde0de') + '">' + mask[i] + '</td>';
+            r4 += '<td>' + f1(H[i] * mask[i]) + '</td>'; r5 += '<td>' + f1(H[i] * mask[i] * sc) + '</td>'; s4 += H[i] * mask[i];
+        }
+        r1 += '<th>Sum</th></tr>'; r2 += '<td><b>' + f1(SUMH) + '</b></td></tr>'; r3 += '<td>&nbsp;</td></tr>'; r4 += '<td><b>' + f1(s4) + '</b></td></tr>'; r5 += '<td><b>' + f1(s4 * sc) + '</b></td></tr>';
+        TB.innerHTML = '<div style="overflow-x:auto"><table class="dp-tbl">' + r1 + r2 + r3 + r4 + r5 + '</table></div>';
+        if (tr) ST.innerHTML = 'Training iterations so far: <b>' + cnt + '</b> &nbsp;|&nbsp; this pass: scaled sum = <b>' + f1(last) + '</b> &nbsp;|&nbsp; average of the scaled sum over all passes: <b>' + (cnt ? (acc / cnt).toFixed(2) : '&ndash;') + '</b> &nbsp;|&nbsp; inference (no dropout) sum: <b>' + SUMH.toFixed(2) + '</b>';
+        else ST.innerHTML = 'Inference: all neurons are active, with no mask and no scaling. The signal sum is <b>' + SUMH.toFixed(2) + '</b>, the same value that the training-time average converges to.';
+    }
+    P.oninput = function () { PV.textContent = (+P.value).toFixed(1); reset(); };
+    document.getElementsByName('dpMode').forEach(function (r) { r.onchange = reset; });
+    document.getElementById('dpNew').onclick = resample;
+    AUTO.onclick = function () {
+        if (timer) { clearInterval(timer); timer = null; AUTO.textContent = 'Auto-play'; }
+        else { timer = setInterval(resample, 450); AUTO.textContent = 'Stop'; }
+    };
+    resample();
+})();
+</script>
+
 </div>
 </body>
 </html>

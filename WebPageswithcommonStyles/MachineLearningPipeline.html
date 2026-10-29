@@ -3,19 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sampling and Statistical Inference</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="description" content="A tutorial covering the fundamentals of Machine Learning and Deep Learning pipelines, from data ingestion through deployment.">
+    <link rel="stylesheet" href="styles_common.css">
+    
     <!-- Hide body initially to prevent flickering -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles_common.css">
-<style>
-body {
-  visibility: hidden;
-}
-</style>
-    <!-- Load global MathJax configuration first -->
+    <!-- <style>body { visibility: hidden; }</style> -->
+    
+    <!-- Load global MathJax configuration first (handles both settings and un-hiding the body) -->
+    
+    <title>Machine Learning Tutorial</title>
+
+    <!-- Load MathJax library last -->
+
+    <style>
+        .section-divider { margin: 32px 0; border: none; border-top: 1px solid #ddd; }
+        .mt-20 { margin-top: 20px; }
+        .pipeline-image { max-width: 100%; height: auto; }
+        .flowchart-wrap { max-width: 900px; margin: 16px auto; }
+        .flowchart-wrap svg { width: 100%; height: auto; display: block; }
+        .flow-box { fill: #eef4fb; stroke: #2c6fbb; stroke-width: 1.5; }
+        .flow-text { font-family: inherit; font-size: 14px; fill: #1a1a1a; text-anchor: middle; }
+        .flow-num { font-family: inherit; font-size: 12px; fill: #2c6fbb; font-weight: bold; text-anchor: middle; }
+        .flow-arrow { stroke: #555; stroke-width: 2; marker-end: url(#arrowhead); fill: none; }
+    </style>
 
     <script>
         window.MathJax = {
@@ -988,45 +998,45 @@ body {
     <!-- Footer Notes -->
     <text x="500" y="580" text-anchor="middle" fill="#94a3b8" font-size="10" font-style="italic">Macro-level CI/CD architecture showing automated gate filtering, failure quarantining, and continuous evaluation loops.</text>
 </svg>
-<h4 class="mt-20">Evaluating LLMs: Macro vs. Micro Views</h4>
-<p class="detail-description">
-    Evaluating a deployed LLM system requires checking two different things, at two different scales — and they're complementary, not redundant: each catches failures the other structurally can't.
-</p>
+<h4 style="margin-top: 48px;">Evaluating LLMs: Macro vs. Micro Views</h4>
+    <p>
+      Evaluating a deployed LLM system requires checking two different things, at two different scales—and they're complementary, not redundant: each catches failures the other structurally can't.
+    </p>
 
-<h5 style="margin-top:15px; color:#2c6fbb;">The Macro Level: "How good is this model version, overall?"</h5>
-<p class="detail-description">
-    This runs offline against fixed, pre-existing benchmark datasets — not live production traffic — split by task type: BLEU/chrF for translation, ROUGE/BERTScore for summarization, MMLU/HumanEval for reasoning. These feed into human and LLM-judge preference testing (Chatbot Arena, MT-Bench) as a second gate. It's worth being precise here: these tools <em>measure</em> quality, they don't <em>create</em> it — the actual fix for a failing model (retraining, fine-tuning, RLHF) happens separately, informed by what the evaluation reveals.
-</p>
-<p class="detail-description">
-    Because macro scores are averaged across thousands of examples, a model can score well overall while still occasionally failing on individual requests — which is exactly what this level can't catch.
-</p>
+    <h4 style="color: var(--class-a); margin-top: 28px;">The Macro Level: "How good is this model version, overall?"</h4>
+    <p>
+      This runs offline against fixed, pre-existing benchmark datasets—not live production traffic—split by task type: <a href="LLMPerformanceEvaluation.html">BLEU/chrF for translation, ROUGE/BERTScore for summarization, MMLU/HumanEval for reasoning</a>. These feed into human and LLM-judge preference testing (Chatbot Arena, MT-Bench) as a second gate. These tools <em>measure</em> quality rather than <em>create</em> it; the actual fix for a failing model (retraining, fine-tuning, RLHF) happens separately, informed by evaluation findings.
+    </p>
+    <p>
+      Because macro scores are averaged across thousands of examples, a model can score well overall while still occasionally failing on individual requests—which is precisely what this level cannot catch.
+    </p>
 
-<h5 style="margin-top:15px; color:#c98a2c;">The Micro Level: "Is this one response, right now, safe to ship?"</h5>
-<p class="detail-description">
-    This runs inside a CI/CD pipeline, triggered whenever a prompt or model change is proposed, and checks a single prompt/response pair through three sequential gates:
-</p>
-<ol style="padding-left: 20px; color: #333;">
-    <li style="margin-bottom: 10px;">
-        <strong>Schema Check</strong> — is the output structured correctly (valid JSON, required keys present)?
-    </li>
-    <li style="margin-bottom: 10px;">
-        <strong>Semantic Similarity</strong> — does the meaning match a reference answer? This uses <em>embeddings</em> rather than keyword overlap, because word-matching misses paraphrases and misreads meaning. For example:
-        <ul style="margin-top:8px; padding-left: 20px;">
-            <li>Reference: <span class="code-style">"The mitochondria produces energy for the cell."</span></li>
-            <li>Model output: <span class="code-style">"Cellular energy is generated by the mitochondria."</span></li>
+    <h4 style="color: var(--class-b); margin-top: 28px;">The Micro Level: "Is this one response, right now, safe to ship?"</h4>
+    <p>
+      This runs inside a CI/CD pipeline, triggered whenever a prompt or model change is proposed, and checks a single prompt/response pair through three sequential gates:
+    </p>
+    <ol style="padding-left: 22px; margin-top: 10px;">
+      <li style="margin-bottom: 10px;">
+        <strong>Schema Check:</strong> Is the output structured correctly (valid JSON, required keys present)?
+      </li>
+      <li style="margin-bottom: 10px;">
+        <strong>Semantic Similarity:</strong> Does the meaning match a reference answer? This uses <code>embeddings</code> rather than keyword overlap, because word-matching misses paraphrases. For example:
+        <ul style="margin-top: 6px; padding-left: 20px;">
+          <li>Reference: <code>"The mitochondria produces energy for the cell."</code></li>
+          <li>Model output: <code>"Cellular energy is generated by the mitochondria."</code></li>
         </ul>
-        <p style="font-size:0.92rem; color:#475569; margin-top:8px;">
-            These share barely any words, so keyword overlap would score them as different — but they mean the same thing, so an embedding (which represents meaning as a vector, not a word list) correctly scores them as a near-match.
+        <p style="color: var(--ink-soft); font-size: 14px; margin-top: 6px;">
+          These share barely any words, so keyword overlap would score them as different. However, vector embeddings represent meaning mathematically, correctly scoring them as a near-match.
         </p>
-    </li>
-    <li style="margin-bottom: 10px;">
-        <strong>LLM-as-Judge</strong> — does it pass a quality/safety rubric? A rubric is a written scoring guide given to a judge model, e.g.:
-        <p style="font-size:0.92rem; color:#475569; font-style:italic; margin-top:8px; padding:10px; background:#f8fafc; border-radius:4px;">
-            "Rate this response 1–5 on: accuracy, relevance, absence of harmful content, and tone. Score substance only — do not reward length."
-        </p>
-        The judge returns a number, and "passing" means that number clears a threshold set in code (e.g., <span class="code-style">score &ge; 3</span> out of 5).
-    </li>
-</ol>
+      </li>
+      <li style="margin-bottom: 10px;">
+        <strong>LLM-as-Judge:</strong> Does it pass a quality/safety rubric? A rubric is a written scoring guide given to a judge model, e.g.:
+        <blockquote style="margin: 8px 0; padding: 10px 14px; background: var(--card); border-left: 3px solid var(--rule); font-size: 14px; font-style: italic;">
+          "Rate this response 1–5 on: accuracy, relevance, absence of harmful content, and tone. Score substance only—do not reward length."
+        </blockquote>
+        The judge returns a number, and "passing" means that score clears a threshold set in code (e.g., <code>score &ge; 3</code> out of 5).
+      </li>
+    </ol>
 
 <p class="detail-description">
     A failure at any micro gate quarantines that response and logs it, rather than letting it reach production, and can trigger the same feedback loop as a macro failure — fine-tuning, RLHF, or prompt adjustments.
@@ -1039,7 +1049,113 @@ body {
     <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
         <em>Micro-level view of LLMOps Evaluation (The SVG): Explains the tactical code execution. It shows the step-by-step gatekeeper script running inside a specific CI runner whenever a developer makes a small change to a prompt config file.</em>
     </p>
-	
+	<section id="ml-pipeline-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Machine learning Pipeline Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "In what order do the six stages of the ML pipeline run?",
+              a: "Data ingestion &rarr; preprocessing &rarr; feature engineering &rarr; model training &rarr; evaluation &rarr; deployment",
+              w: ["Data ingestion &rarr; feature engineering &rarr; preprocessing &rarr; model training &rarr; deployment &rarr; evaluation", "Preprocessing &rarr; data ingestion &rarr; model training &rarr; feature engineering &rarr; evaluation &rarr; deployment", "Data ingestion &rarr; preprocessing &rarr; model training &rarr; feature engineering &rarr; deployment &rarr; evaluation"] },
+            { q: "Which ingestion mode suits continuous, real-time processing (for example with Kafka), and which suits scheduled nightly jobs?",
+              a: "Streaming ingestion for continuous real-time processing; batch ingestion for large volumes at scheduled intervals",
+              w: ["Batch ingestion for continuous real-time processing; streaming ingestion for scheduled nightly jobs", "They are identical; only the file format differs", "Streaming is only for unstructured data and batch is only for structured data"] },
+            { q: "What is a feature store used for?",
+              a: "Storing curated feature vectors so that batch training and real-time inference use the same features consistently",
+              w: ["Storing raw, uncleaned, unstructured data in object storage such as S3", "Storing cleaned, structured data optimised for analytical queries", "Storing trained model versions so they can be rolled back"] },
+            { q: "Where does most LLM pre-training data come from, and what do LLM data pipelines emphasise as a result?",
+              a: "Large-scale web crawls such as Common Crawl, so pipelines emphasise filtering, deduplication and licensing or copyright review",
+              w: ["Small hand-labelled task-specific datasets, so schema validation is the main concern", "Model-generated synthetic text, so the main concern is labelling accuracy", "Wikipedia alone, because it is the largest source on the web"] },
+            { q: "Which task belongs to data cleaning rather than data transformation?",
+              a: "Imputing missing values with the mean or median",
+              w: ["Min-Max normalisation of a numeric column", "One-hot encoding of a categorical column", "Binning continuous ages into groups"] },
+            { q: "Under which pre-processing category does PCA fall?",
+              a: "Data reduction &ndash; dimensionality reduction by feature extraction",
+              w: ["Data cleaning &ndash; removing inconsistent records", "Data transformation &ndash; encoding categorical values", "Handling imbalanced data &ndash; resampling the classes"] },
+            { q: "A text-classification dataset is heavily skewed toward one class. Which approach does the page list for handling this?",
+              a: "Randomly oversample the minority class (or undersample the majority class, or gather more labelled data for the under-represented classes)",
+              w: ["Randomly oversample the majority class so it becomes more dominant", "Delete the minority class, since it carries little signal", "Standardise every feature to z-scores, which balances the classes"] },
+            { q: "Before CNNs, which hand-crafted features were typical for images and for text?",
+              a: "SIFT and HOG for images; Bag-of-Words, TF-IDF and n-grams for text",
+              w: ["MFCCs for images; SIFT for text", "Rolling means for images; HOG for text", "Fourier transforms for images; MFCCs for text"] },
+            { q: "Where does manual feature engineering still matter most despite deep learning?",
+              a: "Structured (tabular) data, for example building a feature such as &ldquo;days since last login&rdquo;",
+              w: ["Raw image classification with CNNs", "Large-scale LLM pre-training on text", "Video understanding with deep networks"] },
+            { q: "Why is time of day encoded as sine and cosine coordinates (cyclical encoding)?",
+              a: "So that the model understands 11 PM and midnight are close together",
+              w: ["To turn each hour into a one-hot column", "To remove seasonality from the data", "To scale the hour value into the range [0, 1]"] },
+            { q: "Which paradigm generates labels automatically from the data itself (for example, predicting a masked word) and underlies most LLM pre-training?",
+              a: "Self-supervised learning",
+              w: ["Supervised learning with human-labelled input&ndash;output pairs", "Semi-supervised learning with a small labelled set", "Unsupervised clustering such as K-Means"] },
+            { q: "In model training, which component computes a numerical score for the gap between the prediction and the ground truth?",
+              a: "The cost (loss) function",
+              w: ["The optimiser", "The model (hypothesis space)", "The validation set"] },
+            { q: "Training error is very low but test error is high. What is the diagnosis, and what is a suitable fix?",
+              a: "Overfitting (high variance); add regularisation, gather more data, use early stopping or simplify the model",
+              w: ["Underfitting (high bias); use a more expressive model and train for longer", "Underfitting; reduce the regularisation strength", "Good generalisation; the model can be deployed as it is"] },
+            { q: "How do L1 (Lasso) and L2 (Ridge) regularisation differ?",
+              a: "L1 can shrink some weights all the way to zero (automatic feature selection), while L2 shrinks them smoothly without necessarily eliminating any",
+              w: ["L2 can shrink some weights to exactly zero, while L1 shrinks them smoothly", "Both set weights to zero, but L1 acts on the activations", "L1 penalises the squared weights, while L2 penalises the absolute weights"] },
+            { q: "What happens when the regularisation strength is set too high?",
+              a: "The penalty starts suppressing genuine patterns, pushing the model back toward underfitting",
+              w: ["Overfitting becomes worse", "The training error falls to zero", "The model starts memorising the noise"] },
+            { q: "What is the difference between parameters and hyperparameters?",
+              a: "Parameters (weights, biases, split points) are learned from data via the cost function and optimisation; hyperparameters (learning rate, tree depth) are set before training and are not learned by gradient descent",
+              w: ["Hyperparameters are the weights learned by gradient descent, while parameters are chosen before training", "Both are learned by gradient descent, but hyperparameters use a smaller step size", "Parameters describe the architecture, while hyperparameters are the training data"] },
+            { q: "Which dataset should be used to compare hyperparameter combinations, and why?",
+              a: "The validation set, because using the test set would leak test information into the model choices",
+              w: ["The test set, because it has never been seen by the model", "The training set, because it is the largest", "Any of the sets, because they are interchangeable"] },
+            { q: "Why do teams often tune LLM hyperparameters on smaller proxy models and use scaling laws?",
+              a: "A full grid or random search on a full-size model is too expensive (one run can cost millions), so good choices are extrapolated from smaller runs",
+              w: ["LLMs have no hyperparameters that need tuning", "Smaller models always share exactly the same optimum as large ones", "Scaling laws replace the need for training data"] },
+            { q: "Which statement correctly describes bagging and boosting?",
+              a: "Bagging trains models in parallel on bootstrap samples and reduces variance; boosting trains sequentially, each model correcting its predecessors, and reduces bias",
+              w: ["Bagging trains models sequentially and reduces bias; boosting trains in parallel and reduces variance", "Both techniques reduce only variance", "Bagging trains a meta-learner on top of different model types, while boosting uses a router"] },
+            { q: "How does a Mixture-of-Experts (MoE) differ from a classical ensemble such as bagging?",
+              a: "The router and the experts are trained together with backpropagation, and only a few top-scoring experts are used per token, so it is a sparse modular architecture within one model",
+              w: ["The experts are trained separately and combined afterwards by voting", "Every expert processes every token, and the outputs are averaged equally", "The router is a fixed rule-based function that is never trained"] },
+            { q: "Why does MoE training add a load-balancing (auxiliary) loss?",
+              a: "To stop the &ldquo;rich-get-richer&rdquo; effect, where favoured experts get more training and the router favours them even more; it penalises uneven token distribution",
+              w: ["To make the router choose experts completely at random", "To reduce the number of experts in the model", "To make sure the skipped experts receive gradients"] },
+            { q: "In evaluation, what does a large gap between training error and test error signal, and how should the test set be used?",
+              a: "Overfitting; the test set serves as a one-time final check, not as a guide for further tuning",
+              w: ["Underfitting; the test set can be reused repeatedly to tune the model", "Good generalisation; the test set should be added to the training data", "Data drift; the test set should be refreshed every epoch"] },
+            { q: "What is a confusion matrix used for in error analysis?",
+              a: "To see whether the model consistently fails on specific classes (for example, mistaking dogs for cats) so improvements can be targeted",
+              w: ["To measure inference latency", "To choose the learning rate", "To compute the RMSE for regression"] },
+            { q: "A fraud check must return a prediction within milliseconds of a live transaction. Which serving pattern fits?",
+              a: "Online (real-time) inference, with the model exposed behind an API",
+              w: ["Batch inference, run nightly on stored transactions", "Edge deployment, on the customer&rsquo;s phone only", "Retraining the model every month"] },
+            { q: "Why is a model packaged in a container (for example, Docker) before serving?",
+              a: "It bundles the model with its dependencies (library versions, preprocessing, configuration) so that it behaves identically wherever it runs and is easy to scale",
+              w: ["To speed up training on GPUs", "To compress the weights of the model", "To label incoming data automatically"] },
+            { q: "What is the difference between a canary release and A/B testing?",
+              a: "A canary release routes a small fraction of traffic to the new model first to validate it, while A/B testing compares two model versions on live traffic",
+              w: ["A canary release compares two versions on live traffic, while A/B testing routes a small fraction to the new model first", "A canary release is run offline on the test set, while A/B testing runs in production", "They are two names for the same practice"] },
+            { q: "What is the difference between data drift and concept drift?",
+              a: "Data drift means the distribution of incoming inputs diverges from the training data; concept drift means the relationship between inputs and the correct output has changed, even if the inputs look the same",
+              w: ["Data drift means the input&ndash;output relationship changes, while concept drift means the input distribution changes", "Both mean that the model&rsquo;s weights have changed since training", "Data drift affects only batch inference, and concept drift affects only online inference"] },
+            { q: "How do the macro and micro levels of LLM evaluation differ?",
+              a: "Macro runs offline on fixed benchmarks (e.g. MMLU, HumanEval, BLEU/ROUGE) to judge overall model quality; micro runs in a CI/CD pipeline and checks each prompt&ndash;response pair through automated gates",
+              w: ["Macro checks each single response in CI/CD, while micro runs offline on benchmarks", "Macro runs on live production traffic, while micro runs offline", "They are redundant, since each catches exactly the same failures"] },
+            { q: "Why does the micro-level semantic-similarity check use embeddings rather than keyword overlap?",
+              a: "Paraphrases share few words but mean the same thing, and embeddings represent meaning as a vector, so they score such answers as a near-match",
+              w: ["Embeddings are faster than counting shared words", "Keyword overlap cannot be computed on JSON output", "Embeddings validate that the output follows the required schema"] },
+            { q: "In what order does a response pass the three micro-level gates, and what happens when a gate fails?",
+              a: "Schema check &rarr; semantic similarity &rarr; LLM-as-judge; a failure quarantines and logs the response so it never reaches production",
+              w: ["LLM-as-judge &rarr; schema check &rarr; semantic similarity; a failure retrains the model immediately", "Semantic similarity &rarr; schema check &rarr; LLM-as-judge; a failure stops all production traffic", "Schema check &rarr; LLM-as-judge &rarr; semantic similarity; a failure is silently ignored"] }
+        ]
+            });
+            </script>
+        </section>
+
 	
 </body>
 </html>

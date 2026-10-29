@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Transformer Algorithm & Architecture From First Principles</title>
     
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles_common.css">
 
     <script>
         window.MathJax = {
@@ -96,9 +96,9 @@
                 </p>
             </div>
 <h2>Transformer Architecture </h2>
-<p>The Transformer model is solely based on attention mechanisms without any convolutional or recurrent layer (Vaswani et al., 2017). Though originally proposed for sequence-to-sequence learning on text data, Transformers have been pervasive in a wide range of modern deep learning applications, such as in areas to do with language, vision, speech, and reinforcement learning. The Transformer is a deep neural network architecture that can process variable-length text and perform a wide range of NLP tasks using a mechanism called Attention, discussed below.</p>
+<p>The Transformer model is solely based on attention mechanisms without any convolutional or recurrent layer (<a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener noreferrer">Vaswani et al., 2017</a>). Though originally proposed for sequence-to-sequence learning on text data, Transformers have been pervasive in a wide range of modern deep learning applications, such as in areas to do with language, vision, speech, and reinforcement learning. The <strong>Transformer is a deep neural network architecture</strong> that can process variable-length text and perform a wide range of NLP tasks using a mechanism called <strong>Attention</strong>, discussed below.</p>
             <h3>Key Structural Components of the Transformer Algorithm Pipeline</h3>
-            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) Transformer</strong> &mdash; the GPT/Claude-style stack that generates text one next token at a time. There is no separate encoder and no cross-attention in this pipeline.</div>
+            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) Transformer</strong> &mdash; the GPT/Claude-style stack that generates text one next token at a time. There is no separate encoder and no cross-attention in this pipeline. Refer the Encoder-Decoder Architecture page for different variants of Encoder/Decoder and various Attention mechanisims</div>
             <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div style="display: flex; flex-direction: column; align-items: center; font-family: monospace;">
                     <div style="background: #e2e8f0; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; font-size: 0.92rem;">Input Sentence</div>
@@ -136,7 +136,7 @@
             <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; margin-top: 20px;">
                 <h3 style="margin-top: 0; color: #0369a1;">1. Tokenization (Slicing the Text)</h3>
                 <p>
-                    Neural networks cannot process raw strings directly; text must be sliced into smaller foundational units called <strong>tokens</strong>. Modern architectures (like Byte-Pair Encoding or WordPiece sub-word tokenizers) break rare words down into sub-word components to handle out-of-vocabulary terms efficiently, while keeping common whole words as single tokens.
+                    Neural networks cannot process raw strings directly; text must be sliced into smaller foundational units called <strong>tokens</strong>. Modern architectures (like Byte-Pair Encoding or WordPiece sub-word tokenizers) break rare words down into sub-word components to handle out-of-vocabulary terms efficiently, while keeping common whole words as single tokens.High-frequency words are typically kept as single tokens in the model's vocabulary (for example, "apple" or "running"), while inflected or compound words are broken down into known sub-word components or roots using continuation markers like ## in WordPiece (for example, "unhappiness" becomes ["un", "##happi", "##ness"]
                 </p>
 
                 <p><strong>How the vocabulary itself is learned — Byte-Pair Encoding (BPE):</strong> the sub-word vocabulary isn't designed by hand; it's <em>learned</em> from a training corpus by repeatedly merging the most frequent adjacent pair of symbols.</p>

@@ -740,6 +740,112 @@
         </tr>
     </tbody>
 </table>
+<section id="cnn-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Convolutional Neural Networks (CNN) Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "Why does flattening an image into a 1D vector hurt an MLP?",
+              a: "It destroys spatial topology: neighbouring pixels end up far apart in the vector, so the MLP must learn pixel relationships globally",
+              w: ["It increases the resolution of the image", "It removes the colour channels from the image", "It makes the MLP translation-invariant"] },
+            { q: "Why can an MLP fail to recognise a feature in the bottom-right that it learned in the top-left?",
+              a: "Its weights are tied to specific, static pixel coordinates, whereas a CNN&rsquo;s shared kernels give it translation invariance",
+              w: ["MLPs always have too few layers", "MLPs use ReLU, which ignores position", "MLPs apply pooling, which discards position"] },
+            { q: "Why are MLPs unable to process images of different sizes without resizing?",
+              a: "They require a hard-coded number of input neurons, which forces destructive resizing",
+              w: ["Their weights cannot be updated for new image sizes", "They need zero-padding on every input", "Softmax needs a fixed image size"] },
+            { q: "How do the filter weights of a CNN differ from classical hand-designed features such as SIFT or HOG?",
+              a: "They are trainable parameters that start as small random numbers and are updated by the same backpropagation/Adam loop as the classifier, so features and classifier are learned jointly",
+              w: ["They are fixed Sobel kernels chosen by researchers", "They are learned first and then frozen while the classifier trains separately", "They are set by He initialisation and never change"] },
+            { q: "What does the output Z<sub>i,j</sub> of a convolution measure?",
+              a: "How similar the local patch around (i, j) is to the filter&rsquo;s pattern &ndash; a form of template matching",
+              w: ["The average brightness of the whole image", "The gradient of the loss at pixel (i, j)", "The probability of the predicted class"] },
+            { q: "Why does a convolutional layer apply a bank of many filters instead of just one?",
+              a: "Each filter detects only one specific pattern, so a bank of filters builds a diverse vocabulary of features for the next layer",
+              w: ["To make each feature map larger", "To reduce the number of parameters", "So that the RGB channels can be processed separately"] },
+            { q: "A 32 &times; 32 &times; 3 image is convolved with two 3 &times; 3 &times; 3 filters (stride 1, no padding). What is the output size?",
+              a: "30 &times; 30 &times; 2 &ndash; one 30 &times; 30 feature map per filter, stacked; the 2 is the number of filters",
+              w: ["30 &times; 30 &times; 3, with the depth equal to the input channels", "32 &times; 32 &times; 2, since the size is preserved", "30 &times; 30 &times; 6, with three maps per filter"] },
+            { q: "How many parameters does a layer with 64 filters of size 3 &times; 3 &times; 3 have (weights plus biases)?",
+              a: "(3 &times; 3 &times; 3 + 1) &times; 64 = 1,792",
+              w: ["3 &times; 3 &times; 3 &times; 64 = 1,728, forgetting the biases", "(3 &times; 3 + 1) &times; 64 = 640, forgetting the input channels", "1,792 &times; 900, counting the weights again at every output position"] },
+            { q: "Convolving a 10 &times; 10 image with a 3 &times; 3 filter in valid mode (no padding) gives what output size?",
+              a: "8 &times; 8, since the output is (m &minus; h + 1) &times; (n &minus; w + 1)",
+              w: ["10 &times; 10, the same as the input", "7 &times; 7", "12 &times; 12"] },
+            { q: "What is the purpose of zero-padding in &ldquo;same&rdquo; convolution?",
+              a: "It lets the filter be centred on edge and corner pixels, so the output has the same size as the input",
+              w: ["It adds real information about the edges of the image", "It makes the output smaller than the input", "It makes the filter larger"] },
+            { q: "For a 5 &times; 7 image, a 3 &times; 3 filter, no padding and stride S = 2, what is the output size?",
+              a: "2 &times; 3, from &lfloor;(5 &minus; 3)/2 + 1&rfloor; and &lfloor;(7 &minus; 3)/2 + 1&rfloor;",
+              w: ["3 &times; 5, which is the stride-1 result", "2 &times; 4", "1 &times; 2"] },
+            { q: "What does a max-pooling layer do?",
+              a: "It downsamples by keeping the strongest activation in each window, reducing dimensions and making detection robust to the exact pixel location or noise",
+              w: ["It learns new filters for the next layer", "It enlarges the feature maps", "It adds a border of zeros around each feature map"] },
+            { q: "What does the hierarchy of features look like from the first layers to the last?",
+              a: "Early layers detect edges and primitives, middle layers combine them into parts (such as ears or eyes), and the final layers combine parts into entity detectors",
+              w: ["Early layers detect whole objects, and later layers detect edges", "Every layer detects whole objects directly from the pixels", "Early layers detect parts, and later layers detect edges"] },
+            { q: "After the conv/pool stack, how does the CNN produce a Face vs. No-Face probability?",
+              a: "The 3D feature maps are flattened into a 1D vector, passed through dense layers, and a softmax over 2 output neurons gives the probabilities",
+              w: ["The RGB values are averaged and thresholded", "Pooling outputs the probabilities directly", "A softmax is applied after every convolutional layer"] },
+            { q: "What do &ldquo;index-bound&rdquo; and &ldquo;pattern-bound&rdquo; describe in the CNN vs. MLP comparison?",
+              a: "The MLP is index-bound (weights tied to flattened pixel positions); the CNN is pattern-bound (shared filters detect a pattern wherever it appears)",
+              w: ["The CNN is index-bound, and the MLP is pattern-bound", "Both networks are index-bound", "They describe the number of output classes"] },
+            { q: "Why does the page use He initialisation (&sigma;&sup2; = 2/n<sub>in</sub>) instead of Xavier for this CNN?",
+              a: "ReLU zeroes out roughly half of the pre-activations, and He compensates so the activation variance stays stable through many ReLU layers",
+              w: ["Xavier uses only n<sub>in</sub>, while He uses n<sub>in</sub> + n<sub>out</sub>", "He sets all weights to zero, which suits ReLU", "He is needed because the output layer uses softmax"] },
+            { q: "With softmax and categorical cross-entropy, what does &part;L/&part;Z<sup>[L]</sup> simplify to?",
+              a: "dZ<sup>[L]</sup> = P<sub>predicted</sub> &minus; y<sub>expected</sub>",
+              w: ["dZ<sup>[L]</sup> = y &minus; P", "dZ<sup>[L]</sup> = P(1 &minus; P)", "dZ<sup>[L]</sup> = &minus;log P"] },
+            { q: "Which operation gives the weight gradient dK of a convolutional layer?",
+              a: "A valid cross-correlation of A<sup>[l&minus;1]</sup> with dZ<sup>[l]</sup> (no kernel flip, so correlate2d rather than convolve2d)",
+              w: ["convolve2d, which flips dZ before sliding it", "A full convolution with the 180&deg;-rotated kernel", "The elementwise product of dZ and the ReLU derivative"] },
+            { q: "Why is the kernel rotated by 180&deg; and full padding used when computing dA<sub>prev</sub>?",
+              a: "The backward pass reverses the forward operation, and full padding makes the error map have the same dimensions as the original input A<sup>[l&minus;1]</sup>",
+              w: ["Rotation makes the kernel larger, and valid padding keeps the size", "No rotation is needed; it is only a convention", "Rotation is part of Adam&rsquo;s bias correction"] },
+            { q: "Why does ConvLayer.forward() store self.last_input?",
+              a: "The weight gradient depends directly on the input values seen during the forward pass",
+              w: ["To compute the softmax", "So that Adam can compute its bias correction", "To restore the original image size"] },
+            { q: "A 1 &times; 1 convolution maps 256 channels to 64. What does it do, and how many parameters does it have?",
+              a: "It recombines channels pixel by pixel with no spatial mixing; (256 + 1) &times; 64 = 16,448 parameters",
+              w: ["It mixes a small neighbourhood of pixels spatially; (256 + 1) &times; 64 = 16,448 parameters", "It detects edges across neighbouring pixels; 256 &times; 64 = 16,384 parameters", "It halves the spatial size; 64 &times; 4 = 256 parameters"] },
+            { q: "What problem does ResNet address in plain deep CNNs?",
+              a: "Past a certain depth, adding layers makes even the training accuracy worse &ndash; an optimisation failure, not overfitting",
+              w: ["Deeper plain CNNs overfit, so validation accuracy drops while training accuracy improves", "Deeper plain CNNs run out of memory before training starts", "Deeper plain CNNs cannot be initialised with He initialisation"] },
+            { q: "For a residual block H(x) = F(x) + x, why does the identity shortcut fix training?",
+              a: "&part;L/&part;x = &part;L/&part;H &middot; (&part;F/&part;x + 1), and the &ldquo;+1&rdquo; gives a direct gradient path however small &part;F/&part;x gets",
+              w: ["The &ldquo;+1&rdquo; comes from the bias term and guarantees F(x) is large", "It adds a regularisation penalty to the loss", "It halves the number of layers the gradient must cross"] },
+            { q: "What is the design of a bottleneck residual block?",
+              a: "1 &times; 1 reduces the channel depth, 3 &times; 3 does the spatial work on fewer channels, and a second 1 &times; 1 expands it back, using far fewer parameters",
+              w: ["3 &times; 3, then 1 &times; 1, then 3 &times; 3, to widen the channels", "Two 3 &times; 3 convolutions with no shortcut", "Three 1 &times; 1 convolutions, with no spatial convolution at all"] },
+            { q: "How is ResNet typically used in medical imaging when labelled scans are scarce?",
+              a: "A ResNet pretrained on ImageNet is fine-tuned on a few thousand labelled scans, which the bottleneck design makes tractable because fewer weights need re-learning",
+              w: ["It is trained from scratch on millions of scans each time", "It is pretrained on medical data and applied unchanged to natural images", "It is used only as the decoder of a segmentation network"] },
+            { q: "In a transfer-learning training step, which layers take part in the forward and backward passes?",
+              a: "All layers run in the forward pass, including frozen ones; in the backward pass, gradients are computed and weights updated only for layers with requires_grad = True",
+              w: ["Frozen layers are skipped in the forward pass as well", "Gradients are computed for all layers, but frozen weights are reset afterwards", "Frozen layers are removed from the network before training"] },
+            { q: "What does U-Net add to the plain pool-flatten-classify design?",
+              a: "A mirror-image decoder that upsamples with transposed convolution back to full resolution, with skip connections restoring spatial detail, giving a per-pixel output",
+              w: ["Residual shortcuts that let the network train at 150 layers", "Parallel filter sizes in each block for multi-scale features", "A recurrent hidden state that carries information across time steps"] },
+            { q: "How do ResNet&rsquo;s skip connections differ from U-Net&rsquo;s?",
+              a: "ResNet adds two same-shaped tensors elementwise, while U-Net concatenates the encoder map onto the upsampled decoder map along the channel axis",
+              w: ["ResNet concatenates along the channel axis, while U-Net adds elementwise", "Both add elementwise; U-Net just uses larger tensors", "Both concatenate; ResNet uses a 1 &times; 1 convolution first"] },
+            { q: "Which architecture&rsquo;s key structural change is parallel filter sizes in each block, with 1 &times; 1 convolutions for channel reduction?",
+              a: "Inception / GoogLeNet, which captures features at multiple scales cheaply",
+              w: ["VGG, which uses uniform stacks of 3 &times; 3 convolutions", "ResNet, which uses additive residual shortcuts", "U-Net, which uses an encoder-decoder with concatenated skips"] },
+            { q: "What is VGG&rsquo;s key structural change, based on the idea that &ldquo;depth matters&rdquo;?",
+              a: "Uniform stacks of 3 &times; 3 convolutions instead of larger filters",
+              w: ["Parallel filter sizes inside each block", "Residual (additive) skip connections around each block", "An encoder-decoder with concatenated skip connections"] }
+        ]
+            });
+            </script>
+        </section>
 
 </body>
 </html>

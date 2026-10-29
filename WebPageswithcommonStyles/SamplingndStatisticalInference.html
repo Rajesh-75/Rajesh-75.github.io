@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sampling and Statistical Inference</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles_common.css">
     <link rel="stylesheet" href="style.css">
     <!-- Hide body initially to prevent flickering -->
     <style>body { visibility: hidden; }</style>
@@ -32,21 +36,26 @@
     <script type="text/javascript" async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
+    <script>
+        /* Fallback: if MathJax cannot load, do not leave the page blank */
+        setTimeout(function () { document.body.style.visibility = 'visible'; }, 4000);
+    </script>
 </head>
 <body>
 
 <div class="content-wrapper">
-    <h1>Sampling & Statistical Inference</h1>
+    <h1>Sampling &amp; Statistical Inference</h1>
+    <div class="stat-box" style="background:#eef6ff; border-left:5px solid #0056b3; padding:10px 14px; margin:12px 0;"><strong>Related pages:</strong> <a href="HypothesisTesting.html">Sampling Distributions</a> (where the Z, t, &chi;&sup2; and F distributions used below are derived) &middot; <a href="EstimationTheory.html">Estimation Theory</a> (the other branch of inference) </div>
     
     <p class="detail-description">
-        Probability distributions like the <strong>Multivariate Normal Distribution</strong> allow us to describe the "shape" of data when we already know the parameters ($\mu, \Sigma$). However, in the real world, we are rarely given these true parameters; instead, we use a small <strong>Sample</strong> to infer the shape of the entire <strong>Population</strong> with mathematical certainty.
+        Probability distributions like the <strong>Multivariate Normal Distribution</strong> allow us to describe the "shape" of data when we already know the parameters ($\mu, \Sigma$). However, in the real world, we are rarely given these true parameters; instead, we use a small <strong>Sample</strong> to infer the shape of the entire <strong>Population</strong>, with the uncertainty of that inference quantified.
     </p>
 
     <p class="detail-description">
         In both modern AI development and traditional statistical thinking, the relationship between a sample and Statistical Inference is the fundamental bridge between observed data and the truth about the population. Whether you are a researcher conducting a Sample Survey or an ML engineer training a Large Language Model, you are working with a finite slice of a much larger Population.
     </p>
 
-    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed; font-family: 'Courier New', monospace;">
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed; ">
         <strong>Statistical Inference:</strong> Given a sample $X_1, X_2, \dots, X_N$ which follows a distribution $F$, how do we infer $F$?
     </div>
 
@@ -59,14 +68,14 @@
     </p>
     
     <ul>
-        <li><strong>Estimation:</strong> Using sample data to calculate a specific value or range for a population parameter.</li>
+        <li><strong><a href="EstimationTheory.html">Estimation</a>:</strong> Using sample data to calculate a specific value or range for a population parameter.</li>
         <li><strong>Hypothesis Testing:</strong> Using sample data to evaluate the validity of a claim or "sanity check" regarding the population.</li>
     </ul>
 </div>
 
  <h2>Statistical Test of Hypothesis</h2>
  <div class="content-wrapper">
- <p class="detail-description"> Statistical Test of Hypothesis is  process or procedure under which statistical hypothesis is laid down and it is rejected or accepted. The test conducted to accept or to reject the Hypothesis are known of statistical test of Hypothesis.In other words, A <strong>Statistical Test of Hypothesis</strong> is a formal procedure used to decide whether the data from a sample supports a particular claim about the population. Think of it as a "Trial by Data": we start with an assumption, look at the evidence, and determine if that assumption holds up under scrutiny. </p>
+ <p class="detail-description"> A <strong>Statistical Test of Hypothesis</strong> is a formal procedure used to decide whether the data from a sample supports a particular claim about the population. Think of it as a "Trial by Data": we start with an assumption, look at the evidence, and determine if that assumption holds up under scrutiny. </p>
  <p class="detail-description">
     In this process, we evaluate two competing statements:
 </p>
@@ -75,15 +84,14 @@
     <li><strong>Null Hypothesis ($H_0$):</strong> The "default" assumption that there is no effect or no difference. (e.g., "This new medicine has the same effect as a sugar pill.")</li>
     <li><strong>Alternative Hypothesis ($H_1$):</strong> The claim we are trying to prove. (e.g., "This new medicine is more effective than a sugar pill.")</li>
 </ul>
-<p class="detail-description">
-One can generalize the examples of the Testing Hypothesis as 
+<p class="detail-description">Typical questions answered by a test of hypothesis include:</p>
 <ul>
-	<li> To test whether a give sample is a give sample is a true sample</li>
-	<li> To test whether two attributes are independent</li>
-	<li> To test whether a give sample is a give sample is a true sample</li>
-	<li> To test whether population proportion is grate than a give value etc </li>
-</ul>	</p>
-<h3>Statistical Distributions for Tests of Hypothesis</h3>
+	<li>To test whether a given sample comes from a population with a specified mean</li>
+	<li>To test whether two attributes are independent</li>
+	<li>To test whether the means (or variances) of two populations are equal</li>
+	<li>To test whether a population proportion is greater than a given value</li>
+</ul>
+<h3 id="test-distributions">Statistical Distributions for Tests of Hypothesis</h3>
 <div class="content-wrapper">
     <p class="detail-description">
         When we perform a hypothesis test, we calculate a <strong>Test Statistic</strong><span style="color: #555;">(It is a single number that summarizes how much your sample data disagrees with your starting assumption. The further this score is from zero, the more "guilty" your Null Hypothesis looks)</span>.. To decide if that value is "rare" or "normal," we compare it to a known probability distribution. While you have already studied the <strong>Normal Distribution</strong>, it has several "cousins" used depending on what we are testing:
@@ -92,25 +100,25 @@ One can generalize the examples of the Testing Hypothesis as
     
         <ul>
             <li>
-                <strong>Z-test (Standard Normal):</strong> Used when your sample size is large ($n > 30$) or when you already know the population variance. It is the "gold standard" for A/B testing in high-traffic ML systems.
+                <strong><a href="HypothesisTesting.html#sampling-mean">Z-test (Standard Normal)</a>:</strong> Used when your sample size is large ($n > 30$) or when you already know the population variance. It is the "gold standard" for A/B testing in high-traffic ML systems.
             </li>
             <li>
-                <strong>t-test (Student’s t):</strong> Used when the sample size is small ($n < 30$) and the population variance is unknown. It looks like a Normal Distribution but has "fresher" (heavier) tails to account for greater uncertainty.
+                <strong><a href="HypothesisTesting.html#t-derivation">t-test (Student’s t)</a>:</strong> Used when the sample size is small ($n < 30$) and the population variance is unknown (for a normal population). It looks like a Normal Distribution but has "fatter" (heavier) tails to account for greater uncertainty.
             </li>
             
             <li>
-                <strong>$\chi^2$-test (Chi-Square):</strong> Used to test the "Goodness of Fit" or independence between variables. For example: "Is the distribution of user clicks across different regions truly random?"
+                <strong><a href="HypothesisTesting.html#chi-square-derivation">$\chi^2$-test (Chi-Square)</a>:</strong> Used to test the "Goodness of Fit" or independence between variables. For example: "Is the distribution of user clicks across different regions truly random?"
             </li>
             <li>
-                <strong>F-test (Fisher-Snedecor):</strong> Used to compare the variances of two different groups. In ML, we use this to see if one model's error variance is significantly lower than another's.
+                <strong><a href="HypothesisTesting.html#f-derivation">F-test (Fisher-Snedecor)</a>:</strong> Used to compare the variances of two different groups. In ML, we use this to see if one model's error variance is significantly lower than another's.
             </li>
         </ul>
     </div>
 
     <div class="stat-box" style="background: #fdfaf0; border: 1px solid #f1e4bc;">
-        <strong>Key Connection:</strong> Most of these distributions are derived from the Normal Distribution. For instance, if you square a Standard Normal variable, you get a $\chi^2$ distribution. If you divide two $\chi^2$ variables, you get an $F$ distribution.
+        <strong>Key Connection:</strong> Most of these distributions are derived from the Normal Distribution. For instance, if you square a Standard Normal variable, you get a $\chi^2$ distribution. The ratio of two independent $\chi^2$ variables, each divided by its degrees of freedom, gives an $F$ distribution, and a Standard Normal divided by the square root of an independent $\chi^2/\text{d.f.}$ gives a $t$ distribution. The derivations are on the <a href="HypothesisTesting.html#distributions-table">Sampling Distributions</a> page.
     </div>
-	<h3>Algorithmic appraoch for Testing of hypothesis</h3>
+	<h3 id="algorithm">Algorithmic approach for Testing of hypothesis</h3>
 	<div class="algorithm-box">
         <span class="algorithm-title">Testing Hypothesis generic steps</span>
 	 <ol>
@@ -118,19 +126,20 @@ One can generalize the examples of the Testing Hypothesis as
             <li>Decide the test criterion suitable to the test statistic (such as t test, F-test) mentioned above,based on your data</li>
             <li>Specifiy the suitable <strong>level of Significance (such as 5%,1% etc)</strong></li>
 			<li>Calculate the value of the <strong>test statistic</strong> using the appropriate forumula</li>
-			<li>Then find the <strong>table value</strong> of the test statistic using the approximate formula.Table Value" is often called the <strong>Critical Value</strong> and this value depends on <strong>Degrees of Freedom</strong></li>
-			<li>Make the decisions about accepting or rejecting the null hypothesis. The decision depends on whether the computed value of the test statistic falls in the acceptance region or rejection region. When the computed value of the test statistic is numerically less than the table value the test statistic falls in the acceptance region,otherwise in the rejection region.
+			<li>Then find the <strong>table value</strong> of the test statistic from the statistical table for the chosen level of significance. This table value is called the <strong>Critical Value</strong>, and for $t$, $\chi^2$ and $F$ it also depends on the <strong>Degrees of Freedom</strong></li>
+			<li>Make the decisions about accepting or rejecting the null hypothesis. The decision depends on whether the computed value of the test statistic falls in the acceptance region or rejection region. When the computed value of the test statistic is numerically less than the table value the test statistic falls in the acceptance region, otherwise in the rejection region. (For a two-tailed test compare the <em>absolute</em> value of the statistic with the table value.)
 			<ul>
                 <li>If the <strong>Calculated Test Statistic Value < Table Value</strong>: We fall in the "Acceptance Region" (Fail to reject $H_0$).</li>
-                <li>If the <strong>Calculated Test Statistic Value  > Table Value</strong>: We fall in the "Rejection Region" (Accept $H_1$ as likely true).</li>
-            </ul>		
+                <li>If the <strong>Calculated Test Statistic Value  > Table Value</strong>: We fall in the "Rejection Region" (Reject $H_0$ in favour of $H_1$).</li>
+            </ul>
+			</li>		
 	 </ol>	 
     </div>
 	<p class="detail-description"> In the subsequent part of the tutorial, we shall discuss each of steps in detail. 
 	 </p>
 	<div class="description-box"> 
 	<h3>Null and Alternative Hypothesis</h3>
-	<p class="detail-description"> In any test of hypothesis first step is to set up a hypothesis about the population parameter. The conventional approach is to set up two different hypothesis. The two hypothesis are so constructed that if one hypothesis is accpeted,other is rejected. These two hypothesis is know n as the <strong>Null Hypothesis </strong>(Population mean is 65) and <strong>Alternative hypothesis </strong>(Population mean is not 65).Null hypothesis is assumed to be accpted. If test fails we choose alternative hypothesis</p>
+	<p class="detail-description"> In any test of hypothesis first step is to set up a hypothesis about the population parameter. The conventional approach is to set up two different hypothesis. The two hypotheses are constructed so that if one is accepted, the other is rejected. These two hypotheses are known as the <strong>Null Hypothesis </strong>(Population mean is 65) and <strong>Alternative hypothesis </strong>(Population mean is not 65). The null hypothesis is assumed to be true until the sample gives enough evidence against it; if the test rejects it, we adopt the alternative hypothesis</p>
 	
 		
 	<div class="highlight-box">
@@ -176,14 +185,15 @@ One can generalize the examples of the Testing Hypothesis as
 <div class="example-box">
         Suppose the population mean is 125. But the test conducted on the basis of a sample drawn from the populaion leads to the conclusion that population mean is not equal to 125. This is type 1 error.
     </div>
+</div>
 <div class="description-box"> 
-	<h3>Step 3: Level of Significance ($\alpha$)</h3>
+	<h3 id="level-of-significance">Level of Significance ($\alpha$) <small>(Step 3 of the algorithm)</small></h3>
 <p class="detail-description">
     The confidence with which we reject a Null Hypothesis depends on the <strong>Level of Significance.</strong>
 </p>
     <div class="intuition-box">
         <strong>The Balancing Act:</strong> As you decrease $\alpha$ (e.g., from 5% to 0.1%), you become more strict. 
-        In our University example: If you raise the passing mark from 43 to 95, you rarely pass an unqualified person (Low Type I Error), but you might fail many geniuses (High Type II Error).
+        Think of a university entrance test: if you raise the passing mark from 43 to 95, you rarely pass an unqualified person (Low Type I Error), but you might fail many geniuses (High Type II Error).
     </div>
 
     <div class="math-breakdown">
@@ -191,8 +201,9 @@ One can generalize the examples of the Testing Hypothesis as
         <p>$$ \alpha = P(\text{Reject } H_0 \mid H_0 \text{ is True}) \text{ [Type I Error]} $$</p>
         <p>$$ \beta = P(\text{Accept } H_0 \mid H_0 \text{ is False}) \text{ [Type II Error]} $$</p>
     </div>
+</div>
 <div class="description-box"> 
-	<h3>Critical Region</h3>
+	<h3 id="critical-region">Critical Region</h3>
 <p class="detail-description">
     The statistical procedure divides the <strong>Sample Space ($S$)</strong>—which represents all possible outcomes of our test statistic—into two distinct subsets:
 </p>
@@ -225,17 +236,18 @@ One can generalize the examples of the Testing Hypothesis as
             <line x1="50" y1="250" x2="550" y2="250" stroke="#333" stroke-width="2" />
             <path d="M 50 250 C 150 250 200 50 300 50 C 400 50 450 250 550 250" fill="none" stroke="#0056b3" stroke-width="3" />
             
-            <path d="M 185 250 V 165 C 220 100 260 50 300 50 C 340 50 380 100 415 165 V 250 Z" fill="#e7f3ff" opacity="0.6" />
+            <path d="M 185.0 250 L 185.0 136.7 C 219.3 91.5 254.4 50.0 300 50 C 345.6 50.0 380.7 91.5 415.0 136.7 L 415.0 250 Z" fill="#e7f3ff" opacity="0.6" />
             
-            <path d="M 50 250 C 100 250 150 220 185 165 V 250 Z" fill="#d32f2f" opacity="0.7" />
-            <path d="M 415 165 C 450 220 500 250 550 250 H 415 Z" fill="#d32f2f" opacity="0.7" />
+            <path d="M 50 250 C 104.4 250.0 144.1 190.7 185.0 136.7 V 250 Z" fill="#d32f2f" opacity="0.7" />
+            <path d="M 550 250 C 495.6 250.0 455.9 190.7 415.0 136.7 V 250 Z" fill="#d32f2f" opacity="0.7" />
 
-            <text x="300" y="130" text-anchor="middle" font-family="sans-serif" font-weight="bold" fill="#0056b3">Acceptance Region (R')</text>
+            <text x="300" y="130" text-anchor="middle" font-family="sans-serif" font-weight="bold" fill="#0056b3">Acceptance Region (A)</text>
             <text x="100" y="280" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#d32f2f" font-weight="bold">Critical Region (R)</text>
             <text x="500" y="280" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#d32f2f" font-weight="bold">Critical Region (R)</text>
         </svg>
     </div>
-<h3>How to find the critical region when the size of the critical region is fixed</h3>
+</div>
+<p class="detail-description"><strong>How do we find the critical region when its size $\alpha$ is fixed?</strong> Many regions have the same size; the best one is found with the <a href="#bcr">Neyman&ndash;Pearson derivation</a> later on this page.</p>
 <div class="description-box"> 
     <h3>Test Statistic or Test Criterion</h3>
     
@@ -244,7 +256,7 @@ One can generalize the examples of the Testing Hypothesis as
     </p>
 
     <p class="detail-description">
-        If the computed value of this statistic falls within the <strong>Acceptance Region</strong>, we fail to reject the null hypothesis. This calculated value is known as the <strong>Test Statistic</strong>.
+        The value of this statistic calculated from the sample is called the <strong>Test Statistic</strong>. If it falls within the <strong>Acceptance Region</strong> we fail to reject the null hypothesis; if it falls in the Critical Region we reject it. The standard error used to standardise it is derived on the <a href="HypothesisTesting.html#standard-error">Sampling Distributions</a> page.
     </p>
 
     
@@ -265,7 +277,7 @@ One can generalize the examples of the Testing Hypothesis as
 </div>
 
 <div class="content-wrapper">
-    <h2>Two Taileds vs One Tailed Tests </h2>
+    <h2 id="tails">Two-Tailed vs One-Tailed Tests</h2>
     
     <p class="detail-description">
         The structure of the <strong>Alternative Hypothesis ($H_1$)</strong> determines the "tails" of the test. This tells us whether we are looking for a difference in any direction or a specific direction (higher or lower).
@@ -307,7 +319,7 @@ One can generalize the examples of the Testing Hypothesis as
 </div>
 <div class="example-box" style="border: 1px solid #0056b3; border-radius: 8px; overflow: hidden; margin: 20px 0;">
     <div class="problem-header" style="background-color: #0056b3; color: white; padding: 10px 15px; font-weight: bold;">
-        Worked Example: Size and Power of a Test
+        <a id="size-power"></a>Worked Example: Size and Power of a Test
     </div>
     
     <div style="padding: 15px; background-color: #fcfcfc;">
@@ -358,11 +370,12 @@ One can generalize the examples of the Testing Hypothesis as
         and the probability of correctly detecting the change to $\theta=4$ is $52\%$.
     </p>
 </div>
-<div class="example-box">
+<div class="example-box" id="bcr">
     <h4>Mathematical Derivation: Finding the Best Critical Region (BCR)</h4>
     <p class="detail-description">
-        To find the most powerful test for example let's say $H_0: \mu = 5$ vs $H_1: \mu > 5$ with $\sigma = 1$, Assuming that Since the population is Normal with a known variance, we are looking for the region that is best critical region (maximizes the power of the test for a fixed $\alpha = 0.05). Hence we apply the <strong>Neyman-Pearson Lemma</strong>.
-		<div class="intuition-box">
+        To find the most powerful test, take for example $H_0: \mu = 5$ vs $H_1: \mu > 5$ with $\sigma = 1$. Since the population is Normal with a known variance, we are looking for the region that is best critical region (maximizes the power of the test for a fixed $\alpha = 0.05). Hence we apply the <strong>Neyman-Pearson Lemma</strong>.
+    </p>
+    <div class="intuition-box">
     <strong>Neyman-Pearson Theorem:</strong> 
     Let $L_1$ (or $L(\mu_1)$) be the Likelihood Function when the null hypothesis $H_0$ is true, 
     and $L_2$ (or $L(\mu_2)$) be the Likelihood Function when the alternative hypothesis $H_1$ is true. 
@@ -376,7 +389,6 @@ One can generalize the examples of the Testing Hypothesis as
     where $k$ is a value determined on the basis of the level of significance $\alpha$. 
     This region $\omega$ is the <strong>most powerful critical region</strong> of the significance level $\alpha$ for testing $H_0$ against $H_1$.
 </div>
-    </p>
 
     <div class="math-breakdown">
         <strong>1. The Likelihood Ratio</strong>
@@ -405,7 +417,7 @@ One can generalize the examples of the Testing Hypothesis as
     <div class="intuition-box">
         <strong>Conclusion:</strong> The derivation proves that for a normal population, the <strong>Sample Mean ($\bar{x}$)</strong> is the best tool for the test. We reject $H_0$ if:
         $$ \bar{x} \ge 5 + z_{\alpha} \frac{\sigma}{\sqrt{n}} $$
-        For $\alpha = 0.05$, $z_{\alpha} = 1.645$.
+        For $\alpha = 0.05$, $z_{\alpha} = 1.645$. Because this region does not depend on the particular value $\mu_1 > 5$, it is the most powerful region for every $\mu_1 > 5$ (a uniformly most powerful test).
     </div>
 	<div class="intuition-box">
     <strong>What makes a Critical Region the "Best"?</strong>
@@ -491,8 +503,8 @@ One can generalize the examples of the Testing Hypothesis as
         <thead>
             <tr>
                 <th>Measure</th>
-                <th>$\sigma = \sqrt{12}$ (Old Context)</th>
-                <th>$\sigma = 12$ (Current Question)</th>
+                <th>If $\sigma^2 = 12$ ($\sigma \approx 3.46$)</th>
+                <th>This question ($\sigma^2 = 144$, $\sigma = 12$)</th>
             </tr>
         </thead>
         <tbody>
@@ -515,7 +527,7 @@ One can generalize the examples of the Testing Hypothesis as
     </table>
 </div>
 
-<div class="example-box">
+<div class="example-box" id="z-test-example">
 
     <div class="problem-header" style="background-color: #0056b3; color: white; padding: 10px 15px; font-weight: bold;">
         Worked example: Z-Test for Single Mean (Tyres)
@@ -528,14 +540,13 @@ One can generalize the examples of the Testing Hypothesis as
 
         <h3 class="detail-author-title">Solution:</h3>
         <p class="detail-description">
-            Given: 
+            Given:</p>
             <ul>
                 <li>Population Mean ($\mu_0$) = 15200 KM</li>
                 <li>Population SD ($\sigma$) = 1248 KM</li>
                 <li>Sample Size ($n$) = 100</li>
                 <li>Sample Mean ($\bar{x}$) = 15269 KM</li>
             </ul>
-        </p>
 
         <p class="detail-description">
             <strong>1. Null Hypothesis ($H_0$):</strong> $\mu = 15200$ (The claim is valid).<br>
@@ -553,11 +564,147 @@ One can generalize the examples of the Testing Hypothesis as
             <strong>Final Conclusion:</strong><br>
             Since the calculated value of $|Z| = 0.5529$ is less than the critical value of $1.96$ (at the 5% level of significance), we <strong>fail to reject the Null Hypothesis ($H_0$)</strong>. 
             <br><br>
-            The difference between the sample mean and the population mean is not statistically significant. Therefore, the claim is <strong>valid</strong>.
+            The difference between the sample mean and the population mean is not statistically significant. Therefore, the sample gives no evidence against the claim. (Failing to reject $H_0$ does not prove that the claim is true.) The standard error $\sigma/\sqrt{n}$ used here is derived on the <a href="HypothesisTesting.html#standard-error">Sampling Distributions</a> page.
         </div>
     </div>
 </div>
 </div>
-		
+
+<div class="stat-box" style="background:#eef6ff; border-left:5px solid #0056b3; padding:10px 14px; margin:12px 0;"><strong>Related pages:</strong> Back to <a href="HypothesisTesting.html#distributions-table">Sampling Distributions</a> (derivations of Z, t, &chi;&sup2; and F) &middot; <a href="EstimationTheory.html">Estimation Theory</a> </div>
+</div>
+
+<section id="sampling-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+    <style>
+        #quiz-start-box { text-align: center; padding: 22px 16px; background: #f5f9ff; border: 1px solid #cfe0f5; border-radius: 10px; }
+        #quiz-start-box p { margin: 0 0 14px; color: #263238; font-size: 1rem; }
+        #start-quiz-btn { background: #1565c0; color: #fff; border: 0; border-radius: 8px; padding: 12px 34px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease; }
+        #start-quiz-btn:hover { background: #0d47a1; }
+        #start-quiz-btn:active { transform: scale(0.97); }
+        #start-quiz-btn:focus-visible { outline: 3px solid #90caf9; outline-offset: 2px; }
+    </style>
+    <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Sampling and Statistical Inference Quiz</h2>
+
+    <div id="quiz-start-box">
+        <p>30 multiple-choice questions on sampling, hypothesis testing, errors, critical regions, the Neyman&ndash;Pearson lemma and the worked examples above.</p>
+        <button type="button" id="start-quiz-btn">Start Quiz</button>
+    </div>
+
+    <div id="quiz"></div>
+
+    <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+    <script src="quiz.js"></script>
+    <script>
+    (function () {
+        var questions = [
+                { q: "What is the difference between population parameters and sample statistics?",
+                  a: "Parameters are measures of the whole population, statistics are calculated from a sample, and we draw conclusions about the parameters from the statistics",
+                  w: ["Parameters are calculated from a sample, and statistics describe the whole population", "Parameters describe only the shape of a distribution, and statistics describe only the sample size", "They are the same quantity measured twice"] },
+                { q: "What are the two main branches of statistical inference?",
+                  a: "Estimation (a value or range for a parameter) and hypothesis testing (checking a claim about the population)",
+                  w: ["Sampling and census enumeration", "Descriptive statistics and data visualisation", "Classification and regression"] },
+                { q: "In the new-medicine example, which statements are H<sub>0</sub> and H<sub>1</sub>?",
+                  a: "H<sub>0</sub>: the medicine has the same effect as a sugar pill; H<sub>1</sub>: it is more effective than a sugar pill",
+                  w: ["H<sub>0</sub>: the medicine is more effective than a sugar pill; H<sub>1</sub>: it has the same effect", "H<sub>0</sub>: the medicine is harmful; H<sub>1</sub>: the medicine is harmless", "H<sub>0</sub> is the claim we want to prove, and H<sub>1</sub> is the default assumption"] },
+                { q: "What is a test statistic?",
+                  a: "A single number summarising how strongly the sample data disagrees with the null hypothesis; the further it is from zero, the more doubt it casts on H<sub>0</sub>",
+                  w: ["The probability that H<sub>0</sub> is true", "The significance level chosen before the test", "The size of the sample"] },
+                { q: "A sample of n = 12 is drawn from a normal population with unknown variance. Which test fits, and why?",
+                  a: "The t-test, because the sample is small (n &lt; 30) and the population variance is unknown",
+                  w: ["The Z-test, because n is small", "The &chi;&sup2;-test, because the variance is unknown", "The F-test, because there is only one sample"] },
+                { q: "Is the distribution of user clicks across different regions truly random? Which test addresses this?",
+                  a: "The &chi;&sup2;-test (goodness of fit)",
+                  w: ["The Z-test", "The F-test", "The t-test"] },
+                { q: "What is the F-test used for?",
+                  a: "Comparing the variances of two groups, for example whether one model&rsquo;s error variance is significantly lower than another&rsquo;s",
+                  w: ["Comparing two means when the variances are known", "Testing whether two attributes are independent", "Testing whether one mean equals a specified value when the variance is unknown"] },
+                { q: "How are Z, &chi;&sup2;, F and t connected?",
+                  a: "Squaring a standard normal gives &chi;&sup2;; the ratio of two independent &chi;&sup2; variables (each divided by its d.f.) gives F; a standard normal divided by &radic;(&chi;&sup2;/d.f.) gives t",
+                  w: ["Squaring a standard normal gives F; the ratio of two independent normals gives &chi;&sup2;; Z divided by &chi;&sup2; gives t", "Squaring a standard normal gives t; the sum of two t variables gives F; Z/&radic;(&chi;&sup2;/d.f.) gives &chi;&sup2;", "These distributions are unrelated to the Normal distribution"] },
+                { q: "In what order do the generic steps of a hypothesis test run?",
+                  a: "Set H<sub>0</sub> and H<sub>1</sub> &rarr; choose the test criterion &rarr; specify the significance level &rarr; compute the test statistic &rarr; find the critical (table) value &rarr; decide",
+                  w: ["Compute the test statistic &rarr; set H<sub>0</sub> and H<sub>1</sub> &rarr; find the table value &rarr; choose the significance level &rarr; decide", "Specify the significance level &rarr; decide &rarr; compute the test statistic &rarr; set the hypotheses &rarr; find the critical value", "Find the critical value &rarr; set H<sub>0</sub> and H<sub>1</sub> &rarr; compute the statistic &rarr; choose the test &rarr; decide"] },
+                { q: "What is the decision rule comparing the computed statistic with the table value?",
+                  a: "If the computed value is numerically less than the table value it falls in the acceptance region (fail to reject H<sub>0</sub>); otherwise reject; for a two-tailed test compare the absolute value",
+                  w: ["Reject whenever the computed value is less than the table value", "Reject H<sub>0</sub> only if the computed value is negative", "Always compare the signed value, even for two-tailed tests"] },
+                { q: "Which critical (table) values also depend on the degrees of freedom?",
+                  a: "Those of the t, &chi;&sup2; and F distributions",
+                  w: ["Only the Z critical value", "None of them", "Only the F critical value"] },
+                { q: "What are Type I and Type II errors?",
+                  a: "Type I: rejecting a true H<sub>0</sub> (false positive, &alpha;); Type II: accepting a false H<sub>0</sub> (false negative, &beta;)",
+                  w: ["Type I: accepting a false H<sub>0</sub>; Type II: rejecting a true H<sub>0</sub>", "Type I: accepting a true H<sub>0</sub>; Type II: rejecting a false H<sub>0</sub>", "Both are failures to reject H<sub>0</sub>, differing only in the sample size"] },
+                { q: "What is the power of a test?",
+                  a: "1 &minus; &beta;, the probability of correctly rejecting H<sub>0</sub> when it is false",
+                  w: ["1 &minus; &alpha;, the probability of correctly accepting H<sub>0</sub> when it is true", "&alpha;, the probability of rejecting H<sub>0</sub> when it is true", "&beta;, the probability of accepting H<sub>0</sub> when it is false"] },
+                { q: "The population mean really is 125, but a sample-based test concludes that it is not 125. Which error is this?",
+                  a: "A Type I error (rejecting a true H<sub>0</sub>)",
+                  w: ["A Type II error (accepting a false H<sub>0</sub>)", "No error &ndash; it is the power of the test", "No error &ndash; failing to reject can never be wrong"] },
+                { q: "What happens when you lower the level of significance &alpha; (for example from 5% to 0.1%)?",
+                  a: "Type I errors become rarer but Type II errors become more likely, like raising a university pass mark from 43 to 95",
+                  w: ["Both Type I and Type II errors become rarer", "Type I errors become more likely and Type II errors rarer", "The Type II error is not affected at all"] },
+                { q: "What is it called when we accept a true H<sub>0</sub>, and what is its probability?",
+                  a: "A correct decision, with probability equal to the confidence level 1 &minus; &alpha;",
+                  w: ["A Type II error, with probability &beta;", "The power of the test, with probability 1 &minus; &beta;", "A Type I error, with probability &alpha;"] },
+                { q: "What is the size of the critical region?",
+                  a: "&alpha; = P(test statistic &isin; R | H<sub>0</sub> is true), equal to the level of significance",
+                  w: ["1 &minus; &beta;, the power of the test", "P(test statistic &isin; R | H<sub>1</sub> is true)", "The probability that the acceptance region contains the mean"] },
+                { q: "For H<sub>1</sub>: &theta; &gt; &theta;<sub>0</sub>, what type of test is it and what is the critical region?",
+                  a: "Right-tailed, with critical region (t<sub>&alpha;</sub>, &infin;)",
+                  w: ["Two-tailed, with critical region (&minus;&infin;, &minus;t<sub>&alpha;/2</sub>) &cup; (t<sub>&alpha;/2</sub>, &infin;)", "Left-tailed, with critical region (&minus;&infin;, &minus;t<sub>&alpha;</sub>)", "Two-tailed, with critical region (&minus;t<sub>&alpha;</sub>, t<sub>&alpha;</sub>)"] },
+                { q: "For a two-tailed Z-test at &alpha; = 0.05, how is &alpha; split and what are the critical values?",
+                  a: "2.5% in each tail, with Z = &plusmn;1.96",
+                  w: ["5% in each tail, with Z = &plusmn;1.645", "5% in the right tail only, with Z = 1.645", "2.5% in the right tail only, with Z = 1.96"] },
+                { q: "A box has 10 balls, &theta; white. H<sub>0</sub>: &theta; = 5. Two balls are drawn with replacement, and H<sub>0</sub> is rejected if they have the same colour. What is the size &alpha;?",
+                  a: "0.50, from P(WW) + P(BB) = 0.25 + 0.25 when there are 5 white and 5 black",
+                  w: ["0.25, counting only WW", "0.52, which is the power of the test", "0.16 + 0.36 = 0.52"] },
+                { q: "For the same test against H<sub>1</sub>: &theta; = 4 (4 white, 6 black), what is the power?",
+                  a: "0.52, from (4/10)&sup2; + (6/10)&sup2; = 0.16 + 0.36",
+                  w: ["0.50, the same as the size", "0.48, the Type II error probability", "0.36, counting only BB"] },
+                { q: "What does the Neyman&ndash;Pearson lemma give?",
+                  a: "For a fixed &alpha;, the critical region of maximum power, made of the points where L<sub>1</sub>/L<sub>2</sub> &le; k (null likelihood over alternative likelihood), with k fixed by &alpha;",
+                  w: ["The region where L<sub>1</sub>/L<sub>2</sub> &ge; k, which has the minimum power", "The smallest region, whatever its power", "The region that makes &alpha; equal to &beta;"] },
+                { q: "For a normal population N(&mu;, 1) with H<sub>1</sub>: &mu; &gt; 5, what does the derivation show about the best critical region?",
+                  a: "It reduces to x&#772; &ge; k, so the sample mean is the best tool; as it does not depend on the particular &mu;<sub>1</sub> &gt; 5, the test is uniformly most powerful",
+                  w: ["It reduces to &sum;x<sub>i</sub>&sup2; &ge; k, because the sum of squares does not cancel", "It reduces to x&#772; &ge; k only for &mu;<sub>1</sub> = 6, and every &mu;<sub>1</sub> needs a different region", "It reduces to the sample median being at least k"] },
+                { q: "For H<sub>0</sub>: &mu; = 5 vs H<sub>1</sub>: &mu; &gt; 5 with &sigma; = 1, n = 25 and &alpha; = 0.05, what is the rejection rule?",
+                  a: "Reject H<sub>0</sub> if x&#772; &ge; 5 + 1.645 &times; (1/&radic;25) = 5.329",
+                  w: ["Reject if x&#772; &ge; 5 + 1.96 &times; 0.2 = 5.392", "Reject if x&#772; &ge; 5 + 1.645 = 6.645, forgetting the standard error", "Reject if x&#772; &ge; 5.2"] },
+                { q: "For N(&mu;, 144) with n = 16, H<sub>0</sub>: &mu; = 35 and a right-tailed test at &alpha; = 0.05, what are the standard error and the rejection boundary?",
+                  a: "SE = 12/&radic;16 = 3, so reject if x&#772; &gt; 35 + 1.645 &times; 3 = 39.935",
+                  w: ["SE = 12/16 = 0.75, so the boundary is 36.23", "SE = 3, so the boundary is 35 + 1.96 &times; 3 = 40.88", "SE = 144/4 = 36, so the boundary is 35 + 1.645 &times; 36"] },
+                { q: "For the same data, what is the two-tailed critical region of size 0.05?",
+                  a: "x&#772; &lt; 29.12 or x&#772; &gt; 40.88, that is 35 &plusmn; 1.96 &times; 3",
+                  w: ["x&#772; &lt; 30.065 or x&#772; &gt; 39.935, using 1.645 in each tail", "x&#772; &lt; 29.12 only", "29.12 &lt; x&#772; &lt; 40.88, which is the acceptance region"] },
+                { q: "How does changing the variance from &sigma;&sup2; = 12 to &sigma;&sup2; = 144 affect the standard error and the cut-offs in the example?",
+                  a: "The SE rises from 0.866 to 3.000, and the cut-offs move farther from 35 (the one-tailed cut-off goes from 36.42 to 39.94)",
+                  w: ["The SE falls, and the cut-offs move closer to 35", "The SE is unchanged, and only the cut-offs move", "The SE rises, but the cut-offs stay the same"] },
+                { q: "In the tyre example (n = 100, x&#772; = 15269, &mu;<sub>0</sub> = 15200, &sigma; = 1248), what is the Z statistic?",
+                  a: "Z = 69/124.8 = 0.5529, since the standard error is 1248/&radic;100 = 124.8",
+                  w: ["Z = 5.529, from dividing &sigma; by n instead of &radic;n", "Z = 0.0553, from dividing the difference by &sigma; alone", "Z = 69, the raw difference"] },
+                { q: "What is the conclusion of the tyre test at the 5% level?",
+                  a: "|Z| = 0.5529 &lt; 1.96, so we fail to reject H<sub>0</sub>; this does not prove the claim true, only that the sample gives no evidence against it",
+                  w: ["Reject H<sub>0</sub>, since Z is positive", "Accept H<sub>0</sub> and conclude the claim is proven true", "Reject H<sub>0</sub>, since 0.5529 is larger than the 0.05 significance level"] },
+                { q: "Why is the Z-test described as the &ldquo;gold standard&rdquo; for A/B testing in high-traffic ML systems?",
+                  a: "Such systems have large samples (n &gt; 30), which is when the Z-test applies",
+                  w: ["The Z-test needs no null hypothesis", "High-traffic data always has unknown variance", "The Z-test compares the variances of two groups"] }
+        ];
+        var btn = document.getElementById("start-quiz-btn");
+        btn.addEventListener("click", function () {
+            if (typeof startQuiz !== "function") {
+                btn.textContent = "quiz.js not found";
+                btn.disabled = true;
+                return;
+            }
+            document.getElementById("quiz-start-box").style.display = "none";
+            startQuiz({
+                mount: "#quiz",
+                // timeLimit: 5,   // optional: seconds per question
+                questions: questions
+            });
+            document.getElementById("quiz").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    })();
+    </script>
+</section>
+
 </body>
 </html>

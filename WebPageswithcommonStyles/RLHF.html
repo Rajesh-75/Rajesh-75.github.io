@@ -128,6 +128,8 @@ ul, ol {
 <body>
 <div class="container">
 
+<h1 class="detail-title">Reinforcement Learning via Human Feedback(RLHF)</h1>
+
 <h2>3.1 What is Reinforcement Learning (RL)?</h2>
 <p>
   Before diving into Large Language Models and alignment, we must understand the foundational mechanics of <strong>Reinforcement Learning (RL)</strong>. Unlike supervised learning—where a dataset explicitly tells the model the exact "correct" answer for every input—an RL agent learns entirely through <strong>trial and error</strong> by interacting with an environment.
@@ -1007,9 +1009,54 @@ ul, ol {
         <li><strong>Adopting RLAIF:</strong> Replacing human annotators with <strong>AI Feedback (RLAIF)</strong> uses frontier models (like GPT-4 or Claude) as judges. AI judges operate instantly, do not suffer from fatigue, can handle complex logical tasks, and scale at a fraction of the cost.</li>
     </ol>
 </div>
+<section id="transformer-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Reinforcement Learning with Human Feedback (RLHF)Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "What is the main &ldquo;information bottleneck&rdquo; of a classic RNN encoder&ndash;decoder (Seq2Seq) model?",
+              a: "The whole input sequence must be compressed into one fixed-length context vector",
+              w: ["The decoder can only generate one token per sequence", "The encoder has no hidden state to store information", "The output vocabulary is limited to the words in the input"] },
+            { q: "Why can Transformers be trained far more efficiently on GPUs than RNNs?",
+              a: "All token positions are processed in parallel, with no step-by-step recurrence over time",
+              w: ["They always have fewer parameters than an RNN", "They avoid matrix multiplications altogether", "They read the sequence one token at a time, but with bigger batches"] },
+            { q: "Why is positional encoding added to the token embeddings?",
+              a: "Self-attention has no built-in notion of word order, so position information must be injected",
+              w: ["To reduce the embedding dimension", "To convert tokens into integer IDs", "To normalise every embedding to unit length"] },
+            { q: "In self-attention, how are the Query, Key and Value vectors obtained?",
+              a: "By multiplying each token's vector with three learned matrices W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup>",
+              w: ["Q comes from the input, while K and V are fixed random vectors", "They are looked up from three separate vocabulary tables", "They are the output of the softmax over the attention scores"] },
+            { q: "Why are attention scores divided by &radic;d<sub>k</sub> before the softmax?",
+              a: "Large dot products would saturate the softmax and shrink its gradients",
+              w: ["To make the attention weights sum to 1", "To mask out future tokens", "To reduce the number of heads required"] },
+            { q: "What does the causal mask do in a decoder-only (GPT-style) Transformer?",
+              a: "It stops each token from attending to tokens that come after it",
+              w: ["It hides random tokens so the model must reconstruct them", "It removes padding tokens from the loss", "It stops each token from attending to itself"] },
+            { q: "What is the benefit of multi-head attention over a single head?",
+              a: "Different heads can learn to focus on different kinds of relationships in different subspaces",
+              w: ["It shortens the sequence before attention is applied", "It removes the need for positional encoding", "It lets the model skip the feed-forward layer"] },
+            { q: "How does the feed-forward network (FFN) in a Transformer layer treat the tokens?",
+              a: "Each token vector is transformed independently, using the same weights at every position",
+              w: ["It mixes information across all tokens, just like attention", "Every position has its own separately trained FFN", "It only runs on the last token of the sequence"] },
+            { q: "How does a decoder-only Transformer turn its final hidden vectors into a next-token prediction?",
+              a: "A linear projection to vocabulary size followed by a softmax over the vocabulary",
+              w: ["A softmax over the embedding dimension followed by averaging", "A nearest-neighbour lookup in the positional-encoding table", "A second self-attention block that outputs one word directly"] },
+            { q: "What is the usual order of the three LLM training stages?",
+              a: "Unsupervised pre-training &rarr; Supervised fine-tuning (SFT) &rarr; RLHF / alignment",
+              w: ["SFT &rarr; Pre-training &rarr; RLHF", "RLHF &rarr; SFT &rarr; Pre-training", "Pre-training &rarr; RLHF &rarr; SFT"] }
+        ]
+            });
+            </script>
+        </section>
+
 
 </body>
 </html>
 
-</body>
-</html>

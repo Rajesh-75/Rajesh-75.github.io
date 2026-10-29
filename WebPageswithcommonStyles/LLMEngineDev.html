@@ -758,6 +758,29 @@ app.run(debug=True)</code></pre>
       a tunable hyperparameter rather than a fixed, one-time decision.</p>
   </div>
 
+  <h3>Data Quality: Deduplication &amp; Contamination</h3>
+  <p>
+    Web-scale corpora contain huge numbers of exact and near-duplicate documents. Pipelines remove them (for example with
+    hashing or MinHash similarity) because repeated text is over-weighted and memorised, wasting compute and raising verbatim
+    regurgitation. They also screen out <strong>benchmark contamination</strong> &mdash; test questions or near-copies that leaked into
+    the training data &mdash; since a contaminated benchmark score overstates the model's real ability.
+  </p>
+<div class="algorithm-box">
+      <strong class="label">How Web-Scale Deduplication Works</strong>
+      <p style="margin-top: 0;">
+        Web-scale corpora contain huge numbers of exact and near-duplicate documents. Pipelines remove them using a two-tier strategy:
+      </p>
+      <ul>
+        <li><strong>Exact Deduplication (Cryptographic Hashing):</strong> Every document is passed through a hash function (like MD5 or SHA-256) to produce a fixed-length string digest. If a newly scanned document yields a hash already stored in a central distributed hash set, it is flagged as an exact duplicate and discarded in near-linear time ($O(N)$).</li>
+        <li><strong>Near-Duplicate Deduplication (MinHash &amp; LSH):</strong> Because web pages often contain minor layout variations, boilerplate text, or timestamps, pipelines use <strong>MinHash</strong> combined with <strong>Locality-Sensitive Hashing (LSH)</strong>. 
+          <ul>
+            <li><em>Shingling:</em> Documents are broken down into overlapping $n$-grams (shingles).</li>
+            <li><em>MinHashing:</em> Randomized hash functions generate compact signatures where the probability of matching values equals the Jaccard similarity between shingle sets.</li>
+            <li><em>LSH Bucketing:</em> Signatures are divided into bands and hashed into buckets. Instead of an impossible $O(N^2)$ pairwise check across millions of files, only documents sharing buckets are compared, clustered, and pruned to a single representative copy.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
   <h3>Mixed-Precision Training</h3>
   <p>
     Training entirely in 32-bit floating point (FP32) is accurate but slow and memory-hungry at LLM
@@ -794,6 +817,10 @@ app.run(debug=True)</code></pre>
       all — why most modern training setups prefer it over FP16.</p>
   </div>
 
+  <h3 id="pretraining-stability">Pretraining Stability: Loss Spikes &amp; Gradient Clipping</h3>
+    <p>
+      During training, large language model training can occasionally suffer from a <strong>loss spike</strong>, where the error suddenly and drastically jumps. A "bad batch" refers to an unusual chunk of training data—such as corrupted text, broken code, or rare web scraping noise—that contains weird token combinations, generating abnormally massive error signals and extreme gradients. To prevent this from ruining the model, engineers use two main safeguards during the backward pass: <strong>gradient clipping</strong>, which calculates the combined global vector norm of the gradients $\|\mathbf{g}\|_2 = \sqrt{\sum_{i} g_i^2}$ and rescales them if they exceed a threshold $c$ (such as $1.0$) via $\mathbf{g} \leftarrow \mathbf{g} \cdot \frac{c}{\max(c, \|\mathbf{g}\|_2)}$ so a single bad batch cannot cause a destructive leap; and <strong>learning-rate warmup</strong>, which linearly ramps up the learning rate from zero using $\eta_t = \eta_{\text{peak}} \cdot \frac{\text{current\_step}}{\text{warmup\_steps}}$ during the initial steps to avoid volatile updates on unstable early weights. If a spike still ruins the model despite these precautions, teams roll back training to a previously saved checkpoint and advance the data loader past the bad batch that caused the error.
+    </p>
   <h3>Distributing Training Across Multiple GPUs</h3>
   <p>
     A large model's weights, activations, and optimizer state together can easily exceed what a
@@ -853,6 +880,14 @@ app.run(debug=True)</code></pre>
     parallelism keep the data flow simple and instead split the <em>model itself</em> — by width
     (tensor) or by depth (pipeline).
   </div>
+
+  <h3>Systems Resilience: Distributed Checkpointing</h3>
+  <p>
+    A run spanning thousands of GPUs for weeks will see hardware failures as a matter of routine, so training periodically saves
+    <strong>checkpoints</strong> &mdash; the weights, the optimizer state and the data-loader position. With sharded training each GPU
+    writes only its own slice (<em>distributed checkpointing</em>), and after a failure the run resumes from the latest checkpoint
+    instead of restarting from scratch. The same checkpoints make the loss-spike rollback above possible.
+  </p>
 
   </section>
 
@@ -1386,5 +1421,142 @@ app.run(debug=True)</code></pre>
 </div>
 </section>
 </div>
+<section id="llm-engine-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: LLM Development Engine Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "Theory: In pretraining, what is the loss at a single position of a sequence?",
+              a: "CE = &minus;log &ybar;<sub>k</sub>, where k is the vocabulary index of the true next token and &ybar; is the model&rsquo;s softmax output",
+              w: ["&minus;log of the largest output probability, whichever token it belongs to", "The squared difference between &ybar;<sub>k</sub> and 1", "log &ybar;<sub>k</sub> without the minus sign, which is then maximised as a penalty"] },
+            { q: "Theory: In L<sub>SFT</sub>, why is the masked sum divided by &sum; m<sub>t</sub> rather than by the full sequence length T?",
+              a: "So the loss is averaged strictly over the active response tokens, and prompt length does not change how a sequence is penalised",
+              w: ["So that the loss equals the number of tokens in the sequence", "To normalise the logits so they sum to 1", "To give prompt tokens half the weight of response tokens"] },
+            { q: "Theory: What exactly changes between the pretraining objective and the SFT objective?",
+              a: "Only the data distribution (curated demonstrations) and the loss mask (only response tokens count); it is still cross-entropy with a fixed target, and nothing is RL yet",
+              w: ["SFT switches to a reward-model objective optimised with policy gradients", "SFT replaces cross-entropy with mean squared error", "SFT trains on the model&rsquo;s own sampled outputs"] },
+            { q: "Theory: How do BPE and the Unigram tokenizer differ in how they build a vocabulary?",
+              a: "BPE builds bottom-up by repeatedly merging the most frequent pair; Unigram starts from a huge seed vocabulary and prunes top-down until V tokens remain",
+              w: ["BPE starts huge and prunes by likelihood loss; Unigram merges the most frequent pair", "Both start from a huge seed vocabulary and prune it", "Both merge the most frequent pair, but Unigram stops earlier"] },
+            { q: "Theory: Under the Unigram model, how is P(x) scored, and which tokens are pruned?",
+              a: "P(x) is the product of token probabilities for the best segmentation (found by Viterbi); tokens whose removal lowers the corpus log-likelihood least are pruned, about 10&ndash;20% per round",
+              w: ["P(x) sums over all segmentations; the most frequent tokens are pruned", "P(x) is the probability of the first token only; the rarest tokens by raw count are pruned", "P(x) is the average token length; the longest tokens are pruned"] },
+            { q: "Theory: Why does fitting the Unigram tokenizer need Expectation-Maximisation, just like a Gaussian Mixture Model?",
+              a: "The log-likelihood is a log of a sum over a hidden variable (segmentation here, component in a GMM), which blocks a closed-form solution, so E-step and M-step alternate",
+              w: ["The token probabilities are always exactly zero at the start", "The corpus is too small for a closed-form solution", "Viterbi cannot be run efficiently without EM"] },
+            { q: "Theory: Why does BF16 rarely need loss scaling while FP16 does?",
+              a: "BF16 shares FP32&rsquo;s wide exponent range, so small gradients do not underflow, whereas FP16&rsquo;s narrow range can round them to exactly zero",
+              w: ["BF16 has more mantissa bits than FP32", "BF16 stores gradients in 64-bit format", "BF16 keeps a master copy of the weights, so scaling is unnecessary"] },
+            { q: "Theory: How do data, tensor and pipeline parallelism differ?",
+              a: "Data parallelism copies the whole model to every GPU and splits the data (a speed fix); tensor parallelism splits each layer by width and pipeline parallelism splits the model by depth (memory fixes)",
+              w: ["Data parallelism splits the model by depth, while pipeline parallelism copies the model everywhere", "All three split only the data, in different ways", "Tensor parallelism copies the model and splits the data, while data parallelism splits the layer width"] },
+            { q: "Theory: How does the router of a Mixture-of-Experts layer work?",
+              a: "A linear layer plus softmax scores all N experts for a token; the top-k experts run, and their outputs are combined as a weighted sum using the router scores as weights",
+              w: ["A hand-coded rule table assigns each token to an expert", "After training, the router picks experts at random", "All experts run, and the router averages their outputs equally"] },
+            { q: "Theory: How does MoE differ from a classical ensemble such as bagging or boosting?",
+              a: "The router and every expert are trained together from the start inside one model, whereas ensembles combine fully trained, independent models afterwards by averaging, voting or a meta-learner",
+              w: ["MoE trains its experts separately and combines them by voting", "MoE combines models after the fact, while ensembles train them jointly", "MoE and ensembles differ only in the number of models used"] },
+            { q: "Theory: In the Chinchilla law L(N, D) = E + A/N<sup>&alpha;</sup> + B/D<sup>&beta;</sup>, what does &alpha; &asymp; &beta; &asymp; 0.5 imply?",
+              a: "Parameters and tokens should scale at an equal rate: doubling the compute means doubling both N and D",
+              w: ["Only parameters matter, since &beta; is effectively zero", "Doubling the compute means quadrupling N and leaving D fixed", "The loss does not depend on D"] },
+            { q: "Theory: Why does decoupled weight decay (AdamW) beat L2 regularisation inside Adam?",
+              a: "With L2 in the gradient, Adam divides the penalty by &radic;v&#770;<sub>t</sub>, so frequently updated parameters get weaker regularisation; AdamW subtracts &lambda;&theta; at the end of the step, separate from the adaptive update",
+              w: ["L2 inside Adam regularises frequently updated parameters more strongly, and AdamW removes weight decay altogether", "AdamW changes only the momentum term", "AdamW applies the weight decay to the gradient before the adaptive scaling"] },
+            { q: "Theory: How is the reward model in RLHF trained on preference triples (p, c<sub>w</sub>, c<sub>l</sub>)?",
+              a: "By minimising &minus;E[log &sigma;(RM(p, c<sub>w</sub>) &minus; RM(p, c<sub>l</sub>))], which pushes the preferred response&rsquo;s score above the rejected one&rsquo;s",
+              w: ["By minimising &minus;E[log &sigma;(RM(p, c<sub>l</sub>) &minus; RM(p, c<sub>w</sub>))]", "By regressing the score toward a fixed human rating of 0 or 1 for every response", "By running next-token cross-entropy on the preferred response only"] },
+            { q: "Theory: Why does RLHF need a reward model, a critic and a policy gradient, when SFT needed none of them?",
+              a: "SFT has a fixed target and a direct gradient; RLHF&rsquo;s objective is an expectation over the policy&rsquo;s own sampled responses, with no fixed target and no direct gradient through the sampling step",
+              w: ["Both have fixed targets, and RLHF only adds a reward term", "RLHF has a fixed target but a non-differentiable loss", "SFT needs a reward model, and RLHF does not"] },
+            { q: "Theory: In RLHF, why is a per-token KL penalty &minus;&beta; log(&pi;<sub>&theta;</sub>/&pi;<sub>ref</sub>) added against a frozen reference model &pi;<sub>ref</sub>?",
+              a: "It keeps the policy close to the SFT model, so it cannot drift far from sensible text while chasing a high reward-model score",
+              w: ["It makes sampling faster by shortening the responses", "It replaces the reward model&rsquo;s score entirely", "It scales the loss by the length of the sequence"] },
+            { q: "Applied: A freshly pretrained base model answers &ldquo;What is the capital of France?&rdquo; with more quiz questions. What is the right fix?",
+              a: "Supervised fine-tuning on curated prompt&ndash;response pairs; the model is not broken, it is continuing the text exactly as it was trained to",
+              w: ["Lower the temperature", "Add more web pages to pretraining", "Quantise the model to 4 bits"] },
+            { q: "Applied: After SFT, answers are correct but open with &ldquo;Great question!&rdquo;, run long and end with unrequested offers. Which stage fixes this, and why?",
+              a: "RLHF/DPO preference training, because it learns from human preference between two already-correct answers instead of imitating a fixed target",
+              w: ["More SFT epochs on the same targets", "A higher learning rate during SFT", "A larger top-p at decoding time"] },
+            { q: "Applied: A team lowers the temperature and top-p of a base model hoping it will start answering questions. What do decoding settings actually change?",
+              a: "Only the wording of the continuation &ndash; not the model&rsquo;s knowledge, instruction-following or alignment",
+              w: ["They turn the base model into an instruction follower", "They add new knowledge to the model", "They align the model with human preferences"] },
+            { q: "Applied: The same sentence costs 3&times; more tokens in an under-represented language than in English. What does that cost?",
+              a: "More compute and latency, and a smaller effective context window &ndash; an artefact of the tokenizer&rsquo;s training data, not of the language",
+              w: ["Nothing, because the context window is counted in words", "Only extra memory, with no change in latency", "Higher accuracy, since more tokens carry more information"] },
+            { q: "Applied: A model keeps making arithmetic mistakes. Which tokenisation choice does the page cite, and what would help?",
+              a: "BPE/Unigram split digits by frequency (380 as one chunk, 381 as 38 + 1), so place value is not tracked consistently; fixed-width, digit-by-digit tokenisation would help",
+              w: ["Digits are never in the vocabulary, so they must be added", "Whitespace is treated as a token, which breaks the sums", "The context window is too large, so the digits get lost"] },
+            { q: "Applied: You are building a tokenizer for Japanese and Thai, which do not separate words with spaces. Which choice avoids a broken start?",
+              a: "SentencePiece, which reads a raw Unicode stream (whitespace is an ordinary symbol) and never assumes word boundaries",
+              w: ["A classic BPE implementation that pre-splits on whitespace", "A word-level vocabulary built from space-separated words", "Lower-casing the text and splitting it into characters only"] },
+            { q: "Applied: A held-out evaluation midway through pretraining shows coding ability lagging. What does the page suggest?",
+              a: "Treat the data mixture as a tunable hyperparameter and revise the ratios (for example, raise the share of code) during training",
+              w: ["Set the ratios proportional to each source&rsquo;s share of the internet", "Switch to a larger tokenizer vocabulary", "Add loss scaling to the optimiser"] },
+            { q: "Applied: FP16 training stalls: the loss stops improving and many gradients are exactly zero. What is the cause and the fix?",
+              a: "Small gradients underflow because of FP16&rsquo;s narrow exponent range; use loss scaling or switch to BF16",
+              w: ["FP16 has too many exponent bits, so train in FP32 only", "The master FP32 weights are too large, so remove them", "Mixed precision cannot be used at LLM scale"] },
+            { q: "Applied: Team A&rsquo;s model fits on one GPU, but training is too slow; Team B&rsquo;s model does not fit on one GPU at all. What should each use?",
+              a: "Team A: data parallelism (a speed fix); Team B: tensor and/or pipeline parallelism, plus sharded optimiser state (ZeRO/FSDP), for memory",
+              w: ["Team A: tensor parallelism; Team B: data parallelism", "Both: data parallelism only", "Team A: pipeline parallelism; Team B: mixed precision only"] },
+            { q: "Applied: In an MoE model a handful of experts receive almost every token while the rest stay under-trained. What causes this, and how is it fixed?",
+              a: "A rich-get-richer effect (only selected experts get gradients, so early favourites improve and the router favours them more); add an auxiliary load-balancing loss that penalises uneven token distribution",
+              w: ["The router is too small, so use more experts", "Top-k is too large, so set k = 1", "The experts share weights, so untie them"] },
+            { q: "Applied: Your compute budget doubles. How do the Chinchilla results say to spend it, and roughly how many tokens suit a 7B model?",
+              a: "Double both parameters and tokens; about 20 tokens per parameter, so roughly 140B tokens for a 7B model",
+              w: ["Double only the parameters, as in the GPT-3 era; about 6 tokens per parameter, roughly 42B tokens", "Double only the tokens; roughly 2T tokens", "Halve the parameters and double the tokens; roughly 1.4T tokens"] },
+            { q: "Applied: Why do open-weights models such as Llama and Mistral train 7B&ndash;70B models on tens of trillions of tokens, far beyond the Chinchilla-optimal amount?",
+              a: "A smaller model trained for longer reaches comparable accuracy and is much cheaper and faster to serve",
+              w: ["Chinchilla says to train on as many tokens as possible", "More tokens let them skip the SFT stage", "Smaller models need more tokens in order to fit in memory"] },
+            { q: "Applied: A team fine-tunes a base model with the same peak learning rate as pretraining, and it forgets knowledge. What went wrong, and what does the page recommend?",
+              a: "The rate was too high, causing catastrophic forgetting; use a peak rate 5&ndash;10&times; smaller (about 1&times;10<sup>&minus;5</sup> to 5&times;10<sup>&minus;5</sup>), with brief warmup, cosine decay and AdamW weight decay",
+              w: ["The rate was too low, so raise it 10&times;", "There were too many prompt tokens, so remove the loss mask", "The dataset was too small, so drop weight decay"] },
+            { q: "Applied: The SFT example &ldquo;User: What is 2+2?\\nAssistant: 4&lt;eos&gt;&rdquo; has 5 prompt positions and 2 response positions (&ldquo;4&rdquo; and &lt;eos&gt;). How is L<sub>SFT</sub> computed?",
+              a: "Average &minus;log p over the 2 response positions only; the 5 prompt positions are excluded, even from the denominator",
+              w: ["Average over all 7 positions", "Sum over the 2 response positions, then divide by 7", "Average over the 5 prompt positions"] },
+            { q: "Training challenge: Mixed-precision training with Adam keeps FP16 weights and gradients, FP32 master weights, and Adam&rsquo;s two FP32 moment estimates. Roughly how many bytes per parameter is that, and what does it mean for a 7B model?",
+              a: "About 16 bytes per parameter (2 + 2 + 4 + 4 + 4), so roughly 112 GB for a 7B model before activations &ndash; more than a single 80 GB GPU",
+              w: ["About 2 bytes per parameter, so a 7B model needs only 14 GB", "About 4 bytes per parameter, so a 7B model needs 28 GB", "About 8 bytes per parameter, so a 7B model needs 56 GB"] },
+            { q: "Training challenge: How does sharding the optimiser state (as in DeepSpeed ZeRO or PyTorch FSDP) ease the memory challenge?",
+              a: "It splits the optimiser state (and optionally gradients and weights) across the GPUs, so each GPU stores only a slice instead of a full copy",
+              w: ["It stores the optimiser state in FP64 so it takes less space", "It removes the optimiser state, since Adam does not need it", "It keeps a full copy on every GPU but compresses it with pruning"] },
+            { q: "Training challenge: Midway through a long pretraining run the loss suddenly spikes upward. What are the usual responses?",
+              a: "Clip the gradient norm and, if the spike persists, restart from an earlier checkpoint, often lowering the learning rate or skipping the offending data batches",
+              w: ["Switch to FP64 for the rest of training", "Remove the warmup phase", "Raise the learning rate so training pushes through the spike"] },
+            { q: "Training challenge: What does gradient clipping do, and why does it help with instability?",
+              a: "It rescales the gradient whenever its global norm exceeds a threshold, limiting the size of any single update and guarding against exploding gradients",
+              w: ["It rounds the gradients to FP16 to save memory", "It zeroes the gradients of the prompt tokens", "It drops the smallest gradients to speed up the step"] },
+            { q: "Training challenge: Why is a brief learning-rate warmup used at the start of large-model training?",
+              a: "A large learning rate on freshly initialised weights and noisy optimiser statistics can cause sudden gradient spikes, so the rate is ramped up gradually",
+              w: ["It lets the model see the whole dataset once before updating", "It reduces the number of parameters that need gradients", "It replaces the need for a cosine decay schedule"] },
+            { q: "Training challenge: Why do pretraining pipelines deduplicate their web data?",
+              a: "Repeated documents are over-weighted and memorised, which wastes compute and increases verbatim regurgitation",
+              w: ["Duplicate documents cannot be tokenised", "Duplicates break the softmax over the vocabulary", "Removing duplicates shrinks the corpus enough to fit in memory"] },
+            { q: "Training challenge: What is benchmark contamination?",
+              a: "Test examples (or near copies of them) appear in the training corpus, so the benchmark score overstates the model&rsquo;s real ability",
+              w: ["The benchmark labels contain random noise", "The training loss ends up higher than the validation loss", "The benchmark is run in a different numerical precision from training"] },
+            { q: "Training challenge: Thousands of GPUs train a model for weeks. Why are frequent checkpoints essential?",
+              a: "With so many components, hardware failures are routine, and checkpoints let the run resume from the last saved state instead of restarting from scratch",
+              w: ["Checkpoints reduce the memory used by activations", "Checkpoints make the learning rate decay on schedule", "Checkpoints remove the need for mixed precision"] },
+            { q: "Training challenge: Why does adding more GPUs not speed up training linearly?",
+              a: "GPUs must exchange gradients and activations, and pipeline stages leave idle &ldquo;bubbles&rdquo;, so communication and idle time eat into the speed-up",
+              w: ["Each extra GPU shrinks the batch size toward zero", "Data parallelism needs a different loss function on each GPU", "FP16 cannot be used with more than 8 GPUs"] },
+            { q: "Training challenge: During SFT on a small instruction dataset, training loss keeps falling while validation loss rises. What is the challenge, and what helps?",
+              a: "Overfitting on a small, highly structured dataset; decoupled weight decay (AdamW), a lower learning rate, early stopping and more diverse data help",
+              w: ["Underfitting; raise the learning rate and remove weight decay", "Catastrophic forgetting; remove the loss mask", "Loss spikes; switch the model to FP64"] },
+            { q: "Applied: How does a serving engine handle many concurrent users efficiently?",
+              a: "It caches past computation (the KV cache) and batches requests together, instead of redoing work or serving one user at a time",
+              w: ["It retrains the model for each user", "It serves one user at a time in higher precision", "It re-reads the whole prompt for every new token to stay accurate"] }
+        ]
+            });
+            </script>
+        </section>
+
 </body>
 </html>

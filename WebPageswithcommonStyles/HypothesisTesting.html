@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     <!-- Hide body initially to prevent flickering -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,10 +13,9 @@ body {
 }
 </style>
     <!-- Load global MathJax configuration first -->
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sampling Distribution</title>
-    <link rel="stylesheet" href="Style.css">
+    <link rel="stylesheet" href="style.css">
 
     <script>
         window.MathJax = {
@@ -40,11 +40,16 @@ body {
     <script type="text/javascript" async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
+    <script>
+        /* Fallback: if MathJax cannot load, do not leave the page blank */
+        setTimeout(function () { document.body.style.visibility = 'visible'; }, 4000);
+    </script>
 </head>
 <body>
 
 <div class="content-wrapper">
-    <h1>Sampling Distribution</h1>
+    <h1>Testing of hypothesis</h1>
+    <div class="stat-box" style="background:#eef6ff; border-left:5px solid #0056b3; padding:10px 14px; margin:12px 0;"><strong>Related pages:</strong> <a href="SamplingndStatisticalInference.html">Statistical Inference</a> (uses the distributions derived here) &middot; <a href="EstimationTheory.html">Estimation Theory</a> (statistics vs parameters, standard error, repeated sampling) </div>
     
     <div class="description-box">
         <h3>Statistics and Parameters</h3>
@@ -59,13 +64,13 @@ body {
     <div class="description-box">
         <h3>Sampling Distribution</h3>
         <p class="detail-description">
-            A statistic is a random variable. Because the sample is random, the statistic calculated from it changes with every new sample, and the distribution of samples thus obtained is the <strong>sampling distribution</strong>.
+            A statistic is a random variable. Because the sample is random, the statistic calculated from it changes with every new sample, and the distribution of the values of the statistic over all possible samples is the <strong>sampling distribution</strong>.
             Since the sample mean is a statistic, the distribution of the sample mean is a <strong>sampling distribution</strong>.
         </p>
     </div>
 
     <div class="description-box">
-        <h3>Standard Error</h3>
+        <h3 id="standard-error">Standard Error</h3>
         <p class="detail-description">
             The standard deviation of a sampling distribution is called the <strong>Standard Error (S.E.)</strong>.
         </p>
@@ -82,7 +87,7 @@ body {
         </div>
     </div>
 
-    <h3>Sampling Distribution of mean of samples drawn from a normal population</h3>
+    <h3 id="sampling-mean">Sampling Distribution of mean of samples drawn from a normal population</h3>
     
     <p class="detail-description">
         To derive the sampling distribution of the mean $\bar{x}$, we use the property that the Moment Generating Function (MGF) of a sum of independent random variables is the product of their individual MGFs.
@@ -93,7 +98,7 @@ body {
         
         <div class="math-breakdown">
             <strong>1. The MGF of the Population</strong>
-            <p>Given that $x \sim N(\mu, \sigma^2)$, the MGF of a single observation $x_i$ is:</p>
+            <p>Given that the observations are independent and identically distributed with $x_i \sim N(\mu, \sigma^2)$, the MGF of a single observation $x_i$ is:</p>
             $$M_{x_i}(t) = E[e^{tx_i}] = \exp\left( \mu t + \frac{\sigma^2 t^2}{2} \right)$$
 
             <strong>2. Define the Sample Mean</strong>
@@ -122,6 +127,7 @@ body {
     <div class="intuition-box" style="margin-top: 15px; background: #f0f7ff; padding: 15px; border-left: 5px solid #0056b3;">
         <strong>Conclusion:</strong> The final expression is the MGF of a Normal distribution with mean $\mu$ and variance $\sigma^2/n$. Therefore, we have proven:
         <p style="text-align: center; font-weight: bold; font-size: 1.1rem; margin-top: 10px;">$\bar{x} \sim N\left(\mu, \frac{\sigma^2}{n}\right)$</p>
+        Hence the <strong>standard error of the mean</strong> is $S.E.(\bar{x}) = \dfrac{\sigma}{\sqrt{n}}$. For a non-normal population with finite variance, the same mean and standard error hold, and by the Central Limit Theorem $\bar{x}$ is approximately normal when $n$ is large. For a repeated-sampling picture of this spread, see <a href="EstimationTheory.html">Estimation Theory</a>.
     </div>
 
     <div class="note-box" style="background-color: #fff9db; border-left: 5px solid #fcc419; padding: 15px; margin: 20px 0;">
@@ -138,7 +144,7 @@ body {
         </ul>
     </div>
 
-    <div class="example-box" style="border: 2px solid #0056b3; border-radius: 8px; margin-top: 30px; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div class="example-box" style="border: 2px solid #0056b3; border-radius: 8px; margin-top: 30px; overflow: hidden; ">
         <div class="example-header" style="background-color: #0056b3; color: white; padding: 12px 20px; font-weight: bold; font-size: 1.2rem;">
             Example: Probability and the Sampling Distribution
         </div>
@@ -162,7 +168,7 @@ body {
                     $$SE = \frac{\sigma}{\sqrt{n}} = \frac{10}{\sqrt{20}} = \frac{10}{4.472} \approx 2.236$$
                 </li>
             </ul>
-            <p>The sampling distribution is $\bar{x} \sim N(30, 2.236)$.</p>
+            <p>The sampling distribution is $\bar{x} \sim N(30,\ 5)$, i.e. variance $SE^2 = 2.236^2 = 5$ and standard error $2.236$. (The same standardisation $Z=\frac{\bar{x}-\mu}{SE}$ gives the test statistic used in a <a href="SamplingndStatisticalInference.html#z-test-example">Z-test</a>.)</p>
 
             <p><strong>Step 2: Probability that $\bar{x}$ exceeds 35</strong></p>
             <p>We want to find $P(\bar{x} > 35)$. First, calculate the Z-score:</p>
@@ -190,13 +196,13 @@ body {
     </div>
 
     <div class="description-box">
-        <h3> Commonly Used Sampling Distributions</h3>
+        <h3 id="distributions-table">Commonly Used Sampling Distributions</h3>
          <p class="detail-description">
            There are several standard distributions used for testing of hypothesis and other statistical inferences purposes. Given below is a table listing the widely sampling distributions.
         </p>
         
         <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #fff; font-size: 0.95rem; font-family: sans-serif;">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #fff; font-size: 0.95rem; ">
                 <thead>
                     <tr style="background-color: #0056b3; color: white; text-align: left;">
                         <th style="padding: 12px; border: 1px solid #dee2e6;">Distribution</th>
@@ -214,15 +220,15 @@ body {
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$\mu$</td>
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$\sigma$</td>
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$Z = \frac{\bar{x} - \mu}{\sigma / \sqrt{n}}$</td>
-                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used for Z-tests concerning population means when variance is known or sample size is large.</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used for Z-tests concerning population means when variance is known or sample size is large.<br><a href="SamplingndStatisticalInference.html#test-distributions">How it is used in a test &rarr;</a></td>
                     </tr>
                     <tr style="background-color: #f9f9f9;">
                         <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Chi-Square ($\chi^2$)</strong><br>with $n$ d.f.</td>
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$f(x) = \frac{1}{2^{n/2}\Gamma(n/2)} x^{(n/2)-1} e^{-x/2}$</td>
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$n$</td>
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$\sqrt{2n}$</td>
-                        <td style="padding: 12px; border: 1px solid #dee2e6;">$\chi^2 = \frac{(n-1)s^2}{\sigma^2}$</td>
-                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used for testing population variance, Goodness of Fit, and Independence in contingency tables.</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$\chi^2 = \frac{(n-1)s^2}{\sigma^2}$ <small>(this statistic has $n-1$ d.f.)</small></td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used for testing population variance, Goodness of Fit, and Independence in contingency tables.<br><a href="SamplingndStatisticalInference.html#test-distributions">How it is used in a test &rarr;</a></td>
                     </tr>
                     <tr>
                         <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Student's $t$</strong><br>with $n$ d.f.</td>
@@ -230,24 +236,26 @@ body {
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$0$ <small>($n > 1$)</small></td>
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$\sqrt{\frac{n}{n-2}}$ <small>($n > 2$)</small></td>
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$t = \frac{\bar{x} - \mu}{s / \sqrt{n}}$</td>
-                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used for testing means when the population variance is unknown and the sample size is small.</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used for testing means when the population variance is unknown and the sample size is small.<br><a href="SamplingndStatisticalInference.html#test-distributions">How it is used in a test &rarr;</a></td>
                     </tr>
                     <tr style="background-color: #f9f9f9;">
                         <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>F-Distribution</strong><br>with $n_1, n_2$ d.f.</td>
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$f(x) = \frac{\sqrt{\frac{(n_1 x)^{n_1} n_2^{n_2}}{(n_1 x + n_2)^{n_1 + n_2}}}}{x B(\frac{n_1}{2}, \frac{n_2}{2})}$</td>
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$\frac{n_2}{n_2-2}$ <small>($n_2 > 2$)</small></td>
-                        <td style="padding: 12px; border: 1px solid #dee2e6;">Complex formula</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">$\sqrt{\frac{2n_2^2(n_1+n_2-2)}{n_1(n_2-2)^2(n_2-4)}}$ <small>($n_2 > 4$)</small></td>
                         <td style="padding: 12px; border: 1px solid #dee2e6;">$F = \frac{s_1^2}{s_2^2}$</td>
-                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used to compare two population variances and as the basis for Analysis of Variance (ANOVA).</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">Used to compare two population variances and as the basis for Analysis of Variance (ANOVA).<br><a href="SamplingndStatisticalInference.html#test-distributions">How it is used in a test &rarr;</a></td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 20px 0; padding: 25px; border: 1px solid #e1e4e8; border-radius: 8px; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <div style="line-height: 1.6; color: #333; margin: 20px 0; padding: 25px; border: 1px solid #e1e4e8; border-radius: 8px; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
 
-        <h2 style="color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px;">Deriving the Chi-Square Test statistic </h2>
+        <h2 style="color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px;" id="chi-square-derivation">Deriving the Chi-Square Test statistic</h2>
+
+        <div style="margin-bottom: 20px; padding: 12px; background-color: #f0f7ff; border-left: 5px solid #0056b3; font-size: 0.95rem;"><strong>Notation:</strong> $S^2=\frac1n\sum(x_i-\bar{x})^2$ (divisor $n$) and $s^2=\frac1{n-1}\sum(x_i-\bar{x})^2$ (divisor $n-1$). Since $nS^2=(n-1)s^2$, the statistics $\frac{nS^2}{\sigma^2}$ and $\frac{(n-1)s^2}{\sigma^2}$ are the same number, both $\sim\chi^2_{n-1}$. The table and the worked examples below use $s^2$.</div>
 
         <div style="margin-bottom: 25px; padding: 15px; background-color: #fff8e1; border-left: 5px solid #ffc107; border-radius: 4px;">
             <h4 style="margin: 0 0 10px 0; color: #856404;">The Rule of Transformation (Jacobian)</h4>
@@ -296,7 +304,7 @@ body {
         </div>
     </div>
 
-    <div class="example-box" style="border: 2px solid #0056b3; border-radius: 8px; margin: 20px 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div class="example-box" style="border: 2px solid #0056b3; border-radius: 8px; margin: 20px 0; overflow: hidden; ">
         <div class="example-header" style="background-color: #0056b3; color: white; padding: 12px 20px; font-weight: bold; font-size: 1.2rem;">
             Worked Example: Finding Minimum Sample Variance
         </div>
@@ -342,10 +350,10 @@ body {
             </div>
         </div>
     </div>
-	<div class="derivation-box" style="border: 1px solid #0056b3; border-radius: 8px; margin: 25px 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+	<div class="derivation-box" style="border: 1px solid #0056b3; border-radius: 8px; margin: 25px 0; overflow: hidden; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     
     <div style="background-color: #0056b3; color: white; padding: 15px 20px; font-weight: bold; font-size: 1.25rem;">
-        Deriving the Test statistic for T-Distribution
+        <a id="t-derivation"></a>Deriving the Test statistic for T-Distribution
     </div>
 
     <div style="padding: 25px; background-color: #ffffff; line-height: 1.7; color: #2c3e50;">
@@ -364,9 +372,10 @@ body {
             If $x \sim N(\mu, \sigma^2)$, then the sample mean $\bar{x} \sim N(\mu, \sigma^2/n)$. Standardizing gives:</p>
             <div style="text-align: center;">$$Z = \frac{(\bar{x} - \mu)\sqrt{n}}{\sigma}$$</div>
 
-            <p><strong>Denominator part:The Chi-square ($V$)</strong><br>
+            <p><strong>Denominator part: The Chi-square ($V$)</strong><br>
             The sum of squared deviations follows a Chi-square distribution with $k = n-1$ degrees of freedom:</p>
             <div style="text-align: center;">$$V = \frac{\sum(x_i - \bar{x})^2}{\sigma^2} = \frac{nS^2}{\sigma^2} \sim \chi^2_{(n-1)}$$</div>
+            <p>For a sample from a normal population, $\bar{x}$ and $S^2$ are independent, so $Z$ and $V$ are independent, exactly as the definition of $t$ requires.</p>
         </div>
 
         <h3 style="color: #0056b3; font-size: 1.15rem; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px;">Step 2. Construct the Ratio</h3>
@@ -377,15 +386,15 @@ body {
             $$t = \frac{(\bar{x} - \mu)\sqrt{n}}{\sigma} \cdot \frac{\sigma \sqrt{n-1}}{S \sqrt{n}}$$
 			$$t = \frac{(\bar{x} - \mu)\sqrt{n-1}}{S}$$
         </div>
-        <h3 style="color: #0056b3; font-size: 1.15rem; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px;">Step 4. Conclusion</h3>
+        <h3 style="color: #0056b3; font-size: 1.15rem; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px;">Step 3. Conclusion</h3>
         <p>Because we represented the expression as $Z / \sqrt{V/k}$ = $t = \frac{(\bar{x} - \mu)\sqrt{n-1}}{S}$, it follows the <strong>Student's $t$-distribution with $n-1$ degrees of freedom.</strong></p>
 
         <div style="margin-top: 20px; padding: 15px; background-color: #e7f3ff; border-left: 5px solid #0056b3; font-size: 0.95rem;">
-            <strong></strong> Mathematical Idea." The $(\bar{x} - \mu)$ part brings in the Normal property, and the $S$ part brings in the Chi-square property. By combining them, the <strong>unknown population variance $\sigma$ disappears</strong>, allowing for inference without perfect population knowledge.
+            <strong>Mathematical Idea:</strong> The $(\bar{x} - \mu)$ part brings in the Normal property, and the $S$ part brings in the Chi-square property. By combining them, the <strong>unknown population variance $\sigma$ disappears</strong>, allowing for inference without perfect population knowledge.
         </div>
 
     </div> </div> 
-	<div class="example-box" style="border: 2px solid #0056b3; border-radius: 8px; margin: 25px 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+	<div class="example-box" style="border: 2px solid #0056b3; border-radius: 8px; margin: 25px 0; overflow: hidden; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     
     <div class="example-header" style="background-color: #0056b3; color: white; padding: 12px 20px; font-weight: bold; font-size: 1.2rem;">
         Numerical Example: Inference with the $t$-Distribution
@@ -394,7 +403,7 @@ body {
     <div class="example-body" style="padding: 20px; background-color: #f8f9fa; line-height: 1.6;">
         
         <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #dee2e6; margin-bottom: 20px;">
-            <p style="margin: 0;"><strong>Question:</strong> A sample of size $n=25$ drawn from a normal population has mean $\mu=20$ and sample variance $s^2=8$. Find the probability that:
+            <p style="margin: 0;"><strong>Question:</strong> A sample of size $n=25$ drawn from a normal population comes from a normal population with mean $\mu=20$, and the sample variance is $s^2=8$. Find the probability that:
                 <br><strong>(1)</strong> The sample mean ($\bar{x}$) is greater than 21.
                 <br><strong>(2)</strong> The sample mean ($\bar{x}$) lies between 19 and 21.
             </p>
@@ -448,16 +457,14 @@ body {
         </div>
 
         <div style="margin-top: 20px; padding: 12px; background-color: #fff9db; border-left: 5px solid #fcc419; font-size: 0.9rem; color: #856404;">
-            <strong>Theoretical Note:</strong> The $t$-distribution effectively "penalizes" our uncertainty by having thicker tails. If we had used $Z$ here, our estimated probability would be slightly higher, potentially leading to an overconfident (and incorrect) conclusion.
+            <strong>Theoretical Note:</strong> The $t$-distribution has thicker tails than $Z$, so it puts more probability far from the mean. With $Z$ we would get $P(\bar{x}>21)\approx0.0385$ (too small) and $P(19<\bar{x}<21)\approx0.923$ (too large), which would make us overconfident about how close $\bar{x}$ stays to $\mu$.
         </div>
 
-    </div> </div> ```
-	<div class="derivation-box" style="border: 1px solid #28a745; border-radius: 8px; margin: 25px 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    
-    <div class="derivation-box" style="border: 1px solid #0056b3; border-radius: 8px; margin: 25px 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    </div> </div>
+    <div class="derivation-box" style="border: 1px solid #0056b3; border-radius: 8px; margin: 25px 0; overflow: hidden; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     
     <div style="background-color: #0056b3; color: white; padding: 15px 20px; font-weight: bold; font-size: 1.25rem;">
-        Mathematical Proof: The Derivation of the $F$-Distribution Ratio
+        <a id="f-derivation"></a>Mathematical Proof: The Derivation of the $F$-Distribution Ratio
     </div>
 
     <div style="padding: 25px; background-color: #ffffff; line-height: 1.7; color: #2c3e50;">
@@ -503,8 +510,56 @@ body {
             <strong>Tutorial Insight:</strong> This proof is the reason why the $F$-test is so powerful for comparing variances. It allows us to determine if two samples have significantly different variabilities without needing to know the actual value of the population variance ($\sigma^2$), provided the populations are normally distributed.
         </div>
 
-    </div> </div> ```
+    </div> </div>
 
+    <div class="stat-box" style="background:#eef6ff; border-left:5px solid #0056b3; padding:10px 14px; margin:12px 0;"><strong>Related pages:</strong> Next: <a href="SamplingndStatisticalInference.html#test-distributions">use these distributions in Hypothesis Testing &rarr;</a> (Z, t, &chi;&sup2; and F tests, critical regions, worked examples) </div>
+</div> 
+<section id="transformer-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Quiz on Testing of Hypothesis and Statistical Inference</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "What is the main &ldquo;information bottleneck&rdquo; of a classic RNN encoder&ndash;decoder (Seq2Seq) model?",
+              a: "The whole input sequence must be compressed into one fixed-length context vector",
+              w: ["The decoder can only generate one token per sequence", "The encoder has no hidden state to store information", "The output vocabulary is limited to the words in the input"] },
+            { q: "Why can Transformers be trained far more efficiently on GPUs than RNNs?",
+              a: "All token positions are processed in parallel, with no step-by-step recurrence over time",
+              w: ["They always have fewer parameters than an RNN", "They avoid matrix multiplications altogether", "They read the sequence one token at a time, but with bigger batches"] },
+            { q: "Why is positional encoding added to the token embeddings?",
+              a: "Self-attention has no built-in notion of word order, so position information must be injected",
+              w: ["To reduce the embedding dimension", "To convert tokens into integer IDs", "To normalise every embedding to unit length"] },
+            { q: "In self-attention, how are the Query, Key and Value vectors obtained?",
+              a: "By multiplying each token's vector with three learned matrices W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup>",
+              w: ["Q comes from the input, while K and V are fixed random vectors", "They are looked up from three separate vocabulary tables", "They are the output of the softmax over the attention scores"] },
+            { q: "Why are attention scores divided by &radic;d<sub>k</sub> before the softmax?",
+              a: "Large dot products would saturate the softmax and shrink its gradients",
+              w: ["To make the attention weights sum to 1", "To mask out future tokens", "To reduce the number of heads required"] },
+            { q: "What does the causal mask do in a decoder-only (GPT-style) Transformer?",
+              a: "It stops each token from attending to tokens that come after it",
+              w: ["It hides random tokens so the model must reconstruct them", "It removes padding tokens from the loss", "It stops each token from attending to itself"] },
+            { q: "What is the benefit of multi-head attention over a single head?",
+              a: "Different heads can learn to focus on different kinds of relationships in different subspaces",
+              w: ["It shortens the sequence before attention is applied", "It removes the need for positional encoding", "It lets the model skip the feed-forward layer"] },
+            { q: "How does the feed-forward network (FFN) in a Transformer layer treat the tokens?",
+              a: "Each token vector is transformed independently, using the same weights at every position",
+              w: ["It mixes information across all tokens, just like attention", "Every position has its own separately trained FFN", "It only runs on the last token of the sequence"] },
+            { q: "How does a decoder-only Transformer turn its final hidden vectors into a next-token prediction?",
+              a: "A linear projection to vocabulary size followed by a softmax over the vocabulary",
+              w: ["A softmax over the embedding dimension followed by averaging", "A nearest-neighbour lookup in the positional-encoding table", "A second self-attention block that outputs one word directly"] },
+            { q: "What is the usual order of the three LLM training stages?",
+              a: "Unsupervised pre-training &rarr; Supervised fine-tuning (SFT) &rarr; RLHF / alignment",
+              w: ["SFT &rarr; Pre-training &rarr; RLHF", "RLHF &rarr; SFT &rarr; Pre-training", "Pre-training &rarr; RLHF &rarr; SFT"] }
+        ]
+            });
+            </script>
+        </section>
 
 
 

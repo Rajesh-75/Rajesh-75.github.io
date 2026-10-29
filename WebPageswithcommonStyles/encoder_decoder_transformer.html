@@ -1030,7 +1030,98 @@ hr.divider {
       </tbody>
     </table>
 	
-	<!-- ══ SECTION X: ENCODER–DECODER INPUT/OUTPUT FLOW ══ -->
+	  <!-- ══ SECTION 9: HOW REAL LLMs USE THESE ARCHITECTURES ══ -->
+  <div class="section">
+    <h2><span class="sec-num">9</span> How Real LLMs Use These Architectures</h2>
+    <p>
+      The three architectures differ in wiring, but BERT, GPT and T5 also differ in <strong>what they are trained to predict</strong>
+      and in <strong>how they are put to work</strong>. The table maps each family to its usual pretraining objective.
+    </p>
+
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th>Family</th>
+          <th>Typical pretraining objective</th>
+          <th>How it is used</th>
+          <th>Examples</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Encoder-only</strong></td>
+          <td><strong>Masked language modelling</strong> — hide some tokens (BERT masks about 15%) and predict them from the context on <em>both</em> sides</td>
+          <td>Add a small task head on the output vectors and fine-tune: classification, tagging, search embeddings</td>
+          <td>BERT, RoBERTa</td>
+        </tr>
+        <tr>
+          <td><strong>Decoder-only</strong></td>
+          <td><strong>Next-token prediction</strong> — predict token t+1 from the tokens up to t; every position gives a training signal</td>
+          <td>Prompt it and let it continue; instruction tuning and RLHF turn it into a chat assistant</td>
+          <td>GPT-3, Claude, LLaMA</td>
+        </tr>
+        <tr>
+          <td><strong>Encoder–Decoder</strong></td>
+          <td><strong>Denoising / text-to-text</strong> — T5 masks spans of the input and the Decoder generates the missing text; BART corrupts the text and the Decoder reconstructs the original</td>
+          <td>Cast every task as source text → target text: translation, summarisation, Seq2Seq</td>
+          <td>T5, BART</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3><span class="label-strip ls-green">Masked Language Modelling, step by step</span></h3>
+    <p>
+      Masked language modelling (MLM) is how an Encoder-only model learns language from raw text, with no labels. Using the page's
+      running example, <code>"The cat sat on the mat"</code>:
+    </p>
+    <ol>
+      <li><strong>Choose:</strong> pick about 15% of the token positions at random — say the last token, <code>"mat"</code>.</li>
+      <li><strong>Mask:</strong> replace it with a special <code>[MASK]</code> token, giving <code>"The cat sat on the [MASK]"</code>.
+        (BERT replaces 80% of the chosen tokens with <code>[MASK]</code>, 10% with a random token and leaves 10% unchanged, so the model
+        does not learn to rely on <code>[MASK]</code> being there — it never appears when the model is later fine-tuned.)</li>
+      <li><strong>Encode:</strong> the whole corrupted sentence passes through the bidirectional Encoder in parallel, so the vector at
+        the <code>[MASK]</code> position is built from the words around it.</li>
+      <li><strong>Predict:</strong> project that vector to the vocabulary size, apply a softmax, and compare with the original token
+        <code>"mat"</code> using cross-entropy. The loss is computed <em>only at the masked positions</em>.</li>
+    </ol>
+
+    <div class="callout cl-amber">
+      <div class="callout-title">Two different “masks” — do not confuse them</div>
+      The <strong>causal mask</strong> in the Decoder (Section 4) blocks <em>attention</em> to future positions; the input text is intact.
+      The <strong>[MASK] token</strong> in MLM hides <em>input words</em>; attention is completely unrestricted. Also note that only about 15% of
+      positions contribute to the MLM loss, so one sentence gives fewer training signals than next-token prediction, where every position does.
+    </div>
+
+    <div class="callout cl-blue">
+      <div class="callout-title">BERT in brief</div>
+      BERT (Devlin et al., 2018) is a stack of bidirectional Encoder layers — exactly the Encoder of Section 2, with no Decoder.
+      It is pretrained by masked language modelling: about 15% of the tokens are hidden and predicted from the words on <em>both</em> sides,
+      so every token sees the whole sentence. The output vector of a special <code>[CLS]</code> token is commonly used to represent the whole input for classification.
+    </div>
+
+    <div class="callout cl-teal">
+      <div class="callout-title">T5 in brief</div>
+      T5 (Raffel et al., 2020, the “Text-to-Text Transfer Transformer”) is a full Encoder–Decoder in which every task is text in, text out,
+      marked by a short prefix on the input such as <code>translate English to German:</code> or <code>summarize:</code>.
+      It is pretrained by span corruption: random spans of the input are replaced by sentinel tokens, and the Decoder generates the missing spans.
+    </div>
+
+    <div class="callout cl-purple">
+      <div class="callout-title">BART in brief</div>
+      BART (Lewis et al., 2019) is also a full Encoder–Decoder: a bidirectional Encoder like BERT feeding a causal Decoder like GPT.
+      It is a denoising autoencoder — the text is corrupted (for example tokens are masked, or a whole span is replaced by a single mask token)
+      and the Decoder reconstructs the full original text, which makes it especially strong at summarisation.
+    </div>
+
+    <div class="callout cl-amber">
+      <div class="callout-title">Why are most general-purpose chat LLMs decoder-only?</div>
+      One simple stack with one objective — next-token prediction — gives a training signal at every position and scales with
+      data and compute. Because any task can be written as a prompt for the model to continue, no separate Encoder is needed.
+      Encoder–Decoder models remain a strong choice for focused source → target tasks such as translation and summarisation.
+    </div>
+  </div>
+
+  <!-- ══ SECTION X: ENCODER–DECODER INPUT/OUTPUT FLOW ══ -->
 <div class="section">
   <h2><span class="sec-num">X</span> Encoder–Decoder: Input/Output Flow, Stage by Stage</h2>
   <p>
@@ -1116,6 +1207,100 @@ hr.divider {
       = <strong>Full Encoder–Decoder Transformer</strong> — both bottlenecks eliminated, fully parallelisable
     </div>
   </div>
+<section id="encoder-decoder-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Encoder-Decoder Architecture Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "Architecture: How does the full Encoder&ndash;Decoder Transformer remove both bottlenecks of the RNN Encoder&ndash;Decoder?",
+              a: "Parallel self-attention in the Encoder removes the sequential bottleneck, and cross-attention gives the Decoder direct access to all Encoder vectors, removing the single fixed-size context vector",
+              w: ["Parallel self-attention in the Decoder removes the sequential bottleneck, and a larger LSTM hidden state removes the context bottleneck", "Bahdanau Attention alone removes both bottlenecks", "A bigger context vector removes the context bottleneck, while the sequential bottleneck stays by design"] },
+            { q: "Architecture: In cross-attention, where do the Query, Key and Value come from?",
+              a: "Q comes from the Decoder&rsquo;s current hidden state, while K and V come from the Encoder&rsquo;s output vectors",
+              w: ["Q comes from the Encoder, while K and V come from the Decoder", "Q, K and V all come from the Decoder&rsquo;s own tokens", "Q and K come from the Encoder, while V comes from the Decoder"] },
+            { q: "Architecture: What are the three sublayers of a Decoder layer, in order?",
+              a: "Masked multi-head self-attention &rarr; multi-head cross-attention &rarr; feed-forward network, each followed by a residual connection and layer normalisation",
+              w: ["Cross-attention &rarr; masked self-attention &rarr; feed-forward network", "Masked self-attention &rarr; feed-forward network &rarr; cross-attention", "Self-attention &rarr; feed-forward network only, with cross-attention in a separate layer after the stack"] },
+            { q: "Architecture: What does the causal mask in the Decoder&rsquo;s self-attention do?",
+              a: "It stops the Decoder at position t from seeing positions t+1 onward, so it cannot peek at future target tokens during training",
+              w: ["It hides padding tokens in the source sentence", "It hides random source tokens so the Encoder must reconstruct them", "It stops the Decoder from attending to the Encoder"] },
+            { q: "Architecture: What is teacher forcing, and how does inference differ?",
+              a: "During training the correct target tokens are fed in at every position simultaneously (the causal mask still blocks look-ahead); at inference each predicted token is fed back as the next input",
+              w: ["During training the Decoder waits for its own previous prediction; at inference the correct tokens are fed in", "During training the source tokens are fed into the Decoder", "Teacher forcing is used only at inference time"] },
+            { q: "Architecture: In the translation walk-through, how often does the Encoder run, and what happens to its output?",
+              a: "It runs once; the output vectors E<sub>1</sub>&hellip;E<sub>6</sub> are held fixed and reused at every decoding step",
+              w: ["It re-runs at every decoding step with the newly generated token", "It runs once per Decoder layer", "Its vectors are overwritten at each step by the Decoder output"] },
+            { q: "Architecture: When generating &ldquo;chat&rdquo; (step 2), where does the cross-attention weight fall, and what does it show?",
+              a: "Mostly on &ldquo;cat&rdquo; (&alpha; = 0.72), so the Decoder query finds the source token that corresponds to the word being generated",
+              w: ["Mostly on &ldquo;The&rdquo; (&alpha; = 0.72), because it is the start of the sentence", "Evenly across all six source tokens", "Mostly on &ldquo;chat&rdquo; itself, because it attends to the Decoder&rsquo;s own tokens"] },
+            { q: "Architecture: What are the Decoder&rsquo;s two separate inputs, and where does each enter?",
+              a: "Input #1 is the target tokens generated so far (shifted right), entering masked self-attention; Input #2 is the Encoder&rsquo;s final output, entering only at cross-attention as K and V",
+              w: ["Input #1 is the source sentence and Input #2 is the target sentence, both entering the first layer", "Both inputs enter at the first masked self-attention", "Input #2 enters only at the last Decoder layer"] },
+            { q: "Architecture: How does Transformer cross-attention differ from Bahdanau Attention?",
+              a: "Bahdanau uses an additive MLP score with a sequential LSTM encoder and a single attention; cross-attention uses scaled dot-product QK<sup>T</sup>/&radic;d<sub>k</sub> with explicit Q, K, V, multiple heads and a parallel Encoder",
+              w: ["Bahdanau uses scaled dot-product scoring and is multi-head, while cross-attention uses an additive MLP", "Both use additive MLP scoring, and the only difference is the number of layers", "Bahdanau is multi-head, while cross-attention is single-head"] },
+            { q: "Comparison: How many sublayers does one layer have in an Encoder-only, a Decoder-only and a full Encoder&ndash;Decoder (Decoder) stack?",
+              a: "2 (self-attention + FFN), 2 (masked self-attention + FFN) and 3 (masked self-attention + cross-attention + FFN)",
+              w: ["3, 3 and 3", "3, 2 and 2", "2, 3 and 4"] },
+            { q: "Comparison: What is the attention direction in Encoder-only, Decoder-only and Encoder&ndash;Decoder models?",
+              a: "Encoder-only is bidirectional; Decoder-only is causal (left-to-right); in Encoder&ndash;Decoder the Encoder is bidirectional and the Decoder is causal",
+              w: ["Encoder-only is causal; Decoder-only is bidirectional; Encoder&ndash;Decoder is bidirectional throughout", "All three are bidirectional", "All three are causal"] },
+            { q: "Comparison: Which architectures have cross-attention, and which can generate text?",
+              a: "Only the Encoder&ndash;Decoder has cross-attention; Decoder-only and Encoder&ndash;Decoder can generate, but Encoder-only cannot",
+              w: ["Encoder-only and Decoder-only have cross-attention; only Decoder-only can generate", "All three have cross-attention, and all three can generate", "Only Decoder-only has cross-attention, and only Encoder-only can generate"] },
+            { q: "Comparison: How does the input&ndash;output mapping differ across the three architectures?",
+              a: "Encoder-only: sequence &rarr; vectors; Decoder-only: sequence &rarr; next token; Encoder&ndash;Decoder: source sequence &rarr; target sequence",
+              w: ["Encoder-only: sequence &rarr; next token; Decoder-only: sequence &rarr; vectors; Encoder&ndash;Decoder: sequence &rarr; vectors", "All three map a sequence to the next token", "Encoder-only: source &rarr; target; Decoder-only: sequence &rarr; vectors; Encoder&ndash;Decoder: sequence &rarr; class label"] },
+            { q: "Comparison: In the full Transformer, the Encoder stack is identical to which standalone architecture?",
+              a: "The Encoder-only (BERT-style) architecture, with bidirectional self-attention",
+              w: ["The Decoder-only (GPT-style) architecture", "A bidirectional LSTM", "The Encoder of the RNN Seq2Seq model"] },
+            { q: "Usage: BERT and RoBERTa follow which architecture, and what are they best suited for?",
+              a: "Encoder-only; classification and search, since they output vectors rather than generated text",
+              w: ["Decoder-only; chat and code generation", "Encoder&ndash;Decoder; translation and summarisation", "Encoder-only; autoregressive text generation"] },
+            { q: "Usage: GPT-3, Claude and LLaMA use which architecture, and why does it suit them?",
+              a: "Decoder-only: causal (left-to-right) masked self-attention predicts the next token, so they generate text for chat, code and writing",
+              w: ["Encoder&ndash;Decoder: cross-attention gives them a separate source sequence", "Encoder-only: bidirectional attention lets them generate text", "Decoder-only with cross-attention to a separate Encoder"] },
+            { q: "Usage: T5, BART and the original Transformer follow which architecture, and for which tasks?",
+              a: "Encoder&ndash;Decoder; translation, summarisation and other source-to-target (Seq2Seq) tasks",
+              w: ["Decoder-only; chat and code generation", "Encoder-only; classification and search", "Decoder-only; search and ranking"] },
+            { q: "Usage: Which architecture is the original 2017 &ldquo;Attention Is All You Need&rdquo; Transformer, and what was its first target task?",
+              a: "The Encoder&ndash;Decoder architecture, applied to machine translation",
+              w: ["The Decoder-only architecture, applied to chat", "The Encoder-only architecture, applied to text classification", "A hybrid of RNN and Decoder-only layers, applied to speech"] },
+            { q: "Usage: A search engine needs one contextual vector per document for ranking and never generates text. Which architecture fits?",
+              a: "Encoder-only (BERT-style): bidirectional attention yields a contextual vector for every token, used for classification and search",
+              w: ["Decoder-only, because its causal attention predicts the next token", "Encoder&ndash;Decoder, because cross-attention is always needed", "Any of them equally, since all three generate text the same way"] },
+            { q: "Usage: A coding assistant must continue a prompt token by token. Which architecture fits, and what limits what each token can see?",
+              a: "Decoder-only; the causal mask lets each token see only the tokens before it",
+              w: ["Encoder-only; bidirectional attention shows each token every other token", "Encoder&ndash;Decoder; the Decoder&rsquo;s cross-attention lets it see the future of the target", "Decoder-only; each token can attend to all tokens, including future ones"] },
+            { q: "Usage: How is an Encoder-only model such as BERT pretrained?",
+              a: "With masked language modelling: some tokens are hidden and predicted from the context on both sides",
+              w: ["With next-token prediction from the left context only", "By translating source sentences into target sentences", "By classifying sentences with human-annotated topic labels"] },
+            { q: "Usage: What is the pretraining objective of a Decoder-only model such as GPT or LLaMA?",
+              a: "Next-token prediction: predict token t+1 from the tokens up to t, so every position provides a training signal",
+              w: ["Masked language modelling: hide tokens and predict them from both sides", "Source-to-target translation using cross-attention", "Reconstructing corrupted text spans with a separate Encoder"] },
+            { q: "Usage: How is T5 trained and used?",
+              a: "Spans of the input are masked and the Decoder generates the missing text; every task is cast as text-to-text (source text &rarr; target text)",
+              w: ["With next-token prediction over a single sequence, every task being a prompt to continue", "With masked language modelling in the Encoder alone, plus a separate classification head for each task", "Only on translation pairs, so it cannot be used for summarisation"] },
+            { q: "Usage: How is BART trained?",
+              a: "The input text is corrupted, and the Decoder learns to reconstruct the original text from the Encoder&rsquo;s representation",
+              w: ["The Decoder predicts the next sentence of a document with no Encoder involved", "The Encoder predicts the masked tokens alone, and the Decoder is unused", "The Decoder is trained on translation pairs only"] },
+            { q: "Usage: How is an Encoder-only model typically put to work, compared with a Decoder-only model?",
+              a: "Encoder-only: a small task head on its output vectors is fine-tuned (classification, tagging, search embeddings); Decoder-only: it is prompted to continue text, and instruction tuning and RLHF turn it into a chat assistant",
+              w: ["Encoder-only: it is prompted to continue text; Decoder-only: it needs a classification head", "Both are used only after fine-tuning on translation pairs", "Encoder-only models are prompted to chat, and Decoder-only models are used only for search embeddings"] },
+            { q: "Usage: Why are most general-purpose chat LLMs decoder-only?",
+              a: "One simple stack with one objective, next-token prediction, gives a training signal at every position and scales with data and compute; any task can be written as a prompt to continue, so no separate Encoder is needed",
+              w: ["Decoder-only models are bidirectional, so they understand context better", "Decoder-only models have cross-attention, which makes them the only architecture that can translate", "Encoder&ndash;Decoder models cannot generate text"] }
+        ]
+            });
+            </script>
+        </section>
 
 </div>
 </body>

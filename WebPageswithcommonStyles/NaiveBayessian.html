@@ -230,5 +230,113 @@ MathJax = {
 
 </section>
 
+<section id="nb-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Naive Bayes Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "In Bayes&rsquo; theorem, what is the prior P(A)?",
+              a: "Our belief about A before seeing any new evidence, based on existing knowledge, historical frequency or assumption",
+              w: ["Our updated belief about A after seeing the evidence", "The probability of the evidence B assuming A is true", "The constant that normalises the posterior"] },
+            { q: "What is the likelihood P(B|A)?",
+              a: "How probable the observed evidence B is, assuming A is true &ndash; how well the hypothesis explains the data",
+              w: ["Our belief about A before seeing any evidence", "Our updated belief about A after seeing the evidence", "The probability that A and B never occur together"] },
+            { q: "What is the posterior P(A|B), and how is it related to the prior and the likelihood?",
+              a: "The updated belief about A after the evidence B; Posterior &prop; Prior &times; Likelihood",
+              w: ["The belief before the evidence; Posterior &prop; Prior + Likelihood", "The likelihood alone; Posterior = Likelihood", "The updated belief; Posterior &prop; Prior / Likelihood"] },
+            { q: "Box A has 8 red and 2 blue balls; Box B has 3 red and 7 blue. What are P(red | Box A) and P(red | Box B)?",
+              a: "0.8 and 0.3",
+              w: ["0.5 and 0.5, the priors", "0.4 and 0.15, the prior &times; likelihood products", "8 and 3, the raw counts"] },
+            { q: "With a 50/50 prior and a red ball drawn, the products are 0.4 for Box A and 0.15 for Box B. What is P(Box A | red) after normalising?",
+              a: "0.4/0.55 &asymp; 0.73",
+              w: ["0.8, which is the likelihood", "0.5, which is the prior", "0.27, which is P(Box B | red)"] },
+            { q: "Why can a pixel whose colour strongly matches typical skin tones get a high posterior even though only 20% of pixels are skin?",
+              a: "The likelihood P(colour | skin) is high for skin-like colours and dominates the low prior",
+              w: ["The posterior is always equal to the prior", "RGB values are independent of whether a pixel is skin", "The prior is computed after seeing the pixel"] },
+            { q: "How does Bayes&rsquo; theorem turn classification into a belief-updating problem?",
+              a: "P(class | features) &prop; P(class) &times; P(features | class), and the predicted class is the one with the highest posterior",
+              w: ["The predicted class is the one with the highest prior", "The predicted class is the one with the lowest likelihood", "The features are discarded and only the class frequencies are used"] },
+            { q: "Why can&rsquo;t P(class) &times; P(features | class) be used directly for text classification?",
+              a: "The likelihood is the joint probability of all features together, and the number of feature combinations explodes exponentially",
+              w: ["The prior cannot be estimated from data", "The posterior is always equal to 1", "Bayes&rsquo; theorem only works with numerical features"] },
+            { q: "What is the data-sparsity problem with estimating the joint likelihood directly?",
+              a: "With realistic dataset sizes most specific feature combinations never appear in the training data, so their joint probability cannot be estimated from counts",
+              w: ["Most features are missing at test time", "The training data contains every combination, but it is too large to store", "The counts are always too large to normalise"] },
+            { q: "What is the &ldquo;naive&rdquo; independence assumption?",
+              a: "Every feature is treated as conditionally independent of every other feature, given the class",
+              w: ["Every feature is independent of the class", "Every feature is unconditionally independent of the others, whatever the class", "The classes are independent of one another"] },
+            { q: "Why is it called &ldquo;naive&rdquo;, and what does it trade?",
+              a: "The assumption is almost never perfectly true (word choices and neighbouring pixels are correlated), and it trades some accuracy for tractability",
+              w: ["It ignores the prior, trading speed for accuracy", "It only works for two classes", "It needs no training data at all"] },
+            { q: "What does the independence assumption buy us?",
+              a: "The likelihood splits into a product of small per-feature pieces, each estimated from a small, fixed amount of data instead of an exponential amount per feature combination",
+              w: ["The classifier becomes exactly correct", "The features no longer need to be numeric", "No training data is needed"] },
+            { q: "Why is Naive Bayes training a single fast pass rather than an iterative search?",
+              a: "Each P(f<sub>i</sub> | class) involves one feature, so it can be estimated by counting and normalising in closed form",
+              w: ["It runs gradient descent for only one epoch", "It searches over all feature combinations once", "It tunes the smoothing constant with a grid search"] },
+            { q: "After the independence assumption, what does the posterior formula become?",
+              a: "P(class | features) &prop; P(class) &times; P(f<sub>1</sub> | class) &times; &hellip; &times; P(f<sub>n</sub> | class)",
+              w: ["P(class) divided by the product of the P(f<sub>i</sub> | class)", "P(class) plus the sum of the P(f<sub>i</sub> | class)", "The product of the P(class | f<sub>i</sub>) with no prior"] },
+            { q: "Why does the algorithm work in log-space?",
+              a: "Multiplying many small probabilities underflows to zero, and the log turns every multiplication into an addition",
+              w: ["Logs make every probability larger than 1", "Logs remove the need for the prior", "Logs let the classifier skip smoothing"] },
+            { q: "Why can the denominator P(features) be dropped when comparing classes?",
+              a: "It is identical for every class, so it does not change which class scores highest",
+              w: ["It is always equal to 1", "It is impossible to estimate, so the prior replaces it", "It is already included in the likelihood"] },
+            { q: "What decision rule does Naive Bayes use?",
+              a: "Pick the class c that maximises log P(c) + &sum; log P(f<sub>i</sub> | c)",
+              w: ["Pick the class that minimises the same sum", "Pick the class with the highest prior only", "Pick the class with the highest sum of raw likelihoods, ignoring the prior"] },
+            { q: "The word &ldquo;quantum&rdquo; never appeared in the spam class during training. Without smoothing, what goes wrong?",
+              a: "P(&ldquo;quantum&rdquo; | spam) = 0, so the whole product becomes zero (and log 0 is undefined), overriding all other evidence",
+              w: ["The word is ignored, and the other words decide the class", "The spam prior is reduced to zero for every message", "The word gets the highest probability of any word"] },
+            { q: "In Laplace smoothing, P(f<sub>i</sub> | class) = (count + 1)/(total + V). What does the +V in the denominator do?",
+              a: "It compensates for the +1 added to each of the V feature counts, so the probabilities still sum to 1",
+              w: ["It makes unseen features more probable than seen ones", "It adds V extra training documents", "It removes the need for a prior"] },
+            { q: "The spam class has 100 word occurrences in total, the vocabulary has V = 50 words, and a word never occurred in spam. What is its Laplace-smoothed probability?",
+              a: "(0 + 1)/(100 + 50) = 1/150 &asymp; 0.0067",
+              w: ["0, since the word never occurred", "1/100, forgetting the +V", "1/50, using only the vocabulary size"] },
+            { q: "With the same numbers (100 total, V = 50), what is the smoothed probability of a word that occurred 4 times in spam?",
+              a: "(4 + 1)/(100 + 50) = 1/30 &asymp; 0.033",
+              w: ["4/100 = 0.04, the unsmoothed estimate", "5/100 = 0.05, forgetting the +V", "4/150 &asymp; 0.027, forgetting the +1"] },
+            { q: "What modest assumption does Laplace smoothing build in?",
+              a: "Even things never seen in training are still possible &ndash; just unlikely",
+              w: ["Unseen features are impossible", "All features are equally likely", "The training data is complete"] },
+            { q: "Which of these are refined alternatives to Laplace smoothing mentioned on the page?",
+              a: "Lidstone, Good-Turing, Jelinek-Mercer and Absolute Discounting",
+              w: ["Gini, entropy, information gain and pruning", "L1, L2, dropout and early stopping", "Min-Max, Z-score, one-hot and binning"] },
+            { q: "In the training pseudocode, how is each log prior computed?",
+              a: "Log_prior[c] = Log(Class_counts[c] / N)",
+              w: ["Log_prior[c] = Log(N / Class_counts[c])", "Log_prior[c] = Class_counts[c] / Num_features", "Log_prior[c] = Log(Feature_counts[c][f] / N)"] },
+            { q: "In the pseudocode, what is the denominator of the smoothed likelihood?",
+              a: "Total_feature_count_per_class[c] + Alpha &times; Num_features, so V is the number of features (vocabulary size)",
+              w: ["Total_feature_count_per_class[c] + Alpha, with no V", "N + Alpha &times; Num_classes", "Class_counts[c] + Num_features"] },
+            { q: "What does Feature_counts[c][f] accumulate during training?",
+              a: "The total count of feature f (for example a word) over all training examples of class c",
+              w: ["The number of classes in which feature f appears", "The prior probability of class c", "The log-likelihood of feature f"] },
+            { q: "Why does Predict_naive_bayes start each score at Log_prior[c]?",
+              a: "The prior P(c) is the first factor of the posterior, and the log-likelihood terms are then added to it",
+              w: ["The prior is used only to break ties between classes", "The score must start at zero, and the prior is added at the end", "The prior is replaced by the likelihood of the first feature"] },
+            { q: "In prediction, the pseudocode adds X_test[f] &times; Log_likelihood[c][f] only when X_test[f] &gt; 0. Why?",
+              a: "A feature occurring x times contributes x times its log-likelihood, and absent features (count 0) contribute nothing",
+              w: ["Features with count 0 would make the score infinite", "Only the first occurrence of a feature should count", "Features with count 0 are removed from the vocabulary"] },
+            { q: "How does Test_naive_bayes measure performance?",
+              a: "Accuracy: the number of correct predictions divided by the number of test examples M",
+              w: ["The sum of the log-likelihoods of the test set", "The precision of class 0 only", "The largest class score over the test set"] },
+            { q: "How does the skin-pixel example relate to Naive Bayes text classification?",
+              a: "In text, word occurrences update the posterior probability of a class (such as spam vs. not-spam), just as pixel colours updated the probability of skin",
+              w: ["Text classification ignores the prior, unlike the pixel example", "Pixels are classified by the independence assumption, and text is not", "The pixel example uses a likelihood, and the text example uses only a prior"] }
+        ]
+            });
+            </script>
+        </section>
+
+
 </body>
 </html>

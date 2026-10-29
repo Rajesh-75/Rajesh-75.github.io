@@ -766,5 +766,82 @@ section ul{ line-height: 1.6; }
   root.pcaDebug = { select: function (i) { sel = i; sidePanel(); draw(); }, click: function (x, y) { lastItems.forEach(function () { }); return lastItems; }, set: function (s, p, k) { if (k) { K = k; $('pcaa-k').value = String(k); } stage = s; prog = p; refresh(); }, D: function () { return D; }, cam: cam, rebuild: function (seed) { SEED = seed; build(); refresh(); } };
 })();
 </script>
+<section id="pca-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Principal Component Analysis Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "What is the main goal of Principal Component Analysis (PCA)?",
+              a: "To reduce the number of features while retaining as much of the data&rsquo;s variance as possible, by rotating to new uncorrelated axes",
+              w: ["To predict a label from the features using labelled examples", "To increase the number of features so that the classes become separable", "To remove outlier samples (rows) from the dataset"] },
+            { q: "Why is PCA called an unsupervised technique?",
+              a: "It uses only the feature matrix X and its variance structure, and never needs labels y",
+              w: ["Its components are chosen at random, so no supervision is needed", "It cannot be applied to data that has labels", "It automatically clusters the samples into groups"] },
+            { q: "PCA turns an n &times; p data matrix into an n &times; k matrix with k &lt; p. What changes?",
+              a: "The number of features drops from p to k, while the number of samples n stays the same",
+              w: ["The number of samples drops from n to k, while the features stay the same", "Both n and p are reduced to k", "The number of features increases from p to k"] },
+            { q: "In the interactive demo, what does the colour of each dot show?",
+              a: "Its PC1 score, from low (blue) to high (red); the colour never changes, so you can follow a sample from the cube to the final n &times; k plot",
+              w: ["The class label of the sample", "The distance of the sample from the origin, recomputed at every step", "The eigenvalue that belongs to the sample"] },
+            { q: "Why must the data be standardised before PCA?",
+              a: "Features with larger numeric ranges would otherwise dominate the variance calculation",
+              w: ["To make the class labels balanced", "To make the covariance matrix non-symmetric", "To guarantee that exactly one principal component is enough"] },
+            { q: "After standardisation Z = (X &minus; &mu;)/&sigma;, what holds for every feature column?",
+              a: "It has mean 0 and standard deviation 1",
+              w: ["It has mean 1 and standard deviation 0", "All its values lie between 0 and 1", "It is uncorrelated with every other column"] },
+            { q: "Z is an N &times; D standardised data matrix. What are the size and type of &Sigma; = Z<sup>T</sup>Z/(n &minus; 1)?",
+              a: "D &times; D, a square symmetric matrix",
+              w: ["N &times; N, a square symmetric matrix", "D &times; N, a rectangular matrix", "N &times; D, the same shape as Z"] },
+            { q: "For standardised data, what do the diagonal entries of the covariance matrix &Sigma; equal?",
+              a: "1 &ndash; each feature&rsquo;s variance &ndash; so &Sigma; is the correlation matrix",
+              w: ["0, since a feature has no covariance with itself", "n &minus; 1, the number of degrees of freedom", "The eigenvalues of &Sigma;"] },
+            { q: "In the demo the data are standardised with p = 3 features. If &lambda;<sub>1</sub> = 2.1 and &lambda;<sub>2</sub> = 0.6, what is &lambda;<sub>3</sub>?",
+              a: "0.3 &ndash; the eigenvalues add up to the trace of &Sigma;, which is p = 3",
+              w: ["0.9, so that the eigenvalues form an arithmetic sequence", "0.0, since only two components carry variance", "2.7, the sum of the two larger eigenvalues"] },
+            { q: "In &Sigma;v = &lambda;v, what do the eigenvector v and its eigenvalue &lambda; represent?",
+              a: "v is the direction of a new axis, and &lambda; is the variance of the data along that axis",
+              w: ["v is the variance along an axis, and &lambda; is its direction", "v is the mean of the data, and &lambda; is its spread", "v is a sample, and &lambda; is its label"] },
+            { q: "What are the eigenvectors of the covariance matrix, as columns of V?",
+              a: "Orthogonal unit vectors that form the new coordinate axes, so the scores on different components are uncorrelated",
+              w: ["Vectors parallel to the original feature axes", "Vectors that all point in the direction of the first one", "Vectors whose lengths equal their eigenvalues"] },
+            { q: "Why are the eigenvalue&ndash;eigenvector pairs sorted in descending order of &lambda;?",
+              a: "It ranks the directions from most to least informative, so the top k can be kept",
+              w: ["It makes the eigenvectors orthogonal", "It makes the matrix &Lambda; symmetric", "It makes the eigenvalues add up to p"] },
+            { q: "Pairs from the deep-dive: A (&lambda; = 0.2), B (&lambda; = 4.5), C (&lambda; = 1.3). For k = 2, which eigenvectors form the columns of W<sub>k</sub>?",
+              a: "v<sub>B</sub> and v<sub>C</sub>, because they belong to the two largest eigenvalues",
+              w: ["v<sub>A</sub> and v<sub>B</sub>, the first two in the list", "v<sub>A</sub> and v<sub>C</sub>, the two that sit nearest the axes", "Only v<sub>B</sub>, since 4.5 is larger than the other two together"] },
+            { q: "With eigenvalues 4.5, 1.3 and 0.2 (total 6.0), what fraction of the total variance is retained when k = 2?",
+              a: "(4.5 + 1.3)/6.0 &asymp; 96.7%",
+              w: ["4.5/6.0 = 75%, which is only the first component", "0.2/6.0 &asymp; 3.3%, which is the discarded part", "About 83%"] },
+            { q: "In the example with D = 3 and k = 2, what is the shape of W<sub>k</sub>, and why does it matter?",
+              a: "3 &times; 2 &ndash; it has fewer columns than the full 3 &times; 3 matrix V, so the projection drops the lowest-variance dimension",
+              w: ["2 &times; 3, with 3 samples and 2 features", "3 &times; 3, with the dropped column filled with zeros", "2 &times; 2, the product of the two kept eigenvalues"] },
+            { q: "With Z of size N &times; D and W<sub>k</sub> of size D &times; k, what is Z<sub>reduced</sub> = Z W<sub>k</sub>?",
+              a: "N &times; k &ndash; the same N samples, now described by only k features",
+              w: ["D &times; k, the same shape as W<sub>k</sub>", "N &times; D, the same shape as Z", "k &times; k, one entry per kept component"] },
+            { q: "What does each entry of Z<sub>reduced</sub> represent?",
+              a: "The coordinate of one sample along one principal component",
+              w: ["The eigenvalue of that sample", "The covariance between that sample and a feature", "The original feature value after scaling"] },
+            { q: "How are the scores on different principal components related, and why is this useful?",
+              a: "They are uncorrelated, which removes multicollinearity before other algorithms",
+              w: ["They are perfectly correlated, which makes training faster", "They are negatively correlated, which balances the features", "They all have the same variance, which makes them interchangeable"] },
+            { q: "Why can PCA reduce noise?",
+              a: "Random low-level fluctuations mostly lie on low-variance axes, which are discarded when only the top components are kept",
+              w: ["It removes the samples that contain noise", "It raises the variance of the kept axes so that the noise looks smaller", "It sets the noise in every feature to zero"] },
+            { q: "How does PCA help in visualising a dataset with 50 features?",
+              a: "Projecting onto the first two or three components gives a 2D or 3D plot that keeps as much variance as possible",
+              w: ["It picks two of the original features at random and plots them", "It increases the dimension to 3 so the points spread out", "It plots every feature against every other feature in one chart"] }
+        ]
+            });
+            </script>
+        </section>
+
 </body>
 </html>

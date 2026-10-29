@@ -313,5 +313,53 @@ body {
 
 </div>
 
+<section id="visualization-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Statistical Data Visualization Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "When is a clustered (multiple) bar diagram the natural choice?",
+              a: "When you have two or more related series measured over the same categories and want to compare them directly",
+              w: ["When you want to show how one total is divided into its components", "When you want to show the net surplus or deficit around a zero baseline", "When you want to show what share of a whole each category takes"] },
+            { q: "In a subdivided (stacked) bar diagram, why is only the bottom component easy to compare across bars?",
+              a: "Only the bottom segment starts from a common baseline; every other segment starts at a different cumulative height",
+              w: ["Only the bottom segment is drawn to scale", "The upper segments always use a different unit", "The legend describes only the bottom component"] },
+            { q: "How does a deviation bar diagram show surpluses and deficits?",
+              a: "Every bar starts at a central zero line: surpluses (positive net) rise above it and deficits (negative net) fall below it, usually in two colours",
+              w: ["Both are drawn above a zero baseline, and only the colour tells them apart", "Surpluses are the bottom segment and deficits the top segment of a stacked bar", "The bars start at the minimum value, and a surplus is any bar taller than the average"] },
+            { q: "In a pie diagram, what angle does a category worth 40 out of a total of 160 get?",
+              a: "(40/160) &times; 360&deg; = 90&deg;",
+              w: ["40&deg;, the value itself", "144&deg;, which is 40% of 360&deg;", "25&deg;, the percentage share"] },
+            { q: "In a box plot Q<sub>1</sub> = 20 and Q<sub>3</sub> = 30. How should a data value of 47 be treated?",
+              a: "As an outlier, because the upper fence is Q<sub>3</sub> + 1.5&times;IQR = 30 + 15 = 45",
+              w: ["Not an outlier, because the upper fence is Q<sub>3</sub> + 3&times;IQR = 60", "An outlier only if it exceeds Q<sub>3</sub> + 1.5&times;Q<sub>3</sub> = 75", "Not an outlier, because whiskers always extend to the maximum value"] },
+            { q: "Contour lines on a plot are packed very close together in one region. What does that tell you?",
+              a: "The surface is steep there, because the value changes quickly over a short distance",
+              w: ["The surface is flat there", "There is a peak exactly at that spot", "The values in that region are missing"] },
+            { q: "Using Sturges&rsquo; rule k = 1 + log<sub>2</sub> n, about how many bins should a histogram of n = 64 observations have?",
+              a: "7, since log<sub>2</sub> 64 = 6 and k = 1 + 6",
+              w: ["6, since k = log<sub>2</sub> 64", "8, since k = 2 + log<sub>2</sub> 64", "64, one bin per observation"] },
+            { q: "How does the bandwidth h affect a kernel density estimate (KDE) drawn over a histogram?",
+              a: "A small h gives a wiggly curve, while a large h over-smooths the shape",
+              w: ["A small h over-smooths the curve, while a large h makes it wiggly", "h changes only the height of the curve, never its shape", "h sets the number of histogram bins"] },
+            { q: "How do you read the median from an ogive (cumulative frequency curve) of n observations?",
+              a: "Go to n/2 on the y-axis, move across to the curve, then down to the x-axis",
+              w: ["Go to the highest point of the curve and read its x-value", "Read the class boundary with the largest class frequency", "Go to n on the y-axis, move across to the curve, then down to the x-axis"] },
+            { q: "If a Lorenz curve lies exactly on the line of equality, what is the Gini coefficient G = A/(A + B)?",
+              a: "0, because the area A between the diagonal and the curve is zero &ndash; perfect equality",
+              w: ["1, because the curve touches both corners of the square", "0.5, because the diagonal splits the square in half", "It cannot be computed without the actual income values"] }
+        ]
+            });
+            </script>
+        </section>
+
+
 </body>
 </html>

@@ -107,17 +107,17 @@ body {
 
     <h3>6.1 Intuition: Repeated Sampling</h3>
     <p>Consider an opinion poll before a state election. Suppose the true vote share of a party is $p_0 = 0.4$. We poll $n$ voters and record the fraction $\hat{p} = k/n$ who say they will vote for the party. This $\hat{p}$ is the MLE of a Bernoulli parameter.</p>
-    <p>If we ran the poll again with a fresh random sample, we would get a slightly different $\hat{p}$. So the estimate is itself a <strong>random variable</strong>, and what matters is how its distribution behaves as $n$ grows. Its spread shrinks like $\sqrt{p_0(1-p_0)/n}$:</p>
+    <p>If we ran the poll again with a fresh random sample, we would get a slightly different $\hat{p}$. So the estimate is itself a <strong>random variable</strong>, and what matters is how its distribution behaves as $n$ grows. Its <strong>variance</strong> shrinks like $\dfrac{p_0(1-p_0)}{n}$, so its standard deviation (the standard error) shrinks like $\sqrt{p_0(1-p_0)/n}$:</p>
 
     <table class="data-table">
-        <tr><th>Voters polled ($n$)</th><th>Standard error of $\hat{p}$</th></tr>
-        <tr><td>100</td><td>$\sqrt{0.24/100}\approx 0.049$ (about 4.9 percentage points)</td></tr>
-        <tr><td>1,000</td><td>$\sqrt{0.24/1000}\approx 0.015$ (about 1.5 percentage points)</td></tr>
-        <tr><td>10,000</td><td>$\sqrt{0.24/10000}\approx 0.005$ (about 0.5 percentage points)</td></tr>
+        <tr><th>Voters polled ($n$)</th><th>Variance of $\hat{p}$</th><th>Standard error of $\hat{p}$</th></tr>
+        <tr><td>100</td><td>$0.24/100 = 0.0024$</td><td>$\sqrt{0.0024}\approx 0.049$ (about 4.9 percentage points)</td></tr>
+        <tr><td>1,000</td><td>$0.24/1000 = 0.00024$</td><td>$\sqrt{0.00024}\approx 0.015$ (about 1.5 percentage points)</td></tr>
+        <tr><td>10,000</td><td>$0.24/10000 = 0.000024$</td><td>$\sqrt{0.000024}\approx 0.005$ (about 0.5 percentage points)</td></tr>
     </table>
 
     <div class="grid-note">
-        <strong>Note:</strong> The error shrinks like $1/\sqrt{n}$, so you need <strong>four times</strong> the data to halve the error. The distribution of estimates piles up ever more tightly around $p_0$. That is what "converges to the true value" means.
+        <strong>Note:</strong> The variance of $\hat{p}$ shrinks like $1/n$: ten times the data gives one-tenth of the variance. Equivalently, the standard error shrinks like $1/\sqrt{n}$, so you need <strong>four times</strong> the data to halve it. The distribution of estimates piles up ever more tightly around $p_0$. That is what "converges to the true value" means.
     </div>
 
     <h3>6.2 Why It Happens: A Three-Step Argument</h3>
@@ -159,7 +159,7 @@ body {
     <p>This is the asymptotic normality listed in Section 5. The variance $1/I(\theta_0)$ is the <strong>Cramér–Rao lower bound</strong>, which is why MLE is called asymptotically efficient.</p>
 
     <div class="example-box">
-        <strong>Check with the poll:</strong> For a Bernoulli parameter, $I(p)=\dfrac{1}{p(1-p)}$, so the limiting variance of $\hat{p}$ is $p(1-p)/n$. This reproduces the standard errors in the table above.<br><br>
+        <strong>Check with the poll:</strong> For a Bernoulli parameter, $I(p)=\dfrac{1}{p(1-p)}$, so the limiting variance of $\hat{p}$ is $p(1-p)/n$. This reproduces the variances (and hence the standard errors) in the table above.<br><br>
         <strong>Check with a Gaussian mean:</strong> $\hat{\mu}=\bar{x}$ has variance $\sigma^2/n$, again equal to $1/(n\,I(\mu))$ with $I(\mu)=1/\sigma^2$.
     </div>
 
@@ -171,7 +171,66 @@ body {
         <li><strong>Efficiency is an asymptotic statement.</strong> In finite samples the MLE can be biased. The Gaussian variance MLE, which divides by $n$, has expectation $\frac{n-1}{n}\sigma^2$. It is the large-$n$ behaviour that is unbiased and attains the Cramér–Rao bound.</li>
     </ul>
 
-    <h3>6.5 Interactive Lab: Watch the Poll Estimate Close In on the Truth</h3>
+        <p>An interactive lab at the end of this page (Section 8) lets you watch this convergence happen.</p>
+
+    <h2>7. MLE in Deep Learning</h2>
+    <p>In deep learning, MLE is how networks are trained: <strong>the loss function is the negative log-likelihood</strong>. The "model family" of Section 1 is the network itself. Each choice of weights $\theta$ defines one distribution $p(y\mid x;\theta)$, and training searches for the weights under which the observed data are most likely.</p>
+
+    <h3>7.1 The Setup</h3>
+    <p>Given iid training pairs $(x_i, y_i)$, the likelihood and log-likelihood are</p>
+    <div class="formula-display">
+        $$L(\theta)=\prod_{i=1}^{n}p(y_i\mid x_i;\theta)\qquad\Rightarrow\qquad \ell(\theta)=\sum_{i=1}^{n}\log p(y_i\mid x_i;\theta).$$
+    </div>
+    <p>Maximising $\ell(\theta)$ is the same as minimising the <strong>negative log-likelihood (NLL)</strong>, $-\frac{1}{n}\ell(\theta)$. The log is used for the same two reasons as in Section 3: sums are easier to differentiate than products, and there is no arithmetic underflow.</p>
+
+    <h3>7.2 Where the Usual Loss Functions Come From</h3>
+    <p>The loss depends on which distribution you let the network output:</p>
+
+    <table class="data-table">
+        <tr><th>Network outputs</th><th>Assumed distribution</th><th>NLL per example</th><th>Familiar name</th></tr>
+        <tr><td>A real number $f_\theta(x)$</td><td>$y\sim N\big(f_\theta(x),\sigma^2\big)$</td><td>$\dfrac{(y-f_\theta(x))^2}{2\sigma^2}+\text{const}$</td><td>Mean squared error</td></tr>
+        <tr><td>A probability $\hat p$</td><td>$y\sim\text{Bernoulli}(\hat p)$</td><td>$-\big[y\log\hat p+(1-y)\log(1-\hat p)\big]$</td><td>Binary cross-entropy</td></tr>
+        <tr><td>Softmax over $K$ classes</td><td>$y\sim\text{Categorical}(\hat p_1,\dots,\hat p_K)$</td><td>$-\log\hat p_{y}$</td><td>Cross-entropy</td></tr>
+        <tr><td>Softmax over the vocabulary at each position</td><td>next token $\sim\text{Categorical}$</td><td>$-\log p_\theta(x_t\mid x_{&lt;t})$</td><td>Token-level cross-entropy</td></tr>
+    </table>
+
+    <div class="grid-note">
+        <strong>Note:</strong> The first row is the usual MLE procedure applied to Gaussian noise: the log-likelihood is proportional to $-\sum_i(y_i-f_\theta(x_i))^2$, so maximising it means minimising the sum of squared errors. In the Categorical rows, the probabilities come from the network (through a softmax) instead of being free parameters estimated from counts.
+    </div>
+
+    <h3>7.3 LLM Pretraining Is Maximum Likelihood</h3>
+    <p>By the chain rule of probability, the probability of a token sequence factorises into next-token predictions:</p>
+    <div class="formula-display">
+        $$p_\theta(x_1,\dots,x_T)=\prod_{t=1}^{T}p_\theta(x_t\mid x_{&lt;t})\quad\Rightarrow\quad \ell(\theta)=\sum_{t=1}^{T}\log p_\theta(x_t\mid x_{&lt;t}).$$
+    </div>
+    <p>The sequence log-likelihood is therefore a sum of per-token log-probabilities, and minimising the average token-level cross-entropy is exactly maximum likelihood on the text.</p>
+
+    <h3>7.4 Why Minimising NLL Is the Same as Minimising KL</h3>
+    <p>Averaged over the data distribution, the NLL is the cross-entropy between the data and the model, which splits into an entropy term and a KL term:</p>
+    <div class="formula-display">
+        $$\mathbb{E}_{p_{\text{data}}}\big[-\log p_\theta(x)\big]=H\big(p_{\text{data}}\big)+\mathrm{KL}\big(p_{\text{data}}\,\|\,p_\theta\big).$$
+    </div>
+    <p>The entropy $H(p_{\text{data}})$ does not depend on $\theta$, so minimising the cross-entropy means minimising $\mathrm{KL}(p_{\text{data}}\,\|\,p_\theta)$. This is the same KL argument as in Section 6.2: the best $\theta$ makes the model distribution as close to the data distribution as possible.</p>
+
+    <h3>7.5 What Is Different from Textbook MLE</h3>
+    <ul>
+        <li><strong>No closed form.</strong> Setting the derivative to zero cannot be solved for a deep network. We run gradient descent (SGD, Adam) on the NLL, with gradients from backpropagation. A minibatch gives a noisy estimate of the average log-likelihood gradient.</li>
+        <li><strong>Non-convex surface.</strong> The NLL has many local minima and saddle points, so training reaches a good solution, not a guaranteed global maximum.</li>
+        <li><strong>Conditional MLE.</strong> We model $p(y\mid x)$ and never $p(x)$, so this is discriminative. Language-model pretraining is the exception: there $x$ is the earlier tokens, and the model does fit the data distribution.</li>
+        <li><strong>Overfitting.</strong> A huge family can fit the training data almost perfectly, which is the degenerate end of plain MLE where the fitted distribution puts all its mass on the training points. So we add constraints: weight decay, dropout, early stopping, and held-out validation data.</li>
+    </ul>
+
+    <h3>7.6 The MAP View of Regularisation</h3>
+    <p>Adding a prior $p(\theta)$ over the weights gives <strong>maximum a posteriori (MAP)</strong> estimation, which maximises</p>
+    <div class="formula-display">
+        $$\log p(D\mid\theta)+\log p(\theta).$$
+    </div>
+    <p>A Gaussian prior on the weights, $\theta\sim N(0,\tau^2 I)$, contributes $-\frac{1}{2\tau^2}\|\theta\|^2$, which is exactly an L2 penalty (weight decay) added to the NLL loss.</p>
+
+    <h3>7.7 What the Section 6 Guarantees Say Here</h3>
+    <p>With a model family that is rich enough, a large amount of data, and an optimiser that actually finds the maximum, the trained model approaches the member of the family closest to the data distribution in KL divergence. In practice none of the three conditions holds exactly, which is why we monitor the validation loss and not only the training loss.</p>
+
+<h2>8. Interactive Lab: Watch the Poll Estimate Close In on the Truth</h2>
     <p>Choose the true vote share $p_0$ and the number of voters polled $n$. The lab runs 500 independent polls and plots their estimates $\hat{p}$ (top). The red curve is the Normal approximation with variance $p_0(1-p_0)/n$ from Section 6.3. The bottom chart shows Steps 1 and 2 for one of those polls: its average log-likelihood curve (blue) against the limiting curve $\ell(p)$ (grey), whose peak sits exactly at $p_0$.</p>
 
     <style>
@@ -296,7 +355,7 @@ body {
             var sd = Math.sqrt(v / R), th = Math.sqrt(p0 * (1 - p0) / n);
             el('cl-stats').innerHTML =
                 'Mean of the 500 estimates: <strong>' + f2(mean) + '</strong> (true p₀ = ' + p0.toFixed(2) + ') &nbsp;|&nbsp; ' +
-                'Observed spread: <strong>' + f2(sd) + '</strong> vs theory √(p₀(1−p₀)/n) = <strong>' + f2(th) + '</strong><br>' +
+                'Observed variance: <strong>' + (sd * sd).toFixed(6) + '</strong> vs theory p₀(1−p₀)/n = <strong>' + (th * th).toFixed(6) + '</strong><br>' +
                 'Polls landing within ±0.02 of p₀: <strong>' + Math.round(100 * near / R) + '%</strong>';
             drawHist(est, p0, th);
             drawLL(est[0], p0);

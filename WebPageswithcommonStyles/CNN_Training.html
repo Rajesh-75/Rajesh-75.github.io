@@ -795,5 +795,113 @@ pre.code-block code{ background: none; padding: 0; color: inherit; font-size: in
 </section>
 </div>
 
+<section id="cnn-training-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Convolutional Neural Network Training Quiz</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "In what order does the page list the stages of the standard CNN training workflow?",
+              a: "Data prep &rarr; architecture &rarr; optimisation &rarr; monitoring",
+              w: ["Architecture &rarr; data prep &rarr; monitoring &rarr; optimisation", "Optimisation &rarr; architecture &rarr; data prep &rarr; monitoring", "Data prep &rarr; monitoring &rarr; architecture &rarr; optimisation"] },
+            { q: "Which of these augmentations is geometric rather than photometric?",
+              a: "Random crop or rotation (which change the spatial arrangement of the image)",
+              w: ["Brightness and contrast jitter", "Hue and saturation shifts", "Gaussian noise injection"] },
+            { q: "How are data augmentations typically applied during training?",
+              a: "As stochastic transforms on the fly to each image before it enters a batch, not as a one-time step that permanently multiplies the dataset on disk",
+              w: ["Once before training, saving every transformed copy to disk", "Only to the validation set", "Only after the final epoch, to test robustness"] },
+            { q: "What is elastic deformation, and why is it popular in medical imaging?",
+              a: "Each pixel is moved by a random, Gaussian-smoothed displacement field, so nearby pixels shift together, mimicking stretching tissue; it let U-Net train from very few annotated images",
+              w: ["Every pixel brightness is shifted by an independent random amount", "The image is flipped horizontally with probability 0.5", "Random patches of the image are erased and replaced with zeros"] },
+            { q: "Why is training done in mini-batches (about 32&ndash;256 images), and what is an epoch?",
+              a: "Full-dataset gradients are accurate but memory-prohibitive and single-sample updates are noisy, so batches are a compromise; one epoch is one full pass over all the batches",
+              w: ["Mini-batches are needed because validation loss cannot be computed otherwise; an epoch is one batch", "Single-sample updates are slow but perfectly smooth; an epoch is one sample", "A mini-batch is a full pass over the training set; an epoch is a pass over the validation set"] },
+            { q: "How do you read the training and validation loss curves?",
+              a: "Both falling together is healthy; training falling while validation rises or plateaus is overfitting; both staying high and flat is underfitting",
+              w: ["Both falling together means overfitting, and both staying high and flat means healthy learning", "Training rising while validation falls means overfitting", "Only the validation curve matters; the training curve is irrelevant"] },
+            { q: "How do feature extraction and fine-tuning differ in transfer learning?",
+              a: "Feature extraction freezes the pretrained conv layers and trains only a new head (small, similar data); fine-tuning unfreezes some or all layers and continues at a low learning rate (good when the domain differs, such as medical images)",
+              w: ["Feature extraction unfreezes all layers at a high learning rate, while fine-tuning freezes everything", "Both freeze every layer, but fine-tuning uses a higher learning rate", "Feature extraction trains the whole network from random weights"] },
+            { q: "Which order does the page recommend for the five-step practical approach to CNN training?",
+              a: "Workflow and monitoring &rarr; diagnose the class distribution &rarr; apply the matching imbalance strategy &rarr; train with cross-entropy + Adam and watch the curves &rarr; tune with random search or Bayesian optimisation",
+              w: ["Tune hyperparameters with grid search &rarr; diagnose the class distribution &rarr; set up the workflow", "Choose the loss and optimiser &rarr; diagnose the class distribution &rarr; set up the train/validation split last", "Apply an imbalance fix before looking at the class counts &rarr; tune with grid search"] },
+            { q: "What does a pretrained backbone pass from layer to layer?",
+              a: "Learned feature maps (for example 256 &times; 256 &times; 64 early and 7 &times; 7 &times; 512 near the end); only the first layer sees raw pixels",
+              w: ["Raw pixels at every layer, with frozen weights", "A single 1D vector at every layer", "Class probabilities at every layer"] },
+            { q: "A CNN classifies cows well in training but fails on a cow in a snowy field. What is the problem, and what mitigates it?",
+              a: "Overfitting to a spurious correlation (the green grass background); data augmentation, dropout and early stopping help",
+              w: ["Vanishing gradients; use Sigmoid activations", "Class imbalance; use grid search", "Underfitting; remove the regularisation"] },
+            { q: "Tuning 3 hyperparameters with 4 candidate values each, how many trials does a full grid search need?",
+              a: "4<sup>3</sup> = 64 trials",
+              w: ["12 trials, since 4 &times; 3 = 12", "7 trials, since 4 + 3 = 7", "256 trials, since 4<sup>4</sup> = 256"] },
+            { q: "Why can random search beat grid search at a fraction of the cost?",
+              a: "Grid search tests each hyperparameter at only 4 distinct values, while random search draws each one independently, so 20 trials (31% of the compute) can test the one that matters at up to 20 values",
+              w: ["Random search tests every combination exhaustively", "Grid search cannot be run in parallel", "Random search uses the gradient of the validation score"] },
+            { q: "How does Bayesian optimisation choose the next hyperparameter combination to try?",
+              a: "A surrogate model (such as a Gaussian Process) fits the past (hyperparameters, score) pairs, and an acquisition function picks the point expected to improve most on the best score so far",
+              w: ["It averages the scores of all grid points", "It samples uniformly at random, ignoring past results", "It runs gradient descent on the validation loss with respect to the hyperparameters"] },
+            { q: "In the 25-class dataset where Class 1 has 300 of 1,000 images, what does a naive model that always predicts Class 1 achieve?",
+              a: "30% accuracy, but 0% recall on the other 24 classes",
+              w: ["100% recall on every class, since Class 1 is dominant", "70% accuracy, since the other classes are ignored", "30% accuracy and 30% macro-F1"] },
+            { q: "Why does class imbalance break training with cross-entropy?",
+              a: "Cross-entropy is an average over all examples, so the head class dominates the gradient, while a class with 2&ndash;3 images barely moves the loss",
+              w: ["Cross-entropy ignores the class labels", "Cross-entropy penalises only the false negatives of the largest class", "The softmax cannot output more than 5 classes"] },
+            { q: "How do macro-F1 and micro-averaging differ?",
+              a: "Macro-F1 is the unweighted mean of the per-class F1 scores, giving every class equal weight; micro-averaging pools the counts and is dominated by the head tier, masking failure on rare classes",
+              w: ["Macro-F1 weights classes by their sample count, while micro-averaging gives every class equal weight", "Macro-F1 is computed on the head tier only, and micro-averaging on the tail only", "They are identical for any class distribution"] },
+            { q: "Why do classes with fewer than 10 images often have a 0% detection rate?",
+              a: "They rarely appear in random batches, so their loss is rarely computed (no gradients); when one is sampled, its gradient is averaged with 31 or 63 majority gradients and swamped",
+              w: ["Their images are too large for GPU memory", "The softmax assigns them zero probability by design", "Early stopping removes them from the dataset"] },
+            { q: "How does few-shot learning (a Siamese or Prototypical network) handle the deepest tail?",
+              a: "It maps images to feature vectors and checks whether a new image lies close in distance to the few sample images",
+              w: ["It trains a standard 25-way softmax classifier for longer", "It duplicates each tail image 1,000 times and retrains", "It lowers the dropout rate for the tail classes"] },
+            { q: "In the two-stage pipeline for the 25-class one-sided tail, what does stage 1 classify, and what does stage 2 do?",
+              a: "Stage 1 is a 5-class CNN (Classes 1&ndash;4 plus a rare-anomaly bucket pooling the 460 tail images); stage 2 uses a distance-based nearest-centroid method to identify the specific rare type",
+              w: ["Stage 1 identifies the specific rare class with softmax; stage 2 merges Classes 1&ndash;4", "Stage 1 is a 25-way softmax; stage 2 applies dropout", "Stage 1 pools Classes 1&ndash;4 into one bucket; stage 2 classifies the 460 images with focal loss"] },
+            { q: "How does Focal Loss, &minus;&alpha;(1 &minus; p<sub>t</sub>)<sup>&gamma;</sup> log(p<sub>t</sub>), help with imbalance?",
+              a: "The (1 &minus; p<sub>t</sub>)<sup>&gamma;</sup> term down-weights easy examples (p<sub>t</sub> near 1), pushing the gradient budget onto the hard, rare-tail examples",
+              w: ["It up-weights easy background examples", "It multiplies every class&rsquo;s loss by the same constant", "It replaces the logarithm with an absolute error"] },
+            { q: "What does lowering the sigmoid decision threshold from 0.5 to 0.15 do for a rare class?",
+              a: "It raises recall for the rare tail, since more inputs are predicted positive",
+              w: ["It raises precision at no cost", "It makes the model predict the majority class more often", "It reduces the number of positive predictions"] },
+            { q: "How does the hybrid approach with hand-crafted medical features work, and why does it help?",
+              a: "A dual-branch network concatenates CNN features with hand-crafted ones (GLCM texture, LBP micro-patterns, active contours) before the final layer, acting as a &ldquo;cheat sheet&rdquo; that reduces the images needed",
+              w: ["Hand-crafted features replace the CNN entirely", "Hand-crafted features are added to the loss as a penalty", "Hand-crafted features are used only to augment the images"] },
+            { q: "Target 10.00 mm, LSL = 9.90, USL = 10.10, process &mu; = 10.01, &sigma; = 0.03. What is C<sub>pk</sub>?",
+              a: "1.00 &ndash; the smaller of (10.10 &minus; 10.01)/0.09 = 1.00 and (10.01 &minus; 9.90)/0.09 = 1.22",
+              w: ["1.22, the larger of the two", "1.11, which is (USL &minus; LSL)/(6&sigma;)", "0.09, the distance from the mean to the USL"] },
+            { q: "Why does a two-sided tail cause gradient conflict?",
+              a: "The error signals from the two extreme tails push the weights in opposite directions, cancelling out and trapping the network in the middle",
+              w: ["The two tails always have identical class counts", "The gradients become exactly zero because the softmax saturates", "The majority class overwhelms only one of the two tails"] },
+            { q: "Which remedies does the page give for two-sided tail data?",
+              a: "A stratified multi-tail sampler (for example about 33% left tail, 34% normal, 33% right tail per batch) and two separate branches (Left vs. Rest, Right vs. Rest) to avoid gradient interference",
+              w: ["Plain random sampling, since it covers both tails equally", "A single binary head, since two-sided tails learn a linear cutoff easily", "Merging both tails into the majority class"] },
+            { q: "In the Zipf power law n<sub>k</sub> &prop; k<sup>&minus;s</sup>, what does a larger s mean?",
+              a: "A steeper drop-off, so the popular head classes starve the rare tail classes even more",
+              w: ["A flatter curve, so all classes become equally frequent", "The number of head classes", "The number of images in the largest class"] },
+            { q: "In the overfitting example, validation loss is 0.88, 0.51, 0.38, 0.35, 0.42, 0.55 and 0.70 at epochs 1, 5, 10, 15, 20, 25 and 30. When should early stopping have halted training?",
+              a: "At epoch 15, where validation loss is lowest (0.35)",
+              w: ["At epoch 30, where the training loss is lowest", "At epoch 1, where the generalisation gap is smallest", "At epoch 25, where the training loss reaches 0.01"] },
+            { q: "How does dropout reduce overfitting?",
+              a: "It zeroes each neuron&rsquo;s activation independently with probability p during training, so no neuron can become a dedicated memoriser that relies on other specific neurons",
+              w: ["It permanently removes the weakest neurons after training", "It lowers the learning rate when validation loss rises", "It adds an L2 penalty on large weights"] },
+            { q: "Why is cross-entropy not an arbitrary loss choice?",
+              a: "It falls out of maximum-likelihood estimation under a categorical distribution, so minimising it is identical to maximising the likelihood assigned to the correct labels",
+              w: ["It is chosen only because its gradient is always 1", "It is the same as mean squared error on class labels", "It maximises the margin between the classes"] },
+            { q: "What makes Adam adapt its step size per parameter?",
+              a: "Dividing by &radic;v<sub>t</sub> gives parameters with recently large gradients smaller steps and parameters with small or sparse gradients relatively larger steps, while m<sub>t</sub> smooths noisy directions",
+              w: ["Adam uses the same fixed step for every parameter, like plain SGD", "Adam takes larger steps for parameters with large recent gradients", "Adam always reaches a better final validation result than well-tuned SGD"] }
+        ]
+            });
+            </script>
+        </section>
+
+
 </body>
 </html>
