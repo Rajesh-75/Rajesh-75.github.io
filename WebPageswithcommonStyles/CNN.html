@@ -746,7 +746,7 @@
             <div id="quiz"></div>
 
             <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
-            <script src="quiz.js"></script>
+            <script src="Quiz.js"></script>
             <script>
             startQuiz({
                 mount: '#quiz',
@@ -831,7 +831,7 @@
               a: "All layers run in the forward pass, including frozen ones; in the backward pass, gradients are computed and weights updated only for layers with requires_grad = True",
               w: ["Frozen layers are skipped in the forward pass as well", "Gradients are computed for all layers, but frozen weights are reset afterwards", "Frozen layers are removed from the network before training"] },
             { q: "What does U-Net add to the plain pool-flatten-classify design?",
-              a: "A mirror-image decoder that upsamples with transposed convolution back to full resolution, with skip connections restoring spatial detail, giving a per-pixel output",
+              a: "A mirror-image decoder that upsamples with transposed convqlution back to full resolution, with skip connections restoring spatial detail, giving a per-pixel output",
               w: ["Residual shortcuts that let the network train at 150 layers", "Parallel filter sizes in each block for multi-scale features", "A recurrent hidden state that carries information across time steps"] },
             { q: "How do ResNet&rsquo;s skip connections differ from U-Net&rsquo;s?",
               a: "ResNet adds two same-shaped tensors elementwise, while U-Net concatenates the encoder map onto the upsampled decoder map along the channel axis",
