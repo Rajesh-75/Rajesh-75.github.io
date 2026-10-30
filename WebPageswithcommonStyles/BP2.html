@@ -463,48 +463,78 @@ def backward_layer(dA, W, b, A_prev, Z, eta):
         </tbody>
     </table>
 </div>
-<section id="transformer-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
-            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Gradient Descent and Back Propogation Quiz</h2>
+<section id="gradient-descent-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Gradient Descent and Backpropagation Quiz</h2>
 
             <div id="quiz"></div>
 
-            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
-            <script src="quiz.js"></script>
+            <!-- Shared animation lives in Quiz.js; this page supplies only the questions. -->
+            <script src="Quiz.js"></script>
             <script>
             startQuiz({
                 mount: '#quiz',
                 // timeLimit: 5,   // optional: seconds per question
                 questions: [
-            { q: "What is the main &ldquo;information bottleneck&rdquo; of a classic RNN encoder&ndash;decoder (Seq2Seq) model?",
-              a: "The whole input sequence must be compressed into one fixed-length context vector",
-              w: ["The decoder can only generate one token per sequence", "The encoder has no hidden state to store information", "The output vocabulary is limited to the words in the input"] },
-            { q: "Why can Transformers be trained far more efficiently on GPUs than RNNs?",
-              a: "All token positions are processed in parallel, with no step-by-step recurrence over time",
-              w: ["They always have fewer parameters than an RNN", "They avoid matrix multiplications altogether", "They read the sequence one token at a time, but with bigger batches"] },
-            { q: "Why is positional encoding added to the token embeddings?",
-              a: "Self-attention has no built-in notion of word order, so position information must be injected",
-              w: ["To reduce the embedding dimension", "To convert tokens into integer IDs", "To normalise every embedding to unit length"] },
-            { q: "In self-attention, how are the Query, Key and Value vectors obtained?",
-              a: "By multiplying each token's vector with three learned matrices W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup>",
-              w: ["Q comes from the input, while K and V are fixed random vectors", "They are looked up from three separate vocabulary tables", "They are the output of the softmax over the attention scores"] },
-            { q: "Why are attention scores divided by &radic;d<sub>k</sub> before the softmax?",
-              a: "Large dot products would saturate the softmax and shrink its gradients",
-              w: ["To make the attention weights sum to 1", "To mask out future tokens", "To reduce the number of heads required"] },
-            { q: "What does the causal mask do in a decoder-only (GPT-style) Transformer?",
-              a: "It stops each token from attending to tokens that come after it",
-              w: ["It hides random tokens so the model must reconstruct them", "It removes padding tokens from the loss", "It stops each token from attending to itself"] },
-            { q: "What is the benefit of multi-head attention over a single head?",
-              a: "Different heads can learn to focus on different kinds of relationships in different subspaces",
-              w: ["It shortens the sequence before attention is applied", "It removes the need for positional encoding", "It lets the model skip the feed-forward layer"] },
-            { q: "How does the feed-forward network (FFN) in a Transformer layer treat the tokens?",
-              a: "Each token vector is transformed independently, using the same weights at every position",
-              w: ["It mixes information across all tokens, just like attention", "Every position has its own separately trained FFN", "It only runs on the last token of the sequence"] },
-            { q: "How does a decoder-only Transformer turn its final hidden vectors into a next-token prediction?",
-              a: "A linear projection to vocabulary size followed by a softmax over the vocabulary",
-              w: ["A softmax over the embedding dimension followed by averaging", "A nearest-neighbour lookup in the positional-encoding table", "A second self-attention block that outputs one word directly"] },
-            { q: "What is the usual order of the three LLM training stages?",
-              a: "Unsupervised pre-training &rarr; Supervised fine-tuning (SFT) &rarr; RLHF / alignment",
-              w: ["SFT &rarr; Pre-training &rarr; RLHF", "RLHF &rarr; SFT &rarr; Pre-training", "Pre-training &rarr; RLHF &rarr; SFT"] }
+            { q: "What does the page mean when it says Gradient Descent is &ldquo;generic&rdquo;?",
+              a: "It only needs &part;L/&part;&theta; and does not care which model produced it; how that derivative is obtained depends on the model",
+              w: ["It computes the derivative itself for any model", "It works only for neural networks", "It needs the second derivative (the Hessian) of the loss to work"] },
+            { q: "In x<sup>k+1</sup> = x<sup>k</sup> &minus; &eta;&middot;&part;f/&part;x<sup>k</sup>, why is the gradient subtracted?",
+              a: "The gradient points in the direction of steepest ascent of the loss, so the update moves in the opposite direction",
+              w: ["The gradient points toward the minimum, so subtracting reverses the learning rate", "Subtracting keeps the parameters positive", "Subtracting makes the loss non-negative"] },
+            { q: "What does the learning rate &eta; control, and how is it set?",
+              a: "The step size: too large and the update overshoots the bottom, too small and convergence is slow; &eta; (like &epsilon;) is set externally, not learned",
+              w: ["Too large is slow and too small overshoots", "&eta; is learned from the data by gradient descent", "&eta; affects only the stopping condition"] },
+            { q: "What is the stopping condition of the generic algorithm, and why is it used?",
+              a: "Stop when |f(x<sup>k+1</sup>) &minus; f(x<sup>k</sup>)| &le; &epsilon;, because the algorithm may never reach an exact zero and a tiny change is not worth computing",
+              w: ["Stop when the gradient is exactly zero", "Stop after exactly 100 iterations", "Stop when f(x) becomes negative"] },
+            { q: "Numerical: For f(x) = x&sup2; with x<sup>0</sup> = 3 and &eta; = 0.1, what is x<sup>1</sup> after one Gradient Descent step?",
+              a: "x<sup>1</sup> = 3 &minus; 0.1 &times; (2 &times; 3) = 2.4",
+              w: ["3.6, adding the gradient instead of subtracting it", "2.7, using &eta;&middot;x instead of &eta;&middot;2x", "&minus;3, forgetting the learning rate (3 &minus; 6)"] },
+            { q: "Which statement describes Batch Gradient Descent?",
+              a: "It uses all N samples for every update, so the path is deterministic, smooth and accurate, but slow and memory-heavy, and it may stall on a plateau",
+              w: ["It updates after every single sample and is faster than SGD", "It is noisy and needs shuffling every epoch", "It uses little memory because it processes one sample at a time"] },
+            { q: "Why does the noise in SGD (a single sample per update) turn out to be useful?",
+              a: "It makes SGD faster and lighter in memory, and the randomness helps it jump out of local minima or saddle points in non-convex landscapes",
+              w: ["SGD&rsquo;s noise is a flaw that the algorithm is designed to remove", "SGD uses all the data, so its path is perfectly smooth", "SGD needs more memory than Batch GD, which makes it more exact"] },
+            { q: "How are batch size B, SGD and Batch GD related, and what is typical for mini-batches?",
+              a: "B = 1 is pure SGD and B = N is Batch GD; typical sizes of 32&ndash;256 balance GPU vectorisation with stable updates",
+              w: ["B = 1 is Batch GD and B = N is pure SGD", "B must always equal the number of features", "Mini-batch SGD avoids shuffling the data"] },
+            { q: "Numerical: A dataset has N = 1,000 samples. How many parameter updates happen in one epoch for SGD, for Mini-batch SGD with B = 50, and for Batch GD?",
+              a: "1,000 for SGD, 20 for Mini-batch SGD (1,000/50) and 1 for Batch GD",
+              w: ["1 for SGD, 20 for Mini-batch SGD and 1,000 for Batch GD", "1,000 for SGD, 50 for Mini-batch SGD and 1 for Batch GD", "1,000 for SGD, 20 for Mini-batch SGD and 20 for Batch GD"] },
+            { q: "Why is the training data shuffled at the start of every epoch in SGD and Mini-batch SGD?",
+              a: "So the model does not learn cycles or biases from the order in which the data was stored, which keeps the algorithm stochastic",
+              w: ["So every sample is used twice per epoch", "To reduce the learning rate over time", "Because shuffling makes Batch GD deterministic"] },
+            { q: "What is an epoch?",
+              a: "One epoch is complete when every sample in the dataset has been used once to update the weights; several epochs are normally needed",
+              w: ["A single update of the weights", "A single mini-batch", "A pass over the validation set only"] },
+            { q: "How is the gradient &nabla;<sub>&theta;</sub>L obtained for Linear Regression, Logistic Regression and Neural Networks?",
+              a: "Linear Regression: (2/N)X<sup>T</sup>(Xw &minus; y) in closed form; Logistic Regression: (1/N)X<sup>T</sup>(&sigma;(Xw) &minus; y) in closed form; Neural Networks: backpropagation",
+              w: ["Linear Regression: backpropagation; Neural Networks: closed form (2/N)X<sup>T</sup>(Xw &minus; y)", "All three use backpropagation", "Logistic Regression: (2/N)X<sup>T</sup>(Xw &minus; y), the same as Linear Regression"] },
+            { q: "Why does a neural network need backpropagation instead of a closed-form gradient?",
+              a: "A network is a long chain of nested functions with no single closed form; backpropagation applies the chain rule backward and reuses intermediate results, giving the derivative of every weight in one backward sweep",
+              w: ["A network has a closed-form gradient like Linear Regression", "Backpropagation computes each weight&rsquo;s derivative separately by perturbing it", "Backpropagation updates the weights without needing gradients"] },
+            { q: "In a layer of the worked example, what are Z<sub>i</sub> and A<sub>i</sub>?",
+              a: "Z<sub>i</sub> = W<sub>i</sub>&middot;A<sub>i&minus;1</sub> + b<sub>i</sub> is the pre-activation sum, and A<sub>i</sub> = &sigma;(Z<sub>i</sub>) is the output after the activation",
+              w: ["Z<sub>i</sub> = &sigma;(A<sub>i</sub>) is the output, and A<sub>i</sub> = W<sub>i</sub>&middot;A<sub>i&minus;1</sub> + b<sub>i</sub> is the pre-activation sum", "Z<sub>i</sub> is the loss, and A<sub>i</sub> is its gradient", "Z<sub>i</sub> = &sigma;(A<sub>i&minus;1</sub>) and A<sub>i</sub> = W<sub>i</sub>&middot;Z<sub>i</sub>"] },
+            { q: "What does Step A compute, and when does it cause a vanishing gradient?",
+              a: "dZ = dA &middot; &sigma;&prime;(Z), the error signal filtered through the activation; on a flat part of the Sigmoid &sigma;&prime;(Z) is near zero, so the gradient vanishes and learning slows",
+              w: ["dZ = dA &middot; W, which vanishes when W is large", "dZ = dA &middot; A<sub>i&minus;1</sub><sup>T</sup>, which vanishes when the input is zero", "dZ = dA + &sigma;&prime;(Z), which vanishes when dA is zero"] },
+            { q: "Numerical: In Step A, the Sigmoid input is Z = 0 and the incoming error is dA = 0.8. What is dZ = dA &middot; &sigma;&prime;(Z), using &sigma;&prime;(Z) = &sigma;(Z)(1 &minus; &sigma;(Z))?",
+              a: "&sigma;(0) = 0.5, so &sigma;&prime;(0) = 0.25 and dZ = 0.8 &times; 0.25 = 0.2",
+              w: ["0.4, using &sigma;(Z) = 0.5 instead of &sigma;&prime;(Z)", "0.8, ignoring the activation", "0.05, applying &sigma;&prime; twice"] },
+            { q: "What does Step B compute, and why is the transpose used?",
+              a: "dW = dZ&middot;(A<sub>i&minus;1</sub>)<sup>T</sup>, so the gradient is input signal &times; error contribution; the transpose aligns the dimensions so dZ<sub>j</sub>&middot;a<sub>k</sub> is computed for every weight at once",
+              w: ["dW = dZ + A<sub>i&minus;1</sub>, with the transpose making the sum possible", "dW = W<sup>T</sup>&middot;dZ, with the transpose reversing the connections", "dW = dZ&middot;dZ<sup>T</sup>, with the transpose making the matrix square"] },
+            { q: "Numerical: With dZ = [0.2, &minus;0.1] and A<sub>i&minus;1</sub> = [1, 2, 3], what are the shape of dW = dZ&middot;A<sub>i&minus;1</sub><sup>T</sup> and the entry for neuron 2 and input 3?",
+              a: "2 &times; 3, and the entry is &minus;0.1 &times; 3 = &minus;0.3",
+              w: ["3 &times; 2, and the entry is 0.6", "2 &times; 3, and the entry is &minus;0.2, which uses input 2", "2 &times; 3, and the entry is 0.3, which drops the sign"] },
+            { q: "What does Step C compute, and what is its shape for a layer with a 2 &times; 3 weight matrix?",
+              a: "dA<sub>prev</sub> = W<sup>T</sup>&middot;dZ, which passes the error backward through the connections in reverse and has one entry per input (3 here)",
+              w: ["dA<sub>prev</sub> = dZ&middot;A<sub>prev</sub><sup>T</sup>, a 2 &times; 3 matrix", "dA<sub>prev</sub> = dZ&middot;&sigma;&prime;(Z), a vector of 2 entries", "dA<sub>prev</sub> = W&middot;dZ, a vector of 2 entries"] },
+            { q: "How does the chain-of-derivatives view describe what each layer does in backpropagation?",
+              a: "Each layer multiplies the error it received by its own local gradient (&part;A/&part;Z &times; &part;Z/&part;W), and the derivatives on the connections feed the generic update &theta; &larr; &theta; &minus; &eta;&nabla;<sub>&theta;</sub>L",
+              w: ["Each layer ignores the error it received and recomputes the loss from scratch", "Each layer adds the received error to its own local gradient before the update", "Each layer sends its own local gradient forward to the next layer"] }
         ]
             });
             </script>

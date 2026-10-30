@@ -444,5 +444,94 @@ body {
             </div>
         </div>
     </div>
+
+<section id="central-tendency-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+    <style>
+        #quiz-start-box { text-align: center; padding: 22px 16px; background: #f5f9ff; border: 1px solid #cfe0f5; border-radius: 10px; }
+        #quiz-start-box p { margin: 0 0 14px; color: #263238; font-size: 1rem; }
+        #start-quiz-btn { background: #1565c0; color: #fff; border: 0; border-radius: 8px; padding: 12px 34px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease; }
+        #start-quiz-btn:hover { background: #0d47a1; }
+        #start-quiz-btn:active { transform: scale(0.97); }
+        #start-quiz-btn:focus-visible { outline: 3px solid #90caf9; outline-offset: 2px; }
+    </style>
+    <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Central Tendency, Deviation and Skewness Quiz</h2>
+
+    <div id="quiz-start-box">
+        <p>15 multiple-choice questions: 5 on measures of central tendency, 5 on measures of deviation and 5 on skewness (and kurtosis).</p>
+        <button type="button" id="start-quiz-btn">Start Quiz</button>
+    </div>
+
+    <div id="quiz"></div>
+
+    <!-- Shared animation lives in Quiz.js; this page supplies only the questions. -->
+    <script src="Quiz.js"></script>
+    <script>
+    (function () {
+        var questions = [
+                { q: "Central Tendency (numerical): For the ten incomes (10, 90, 85, 103, 11, 29, 84, 15, 35, 80) the sum is 542. What is the arithmetic mean?",
+                  a: "542/10 = 54.2",
+                  w: ["542, which is the sum itself", "5.42, which divides by 100", "50.4, which is the mean of the frequency-distribution example"] },
+                { q: "Central Tendency: How is the mean computed for a continuous (grouped) series, and what are the three methods?",
+                  a: "Each class is represented by its mid-value m, and the mean is found by the Direct, Short-cut (assumed mean) or Step-deviation method, which all give the same result (&asymp; 50.75 in the example)",
+                  w: ["Each class is represented by its lower limit, and the three methods are mean, median and mode", "Only the class with the highest frequency is used, with the Direct method", "The classes are ignored, and the mean is found by sorting the individual observations"] },
+                { q: "Central Tendency (numerical): N = 9 observations are arranged in ascending order. The median is the size of which item?",
+                  a: "The ((N + 1)/2)<sup>th</sup> = 5<sup>th</sup> item",
+                  w: ["The 4.5<sup>th</sup> item, which is N/2", "The 9<sup>th</sup> item, which is N", "The 10<sup>th</sup> item, which is N + 1"] },
+                { q: "Central Tendency: In the grouped-data median formula Median = L<sub>1</sub> + [(N/2 &minus; cf)/f] &times; c, how is the median class found and what do cf and f mean?",
+                  a: "The median class is the one containing the N/2<sup>th</sup> item; cf is the cumulative frequency of the class just before it, and f is the frequency of the median class",
+                  w: ["The median class is the one with the highest frequency, and cf is its own cumulative frequency", "The median class is found with (N + 1)/2, and cf is the total frequency N", "L<sub>1</sub> is the upper limit of the median class, and f is the class width"] },
+                { q: "Central Tendency (numerical): No value appears more often than the others, so the mode is ill-defined. If Mean = 50 and Median = 46, what does the empirical formula Mode = 3 &times; Median &minus; 2 &times; Mean give?",
+                  a: "3 &times; 46 &minus; 2 &times; 50 = 138 &minus; 100 = 38",
+                  w: ["3 &times; 50 &minus; 2 &times; 46 = 58", "46, the median itself", "48, the average of the mean and the median"] },
+                { q: "Deviation: What is the Standard Deviation, and how is it related to the variance?",
+                  a: "The square root of the mean of the squared deviations taken from the arithmetic mean; Variance = &sigma;&sup2; and &sigma; = &radic;Variance",
+                  w: ["The mean of the absolute deviations taken from the median", "The square of the mean of the deviations", "The difference between the largest and the smallest value"] },
+                { q: "Deviation (numerical): What is the population standard deviation of 2, 4, 4, 4, 5, 5, 7, 9?",
+                  a: "The mean is 5, &sum;(x &minus; X&#772;)&sup2; = 32, the variance is 32/8 = 4, so &sigma; = 2",
+                  w: ["4, which is the variance", "32, which is the sum of squared deviations", "2.14, which divides by N &minus; 1 = 7"] },
+                { q: "Deviation: How does the short-cut method compute the standard deviation?",
+                  a: "Choose an assumed mean A, take d = m &minus; A, and use &sigma; = &radic;(&sum;fd&sup2;/N &minus; (&sum;fd/N)&sup2;)",
+                  w: ["&sigma; = &radic;(&sum;fd/N), with d equal to the raw value x", "&sigma; = &sum;fd&sup2;/N &minus; &sum;fd/N, with no square root", "&sigma; = &radic;(&sum;fd&sup2;/N + (&sum;fd/N)&sup2;)"] },
+                { q: "Deviation: What does a low or a high standard deviation say about how reliable the mean is?",
+                  a: "A low SD means the values lie close to the mean, so the average is a reliable representative; a high SD means the values are spread out, so the mean may not be a typical experience of the group",
+                  w: ["A low SD means the mean is unreliable, and a high SD means it is reliable", "The SD says nothing about the reliability of the mean", "A high SD means the data are consistent and the mean is stable"] },
+                { q: "Deviation (numerical): Group X has mean 40 and SD 8; Group Y has mean 100 and SD 15. Which group is more consistent, using CV = (&sigma;/X&#772;) &times; 100?",
+                  a: "Group Y: its CV is 15% against 20% for X, and the lower CV means more consistency",
+                  w: ["Group X, because its SD of 8 is smaller than 15", "Group X, because its CV of 20% is higher", "They are equally consistent, since the SDs are close"] },
+                { q: "Skewness: What is skewness, and how are the mean, median and mode ordered for a symmetrical and a positively skewed distribution?",
+                  a: "Skewness is a lack of symmetry; symmetrical: Mean = Median = Mode; positive (right) skew: longer right tail with Mean &gt; Median &gt; Mode",
+                  w: ["Positive skew has a longer left tail with Mean &lt; Median &lt; Mode", "A symmetrical distribution has Mean &gt; Median &gt; Mode", "Skewness measures the peakedness of a distribution"] },
+                { q: "Skewness: For a negatively (left) skewed distribution, which statement is correct?",
+                  a: "The tail on the left is longer, and the order is Mean &lt; Median &lt; Mode",
+                  w: ["The tail on the right is longer, and the order is Mean &gt; Median &gt; Mode", "The tail on the left is longer, but the order is Mean &gt; Median &gt; Mode", "There is no tail, and Mean = Median = Mode"] },
+                { q: "Skewness (numerical): A distribution has Mean = 50, Mode = 44 and &sigma; = 3. What is Karl Pearson&rsquo;s coefficient S<sub>k</sub> = (Mean &minus; Mode)/&sigma;, and what does it indicate?",
+                  a: "S<sub>k</sub> = 6/3 = 2, a positive skew (the right tail is longer)",
+                  w: ["S<sub>k</sub> = &minus;2, a negative skew, from subtracting in the wrong order", "S<sub>k</sub> = 18, from multiplying by &sigma; instead of dividing", "S<sub>k</sub> = 0.5, from dividing &sigma; by the difference"] },
+                { q: "Skewness: When the mode is ill-defined, which form of Pearson&rsquo;s coefficient is used, and where does it come from?",
+                  a: "S<sub>k</sub> = 3(Mean &minus; Median)/&sigma;, which follows from substituting Mode = 3 &times; Median &minus; 2 &times; Mean into (Mean &minus; Mode)/&sigma;",
+                  w: ["S<sub>k</sub> = 3(Median &minus; Mode)/&sigma;", "S<sub>k</sub> = (Mean &minus; Median)/(3&sigma;)", "S<sub>k</sub> = (Mode &minus; Mean)/&sigma;&sup2;"] },
+                { q: "Skewness: Kurtosis is &beta;<sub>2</sub> = &mu;<sub>4</sub>/&mu;<sub>2</sub>&sup2;. What does &beta;<sub>2</sub> = 4 tell you?",
+                  a: "&beta;<sub>2</sub> &gt; 3, so the distribution is leptokurtic: sharply peaked with heavy tails, hence more frequent outliers",
+                  w: ["It is mesokurtic, like the normal distribution", "It is platykurtic: flat-topped with thin tails", "It is negatively skewed"] }
+        ];
+        var btn = document.getElementById("start-quiz-btn");
+        btn.addEventListener("click", function () {
+            if (typeof startQuiz !== "function") {
+                btn.textContent = "Quiz.js not found";
+                btn.disabled = true;
+                return;
+            }
+            document.getElementById("quiz-start-box").style.display = "none";
+            startQuiz({
+                mount: "#quiz",
+                // timeLimit: 5,   // optional: seconds per question
+                questions: questions
+            });
+            document.getElementById("quiz").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    })();
+    </script>
+</section>
+
 </body>
 </html>

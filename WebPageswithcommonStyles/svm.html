@@ -1331,6 +1331,71 @@ body {
     </div>
 
 </div>
+<h3>SVM based Feature Engineering for Image Processing</h3>
+<div class="intuition-box" style="border-left-color: var(--class-a);">
+      <strong class="label" style="color: var(--class-a);">Feature Engineering: What is HOG and How Does SVM Use It?</strong>
+      <p style="margin-top: 0;">
+        Before an SVM can classify an image, the image's raw pixels must be converted into a structured feature vector that captures meaningful spatial information[cite: 3]. <strong>Histogram of Oriented Gradients (HOG)</strong> is a dense feature descriptor that represents an image by the distribution of its local intensity gradients (edges and shapes)[cite: 3].
+      </p>
+
+      <h4 style="margin: 14px 0 6px; color: var(--ink);">What Features are Computed from the Image?</h4>
+      <ul>
+        <li>
+          <strong>Gradient Computation:</strong> The grayscale image is filtered using a central-difference kernel (<code>[-1, 0, 1]</code>) to find horizontal ($g_x$) and vertical ($g_y$) intensity changes[cite: 3]. From these, the script computes the edge magnitude ($\sqrt{g_x^2 + g_y^2}$) and an unsigned orientation angle folded into the range $[0^\circ, 180^\circ)$[cite: 3].
+        </li>
+        <li>
+          <strong>Cell Histogram Binning:</strong> The image space is divided into small grids called cells (e.g., $8 \times 8$ pixels)[cite: 3]. For each cell, a 9-bin orientation histogram is built where every pixel casts a vote proportional to its gradient magnitude, split between neighboring bins using bilinear interpolation[cite: 3].
+        </li>
+        <li>
+          <strong>Block Normalization:</strong> To maintain resilience against illumination changes and shadows, cells are grouped into overlapping blocks (e.g., $2 \times 2$ cells), and the histogram vector within each block is L2-normalized[cite: 3].
+        </li>
+        <li>
+          <strong>Feature Vector Assembly:</strong> All normalized block vectors are concatenated into a single, high-dimensional 1D NumPy array that acts as the final HOG descriptor for that image[cite: 3].
+        </li>
+      </ul>
+
+      <h4 style="margin: 14px 0 6px; color: var(--ink);">How HOG Features are Passed to the SVM</h4>
+      <p>
+        Once the image is converted into a HOG descriptor, the data flows into the SVM classification pipeline as follows[cite: 3]:
+      </p>
+      <ul>
+        <li>
+          <strong>Feature Matrix Construction:</strong> Each image yields a 1D feature vector $\mathbf{x}_i$[cite: 3]. For an entire dataset, these vectors are stacked into a 2D NumPy array $X$ of shape `(n_samples, n_features)`, accompanied by a label array $y$[cite: 3].
+        </li>
+        <li>
+          <strong>Handoff to the Classifier:</strong> The matrix $X$ and labels $y$ are passed directly into the training method (e.g., `clf.fit(X, y)`), whether using a binary trainer or a multi-class wrapper like `OneVsRestSVM`[cite: 3].
+        </li>
+        <li>
+          <strong>Internal SVM Usage:</strong>
+          <ul>
+            <li><strong>In Linear Training (`LinearSVM` / Pegasos):</strong> Each feature vector $\mathbf{x}_i$ is augmented with a trailing constant `1` (to absorb the bias term $b$) and processed iteratively via stochastic subgradient descent directly on the primal hinge-loss objective[cite: 3].</li>
+            <li><strong>In Kernelized Training (`SMOSVM` / Dual Optimization):</strong> The feature vectors are passed into kernel functions (such as linear or RBF kernels, $K(\mathbf{x}_i, \mathbf{x}_j)$) to construct a pairwise Gram matrix, which is then optimized via SMO to solve for the dual Lagrange multipliers ($\alpha_i$)[cite: 3].</li>
+          </ul>
+        </li>
+      </ul>
+
+      <h4 style="margin: 14px 0 6px; color: var(--ink);">Implementation in the Python Module (<code>Hog_SVM.py</code>)</h4>
+      <p>
+        <p>
+        The accompanying Python module implements this full pipeline end-to-end without external machine learning libraries. You can review the complete script here: 
+        <a href="https://github.com/Rajesh-75/Rajesh-75.github.io/blob/main/WebPageswithcommonStyles/Python_Codes/Hog_SVM.py" target="_blank"><code>Hog_SVM.py</code> on GitHub</a>.
+      </p>
+      </p>
+      <ul>
+        <li>
+          <strong><code>compute_hog(image)</code>:</strong> Performs the explicit central-differencing, 9-bin bilinear vote splitting, and $2 \times 2$ block normalization to generate the input vector $\mathbf{x}_i$ for each image[cite: 3].
+        </li>
+        <li>
+          <strong><code>LinearSVM</code> (Pegasos):</strong> Trains directly on the primal hinge-loss objective using stochastic subgradient descent, incorporating an augmented bias term[cite: 3].
+        </li>
+        <li>
+          <strong><code>SMOSVM</code> (Platt's SMO):</strong> Solves the dual Lagrangian problem over Lagrange multipliers ($\alpha_i$) subject to $0 \le \alpha_i \le C$, identifying support vectors and enabling nonlinear RBF kernels[cite: 3].
+        </li>
+        <li>
+          <strong><code>OneVsRestSVM</code>:</strong> Wraps binary SVM models to handle multi-class classification by picking the highest decision score[cite: 3].
+        </li>
+      </ul>
+    </div>
 <section id="svm-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
             <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Timed Support Vector Machine(SVM) Quiz</h2>
 
