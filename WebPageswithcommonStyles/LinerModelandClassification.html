@@ -1289,48 +1289,78 @@ body {
     </p>
 
 </div>
-<section id="transformer-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+<section id="linear-models-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
             <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Linear Model Classification Quiz</h2>
 
             <div id="quiz"></div>
 
-            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
-            <script src="quiz.js"></script>
+            <!-- Shared animation lives in Quiz.js; this page supplies only the questions. -->
+            <script src="Quiz.js"></script>
             <script>
             startQuiz({
                 mount: '#quiz',
                 // timeLimit: 5,   // optional: seconds per question
                 questions: [
-            { q: "What is the main &ldquo;information bottleneck&rdquo; of a classic RNN encoder&ndash;decoder (Seq2Seq) model?",
-              a: "The whole input sequence must be compressed into one fixed-length context vector",
-              w: ["The decoder can only generate one token per sequence", "The encoder has no hidden state to store information", "The output vocabulary is limited to the words in the input"] },
-            { q: "Why can Transformers be trained far more efficiently on GPUs than RNNs?",
-              a: "All token positions are processed in parallel, with no step-by-step recurrence over time",
-              w: ["They always have fewer parameters than an RNN", "They avoid matrix multiplications altogether", "They read the sequence one token at a time, but with bigger batches"] },
-            { q: "Why is positional encoding added to the token embeddings?",
-              a: "Self-attention has no built-in notion of word order, so position information must be injected",
-              w: ["To reduce the embedding dimension", "To convert tokens into integer IDs", "To normalise every embedding to unit length"] },
-            { q: "In self-attention, how are the Query, Key and Value vectors obtained?",
-              a: "By multiplying each token's vector with three learned matrices W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup>",
-              w: ["Q comes from the input, while K and V are fixed random vectors", "They are looked up from three separate vocabulary tables", "They are the output of the softmax over the attention scores"] },
-            { q: "Why are attention scores divided by &radic;d<sub>k</sub> before the softmax?",
-              a: "Large dot products would saturate the softmax and shrink its gradients",
-              w: ["To make the attention weights sum to 1", "To mask out future tokens", "To reduce the number of heads required"] },
-            { q: "What does the causal mask do in a decoder-only (GPT-style) Transformer?",
-              a: "It stops each token from attending to tokens that come after it",
-              w: ["It hides random tokens so the model must reconstruct them", "It removes padding tokens from the loss", "It stops each token from attending to itself"] },
-            { q: "What is the benefit of multi-head attention over a single head?",
-              a: "Different heads can learn to focus on different kinds of relationships in different subspaces",
-              w: ["It shortens the sequence before attention is applied", "It removes the need for positional encoding", "It lets the model skip the feed-forward layer"] },
-            { q: "How does the feed-forward network (FFN) in a Transformer layer treat the tokens?",
-              a: "Each token vector is transformed independently, using the same weights at every position",
-              w: ["It mixes information across all tokens, just like attention", "Every position has its own separately trained FFN", "It only runs on the last token of the sequence"] },
-            { q: "How does a decoder-only Transformer turn its final hidden vectors into a next-token prediction?",
-              a: "A linear projection to vocabulary size followed by a softmax over the vocabulary",
-              w: ["A softmax over the embedding dimension followed by averaging", "A nearest-neighbour lookup in the positional-encoding table", "A second self-attention block that outputs one word directly"] },
-            { q: "What is the usual order of the three LLM training stages?",
-              a: "Unsupervised pre-training &rarr; Supervised fine-tuning (SFT) &rarr; RLHF / alignment",
-              w: ["SFT &rarr; Pre-training &rarr; RLHF", "RLHF &rarr; SFT &rarr; Pre-training", "Pre-training &rarr; RLHF &rarr; SFT"] }
+            { q: "In y = wx + c, what are w and c, and what are the two meanings of &ldquo;bias&rdquo;?",
+              a: "w is the slope and c is the intercept, which ML/DL calls the bias; in classical statistics bias means E[&thetasym;] &minus; &theta;, an estimator&rsquo;s expected deviation from the true parameter",
+              w: ["w is the intercept and c is the slope; bias always means E[&thetasym;] &minus; &theta;", "w is the bias and c is the weight; the two meanings of bias are variance and noise", "Both w and c are slopes; bias refers only to the error term &epsilon;"] },
+            { q: "What are the three components of Linear Regression, and how is it optimised?",
+              a: "Model (y = wx + c), cost function (the sum of squared errors) and optimisation, which here is a closed-form solution of the normal equations with no iteration or learning rate &ndash; the exception rather than the rule",
+              w: ["Model, data and validation, solved iteratively by gradient descent", "Model, cost function and optimisation, solved by gradient descent with a learning rate", "Data, features and labels, solved by random search"] },
+            { q: "Why does Least Squares square the residuals?",
+              a: "Squaring makes every error non-negative, so overshoots and undershoots do not cancel, and it penalises large errors more than proportionally (twice the residual costs four times)",
+              w: ["It makes the cost surface non-convex", "It ignores large errors", "It forces the residuals to sum to zero"] },
+            { q: "Numerical: N = 5, &sum;u = 10, &sum;t = 40, &sum;u&sup2; = 30 and &sum;ut = 90. Solving the normal equations 40 = 10w + 5c and 90 = 30w + 10c, what are w and c?",
+              a: "w = 1 and c = 6 (from the first equation c = 8 &minus; 2w, and substituting gives 90 = 10w + 80)",
+              w: ["w = 2 and c = 4, which satisfies only the first equation", "w = 3 and c = 2, which also satisfies only the first equation", "w = 1 and c = 8, forgetting to subtract w&middot;u&#772;"] },
+            { q: "Why does shifting the input to u = x &minus; 2016 change only the intercept?",
+              a: "The slope depends only on deviations from the mean, which a shift leaves unchanged, while c is tied to where the origin sits",
+              w: ["The slope depends on the origin, so w changes too", "Shifting rescales the data, so both w and c change", "Neither changes, since c is also unaffected by the origin"] },
+            { q: "In the rainfall example, how do predicting 2028 and predicting the withheld year 2021 differ?",
+              a: "2028 (u &asymp; 11.6, outside the fitted range 0&ndash;9) is extrapolation, a much weaker assumption; 2021 is interpolation and can be checked (predicted 97.92 against an actual 102)",
+              w: ["2028 is interpolation because the fitted line is straight", "Both are interpolation", "Both are extrapolation, since the model never saw them"] },
+            { q: "How does the probabilistic (MLE) view of linear regression differ from ordinary Least Squares?",
+              a: "It assumes each target is the true value plus Gaussian noise, t<sub>i</sub> &sim; N(wx<sub>i</sub>, &sigma;&sup2;), writes the likelihood of all the data as a function of w, and picks the w that makes it largest",
+              w: ["It minimises the sum of absolute errors", "It assumes there is no noise and picks the line through the most points", "It picks w so that all the residuals are equal"] },
+            { q: "Where does the squared error come from in the MLE derivation?",
+              a: "The log of the Gaussian likelihood product leaves a constant that does not depend on w plus &minus;&sum;(y<sub>i</sub> &minus; wx<sub>i</sub>)&sup2;/2&sigma;&sup2;, so maximising it means minimising squared error; Laplace noise would give absolute error instead",
+              w: ["The squared error is added by hand as a design choice", "With Laplace noise the loss would still be the squared error", "The constant term decides which w wins"] },
+            { q: "What extra quantity does MLE give that Least Squares has no mechanism to produce?",
+              a: "The noise estimate &sigma;&#770;&sup2; = (1/N)&sum;(y<sub>i</sub> &minus; w&#770;x<sub>i</sub>)&sup2;, the average squared residual of the best fit",
+              w: ["&sigma;&#770;&sup2; = (1/N)&sum;y<sub>i</sub>&sup2;", "&sigma;&#770;&sup2; = &sum;(y<sub>i</sub> &minus; w&#770;x<sub>i</sub>)&sup2; without dividing by N", "&sigma;&#770;&sup2; is simply the square of the slope"] },
+            { q: "Numerical: For 2026 the fitted line predicts 114.75 cm, and the MLE noise estimate is &sigma;&#770; = 5.56 cm. What is the approximate 95% prediction interval?",
+              a: "114.75 &plusmn; 1.96 &times; 5.56 &asymp; 114.75 &plusmn; 10.9, that is (103.9, 125.7) cm",
+              w: ["114.75 &plusmn; 5.56, that is (109.2, 120.3) cm", "114.75 &plusmn; 1.96 &times; 30.9, using the variance instead of &sigma;&#770;", "114.75 &plusmn; 1.645 &times; 5.56, that is (105.6, 123.9) cm"] },
+            { q: "What does L2 (Ridge) regularisation do, and what happens as &lambda; varies?",
+              a: "It adds &lambda;w&sup2; to the cost; &lambda; = 0 recovers Least Squares, and as &lambda; &rarr; &infin; w &rarr; 0 and c &rarr; t&#772;, so the model predicts the mean for every year",
+              w: ["As &lambda; &rarr; &infin; the model fits the training data perfectly", "&lambda; = 0 forces w = 0", "A larger &lambda; makes the fitted slope larger"] },
+            { q: "Numerical: With &sum;u&#771;t&#771; = 10 and &sum;u&#771;&sup2; = 10, what is the ridge slope w<sub>reg</sub> = &sum;u&#771;t&#771;/(&sum;u&#771;&sup2; + &lambda;) for &lambda; = 10?",
+              a: "10/(10 + 10) = 0.5, half the unregularised slope of 1.0",
+              w: ["1.0, the unregularised slope", "2.0, from adding &lambda; to the numerator: (10 + 10)/10", "0.091, from using &lambda;&sup2;: 10/(10 + 100)"] },
+            { q: "Why is only w penalised in Ridge regression, and not c?",
+              a: "c depends on the arbitrary choice of origin (coding years from 2000 or from 2016 changes it), whereas the slope does not",
+              w: ["c is always zero, so it needs no penalty", "Penalising c would make the problem non-convex", "c cannot be differentiated"] },
+            { q: "How should &lambda; be chosen?",
+              a: "Fit (w, c) on the training set for each candidate &lambda;, pick the &lambda; with the lowest validation error (never the training error, which always favours &lambda; = 0), and use the test set only once at the end; with small data, k-fold cross-validation rotates the validation fold",
+              w: ["Pick the &lambda; with the lowest training error", "Use the test set to pick &lambda; and report the same score as final", "Solve for &lambda; with the normal equations"] },
+            { q: "How does a Gaussian prior on the weight relate to regularisation?",
+              a: "A prior w &sim; N(0, &tau;&sup2;) combined with the Gaussian-noise likelihood gives the Ridge objective (MAP) with &lambda; = &sigma;&sup2;/&tau;&sup2;, so noisy data or a strong small-weight belief raise &lambda;",
+              w: ["&lambda; = &tau;&sup2;/&sigma;&sup2;, so noisy data lowers &lambda;", "&lambda; = &sigma;&sup2;&tau;&sup2;", "A uniform prior on w gives Ridge with &lambda; = &sigma;&sup2;"] },
+            { q: "Why does logistic regression use the sigmoid and binary cross-entropy rather than a straight line with squared error?",
+              a: "The sigmoid squeezes z = wx + c into (0, 1) so it reads as a probability; squared error on a sigmoid output is non-convex, whereas a Bernoulli assumption with MLE gives binary cross-entropy, which is convex",
+              w: ["The sigmoid makes the loss non-convex, so squared error is used", "A Gaussian noise assumption gives binary cross-entropy", "Binary cross-entropy has a closed-form solution like the normal equations"] },
+            { q: "How does multinomial (softmax) logistic regression handle K &gt; 2 classes, and what is the gradient of the loss with respect to the logits?",
+              a: "Each class has its own weight vector and bias, normalised by a softmax into a probability distribution; the gradient is P &minus; Y",
+              w: ["One weight vector is shared by all K classes and normalised by a sigmoid; the gradient is Y &minus; P", "Each class has its own weights; the gradient is P(1 &minus; P)", "Each class has its own weights; the gradient is zero for the wrong classes"] },
+            { q: "Numerical: A softmax outputs P = [0.7, 0.2, 0.1] and the true class is the second one, Y = [0, 1, 0]. What is the gradient &nabla;<sub>z</sub>L = P &minus; Y?",
+              a: "[0.7, &minus;0.8, 0.1]",
+              w: ["[&minus;0.7, 0.8, &minus;0.1], with the sign reversed", "[0.7, 0.2, 0.1], which is P without subtracting Y", "[0.21, 0.16, 0.09], which is P(1 &minus; P)"] },
+            { q: "In the binary logistic regression training loop, how are the gradients accumulated and the parameters updated?",
+              a: "grad_w += (p &minus; y)&middot;x and grad_c += (p &minus; y) for each sample, then w &larr; w &minus; &eta;&middot;grad_w and c &larr; c &minus; &eta;&middot;grad_c",
+              w: ["grad_w += (y &minus; p)&middot;x, then w &larr; w &minus; &eta;&middot;grad_w", "grad_w += p&middot;x, ignoring y", "grad_w += (p &minus; y)&sup2;&middot;x, then w &larr; w + &eta;&middot;grad_w"] },
+            { q: "Over many refits at a fixed x<sub>0</sub>, how are variance and bias defined, and where do degree-1 and degree-9 fits sit?",
+              a: "Variance is the spread of the predictions around their own average (the true value never enters); bias is the gap between that average and f(x<sub>0</sub>); degree 1 is high bias and low variance, degree 9 is low bias and high variance",
+              w: ["Variance is the gap between the average prediction and f(x<sub>0</sub>); bias is the spread of the predictions", "Degree 1 is low bias and high variance, and degree 9 is high bias and low variance", "Both are measured on a single fitted line, not across refits"] }
         ]
             });
             </script>

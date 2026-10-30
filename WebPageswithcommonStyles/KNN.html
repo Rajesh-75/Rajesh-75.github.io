@@ -470,48 +470,78 @@ body {
 })();
 </script>
 
-<section id="transformer-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+<section id="knn-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
             <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: K-Nearest neighborhood Quiz</h2>
 
             <div id="quiz"></div>
 
-            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
-            <script src="quiz.js"></script>
+            <!-- Shared animation lives in Quiz.js; this page supplies only the questions. -->
+            <script src="Quiz.js"></script>
             <script>
             startQuiz({
                 mount: '#quiz',
                 // timeLimit: 5,   // optional: seconds per question
                 questions: [
-            { q: "What is the main &ldquo;information bottleneck&rdquo; of a classic RNN encoder&ndash;decoder (Seq2Seq) model?",
-              a: "The whole input sequence must be compressed into one fixed-length context vector",
-              w: ["The decoder can only generate one token per sequence", "The encoder has no hidden state to store information", "The output vocabulary is limited to the words in the input"] },
-            { q: "Why can Transformers be trained far more efficiently on GPUs than RNNs?",
-              a: "All token positions are processed in parallel, with no step-by-step recurrence over time",
-              w: ["They always have fewer parameters than an RNN", "They avoid matrix multiplications altogether", "They read the sequence one token at a time, but with bigger batches"] },
-            { q: "Why is positional encoding added to the token embeddings?",
-              a: "Self-attention has no built-in notion of word order, so position information must be injected",
-              w: ["To reduce the embedding dimension", "To convert tokens into integer IDs", "To normalise every embedding to unit length"] },
-            { q: "In self-attention, how are the Query, Key and Value vectors obtained?",
-              a: "By multiplying each token's vector with three learned matrices W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup>",
-              w: ["Q comes from the input, while K and V are fixed random vectors", "They are looked up from three separate vocabulary tables", "They are the output of the softmax over the attention scores"] },
-            { q: "Why are attention scores divided by &radic;d<sub>k</sub> before the softmax?",
-              a: "Large dot products would saturate the softmax and shrink its gradients",
-              w: ["To make the attention weights sum to 1", "To mask out future tokens", "To reduce the number of heads required"] },
-            { q: "What does the causal mask do in a decoder-only (GPT-style) Transformer?",
-              a: "It stops each token from attending to tokens that come after it",
-              w: ["It hides random tokens so the model must reconstruct them", "It removes padding tokens from the loss", "It stops each token from attending to itself"] },
-            { q: "What is the benefit of multi-head attention over a single head?",
-              a: "Different heads can learn to focus on different kinds of relationships in different subspaces",
-              w: ["It shortens the sequence before attention is applied", "It removes the need for positional encoding", "It lets the model skip the feed-forward layer"] },
-            { q: "How does the feed-forward network (FFN) in a Transformer layer treat the tokens?",
-              a: "Each token vector is transformed independently, using the same weights at every position",
-              w: ["It mixes information across all tokens, just like attention", "Every position has its own separately trained FFN", "It only runs on the last token of the sequence"] },
-            { q: "How does a decoder-only Transformer turn its final hidden vectors into a next-token prediction?",
-              a: "A linear projection to vocabulary size followed by a softmax over the vocabulary",
-              w: ["A softmax over the embedding dimension followed by averaging", "A nearest-neighbour lookup in the positional-encoding table", "A second self-attention block that outputs one word directly"] },
-            { q: "What is the usual order of the three LLM training stages?",
-              a: "Unsupervised pre-training &rarr; Supervised fine-tuning (SFT) &rarr; RLHF / alignment",
-              w: ["SFT &rarr; Pre-training &rarr; RLHF", "RLHF &rarr; SFT &rarr; Pre-training", "Pre-training &rarr; RLHF &rarr; SFT"] }
+            { q: "How does a non-parametric model such as K-NN differ from a parametric one?",
+              a: "A parametric model keeps only a few fitted parameters and can discard the training data; K-NN keeps the entire labelled set and re-examines it for every prediction",
+              w: ["K-NN fits a mean and a covariance per class and then discards the data", "Parametric models keep every training point, while non-parametric models keep only a few numbers", "K-NN assumes each class is Gaussian"] },
+            { q: "Why can a parametric classifier misfit in a way that more data cannot fix?",
+              a: "Its whole fit depends on the assumed shape (such as Gaussian), so if the real data has another shape the misfit is systematic and uncorrectable",
+              w: ["It needs infinitely many parameters", "Its parameters cannot be updated after training", "It ignores the class labels"] },
+            { q: "In the general estimator p(x) &asymp; K/(NV), what do K, V and N stand for?",
+              a: "K is the number of points inside a small region around x, V is the volume of that region, and N is the total number of training samples",
+              w: ["K is the number of classes, V is the variance, and N is the number of neighbours", "K is the kernel width, V is the number of features, and N is the number of test points", "K is the total number of samples, V is the number of points in the region, and N is its volume"] },
+            { q: "Numerical: A sphere around x has volume V = 0.05 and contains K = 10 of N = 200 training points. What is the density estimate p(x) &asymp; K/(NV)?",
+              a: "10/(200 &times; 0.05) = 10/10 = 1.0",
+              w: ["10/200 = 0.05, which ignores the volume", "10/0.05 = 200, which ignores N", "0.5, which halves the result"] },
+            { q: "What methods do you get by holding V or K fixed in p(x) &asymp; K/(NV)?",
+              a: "Fix V and read off K: kernel density estimation (KDE); fix K and find V: K-NN",
+              w: ["Fix V and you get K-NN; fix K and you get KDE", "Fix V and you get K-NN; fix K and you get logistic regression", "Both choices give KDE"] },
+            { q: "What is the weakness of KDE&rsquo;s fixed window size?",
+              a: "In a dense region the window is too coarse and blurs structure, and in a sparse region it may catch very few or zero points, making the estimate noisy or collapse to zero",
+              w: ["The window shrinks in sparse regions and expands in dense ones", "It needs the data to be Gaussian", "It can only be used with two features"] },
+            { q: "How does K-NN density estimation fix that weakness?",
+              a: "It fixes K and grows a sphere until it contains exactly K points, so the window automatically shrinks in dense regions and expands in sparse ones",
+              w: ["It fixes the radius and varies K, so the window shrinks in sparse regions", "It averages several fixed window sizes", "It fits a Gaussian inside each window"] },
+            { q: "How is the sphere used to classify a new point x?",
+              a: "A single sphere centred on x is grown, ignoring class labels, until it contains exactly K points; then the points inside are counted by class (K<sub>k</sub> for class C<sub>k</sub>)",
+              w: ["A separate sphere is grown for each class until it holds K points", "The sphere has a fixed radius, and K varies with the local density", "The sphere is grown until it holds only points of one class"] },
+            { q: "Which three quantities come out of the single sphere construction?",
+              a: "p(x | C<sub>k</sub>) = K<sub>k</sub>/(N<sub>k</sub>V), p(x) = K/(NV) and p(C<sub>k</sub>) = N<sub>k</sub>/N",
+              w: ["p(x | C<sub>k</sub>) = K/(NV), p(x) = K<sub>k</sub>/(N<sub>k</sub>V) and p(C<sub>k</sub>) = N/N<sub>k</sub>", "p(x | C<sub>k</sub>) = N<sub>k</sub>/N, p(x) = K<sub>k</sub>/K and p(C<sub>k</sub>) = K/(NV)", "p(x | C<sub>k</sub>) = K<sub>k</sub>/K, p(x) = N/(KV) and p(C<sub>k</sub>) = V/N"] },
+            { q: "Numerical: N = 100 patients (60 in C<sub>1</sub>, 40 in C<sub>2</sub>). The K = 5 nearest neighbours of x include 4 from C<sub>1</sub> and 1 from C<sub>2</sub>. What is p(C<sub>1</sub> | x)?",
+              a: "K<sub>1</sub>/K = 4/5 = 0.8, because N, V and N<sub>k</sub> all cancel in Bayes&rsquo; theorem",
+              w: ["0.6, which is the prior N<sub>1</sub>/N", "0.727, which is (4/60)/((4/60) + (1/40)), dropping the prior", "0.48, which is 0.8 &times; 0.6"] },
+            { q: "What happens when the three quantities are plugged into Bayes&rsquo; theorem?",
+              a: "N, V and even N<sub>k</sub> cancel, leaving p(C<sub>k</sub> | x) = K<sub>k</sub>/K, so the majority vote is Bayes&rsquo; theorem and not a heuristic",
+              w: ["Only V cancels, so the posterior still depends on N<sub>k</sub>", "Nothing cancels, so the posterior depends on the volume V", "The prior cancels but V does not"] },
+            { q: "In what sense is K-NN Bayes-derived but not &ldquo;Bayesian&rdquo; in the modern sense?",
+              a: "There are no parameters, and so no prior or posterior over parameters; it is a plug-in nonparametric estimate of the class-conditional densities fed through Bayes&rsquo; rule once",
+              w: ["It places a prior over the weights and computes a posterior over them", "It is fully Bayesian because it uses Bayes&rsquo; theorem", "It averages over all possible values of K"] },
+            { q: "Numerical: In the animation K = 9, and the neighbours of the dragged point are 4 from Class A, 3 from Class B and 2 from Class C. What are the posteriors and the prediction?",
+              a: "p(A) = 4/9 &asymp; 0.44, p(B) = 3/9 &asymp; 0.33, p(C) = 2/9 &asymp; 0.22; the prediction is Class A",
+              w: ["p(A) = 1.0, so the prediction is Class A", "p(A) = 4/9, but the prediction is Class B", "0.4, 0.3 and 0.2, from dividing by 10 instead of 9"] },
+            { q: "What do you see in the animation near a cluster centre versus near a boundary between clusters?",
+              a: "Near a centre the sphere stays small and the vote is near-unanimous; near a boundary the sphere reaches further and the vote splits, so the posterior reflects local uncertainty",
+              w: ["Near a centre the sphere is large and the vote splits; near a boundary the vote is unanimous", "The sphere has the same radius everywhere", "The vote is always unanimous, whatever the position"] },
+            { q: "What are the steps of the K-NN algorithm for a test point x<sub>q</sub>?",
+              a: "Compute the distance to every training point, sort ascending, take the K nearest, count votes per class, set p(C<sub>c</sub> | x<sub>q</sub>) = votes/K, and predict the argmax",
+              w: ["Fit a Gaussian per class, then pick the class with the highest density at x<sub>q</sub>", "Train a model on D with gradient descent, then predict x<sub>q</sub>", "Sort the points by class, then take the K largest classes"] },
+            { q: "Why should features be standardised before computing distances in K-NN?",
+              a: "An unscaled feature with a larger numeric range would dominate the distance calculation regardless of its actual relevance",
+              w: ["Standardising makes the sphere grow faster", "Distances cannot be computed on unscaled features", "Standardising turns the K-NN classifier into a parametric model"] },
+            { q: "Why is K-NN called lazy learning?",
+              a: "There is no training phase; the training set is simply kept, and the sort over distances happens fresh at every query",
+              w: ["It trains very slowly with a small learning rate", "It stops training as soon as the loss stops improving", "It uses only the single nearest neighbour"] },
+            { q: "In the clinic example, what role do the two measurements and the classes C<sub>1</sub>, C<sub>2</sub>, C<sub>3</sub> play?",
+              a: "The two measurements define &ldquo;closeness&rdquo; (Euclidean distance) at every step, and C<sub>1</sub>, C<sub>2</sub>, C<sub>3</sub> are the output, not another input",
+              w: ["The classes are used as extra features in the distance", "The measurements are replaced by the class labels after training", "Only the metabolic marker is used for the distance, and the inflammation marker gives the class"] },
+            { q: "How does retrieval in RAG relate to K-NN classification?",
+              a: "It uses the same nearest-neighbour search over embeddings, but with no label or voting step; the K retrieved chunks are fed into the LLM&rsquo;s context window to ground its answer",
+              w: ["It grows a neighbourhood and then takes a majority vote over the chunks", "It trains the LLM on the K nearest chunks with gradient descent", "It uses the K nearest chunks as class labels for the query"] },
+            { q: "How does a nearest-neighbour language model (kNN-LM) use K-NN?",
+              a: "At each step it looks up the K nearest (context representation &rarr; next token) pairs in a datastore built from the training data and interpolates the model&rsquo;s distribution with theirs, with no retraining",
+              w: ["It retrains the language model on the K nearest sentences at every step", "It replaces the model&rsquo;s output with the majority class of the datastore", "It uses K-NN to choose the learning rate during training"] }
         ]
             });
             </script>
