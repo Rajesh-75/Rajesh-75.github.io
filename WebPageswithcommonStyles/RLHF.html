@@ -25,105 +25,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles_common.css">
-<style>
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.6;
-  color: #333333;
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 0 20px;
-  background-color: #f9f9f9;
-  visibility: hidden;
-}
-h1 {
-  color: #1a365d;
-  border-bottom: 2px solid #e2e8f0;
-  padding-bottom: 10px;
-  font-size: 28px;
-}
-h2 {
-  color: #2b6cb0;
-  font-size: 20px;
-  margin-top: 30px;
-}
-h3 {
-  color: #2d3748;
-  font-size: 16px;
-  margin-top: 24px;
-}
-p {
-  margin: 10px 0;
-}
-ul, ol {
-  padding-left: 20px;
-}
-.diagram-frame {
-  background-color: #fbfbfc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 16px;
-  margin: 18px 0;
-  overflow-x: auto;
-}
-.diagram-frame svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.algorithm-box {
-  background-color: #f5f8ff;
-  border: 1px solid #cfe0fa;
-  border-radius: 8px;
-  padding: 18px 22px;
-  margin: 20px 0;
-}
-.algorithm-box .label {
-  display: block;
-  font-weight: 700;
-  color: #1a365d;
-  font-size: 13px;
-  letter-spacing: 0.02em;
-  margin-bottom: 10px;
-}
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 16px 0;
-  font-size: 14px;
-}
-.data-table th, .data-table td {
-  border: 1px solid #e2e8f0;
-  padding: 10px 12px;
-  text-align: left;
-}
-.data-table th {
-  background-color: #f7fafc;
-  color: #4a5568;
-  font-weight: 600;
-}
-.data-table tr:nth-child(even) {
-  background-color: #f8fafc;
-}
-.analogy-box {
-  background-color: #f5fbf5;
-  border-left: 4px solid #38a169;
-  padding: 16px 20px;
-  margin: 20px 0;
-  border-radius: 0 4px 4px 0;
-}
-.analogy-box .label {
-  display: inline-block;
-  background-color: #38a169;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  padding: 2px 8px;
-  border-radius: 3px;
-  margin-bottom: 8px;
-}
-</style>
+
 </head>
 <body>
 <div class="container">
@@ -218,8 +120,29 @@ ul, ol {
 <h2>3.2 Framing the LLM Alignment Problem: Why Standard RL Fails and How RLHF Integrates Human Preferences
 </h2>
 <p>
-  Applying traditional Reinforcement Learning directly to large language models breaks down because language lacks the hard, objective, programmatic environment rules found in chess or video games. Without a rigid ground-truth simulator to evaluate whether a generated paragraph is creative, helpful, or safe, standard RL loops have no intrinsic way to score success. More critically, text generation is fundamentally a single-step contextual <strong>bandit problem</strong> rather than a true multi-step trajectory where environment dynamics change based on intermediate actions. To bridge this gap, <strong>RLHF</Strong> replaces traditional environment rewards with a learned Reward Model trained on human preferences. This setup allows us to steer the model using subjective human intent, while a <strong>reference model and KL penalty</strong> anchor the policy to prevent it from gaming the reward function.It uses an optimization pipeline (algorithms like PPO or DPO) that optimizes an objective based on scalar preference judgments rather than exact token matches performed by pretrained models and SFT models.<strong>RLHF reduces halucinations by penalizing confident wrong answers and prevents harmless content</strong>.
+  Applying traditional Reinforcement Learning directly to large language models breaks down because language lacks the hard, objective, programmatic rules found in chess or video games. Without a ground-truth simulator to say whether a generated paragraph is creative, helpful, or safe, a standard RL loop has no intrinsic way to score success. RLHF closes this gap in three moves:
 </p>
+<ul>
+  <li><strong>A learned Reward Model replaces the environment's reward.</strong> It is trained on human preferences (how, in Section 3.3), so we can steer the model with subjective human intent.</li>
+  <li><strong>A reference model plus a KL penalty anchors the policy</strong>, so it cannot wander off and game the reward function.</li>
+  <li><strong>A policy-optimization algorithm (PPO here; DPO is an alternative)</strong> optimizes the objective using scalar preference judgments rather than exact token matches against a pretrained or SFT model.</li>
+</ul>
+<p>
+  RLHF helps reduce toxic output and makes the model more helpful and safer, but it is not a cure for hallucination: if the reward model favours answers that merely <em>sound</em> authoritative, RLHF can even reward confident mistakes (see the Practical Issues section at the end).
+</p>
+
+<div class="explain-box">
+  <span class="q-label">TWO VIEWS OF THE SAME PROCESS</span>
+  <p>
+    You will meet two descriptions of LLM generation in this section &mdash; a <strong>contextual bandit</strong> (3.2.1) and a <strong>token-level MDP</strong> (3.2.2). They are not competing claims; they answer two different questions:
+  </p>
+  <ul>
+    <li><strong>How is the reward delivered?</strong> The Reward Model reads the whole response and returns <em>one</em> score. From the reward's point of view, the whole response is a single "pull of the lever" &mdash; the bandit view.</li>
+    <li><strong>How is the policy actually optimized?</strong> The model writes <em>one token at a time</em>, so to decide which tokens deserve credit for that one score, optimization treats generation as a step-by-step MDP &mdash; the MDP view. This is exactly why the Critic, PPO and GAE exist.</li>
+  </ul>
+  <p style="margin-bottom:0;"><strong>Rule of thumb: one score per response, learning per token.</strong></p>
+</div>
+
 
 <h3>3.2.1 The High-Level View: The Contextual Bandit</h3>
 <p>
@@ -240,7 +163,7 @@ ul, ol {
     there &#8212; no next state, no planning several moves ahead. That's exactly why the
     state-transition arrows from Figure 4 (s<sub>t</sub> &#8594; s<sub>t+1</sub>) don't appear in
     Figure 5: every generated token in the response is judged together, as part of one single
-    "pull of the lever," not as a sequence of separate environment steps.</p>
+    "pull of the lever," not as a sequence of separate environment steps. (This describes how the <em>reward</em> is delivered. How that single score is turned into a learning signal for individual tokens is the subject of 3.2.2.)</p>
 </div>
 
 <div class="diagram-frame">
@@ -385,257 +308,115 @@ ul, ol {
   </ol>
 </div>
 
+<div class="explain-box">
+  <span class="q-label">RECONCILING THE TWO VIEWS</span>
+  <p style="margin-bottom:0;">
+    The bandit view is why the reward is a <em>single scalar for the whole response</em> and why there are no environment dynamics to simulate. The MDP view is why training still needs a <em>per-token</em> signal: with one score at the very end, we must work out which individual tokens helped or hurt. Section 3.3 uses both &mdash; the Reward Model gives one score at $t=T$ (bandit), and the Critic with GAE spreads credit across tokens (MDP).
+  </p>
+</div>
+
 <p style="font-size: 0.92em; color: #667;">
-  <em>Aside:</em> Direct Preference Optimization (DPO), covered in a later section, uses the reward
+  <em>Aside:</em> Direct Preference Optimization (DPO), covered in Section 3.4, uses the reward
   signal in a fundamentally different way &#8212; it skips the policy-gradient loop above entirely and
-  optimizes directly on pairs of preferred/dispreferred completions. We'll return to that contrast once
-  the PPO picture is complete.
+  optimizes directly on pairs of preferred/dispreferred completions. We return to that contrast in Section 3.4,
+  once the PPO picture is complete.
 </p>
 
-<h2>3.3 RLHF Training</h2>
+<h2>3.3 RLHF Training: Bringing It All Together</h2>
 <p>
-  If you train the AI only to get high scores from the Reward Model, it will learn to cheat. 
-  It might repeat text or use formatting tricks just to trick the system. 
-  This problem is called <strong>reward hacking</strong>. 
-  To stop this and keep the language natural, we save a copy of the original model. 
-  This copy is called the reference model ($\pi_{ref}$). 
-  The reference model is frozen and never changes. 
-  It acts as a baseline to calculate a penalty (the KL divergence penalty) (i.e penalizes the model from drifting too far from its original baseline). For example, the model might discover that repeating words like "excellent, helpful, fantastic" over and over tricks the Reward Model into giving a huge positive score, resulting in total gibberish that gets a high reward.
-  This keeps the AI stable during training, as shown in the formula:
-</p>
-
-<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #0284c7; padding: 16px 20px; border-radius: 8px; max-width: 650px; margin: 30px auto; font-family: system-ui, -apple-system, sans-serif;">
-    <h4 style="margin-top: 0; margin-bottom: 10px; color: #0369a1; font-size: 1.05rem;">RLHF Objective &amp; KL Penalty</h4>
-
-    <!-- Full Objective Equation -->
-    <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 14px; text-align: center; margin-bottom: 12px; font-weight: 500;">
-        $$\max_\theta \;\; \mathbb{E}_{(x, y) \sim \mathcal{D}} \left[ R_\psi(x, y) - \beta \cdot D_{\text{KL}}\big(\pi_\theta(y \vert x) \,||\, \pi_{\text{ref}}(y \vert x)\big) \right]$$
-    </div>
-
-    <p style="margin-bottom: 8px; font-size: 0.92rem; color: #334155;">
-        At the token level, the per-token KL divergence penalty approximation is:
-    </p>
-
-    <!-- Token-level Approximation Formula -->
-    <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; text-align: center; margin-bottom: 12px;">
-        $$\text{KL Penalty}_t \approx \log \left( \frac{\pi_\theta(a_t \vert{} s_t)}{\pi_{\text{ref}}(a_t \vert{} s_t)} \right)$$
-    </div>
-
-    <!-- Intuition List -->
-    <ul style="padding-left: 20px; margin-bottom: 0; font-size: 0.92rem; color: #334155;">
-        <li style="margin-bottom: 8px;">
-            <strong>Similar Probabilities (Policy vs. SFT):</strong><br>
-            When $\frac{\pi_\theta}{\pi_{\text{ref}}} \approx 1 \implies \log(1) = 0$. The penalty is zero.
-        </li>
-        <li>
-            <strong>Drastic Over-assignment by Policy:</strong><br>
-            When $\frac{\pi_\theta}{\pi_{\text{ref}}} \gg 1 \implies \log(\text{large number}) > 0$. Subtracting this positive value reduces the overall net reward $r_t$.
-        </li>
-    </ul>
-</div>
-
-<h3>3.3.1 Why the KL Penalty Can Be Computed Per Token</h3>
-<p>
-  KL divergence between two distributions $P$ and $Q$ is defined as:
-</p>
-<div class="math-block">
-  $$\mathrm{KL}(P \Vert Q) = \sum_{x} P(x) \log \frac{P(x)}{Q(x)}$$
-</div>
-<p>
-  Note the sum is over <strong>every possible outcome $x$</strong>, weighted by how likely $P$
-  thinks that outcome is. It's a property of the two full distributions &#8212; you can't get it
-  from looking at just one outcome; you need to sweep over the entire space.
-</p>
-
-<p><strong>Why that looks impossible here.</strong> In our case, $P = \pi_\theta(c \mid p)$ and
-  $Q = \pi_{ref}(c \mid p)$ &#8212; distributions over every possible complete response $c$. If the
-  vocabulary has $|\mathcal{V}|$ tokens and a response is $T$ tokens long, there are
-  $|\mathcal{V}|^T$ possible completions. To literally compute the KL divergence by the formula
-  above, you'd have to enumerate all $|\mathcal{V}|^T$ of them, compute each one's probability under
-  both models, and sum. That's astronomically intractable &#8212; and during training you only ever
-  have one sampled completion $c$ per prompt, not the full space. So plugging directly into the
-  textbook definition genuinely can't be done here.
-</p>
-
-<div class="explain-box">
-  <span class="q-label">GENERAL CONCEPT: THE MONTE CARLO TRICK</span>
-  <p>
-    Say you want $\mathbb{E}_{X\sim P}[f(X)] = \sum_x P(x)\,f(x)$ &#8212; go through every possible
-    value $x$, weight it by how likely $P$ says it is, and add them all up. That's fine when there
-    are only a few possible values, but impossible or impractical when there are billions, or the
-    values are continuous.
-  </p>
-  <p>
-    The fix: instead of summing over everything, just <strong>draw samples and average</strong>:
-  </p>
-  <div class="math-block" style="margin: 10px 0;">
-    $$\mathbb{E}_{X\sim P}[f(X)] \approx \frac{1}{N}\sum_{i=1}^{N} f(x_i), \quad x_i \sim P$$
-  </div>
-  <p>
-    As $N$ grows, this average converges to the true expectation &#8212; that's the whole trick.
-    Even a <em>single</em> sample is already a valid, if noisy, estimate: roll a fair die once, get
-    a 4, and your one-sample estimate of $\mathbb{E}[X^2]$ is $16$ &#8212; nowhere near the true
-    value of $\frac{91}{6} \approx 15.17$, but if you repeated "roll once and record" many times and
-    averaged those estimates, you'd land back on 15.17. This is exactly why a single sampled LLM
-    response can be treated as a valid estimate of the KL divergence &#8212; no repeated rollouts
-    needed per prompt, since training itself repeats this over many prompts and averages it out.
-  </p>
-</div>
-
-<p><strong>How it's actually done &#8212; sampling, not summing.</strong> The resolution isn't
-  magic, it's an identity. Notice the KL formula is itself an expectation:
-</p>
-<div class="math-block">
-  $$\mathrm{KL}(P \Vert Q) = \mathbb{E}_{x \sim P}\left[\log \frac{P(x)}{Q(x)}\right]$$
-</div>
-<p>
-  An expectation can be estimated by sampling instead of summing over everything. If you draw one
-  $c \sim \pi_\theta$ and compute $\log \frac{\pi_\theta(c\mid p)}{\pi_{ref}(c\mid p)}$ for just that
-  one sample, that single number is an unbiased single-sample estimate of the true KL divergence
-  &#8212; not the exact value, but something that averages out to the exact value over many prompts.
-  That's the standard Monte Carlo trick used everywhere in RL and variational inference, not
-  something specific to RLHF.
-</p>
-
-<div class="explain-box">
-  <span class="q-label">GENERAL CONCEPT: THE CHAIN RULE OF PROBABILITY</span>
-  <p>
-    Any joint probability over a sequence of variables can be broken into a product of conditional
-    probabilities, one variable at a time &#8212; this is always true, by the definition of
-    conditional probability, not an approximation:
-  </p>
-  <div class="math-block" style="margin: 10px 0;">
-    $$P(x_1, \ldots, x_T) = \prod_{t=1}^{T} P(x_t \mid x_1, \ldots, x_{t-1})$$
-  </div>
-  <p>
-    Example: draw 3 cards without replacement and ask for P(Ace, then King, then Queen). Instead of
-    reasoning about all three draws at once, the chain rule lets you go one step at a time, each
-    conditioned on what's already been drawn:
-  </p>
-  <p style="text-align: center; margin: 10px 0;">
-    $P(\text{Ace}) \cdot P(\text{King} \mid \text{Ace}) \cdot P(\text{Queen} \mid \text{Ace, King})
-    = \frac{4}{52} \cdot \frac{4}{51} \cdot \frac{4}{50}$
-  </p>
-  <p>
-    Since $\log(ab) = \log a + \log b$, taking the log of both sides turns this product into a sum:
-  </p>
-  <div class="math-block" style="margin: 10px 0;">
-    $$\log P(x_1, \ldots, x_T) = \sum_{t=1}^{T} \log P(x_t \mid x_1, \ldots, x_{t-1})$$
-  </div>
-  <p>
-    A language model generating a response one token at a time is doing exactly this &#8212; each
-    token depends on everything generated before it &#8212; so the log-probability of the whole
-    response is just the sum of the log-probabilities of each token along the way.
-  </p>
-</div>
-
-<p><strong>What the chain rule adds on top.</strong> The Monte Carlo trick gets you a number from
-  one sample &#8212; but it's one lump number for the whole response. The chain-rule decomposition
-  is the separate step that lets you split that single number into $T$ pieces, one per token, so it
-  can be handed out as a per-step penalty during generation instead of only being usable once, at
-  the very end. Because language models are autoregressive, the sequence-level probability
-  decomposes by the chain rule:
-</p>
-<div class="math-block">
-  $$\log \pi_\theta(c \mid p) = \sum_{t=1}^T \log \pi_\theta(c_t \mid s_t)$$
-</div>
-<p>
-  Applying linearity of expectation, the sequence-level KL divergence expands perfectly into an
-  expected sum of token-level log-ratios:
-</p>
-<div class="math-block">
-  $$\mathbb{E}_{c \sim \pi_\theta} \left[ \log \frac{\pi_\theta(c \mid p)}{\pi_{ref}(c \mid p)} \right] = \mathbb{E}_{c \sim \pi_\theta} \left[ \sum_{t=1}^T \log \frac{\pi_\theta(c_t \mid s_t)}{\pi_{ref}(c_t \mid s_t)} \right]$$
-</div>
-<p>
-  This is exactly what justifies the per-token reward used during training &#8212; the same $r_t$
-  formula from the Step-by-Step walkthrough below, now derived rather than just asserted:
-</p>
-<div class="math-block">
-  $$r_t = -\beta \log \frac{\pi_\theta(c_t \mid s_t)}{\pi_{ref}(c_t \mid s_t)} \;+\; \begin{cases} r_{RM}(p,c) & \text{if } t = T \\ 0 & \text{if } t < T \end{cases}$$
-</div>
-
-<p>
-  The Reward Model ($RM_\psi$) does not give scores word by word. 
-  Instead, it reads the whole prompt and the finished response together just once. 
-  Then, it gives one single score ($r_{RM}$) for the entire response. 
-  Because this score is for the whole text, it cannot be split across individual words. 
-  Therefore, during step-by-step training, this final score is added only to the very last token ($t = T$). 
-  For all the words before the end ($t &lt; T$), the reward is just the penalty for drifting too far from the baseline.
-</p>
-
-<p>
-  The Critic ($V_\eta$) is a separate model trained alongside the main AI. 
-  Its job is to look at each word as it is written and predict what the final score will be. 
-  This prediction serves as a baseline. 
-  By comparing the actual result to this baseline, the system calculates an &ldquo;advantage&rdquo; score. 
-  This score tells the system if a specific word choice was better or worse than expected. 
-  The Critic has its own separate weights and its own loss function, meaning it operates independently without sharing parameters.
-</p>
-
-<h3>3.3.2 Credit Allocation via Generalized Advantage Estimation (GAE)</h3>
-<p>
-  Because the Reward Model's score lands only on the final token, a plain policy-gradient update
-  would be extremely high-variance &#8212; one number at the very end would have to explain every
-  token that came before it. The Critic $V_\eta$ addresses this by estimating the expected
-  cumulative future reward from any given partial sequence $s_t$:
-</p>
-<div class="math-block">
-  $$V_\eta(s_t) \approx \mathbb{E}_{\pi_\theta} \left[ \sum_{l=t}^T \gamma^{l-t} r_l \;\middle\vert{}\; s_t \right]$$
-</div>
-<p style="font-size: 0.92em; color: #667;">
-  (In standard RLHF, the discount factor $\gamma$ is set to $1$ &#8212; there's no reason to discount
-  future tokens within a single response.)
+  Large Language Models start out as raw next-token predictors trained on massive web corpora. While they acquire vast general knowledge during pre-training, they lack conversational etiquette, instruction-following skills, and safety guardrails. 
 </p>
 <p>
-  From this estimate, we compute a temporal-difference error at each step and use GAE to distribute
-  credit backward across the whole sequence:
+  <strong>Reinforcement Learning from Human Feedback (RLHF)</strong> is the critical final alignment stage that solves this. Its core goal is to bridge the gap between raw statistical text generation and subjective human intent. By steering the model using <strong>human preferences</strong>, RLHF tends to suppress toxic outputs, improves instruction-following and helpfulness, and moves a raw language engine toward a safer conversational assistant (it does not, on its own, eliminate hallucinations).
 </p>
-<div class="math-block">
-  $$\delta_t^V = r_t + \gamma V_\eta(s_{t+1}) - V_\eta(s_t)$$
-</div>
-<div class="math-block">
-  $$\hat{A}_t = \sum_{l=0}^{T-t} (\gamma \lambda)^l \delta_{t+l}^V$$
-</div>
+
+<h3>Overview: Goals and the Three-Stage Journey	</h3>
 <p>
-  The resulting Advantage $\hat{A}_t$ is exactly the "was this token better or worse than expected?"
-  signal referenced earlier &#8212; now with the precise recursion behind it, rather than just the
-  informal description.
+  To understand why RLHF is necessary, we must view it as the final step in a three-stage training pipeline:
 </p>
+<ol>
+  <li><strong>Unsupervised Pre-training:</strong> Teaches the model <em>how to speak</em> by predicting the next word across the internet.</li>
+  <li><strong>Supervised Fine-Tuning (SFT):</strong> Teaches the model <em>how to be a helpful assistant</em> using curated prompt-response pairs. This creates our starting model (the <strong>Reference Model</strong>).</li>
+  <li><strong>RLHF (Alignment):</strong> Puts guardrails on the assistant to optimize helpfulness, honesty, and harmlessness based on human preference evaluations.</li>
+</ol>
+
+<h3>The Cast of Characters: The Four Models</h3>
+<p>
+  Because RLHF coordinates multiple systems simultaneously, students often experience cognitive overload. Before diving into the mathematics of the training loop, it helps to know the four distinct roles involved in the process:
+</p>
+<ul>
+  <li><strong>The Policy ($\pi_\theta$) — The Writer:</strong> The active model you are training. It reads the prompt and dynamically generates responses token-by-token.</li>
+  <li><strong>The Reference Model ($\pi_{\text{ref}}$) — The Strict Editor:</strong> A frozen copy of the SFT model that stands over the writer's shoulder, enforcing a penalty if the policy drifts too far from its original linguistic style.</li>
+  <li><strong>The Reward Model ($R_\psi$) — The Movie Critic:</strong> A frozen model trained on human preferences (how it is trained is explained next) that reads the <em>entire finished response</em> at the end and assigns a single quality score.</li>
+  <li><strong>The Critic ($V_\eta$) — The Running Coach:</strong> Evaluates text token-by-token as it's being written to predict future rewards and establish a baseline for advantage estimation.</li>
+</ul>
+<h3>How the Reward Model Is Trained: Learning from Human Comparisons</h3>
+<p>
+  So far the Reward Model is just a box that turns a (prompt, response) pair into a score. That box has to be built <em>before</em> the RL stage starts, and it is built from human judgments.
+</p>
+<p>
+  <strong>Why comparisons instead of scores?</strong> Ask ten people to rate an answer from 1 to 10 and you get ten different scales &mdash; one person's 7 is another's 9. Ask the same people "which of these two answers is better?" and they agree far more often. So RLHF collects <em>preferences</em>, not ratings.
+</p>
+
+<div class="algorithm-box">
+  <strong class="label">Collecting the Preference Data</strong>
+  <ol style="margin-top: 5px; padding-left: 20px; margin-bottom: 0;">
+    <li style="margin-bottom: 8px;">Sample a prompt $p$.</li>
+    <li style="margin-bottom: 8px;">Let the SFT model generate two different completions for it.</li>
+    <li style="margin-bottom: 8px;">A human labeler picks the better one: the <strong>chosen</strong> completion $c_w$ ("winner") and the <strong>rejected</strong> completion $c_l$ ("loser").</li>
+    <li>Repeat many times to build the dataset $\mathcal{D}_{pref} = \{(p,\, c_w,\, c_l)\}$.</li>
+  </ol>
+</div>
 
 <table class="data-table">
   <thead>
-    <tr>
-      <th>Model</th>
-      <th>Forward Pass (FP)</th>
-      <th>Backward Pass (BP)</th>
-    </tr>
+    <tr><th>Prompt $p$</th><th>Chosen $c_w$</th><th>Rejected $c_l$</th></tr>
   </thead>
   <tbody>
     <tr>
-      <td>$\pi_\theta$ (Policy)</td>
-      <td>&#10003; generates $c$, computes $\log \pi_\theta$</td>
-      <td>&#10003; gradients computed, $\theta$ updated</td>
-    </tr>
-    <tr>
-      <td>$RM_\psi$ (Reward Model)</td>
-      <td>&#10003; scores $(p,c) \to r$</td>
-      <td>&#10007; no gradient, $\psi$ untouched</td>
-    </tr>
-    <tr>
-      <td>$\pi_{ref}$ (Reference)</td>
-      <td>&#10003; computes $\log \pi_{ref}$ for KL term</td>
-      <td>&#10007; no gradient, weights untouched</td>
-    </tr>
-    <tr>
-      <td>$V_\eta$ (Critic)</td>
-      <td>&#10003; estimates $V(s_t)$</td>
-      <td>&#10003; gradients computed, $\eta$ updated</td>
+      <td>Explain photosynthesis to a 10-year-old.</td>
+      <td>Plants use sunlight the way a kitchen uses a stove: they take in light, water and air and cook their own food (sugar), and they release the oxygen we breathe.</td>
+      <td>Photosynthesis is the biochemical conversion of photon energy into chemical energy via chlorophyll-mediated carbon fixation.</td>
     </tr>
   </tbody>
 </table>
 
+<p>
+  <strong>The model.</strong> The Reward Model usually starts from the SFT model, with the next-token output layer replaced by a single-number "head". It reads the prompt and the whole response and outputs one scalar, $R_\psi(p,c)$, at the last token. (This is the same quantity written $RM_\psi$ in the figures, and $r_{RM}$ for one particular response.)
+</p>
+<p>
+  <strong>The training objective.</strong> We want $R_\psi(p,c_w) > R_\psi(p,c_l)$. The <strong>Bradley&ndash;Terry model</strong> turns the score gap into the probability that a human prefers $c_w$:
+</p>
+<div class="math-block">
+  $$P(c_w \succ c_l \mid p) = \sigma\big(R_\psi(p,c_w) - R_\psi(p,c_l)\big), \qquad \sigma(z) = \frac{1}{1+e^{-z}}$$
+</div>
+<p>and training minimizes the negative log-likelihood of the human choices:</p>
+<div class="math-block">
+  $$\mathcal{L}(\psi) = -\,\mathbb{E}_{(p,\,c_w,\,c_l)\sim\mathcal{D}_{pref}}\Big[\log \sigma\big(R_\psi(p,c_w) - R_\psi(p,c_l)\big)\Big]$$
+</div>
+
+<div class="explain-box">
+  <span class="q-label">INTUITION WITH NUMBERS</span>
+  <p>
+    Suppose the model gives the chosen answer $1.2$ and the rejected one $0.4$. The gap is $+0.8$, so $\sigma(0.8)\approx 0.69$ and the loss is $-\ln 0.69 \approx 0.37$: small, because the model ranked the pair the way the human did. If it had given them the other way round, the gap would be $-0.8$, $\sigma(-0.8)\approx 0.31$, and the loss would be $-\ln 0.31 \approx 1.17$: large. Gradient descent therefore pushes the chosen score up and the rejected score down.
+  </p>
+</div>
+
+<p><strong>Two consequences to carry forward:</strong></p>
+<ul>
+  <li><strong>Only differences are trained.</strong> The loss depends on the score <em>gap</em>, so the zero point and scale of $R_\psi$ are arbitrary &mdash; a score of $2.0$ means little on its own, only relative to other responses.</li>
+  <li><strong>It is a proxy.</strong> The Reward Model is a learned imitation of human judgment from a limited set of comparisons, so it can be wrong or exploitable. Once training is done it is frozen and used as the reward signal in RLHF &mdash; and its imperfections are exactly why reward hacking (3.3.1) and the KL penalty are needed.</li>
+</ul>
+
+<h3>Step-by-Step Training Loop &amp; Gradient Flow</h3>
+
+<div class="explain-box">
+  <span class="q-label">FIRST LOOK</span>
+  <p>The figure below is a <strong>first look</strong> at one complete RLHF training step. Do not worry if some symbols (the per-token KL term, the advantage $A_t$, the value target $R_t$) are not clear yet &mdash; we unpack each of them in Sections 3.3.1&ndash;3.3.3. For now, just follow three things: (1) which boxes are <span style="color:#0056b3;font-weight:600;">trainable</span> and which are <span style="color:#667;font-weight:600;">frozen</span>, (2) the reward model contributes <strong>one</strong> score at the very last token, and (3) the KL penalty appears at <strong>every</strong> token. We will show this same figure again at the end, once every symbol is explained.</p>
+</div>
+<hr style="margin: 30px 0;">
 <div class="diagram-frame">
-  <svg viewBox="-90 0 1080 800" xmlns="http://www.w3.org/2000/svg" style="max-width:700px; height:auto; display:block; margin:0 auto;">
+  <svg viewBox="-50 0 995 770" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:1000px; height:auto; display:block; margin:0 auto;">
     <defs>
       <marker id="fpArrow3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
         <path d="M0,0 L8,3 L0,6 Z" fill="#0056b3"/>
@@ -795,13 +576,13 @@ ul, ol {
       </text>
     </g>
   </svg>
-  <p class="diagram-caption">Figure 6: The complete RLHF training step, showing per-token detail. The KL
+  <p class="diagram-caption">Figure 6: The complete RLHF training step, showing per-token detail (first look &mdash; symbols are unpacked in 3.3.1&ndash;3.3.3). The KL
     penalty (fed by &#960;<sub>ref</sub>) is computed at every single position, but RM<sub>&#968;</sub>
     contributes exactly once &#8212; its scalar score lands only in the final cell (t = T), highlighted
     above. Backprop (green) only ever updates &#952; and &#951;; RM<sub>&#968;</sub> and &#960;<sub>ref</sub>
     are read from but never written to.</p>
 </div>
-
+<p>
 <div class="algorithm-box" style="margin-top: 30px;">
   <strong class="label">Step-by-Step: What Actually Happens in One RLHF Training Step</strong>
   <p>
@@ -814,12 +595,10 @@ ul, ol {
     <li>
       <strong>Generate and score — forward pass only, nothing learns yet:</strong>
       <ul style="list-style-type: disc; margin-top: 5px; margin-bottom: 10px;">
-        <li><strong>Policy $\pi_\theta$ (trainable):</strong> writes the response $c$, one token at a time, and records how confident it was at each token — $\log \pi_\theta(c_t \mid s_t)$.In othewords This model reads the input Prompt, then dynamically generates the Response tokens one by one in real-time.</li>
-        <li><strong>Reference $\pi_{ref}$ (frozen):</strong> the "before" copy of the policy. It reads the same response and records its own confidence at each token — not to generate anything, just so we have something fixed to compare the policy against. That comparison becomes the KL penalty, every token.
-		This model takes the input Prompt and the exact Response tokens just generated by the policy to evaluate token probabilities.
-		</li>
+        <li><strong>Policy $\pi_\theta$ (trainable):</strong> writes the response $c$, one token at a time, and records how confident it was at each token — $\log \pi_\theta(c_t \mid s_t)$.</li>
+        <li><strong>Reference $\pi_{ref}$ (frozen):</strong> the "before" copy of the policy. It reads the same response and records its own confidence at each token — not to generate anything, just so we have something fixed to compare the policy against. That comparison becomes the KL penalty, every token. Its input is the prompt plus the exact response tokens the policy just generated.</li>
         <li><strong>Reward Model $RM_\psi$ (frozen):</strong> reads the whole finished response once and gives it a single score, $r_{RM}$. It never looks token by token — only at the final result.</li>
-        <li><strong>Critic $V_\eta$ (trainable):</strong> at every token, estimates how much total reward it expects from this point onward — $V(s_t)$.This model takes the input Prompt combined with the fully completed Response sequence to score the entire output text at the very end.This model takes the input Prompt alongside the Response tokens generated up to that specific point in time to predict future rewards</li>
+        <li><strong>Critic $V_\eta$ (trainable):</strong> at every token, estimates how much total reward it expects from this point onward &mdash; $V(s_t)$. Its input at position $t$ is the prompt plus <em>only the response tokens generated up to that point</em> (a partial sequence), not the finished response.</li>
       </ul>
     </li>
 
@@ -828,19 +607,19 @@ ul, ol {
       <ul style="list-style-type: disc; margin-top: 5px; margin-bottom: 10px;">
         <li>At every token $t$, the reward is mostly just the KL penalty — how far the policy has drifted from the reference at that step. Only at the very last token ($t=T$) does the reward model's score $r_{RM}$ get added in:
           <div style="margin: 8px 0; text-align: center;">
-            $$r_t = -\beta \cdot \text{KL}(\pi_\theta \parallel \pi_{ref})_t \;+\; \begin{cases} r_{RM} & t = T \\ 0 & \text{otherwise} \end{cases}$$
-			This calculation block processes each token of the generated Response to calculate individual token-level penalties and append the final reward.
+            $$r_t = -\beta \log \frac{\pi_\theta(c_t \mid s_t)}{\pi_{ref}(c_t \mid s_t)} \;+\; \begin{cases} r_{RM} & t = T \\ 0 & \text{otherwise} \end{cases}$$
+            <span style="font-size: 0.92em; color: #556;">The KL term is computed at every token; the reward-model score is added only at the last one.</span>
           </div>
         </li>
-        <li>GAE then combines this reward sequence $r_t$ with the critic's estimates $V_\eta(s_t)$ to produce two things: the <strong>Advantage $A_t$</strong> (was this token better or worse than the critic expected?) and the <strong>Value Target $R_t$</strong> (what the critic should have predicted).This math engine evaluates the generated Response sequence by comparing the actual token rewards against the Critic's predictions.</li>
+        <li>GAE then combines this reward sequence $r_t$ with the critic's estimates $V_\eta(s_t)$ to produce two things: the <strong>Advantage $A_t$</strong> (was this token better or worse than the critic expected?) and the <strong>Value Target $R_t$</strong> (what the critic should have predicted).</li>
       </ul>
     </li>
 
     <li>
       <strong>Update weights — the only place backprop happens:</strong>
       <ul style="list-style-type: disc; margin-top: 5px; margin-bottom: 0;">
-        <li><strong>Policy update:</strong> the Advantage $A_t$ drives the PPO loss, $\nabla_\theta \log \pi_\theta(c_t \mid s_t) \cdot A_t$. Backprop updates <em>only</em> $\theta$.calculates updates based on how likely the policy was to generate that specific Response given the input Prompt.</li>
-        <li><strong>Critic update:</strong> the gap between $V_\eta(s_t)$ and $R_t$ drives a separate loss, $(V_\eta(s_t) - R_t)^2$. Backprop updates <em>only</em> $\eta$ — a completely separate update from the policy's.optimizes the critic's ability to predict rewards for the generated Response tokens when exposed to the input Prompt.</li>
+        <li><strong>Policy update:</strong> the Advantage $A_t$ drives the PPO loss, $\nabla_\theta \log \pi_\theta(c_t \mid s_t) \cdot A_t$. Backprop updates <em>only</em> $\theta$. (The exact clipped form is in 3.3.3.)</li>
+        <li><strong>Critic update:</strong> the gap between $V_\eta(s_t)$ and $R_t$ drives a separate loss, $(V_\eta(s_t) - R_t)^2$. Backprop updates <em>only</em> $\eta$ — a completely separate update from the policy's.</li>
       </ul>
     </li>
   </ol>
@@ -849,7 +628,294 @@ ul, ol {
     $RM_\psi$ and $\pi_{ref}$ are read from constantly, in every single step — but never once updated.
     They stay exactly as they were for the entire training run.
   </p>
+  
 </div>
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Forward Pass (FP)</th>
+      <th>Backward Pass (BP)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>$\pi_\theta$ (Policy)</td>
+      <td>&#10003; generates $c$, computes $\log \pi_\theta$</td>
+      <td>&#10003; gradients computed, $\theta$ updated</td>
+    </tr>
+    <tr>
+      <td>$RM_\psi$ (Reward Model)</td>
+      <td>&#10003; scores $(p,c) \to r$</td>
+      <td>&#10007; no gradient, $\psi$ untouched</td>
+    </tr>
+    <tr>
+      <td>$\pi_{ref}$ (Reference)</td>
+      <td>&#10003; computes $\log \pi_{ref}$ for KL term</td>
+      <td>&#10007; no gradient, weights untouched</td>
+    </tr>
+    <tr>
+      <td>$V_\eta$ (Critic)</td>
+      <td>&#10003; estimates $V(s_t)$</td>
+      <td>&#10003; gradients computed, $\eta$ updated</td>
+    </tr>
+  </tbody>
+</table>
+<h3>3.3.1 Reward Hacking and KL Penalty computation</h3>
+  If you train the AI only to get high scores from the Reward Model, it will learn to cheat. 
+  It might repeat text or use formatting tricks just to trick the system. 
+  This problem is called <strong>reward hacking</strong>. 
+  To stop this and keep the language natural, we save a copy of the original model. 
+  This copy is called the reference model ($\pi_{ref}$). 
+  The reference model is frozen and never changes. 
+  It acts as a baseline to calculate a penalty (the KL divergence penalty) (i.e penalizes the model from drifting too far from its original baseline). For example, the model might discover that repeating words like "excellent, helpful, fantastic" over and over tricks the Reward Model into giving a huge positive score, resulting in total gibberish that gets a high reward.
+  This keeps the AI stable during training, as shown in the formula:
+</p>
+
+<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #0284c7; padding: 16px 20px; border-radius: 8px; max-width: 650px; margin: 30px auto; font-family: system-ui, -apple-system, sans-serif;">
+    <h4 style="margin-top: 0; margin-bottom: 10px; color: #0369a1; font-size: 1.05rem;">RLHF Objective &amp; KL Penalty</h4>
+
+    <!-- Full Objective Equation -->
+    <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 14px; text-align: center; margin-bottom: 12px; font-weight: 500;">
+        $$\max_\theta \;\; \mathbb{E}_{x \sim \mathcal{D},\; y \sim \pi_\theta(\cdot \vert x)} \left[ R_\psi(x, y) - \beta \cdot D_{\text{KL}}\big(\pi_\theta(y \vert x) \,||\, \pi_{\text{ref}}(y \vert x)\big) \right]$$
+    </div>
+
+    <p style="margin-bottom: 8px; font-size: 0.92rem; color: #334155;">
+        Here the prompts $x$ come from the dataset, but the completions $y$ are <em>sampled from the current policy</em> $\pi_\theta$ (not taken from a dataset). At the token level, the per-token KL divergence penalty approximation is:
+    </p>
+
+    <!-- Token-level Approximation Formula -->
+    <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; text-align: center; margin-bottom: 12px;">
+        $$\text{KL Penalty}_t \approx \log \left( \frac{\pi_\theta(a_t \vert{} s_t)}{\pi_{\text{ref}}(a_t \vert{} s_t)} \right)$$
+    </div>
+
+    <!-- Intuition List -->
+    <ul style="padding-left: 20px; margin-bottom: 0; font-size: 0.92rem; color: #334155;">
+        <li style="margin-bottom: 8px;">
+            <strong>Similar Probabilities (Policy vs. SFT):</strong><br>
+            When $\frac{\pi_\theta}{\pi_{\text{ref}}} \approx 1 \implies \log(1) = 0$. The penalty is zero.
+        </li>
+        <li>
+            <strong>Drastic Over-assignment by Policy:</strong><br>
+            When $\frac{\pi_\theta}{\pi_{\text{ref}}} \gg 1 \implies \log(\text{large number}) > 0$. Subtracting this positive value reduces the overall net reward $r_t$.
+        </li>
+        <li style="margin-top: 8px;">
+            <strong>Policy Under-assigns Relative to the Reference:</strong><br>
+            When $\frac{\pi_\theta}{\pi_{\text{ref}}} < 1 \implies \log(\text{ratio}) < 0$. Subtracting a negative number gives a small <em>bonus</em> on that token. So an individual token's term can be negative; what is guaranteed to be non-negative is the <em>average</em> over many samples, because the true KL divergence is always $\ge 0$.
+        </li>
+    </ul>
+</div>
+
+
+<p>
+  KL divergence between two distributions $P$ and $Q$ is defined as:
+</p>
+<div class="math-block">
+  $$\mathrm{KL}(P \Vert Q) = \sum_{x} P(x) \log \frac{P(x)}{Q(x)}$$
+</div>
+<p>
+  Note the sum is over <strong>every possible outcome $x$</strong>, weighted by how likely $P$
+  thinks that outcome is. It's a property of the two full distributions &#8212; you can't get it
+  from looking at just one outcome; you need to sweep over the entire space.
+</p>
+
+<p><strong>Why that looks impossible here.</strong> In our case, $P = \pi_\theta(c \mid p)$ and
+  $Q = \pi_{ref}(c \mid p)$ &#8212; distributions over every possible complete response $c$. If the
+  vocabulary has $|\mathcal{V}|$ tokens and a response is $T$ tokens long, there are
+  $|\mathcal{V}|^T$ possible completions. To literally compute the KL divergence by the formula
+  above, you'd have to enumerate all $|\mathcal{V}|^T$ of them, compute each one's probability under
+  both models, and sum. That's astronomically intractable &#8212; and during training you only ever
+  have one sampled completion $c$ per prompt, not the full space. So plugging directly into the
+  textbook definition genuinely can't be done here.
+</p>
+
+<div class="explain-box">
+  <span class="q-label">GENERAL CONCEPT: THE MONTE CARLO TRICK</span>
+  <p>
+    Say you want $\mathbb{E}_{X\sim P}[f(X)] = \sum_x P(x)\,f(x)$ &#8212; go through every possible
+    value $x$, weight it by how likely $P$ says it is, and add them all up. That's fine when there
+    are only a few possible values, but impossible or impractical when there are billions, or the
+    values are continuous.
+  </p>
+  <p>
+    The fix: instead of summing over everything, just <strong>draw samples and average</strong>:
+  </p>
+  <div class="math-block" style="margin: 10px 0;">
+    $$\mathbb{E}_{X\sim P}[f(X)] \approx \frac{1}{N}\sum_{i=1}^{N} f(x_i), \quad x_i \sim P$$
+  </div>
+  <p>
+    As $N$ grows, this average converges to the true expectation &#8212; that's the whole trick.
+    Even a <em>single</em> sample is already a valid, if noisy, estimate: roll a fair die once, get
+    a 4, and your one-sample estimate of $\mathbb{E}[X^2]$ is $16$ &#8212; nowhere near the true
+    value of $\frac{91}{6} \approx 15.17$, but if you repeated "roll once and record" many times and
+    averaged those estimates, you'd land back on 15.17. This is exactly why a single sampled LLM
+    response can be treated as a valid estimate of the KL divergence &#8212; no repeated rollouts
+    needed per prompt, since training itself repeats this over many prompts and averages it out.
+  </p>
+</div>
+
+<p><strong>How it's actually done &#8212; sampling, not summing.</strong> The resolution isn't
+  magic, it's an identity. Notice the KL formula is itself an expectation:
+</p>
+<div class="math-block">
+  $$\mathrm{KL}(P \Vert Q) = \mathbb{E}_{x \sim P}\left[\log \frac{P(x)}{Q(x)}\right]$$
+</div>
+<p>
+  An expectation can be estimated by sampling instead of summing over everything. If you draw one
+  $c \sim \pi_\theta$ and compute $\log \frac{\pi_\theta(c\mid p)}{\pi_{ref}(c\mid p)}$ for just that
+  one sample, that single number is an unbiased single-sample estimate of the true KL divergence
+  &#8212; not the exact value, but something that averages out to the exact value over many prompts.
+  That's the standard Monte Carlo trick used everywhere in RL and variational inference, not
+  something specific to RLHF.
+</p>
+
+<div class="explain-box">
+  <span class="q-label">GENERAL CONCEPT: THE CHAIN RULE OF PROBABILITY</span>
+  <p>
+    Any joint probability over a sequence of variables can be broken into a product of conditional
+    probabilities, one variable at a time &#8212; this is always true, by the definition of
+    conditional probability, not an approximation:
+  </p>
+  <div class="math-block" style="margin: 10px 0;">
+    $$P(x_1, \ldots, x_T) = \prod_{t=1}^{T} P(x_t \mid x_1, \ldots, x_{t-1})$$
+  </div>
+  <p>
+    Example: draw 3 cards without replacement and ask for P(Ace, then King, then Queen). Instead of
+    reasoning about all three draws at once, the chain rule lets you go one step at a time, each
+    conditioned on what's already been drawn:
+  </p>
+  <p style="text-align: center; margin: 10px 0;">
+    $P(\text{Ace}) \cdot P(\text{King} \mid \text{Ace}) \cdot P(\text{Queen} \mid \text{Ace, King})
+    = \frac{4}{52} \cdot \frac{4}{51} \cdot \frac{4}{50}$
+  </p>
+  <p>
+    Since $\log(ab) = \log a + \log b$, taking the log of both sides turns this product into a sum:
+  </p>
+  <div class="math-block" style="margin: 10px 0;">
+    $$\log P(x_1, \ldots, x_T) = \sum_{t=1}^{T} \log P(x_t \mid x_1, \ldots, x_{t-1})$$
+  </div>
+  <p>
+    A language model generating a response one token at a time is doing exactly this &#8212; each
+    token depends on everything generated before it &#8212; so the log-probability of the whole
+    response is just the sum of the log-probabilities of each token along the way.
+  </p>
+</div>
+
+<p><strong>What the chain rule adds on top.</strong> The Monte Carlo trick gets you a number from
+  one sample &#8212; but it's one lump number for the whole response. The chain-rule decomposition
+  is the separate step that lets you split that single number into $T$ pieces, one per token, so it
+  can be handed out as a per-step penalty during generation instead of only being usable once, at
+  the very end. Because language models are autoregressive, the sequence-level probability
+  decomposes by the chain rule:
+</p>
+<div class="math-block">
+  $$\log \pi_\theta(c \mid p) = \sum_{t=1}^T \log \pi_\theta(c_t \mid s_t)$$
+</div>
+<p>
+  Applying linearity of expectation, the sequence-level KL divergence expands perfectly into an
+  expected sum of token-level log-ratios:
+</p>
+<div class="math-block">
+  $$\mathbb{E}_{c \sim \pi_\theta} \left[ \log \frac{\pi_\theta(c \mid p)}{\pi_{ref}(c \mid p)} \right] = \mathbb{E}_{c \sim \pi_\theta} \left[ \sum_{t=1}^T \log \frac{\pi_\theta(c_t \mid s_t)}{\pi_{ref}(c_t \mid s_t)} \right]$$
+</div>
+<p>
+  This is exactly what justifies the per-token reward used during training &#8212; the same $r_t$
+  formula from the Step-by-Step walkthrough below, now derived rather than just asserted:
+</p>
+<div class="math-block">
+  $$r_t = -\beta \log \frac{\pi_\theta(c_t \mid s_t)}{\pi_{ref}(c_t \mid s_t)} \;+\; \begin{cases} r_{RM}(p,c) & \text{if } t = T \\ 0 & \text{if } t < T \end{cases}$$
+</div>
+
+<p>
+  The Reward Model ($RM_\psi$) does not give scores word by word. 
+  Instead, it reads the whole prompt and the finished response together just once. 
+  Then, it gives one single score ($r_{RM}$) for the entire response. 
+  Because this score is for the whole text, it cannot be split across individual words. 
+  Therefore, during step-by-step training, this final score is added only to the very last token ($t = T$). 
+  For all the words before the end ($t &lt; T$), the reward is just the penalty for drifting too far from the baseline.
+</p>
+
+<p>
+  The Critic ($V_\eta$) is a separate model trained alongside the main AI. 
+  Its job is to look at each word as it is written and predict what the final score will be. 
+  This prediction serves as a baseline. 
+  By comparing the actual result to this baseline, the system calculates an &ldquo;advantage&rdquo; score. 
+  This score tells the system if a specific word choice was better or worse than expected. 
+  The Critic has its own separate weights and its own loss function, meaning it operates independently without sharing parameters.
+</p>
+
+<h3>3.3.2 Credit Allocation via Generalized Advantage Estimation (GAE)</h3>
+
+<div class="explain-box">
+  <span class="q-label">BEFORE THE FORMULAS: VALUE, BASELINE AND ADVANTAGE</span>
+  <p>
+    <strong>Value $V(s_t)$ = "how well do I expect this to end, from here?"</strong> Think of an exam. After answering half the paper you can already estimate your final mark. That running estimate is the value. Here, $V(s_t)$ is the Critic's guess of the total reward still to come after the tokens written so far.
+  </p>
+  <p>
+    <strong>Why the raw reward is a poor teacher.</strong> If we simply said "the response scored well, so make <em>every</em> token in it more likely", the filler words get pulled up along with the genuinely good choices, and the signal is very noisy. We want to credit a token only for what it contributed <em>beyond what we already expected</em>.
+  </p>
+  <p>
+    <strong>Baseline and advantage.</strong> So we subtract a baseline, the expectation. The <strong>advantage</strong> is
+    "what actually happened minus what we expected". For one step this is the TD error $\delta_t = r_t + V(s_{t+1}) - V(s_t)$: the reward we just received, plus how good things now look, minus how good they looked before this token.
+  </p>
+  <ul>
+    <li><strong>Positive advantage:</strong> this token left us better off than expected &rarr; make it more likely.</li>
+    <li><strong>Negative advantage:</strong> worse than expected &rarr; make it less likely.</li>
+  </ul>
+  <p style="margin-bottom:0;">
+    <strong>Tiny example.</strong> Before writing token $t$ the Critic expects $V(s_t)=0.5$. The token carries a small KL penalty, $r_t=-0.07$, and afterwards the Critic is more optimistic, $V(s_{t+1})=0.8$. Then $\delta_t = -0.07 + 0.8 - 0.5 = +0.23$: this token turned out better than expected, so it is reinforced. Subtracting a baseline does not change the <em>average</em> direction of the gradient, but it removes a lot of noise.
+  </p>
+</div>
+
+<p>
+  Because the Reward Model's score lands only on the final token, a plain policy-gradient update
+  would be extremely high-variance &#8212; one number at the very end would have to explain every
+  token that came before it. The Critic $V_\eta$ addresses this by estimating the expected
+  cumulative future reward from any given partial sequence $s_t$:
+</p>
+<div class="math-block">
+  $$V_\eta(s_t) \approx \mathbb{E}_{\pi_\theta} \left[ \sum_{l=t}^T \gamma^{l-t} r_l \;\middle\vert{}\; s_t \right]$$
+</div>
+<p style="font-size: 0.92em; color: #667;">
+  (In standard RLHF, the discount factor $\gamma$ is set to $1$ &#8212; there's no reason to discount
+  future tokens within a single response.)
+</p>
+<p>
+  From this estimate, we compute a temporal-difference error at each step and use GAE to distribute
+  credit backward across the whole sequence:
+</p>
+<div class="math-block">
+  $$\delta_t^V = r_t + \gamma V_\eta(s_{t+1}) - V_\eta(s_t)$$
+</div>
+<div class="math-block">
+  $$\hat{A}_t = \sum_{l=0}^{T-t} (\gamma \lambda)^l \delta_{t+l}^V$$
+</div>
+<p>
+  The resulting Advantage $\hat{A}_t$ is exactly the "was this token better or worse than expected?"
+  signal referenced earlier &#8212; now with the precise recursion behind it, rather than just the
+  informal description.
+</p>
+<div class="explain-box">
+  <span class="q-label">READING THE FORMULA: WHAT IS &lambda;?</span>
+  <p>
+    $\delta_t$ looks only <em>one token</em> ahead: low noise, but it leans entirely on the Critic being right. The other extreme is to look all the way to the end of the response: no reliance on the Critic, but very noisy. The parameter $\lambda \in [0,1]$ blends the two:
+  </p>
+  <ul>
+    <li>$\lambda = 0$: $\hat{A}_t = \delta_t$ (one-step look-ahead only).</li>
+    <li>$\lambda = 1$: $\hat{A}_t$ = (total reward from $t$ to the end) $- V_\eta(s_t)$ (look all the way).</li>
+    <li>In practice $\lambda$ is set between these (a common value is around $0.95$), trading noise against dependence on the Critic. The sum also reaches back from later tokens: a late reward is shared out, with weight $(\gamma\lambda)^l$, to the earlier tokens that led to it.</li>
+  </ul>
+  <p style="margin-bottom:0;">
+    <em>Terminal convention:</em> after the last token $t=T$ there is nothing left to earn, so $V_\eta(s_{T+1}) = 0$ in $\delta_T$.
+  </p>
+</div>
+
+
+
+
+
+
+
 
 <h3>3.3.3 The Exact Optimization Objectives</h3>
 <p>
@@ -870,6 +936,105 @@ ul, ol {
 </p>
 <div class="math-block">
   $$L^{\text{MSE}}(\eta) = \hat{\mathbb{E}}_t \left[ \left( V_\eta(s_t) - R_t \right)^2 \right]$$
+</div>
+
+<h3>Worked Example: One RLHF Step with a 3-Token Response</h3>
+<p>
+  Let us run every formula from this section on a response so short that you can check each number by hand. The prompt is <em>"Explain photosynthesis simply."</em> and the policy writes a 3-token response, <em>"Plants"</em>, <em>"use"</em>, <em>"sunlight"</em>, so $T=3$. Settings: $\beta = 0.1$, $\gamma = 1$, $\lambda = 0.9$, $\epsilon = 0.2$. The Reward Model scores the finished response $r_{RM} = 2.0$. Numbers are rounded to 2&ndash;3 decimals.
+</p>
+
+<div class="algorithm-box">
+  <strong class="label">Step 1 &mdash; Build the per-token reward</strong>
+  <p style="margin-bottom: 10px;">
+    Use $r_t = -\beta \log\frac{\pi_\theta}{\pi_{ref}} + (r_{RM}\text{ if } t=T)$. At generation time $\pi_\theta$ is the policy that wrote the response (we call it $\pi_{old}$ in Step 5).
+  </p>
+  <table class="data-table">
+    <thead>
+      <tr><th></th><th>$t=1$ "Plants"</th><th>$t=2$ "use"</th><th>$t=3$ "sunlight"</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>$\pi_\theta(c_t \mid s_t)$</td><td>0.40</td><td>0.50</td><td>0.30</td></tr>
+      <tr><td>$\pi_{ref}(c_t \mid s_t)$</td><td>0.20</td><td>0.50</td><td>0.60</td></tr>
+      <tr><td>$\log(\pi_\theta/\pi_{ref})$</td><td>$+0.693$</td><td>$0$</td><td>$-0.693$</td></tr>
+      <tr><td>KL term $-\beta \log(\cdot)$</td><td>$-0.069$</td><td>$0$</td><td>$+0.069$</td></tr>
+      <tr><td>Reward Model score added</td><td>0</td><td>0</td><td>$+2.0$</td></tr>
+      <tr><td><strong>Per-token reward $r_t$</strong></td><td><strong>$-0.07$</strong></td><td><strong>$0.00$</strong></td><td><strong>$+2.07$</strong></td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top: 10px; margin-bottom: 0;">
+    At $t=1$ the policy is twice as confident as the reference, so it pays a small penalty. At $t=3$ it is <em>less</em> confident than the reference, so it gets a small bonus (the ratio&nbsp;&lt;&nbsp;1 case from 3.3.1). The reward-model score lands only at $t=3$.
+  </p>
+</div>
+
+<div class="algorithm-box">
+  <strong class="label">Step 2 &mdash; Ask the Critic and compute TD errors</strong>
+  <p style="margin-bottom: 10px;">
+    Suppose the Critic's value estimates are $V(s_1)=1.0$, $V(s_2)=1.2$, $V(s_3)=1.5$, and $V(s_4)=0$ (nothing is left to earn after the last token). With $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$:
+  </p>
+  <ul style="margin-bottom: 0;">
+    <li>$\delta_1 = -0.07 + 1.2 - 1.0 = +0.13$</li>
+    <li>$\delta_2 = \;\;0.00 + 1.5 - 1.2 = +0.30$</li>
+    <li>$\delta_3 = +2.07 + 0 - 1.5 = +0.57$</li>
+  </ul>
+</div>
+
+<div class="algorithm-box">
+  <strong class="label">Step 3 &mdash; GAE: advantages and value targets</strong>
+  <p style="margin-bottom: 10px;">
+    The GAE sum can be computed <em>backwards</em> with the recursion $\hat{A}_t = \delta_t + \gamma\lambda\,\hat{A}_{t+1}$ (and $\hat{A}_{T+1}=0$). Here $\gamma\lambda = 0.9$:
+  </p>
+  <ul>
+    <li>$\hat{A}_3 = \delta_3 = 0.57$</li>
+    <li>$\hat{A}_2 = \delta_2 + 0.9\,\hat{A}_3 = 0.30 + 0.513 = 0.813$</li>
+    <li>$\hat{A}_1 = \delta_1 + 0.9\,\hat{A}_2 = 0.13 + 0.732 = 0.862$</li>
+  </ul>
+  <p style="margin-bottom: 10px;">The value targets are $R_t = \hat{A}_t + V(s_t)$:</p>
+  <ul style="margin-bottom: 10px;">
+    <li>$R_1 = 0.862 + 1.0 = 1.862$</li>
+    <li>$R_2 = 0.813 + 1.2 = 2.013$</li>
+    <li>$R_3 = 0.57 + 1.5 = 2.07$</li>
+  </ul>
+  <p style="margin-bottom: 0;">
+    <em>Sanity check:</em> $R_3 = 2.07$ is exactly the reward actually received from $t=3$ onward, as it should be at the last step.
+  </p>
+</div>
+
+<div class="algorithm-box">
+  <strong class="label">Step 4 &mdash; Critic loss (updates $\eta$ only)</strong>
+  <p style="margin-bottom: 0;">
+    Squared errors $(V(s_t) - R_t)^2$: $(1.0-1.862)^2 = 0.743$, $(1.2-2.013)^2 = 0.661$, $(1.5-2.07)^2 = 0.325$. The mean is $L^{\text{MSE}} \approx 0.576$. The Critic was too pessimistic at every position, so training pushes its estimates up.
+  </p>
+</div>
+
+<div class="algorithm-box">
+  <strong class="label">Step 5 &mdash; PPO clipped objective (updates $\theta$ only)</strong>
+  <p style="margin-bottom: 10px;">
+    PPO reuses the same batch for a few small updates. Suppose after some of them the current policy gives these probabilities, while $\pi_{old}$ is the policy that wrote the response (Step 1): $0.52, 0.51, 0.27$ against $0.40, 0.50, 0.30$. The ratios are $\rho_t = \pi_\theta / \pi_{old}$ and the clip range with $\epsilon = 0.2$ is $[0.8,\,1.2]$. (We write $\rho_t$ here to avoid confusion with the reward $r_t$.)
+  </p>
+  <table class="data-table">
+    <thead>
+      <tr><th></th><th>$t=1$</th><th>$t=2$</th><th>$t=3$</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Ratio $\rho_t$</td><td>1.30</td><td>1.02</td><td>0.90</td></tr>
+      <tr><td>Advantage $\hat{A}_t$</td><td>0.862</td><td>0.813</td><td>0.570</td></tr>
+      <tr><td>Unclipped: $\rho_t \hat{A}_t$</td><td>1.120</td><td>0.829</td><td>0.513</td></tr>
+      <tr><td>Clipped: $\text{clip}(\rho_t, 0.8, 1.2)\,\hat{A}_t$</td><td>$1.2 \times 0.862 = 1.034$</td><td>0.829</td><td>0.513</td></tr>
+      <tr><td><strong>$\min(\cdot,\cdot)$</strong></td><td><strong>1.034</strong></td><td><strong>0.829</strong></td><td><strong>0.513</strong></td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top: 10px; margin-bottom: 0;">
+    The average is $L^{\text{CLIP}} \approx 0.792$, which PPO <em>maximizes</em> (the loss is its negative). At $t=1$ the policy has already raised the token's probability by 30%, more than the allowed 20%, so the $\min$ picks the clipped term. That term does not depend on $\theta$, so its gradient is zero: the update stops pushing token 1 any higher. Tokens 2 and 3 are inside the range and keep learning.
+  </p>
+</div>
+
+<div class="explain-box">
+  <span class="q-label">WHAT THE EXAMPLE SHOWS</span>
+  <ul style="margin-bottom: 0;">
+    <li><strong>Credit flows backward.</strong> The Reward Model's score arrived only at $t=3$, yet token 1 receives the <em>largest</em> advantage ($0.862$) because GAE passes later good news back to the earlier tokens that led to it.</li>
+    <li><strong>The KL term is small but present at every token.</strong> It nudges the per-token reward without ever overruling the Reward Model's score (with $\beta = 0.1$).</li>
+    <li><strong>Exactly two models learn.</strong> Step 4 updates only the Critic ($\eta$) and Step 5 updates only the Policy ($\theta$). The Reward Model and the Reference model were only read from.</li>
+  </ul>
 </div>
 
 <div style="margin-top: 30px;">
@@ -928,6 +1093,178 @@ ul, ol {
 
 
 
+<h3>Revisiting Figure 6: Every Symbol Now Has a Home</h3>
+<p>Here is the figure from the start of 3.3 again. Earlier it was a first look; now each piece maps to a section you have worked through:</p>
+<ul>
+  <li><strong>The per-token KL box</strong> (fed by $\pi_{ref}$, every $t$) &rarr; Section 3.3.1: why $-\beta\log\frac{\pi_\theta}{\pi_{ref}}$ is a valid per-token penalty (Monte Carlo + chain rule).</li>
+  <li><strong>The single $r_{RM}$ at $t=T$</strong> &rarr; Section 3.3.1: the reward model scores the whole response once, so its score lands only on the last token.</li>
+  <li><strong>The Critic $V_\eta$, the advantage $A_t$ and the value target $R_t$</strong> &rarr; Section 3.3.2: TD error $\delta_t$ and GAE.</li>
+  <li><strong>The two green backprop paths</strong> (policy and critic only) &rarr; Section 3.3.3: the PPO clipped loss for $\theta$ and the MSE loss for $\eta$.</li>
+</ul>
+<div class="diagram-frame">
+  <svg viewBox="-50 0 995 770" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:1000px; height:auto; display:block; margin:0 auto;">
+    <defs>
+      <marker id="fpArrow3b" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#0056b3"/>
+      </marker>
+      <marker id="bpArrow3b" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#206a37"/>
+      </marker>
+    </defs>
+    <g font-family="Segoe UI, sans-serif" font-size="13">
+      <text x="450" y="20" text-anchor="middle" font-weight="700" fill="#334" font-size="14">
+        RLHF Step &#8212; Per-Token Reward &amp; Gradient Flow
+      </text>
+
+      <rect x="90" y="30" width="16" height="12" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+      <text x="112" y="40" fill="#445" font-size="11">Forward Pass</text>
+
+      <rect x="280" y="30" width="16" height="12" fill="#fbf7ef" stroke="#e0d3ab" stroke-width="2"/>
+      <text x="302" y="40" fill="#445" font-size="11">Loss Computation</text>
+
+      <line x1="470" y1="36" x2="500" y2="36" stroke="#206a37" stroke-width="2.5" marker-end="url(#bpArrow3b)"/>
+      <text x="508" y="40" fill="#445" font-size="11">Backprop (Gradient Flow)</text>
+
+      <text x="450" y="52" text-anchor="middle" fill="#667" font-size="10.5" font-style="italic">
+        Green marks the direction gradients flow &#8212; it is not a fourth model, just an action.
+      </text>
+
+      <rect x="370" y="76" width="160" height="40" rx="8" fill="#f4f4f0" stroke="#94a3b8" stroke-width="2"/>
+      <text x="450" y="101" text-anchor="middle" fill="#334">Prompt <tspan font-style="italic">p</tspan></text>
+      <line x1="450" y1="116" x2="450" y2="146" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3b)"/>
+
+      <rect x="280" y="150" width="340" height="74" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2.5"/>
+      <text x="450" y="176" text-anchor="middle" fill="#003d82" font-weight="700">
+        Policy Model &#960;<tspan font-size="70%" dy="5">&#952;</tspan><tspan dy="-5"> (trainable)</tspan>
+      </text>
+      <text x="450" y="198" text-anchor="middle" fill="#445" font-size="11.5">
+        generates <tspan font-style="italic">c</tspan> ~ &#960;<tspan font-size="70%" dy="4">&#952;</tspan><tspan dy="-4">(&#183;|p)</tspan>
+      </text>
+      <text x="450" y="214" text-anchor="middle" fill="#445" font-size="11.5">
+        computes log &#960;<tspan font-size="70%" dy="4">&#952;</tspan><tspan dy="-4">(c<tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">|s</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">)</tspan>
+      </text>
+
+      <line x1="450" y1="224" x2="450" y2="238" stroke="#0056b3" stroke-width="2.5"/>
+      <line x1="160" y1="238" x2="740" y2="238" stroke="#0056b3" stroke-width="2.5"/>
+      <line x1="160" y1="238" x2="160" y2="254" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3b)"/>
+      <line x1="450" y1="238" x2="450" y2="254" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3b)"/>
+      <line x1="740" y1="238" x2="740" y2="254" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3b)"/>
+
+      <rect x="30" y="256" width="260" height="76" rx="10" fill="#eef1f5" stroke="#667" stroke-width="2.5" stroke-dasharray="6,3"/>
+      <text x="160" y="280" text-anchor="middle" fill="#445" font-weight="700" font-size="12.5">
+        Reference &#960;<tspan font-size="65%" dy="4">ref</tspan><tspan dy="-4"> (FROZEN)</tspan>
+      </text>
+      <text x="160" y="300" text-anchor="middle" fill="#667" font-size="11">
+        log &#960;<tspan font-size="65%" dy="4">ref</tspan><tspan dy="-4">(c<tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">|s</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">)</tspan>
+      </text>
+      <text x="160" y="318" text-anchor="middle" fill="#667" font-size="11">&#8594; feeds KL penalty (every step)</text>
+
+      <rect x="320" y="256" width="260" height="76" rx="10" fill="#eef1f5" stroke="#667" stroke-width="2.5" stroke-dasharray="6,3"/>
+      <text x="450" y="280" text-anchor="middle" fill="#445" font-weight="700" font-size="12.5">
+        Reward Model RM<tspan font-size="65%" dy="4">&#968;</tspan><tspan dy="-4"> (FROZEN)</tspan>
+      </text>
+      <text x="450" y="300" text-anchor="middle" fill="#667" font-size="11">
+        scores <tspan font-style="italic">(p, c)</tspan> once &#8594; r<tspan font-size="65%" dy="4">RM</tspan>
+      </text>
+      <text x="450" y="318" text-anchor="middle" fill="#b45309" font-size="11" font-weight="600">one scalar for the whole response</text>
+
+      <rect x="610" y="256" width="260" height="76" rx="10" fill="#eaf2fb" stroke="#0056b3" stroke-width="2.5"/>
+      <text x="740" y="280" text-anchor="middle" fill="#003d82" font-weight="700" font-size="12.5">
+        Critic V<tspan font-size="70%" dy="4">&#951;</tspan><tspan dy="-4"> (trainable)</tspan>
+      </text>
+      <text x="740" y="300" text-anchor="middle" fill="#445" font-size="11">
+        estimates V(s<tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">)</tspan>
+      </text>
+      <text x="740" y="318" text-anchor="middle" fill="#445" font-size="11">at every position</text>
+
+      <path d="M160,332 C 160,352 205,352 210,368" fill="none" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3b)"/>
+      <text x="150" y="352" text-anchor="middle" fill="#0056b3" font-size="10" font-style="italic">KL, every t</text>
+
+      <path d="M450,332 C 450,356 640,356 650,368" fill="none" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3b)"/>
+      <text x="560" y="356" text-anchor="middle" fill="#b45309" font-size="10" font-style="italic">r_RM &#8212; only here</text>
+
+      <text x="450" y="366" text-anchor="middle" fill="#334" font-size="11.5" font-weight="600">
+        Per-token reward r<tspan font-size="70%" dy="3">t</tspan><tspan dy="-3">, across the sequence:</tspan>
+      </text>
+
+      <g font-size="11">
+        <rect x="205" y="374" width="90" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="1.5"/>
+        <text x="250" y="390" text-anchor="middle" font-weight="700" fill="#003d82">t = 1</text>
+        <text x="250" y="408" text-anchor="middle" fill="#334" font-size="10.5">&#8722;&#946;&#183;KL<tspan font-size="70%" dy="3">1</tspan></text>
+        <text x="250" y="424" text-anchor="middle" fill="#667" font-size="10">only</text>
+
+        <rect x="305" y="374" width="90" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="1.5"/>
+        <text x="350" y="390" text-anchor="middle" font-weight="700" fill="#003d82">t = 2</text>
+        <text x="350" y="408" text-anchor="middle" fill="#334" font-size="10.5">&#8722;&#946;&#183;KL<tspan font-size="70%" dy="3">2</tspan></text>
+        <text x="350" y="424" text-anchor="middle" fill="#667" font-size="10">only</text>
+
+        <rect x="405" y="374" width="90" height="70" rx="8" fill="#f7f8fa" stroke="#c7d0da" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="450" y="416" text-anchor="middle" fill="#98a2b3" font-size="20" font-weight="700">&#8230;</text>
+
+        <rect x="505" y="374" width="90" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="1.5"/>
+        <text x="550" y="390" text-anchor="middle" font-weight="700" fill="#003d82">t = T&#8722;1</text>
+        <text x="550" y="408" text-anchor="middle" fill="#334" font-size="10.5">&#8722;&#946;&#183;KL<tspan font-size="70%" dy="3">T&#8722;1</tspan></text>
+        <text x="550" y="424" text-anchor="middle" fill="#667" font-size="10">only</text>
+
+        <rect x="605" y="374" width="90" height="70" rx="8" fill="#fff0d6" stroke="#b45309" stroke-width="2.5"/>
+        <text x="650" y="390" text-anchor="middle" font-weight="700" fill="#7a4e05">t = T</text>
+        <text x="650" y="406" text-anchor="middle" fill="#7a4e05" font-size="10.5">&#8722;&#946;&#183;KL<tspan font-size="70%" dy="3">T</tspan></text>
+        <text x="650" y="422" text-anchor="middle" fill="#7a4e05" font-size="10.5" font-weight="700">+ r<tspan font-size="70%" dy="3">RM</tspan></text>
+      </g>
+      <text x="650" y="460" text-anchor="middle" fill="#b45309" font-size="10.5" font-style="italic">
+        &#8593; only cell where RM&#968; contributes
+      </text>
+
+      <line x1="450" y1="444" x2="420" y2="484" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3b)"/>
+      <line x1="740" y1="332" x2="710" y2="484" stroke="#0056b3" stroke-width="2.5" marker-end="url(#fpArrow3b)"/>
+
+      <rect x="190" y="486" width="520" height="66" rx="10" fill="#fbf7ef" stroke="#e0d3ab" stroke-width="2"/>
+      <text x="450" y="510" text-anchor="middle" fill="#8a6d1d" font-weight="700" font-size="12.5">
+        GAE: Advantage A<tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">  and  Value Target R</tspan><tspan font-size="70%" dy="4">t</tspan>
+      </text>
+      <text x="450" y="530" text-anchor="middle" fill="#6b5716" font-size="11">
+        computed from r<tspan font-size="70%" dy="3">t</tspan><tspan dy="-3"> (reward sequence) and V</tspan><tspan font-size="70%" dy="3">&#951;</tspan><tspan dy="-3">(s</tspan><tspan font-size="70%" dy="3">t</tspan><tspan dy="-3">) (critic estimate)</tspan>
+      </text>
+
+      <line x1="350" y1="552" x2="260" y2="580" stroke="#8a6d1d" stroke-width="2.5" marker-end="url(#fpArrow3b)"/>
+      <line x1="550" y1="552" x2="640" y2="580" stroke="#8a6d1d" stroke-width="2.5" marker-end="url(#fpArrow3b)"/>
+
+      <rect x="90" y="582" width="340" height="64" rx="10" fill="#fbf7ef" stroke="#e0d3ab" stroke-width="2"/>
+      <text x="260" y="608" text-anchor="middle" fill="#8a6d1d" font-weight="700" font-size="12.5">PPO Clipped Policy Gradient Loss</text>
+      <text x="260" y="630" text-anchor="middle" fill="#6b5716" font-size="11">
+        &#8711;<tspan font-size="70%" dy="4">&#952;</tspan><tspan dy="-4"> log &#960;</tspan><tspan font-size="70%" dy="4">&#952;</tspan><tspan dy="-4">(c</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">|s</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">) &#183; A</tspan><tspan font-size="70%" dy="4">t</tspan>
+      </text>
+
+      <rect x="470" y="582" width="340" height="64" rx="10" fill="#fbf7ef" stroke="#e0d3ab" stroke-width="2"/>
+      <text x="640" y="608" text-anchor="middle" fill="#8a6d1d" font-weight="700" font-size="12.5">Critic Value Loss (MSE)</text>
+      <text x="640" y="630" text-anchor="middle" fill="#6b5716" font-size="11">
+        ( V<tspan font-size="70%" dy="4">&#951;</tspan><tspan dy="-4">(s</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4">) &#8722; R</tspan><tspan font-size="70%" dy="4">t</tspan><tspan dy="-4"> )</tspan>&#178;
+      </text>
+
+      <path d="M90,614 C -60,614 -60,187 276,187" fill="none" stroke="#206a37" stroke-width="2.5" marker-end="url(#bpArrow3b)"/>
+      <text x="-30" y="410" text-anchor="middle" fill="#206a37" font-size="12" font-weight="600" transform="rotate(-90 -30 410)">Backprop &#8594; updates &#952; (Policy)</text>
+
+      <path d="M810,614 C 960,614 960,294 874,294" fill="none" stroke="#206a37" stroke-width="2.5" marker-end="url(#bpArrow3b)"/>
+      <text x="930" y="460" text-anchor="middle" fill="#206a37" font-size="12" font-weight="600" transform="rotate(-90 930 460)">Backprop &#8594; updates &#951; (Critic)</text>
+
+      <g font-size="11">
+        <rect x="40" y="720" width="16" height="12" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="62" y="730" fill="#445">Trainable (&#952;, &#951;)</text>
+
+        <rect x="220" y="720" width="16" height="12" fill="#eef1f5" stroke="#667" stroke-width="2" stroke-dasharray="4,2"/>
+        <text x="242" y="730" fill="#445">Frozen (&#968;, &#960;<tspan font-size="70%" dy="3">ref</tspan><tspan dy="-3"> — forward pass only)</tspan></text>
+
+        <line x1="520" y1="726" x2="550" y2="726" stroke="#206a37" stroke-width="2.5" marker-end="url(#bpArrow3b)"/>
+        <text x="558" y="730" fill="#445">Backprop path (always green)</text>
+      </g>
+      <text x="450" y="754" text-anchor="middle" fill="#667" font-size="11.5" font-style="italic">
+        RM<tspan font-size="70%" dy="3">&#968;</tspan><tspan dy="-3"> runs once per response, not once per token &#8212; only its score at t=T ever reaches the loop.</tspan>
+      </text>
+    </g>
+  </svg>
+  <p class="diagram-caption">Figure 6 (revisited): the same training step, now with every symbol explained. Compare with the first look above.</p>
+</div>
+
 <h3>Real-Life Analogy of RLHF</h3>
 <div class="analogy-box">
   <span class="label">ANALOGY</span>
@@ -940,6 +1277,109 @@ ul, ol {
     interrupting with micro-grades; and finally, the Critic and GAE operate like a reflective coach
     who breaks down the flow of a piece to distribute credit and figure out which exact choice
     turned the tide.
+  </p>
+</div>
+
+<h2>3.4 Direct Preference Optimization (DPO): Alignment Without the RL Loop</h2>
+<p>
+  The PPO pipeline of Section 3.3 works, but it is heavy: four models in memory, fresh text sampled during training, and many knobs ($\beta$, $\epsilon$, $\lambda$, $\gamma$, the Critic's learning rate). DPO asks a bold question: can we reach the same goal &mdash; a policy that follows human preferences while staying close to the reference &mdash; using <em>only the preference pairs we already collected</em>, with no separate Reward Model and no RL loop? The answer turns out to be yes.
+</p>
+
+<div class="explain-box">
+  <span class="q-label">THE KEY IDEA</span>
+  <p style="margin-bottom:0;">
+    <strong>The reward is hiding inside the policy.</strong> For the RLHF objective there is a closed-form optimal policy, and it can be turned around to express the reward in terms of that policy and the reference model. Substitute this into the Reward Model's preference loss and the Reward Model disappears: we can train the policy directly on the preference pairs.
+  </p>
+</div>
+
+<h3>Step 1: The optimal policy of the KL-regularized objective</h3>
+<p>
+  For a single prompt $p$, RLHF maximizes expected reward minus the KL penalty:
+</p>
+<div class="math-block">
+  $$\max_{\pi}\; \mathbb{E}_{c \sim \pi(\cdot \mid p)}\big[R(p,c)\big] \;-\; \beta\, \mathrm{KL}\big(\pi(\cdot \mid p)\,\Vert\,\pi_{ref}(\cdot \mid p)\big)$$
+</div>
+<p>This has a known solution:</p>
+<div class="math-block">
+  $$\pi^*(c \mid p) = \frac{1}{Z(p)}\,\pi_{ref}(c \mid p)\,\exp\!\Big(\frac{R(p,c)}{\beta}\Big), \qquad Z(p) = \sum_{c} \pi_{ref}(c \mid p)\exp\!\Big(\frac{R(p,c)}{\beta}\Big)$$
+</div>
+<p>
+  In words: start from the reference model and <em>re-weight</em> each completion by $e^{R/\beta}$, so higher-reward completions become more likely. A small $\beta$ re-weights aggressively; a large $\beta$ stays close to $\pi_{ref}$. $Z(p)$ is just the normalizer, and it depends only on the prompt.
+</p>
+
+<div class="explain-box">
+  <span class="q-label">WHY THIS IS THE OPTIMUM (SHORT ALGEBRA)</span>
+  <p>
+    Write the objective as $-\beta\sum_c \pi(c)\Big[\log\frac{\pi(c)}{\pi_{ref}(c)} - \frac{R(c)}{\beta}\Big] = -\beta\sum_c \pi(c)\log\frac{\pi(c)}{\pi_{ref}(c)\,e^{R(c)/\beta}}$. Since $\pi_{ref}(c)\,e^{R(c)/\beta} = Z\,\pi^*(c)$, this equals
+  </p>
+  <div class="math-block" style="margin: 8px 0;">
+    $$-\beta\,\mathrm{KL}(\pi \,\Vert\, \pi^*) + \beta \log Z(p).$$
+  </div>
+  <p style="margin-bottom:0;">
+    The second term does not depend on $\pi$, and KL is never negative, so the objective is largest when the KL term is zero, i.e. when $\pi = \pi^*$.
+  </p>
+</div>
+
+<h3>Step 2: Turn it around &mdash; reward in terms of the policy</h3>
+<p>Take the logarithm of $\pi^*$ and solve for the reward:</p>
+<div class="math-block">
+  $$R(p,c) = \beta \log\frac{\pi^*(c \mid p)}{\pi_{ref}(c \mid p)} + \beta \log Z(p)$$
+</div>
+<p>
+  The reward is the log-ratio of the optimal policy to the reference (scaled by $\beta$), plus a term that depends only on the prompt. $Z(p)$ sums over every possible completion and is intractable &mdash; but watch what happens next.
+</p>
+
+<h3>Step 3: Plug into the Bradley&ndash;Terry preference loss</h3>
+<p>
+  Section 3.3 trained the Reward Model with $-\log\sigma\big(R(p,c_w) - R(p,c_l)\big)$. That depends only on the <em>difference</em> of two rewards for the same prompt, so the $\beta\log Z(p)$ terms <strong>cancel</strong>:
+</p>
+<div class="math-block">
+  $$R(p,c_w) - R(p,c_l) = \beta \log\frac{\pi^*(c_w \mid p)}{\pi_{ref}(c_w \mid p)} - \beta \log\frac{\pi^*(c_l \mid p)}{\pi_{ref}(c_l \mid p)}$$
+</div>
+<p>
+  Replace the unknown $\pi^*$ with the policy we are training, $\pi_\theta$. This gives the <strong>DPO loss</strong>:
+</p>
+<div class="math-block">
+  $$\mathcal{L}_{\text{DPO}}(\theta) = -\,\mathbb{E}_{(p,\,c_w,\,c_l)\sim\mathcal{D}_{pref}}\left[\log \sigma\!\left(\beta \log\frac{\pi_\theta(c_w \mid p)}{\pi_{ref}(c_w \mid p)} - \beta \log\frac{\pi_\theta(c_l \mid p)}{\pi_{ref}(c_l \mid p)}\right)\right]$$
+</div>
+
+<h3>Reading the DPO loss</h3>
+<ul>
+  <li><strong>Implicit reward.</strong> The quantity $\hat{r}_\theta(p,c) = \beta\log\frac{\pi_\theta(c \mid p)}{\pi_{ref}(c \mid p)}$ plays the role of the Reward Model's score. The policy <em>is</em> its own reward model.</li>
+  <li><strong>What training does.</strong> It raises the chosen completion's probability <em>relative to the reference</em> and lowers the rejected one's. Both log-probabilities are sums of token log-probabilities (the chain rule from 3.3.1).</li>
+  <li><strong>The KL anchor is built in.</strong> $\pi_{ref}$ appears inside the loss, so the policy is measured against the reference throughout, with no separate penalty term. As in PPO, a larger $\beta$ keeps the policy closer to the reference.</li>
+  <li><strong>Hard pairs get bigger updates.</strong> The gradient is scaled by $\sigma(-\text{margin})$, where the margin is the quantity inside the $\sigma$ above. A pair the model currently ranks the wrong way has a negative margin, so it gets a large weight; a pair it already ranks correctly gets a small one.</li>
+</ul>
+
+<div class="explain-box">
+  <span class="q-label">WORKED NUMBERS</span>
+  <p>
+    Take $\beta = 0.1$. For the chosen completion, $\log\pi_\theta(c_w \mid p) = -10.0$ and $\log\pi_{ref}(c_w \mid p) = -11.0$, so its log-ratio is $+1.0$. For the rejected completion, $\log\pi_\theta(c_l \mid p) = -15.0$ and $\log\pi_{ref}(c_l \mid p) = -14.0$, so its log-ratio is $-1.0$.
+  </p>
+  <p>
+    The margin is $0.1\times\big(1.0 - (-1.0)\big) = 0.2$, so $\sigma(0.2) \approx 0.55$ and the loss is $-\ln 0.55 \approx 0.60$. At the very start of training $\pi_\theta = \pi_{ref}$, so the margin is $0$, $\sigma(0)=0.5$ and the loss is $\ln 2 \approx 0.693$. Training drives the loss down by widening the gap between the chosen and rejected log-ratios.
+  </p>
+</div>
+
+<h3>PPO-based RLHF vs. DPO</h3>
+<table class="data-table">
+  <thead>
+    <tr><th></th><th>PPO-based RLHF (3.3)</th><th>DPO (3.4)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Models in memory</td><td>Policy, Reference, Reward Model, Critic</td><td>Policy and Reference</td></tr>
+    <tr><td>Data</td><td>Prompts; completions are sampled <em>online</em> from the current policy and scored by the Reward Model</td><td>A fixed, <em>offline</em> dataset of $(p, c_w, c_l)$ preference pairs</td></tr>
+    <tr><td>Training loop</td><td>Generate, score, GAE, clipped policy update, Critic update</td><td>Minimize one supervised-style loss</td></tr>
+    <tr><td>Main hyperparameters</td><td>$\beta$, $\epsilon$, $\lambda$, $\gamma$, Critic learning rate, &hellip;</td><td>Mostly $\beta$ and the learning rate</td></tr>
+    <tr><td>Strengths</td><td>Keeps exploring new completions; any scorer can supply the reward</td><td>Simple, stable and much cheaper</td></tr>
+    <tr><td>Limitations</td><td>Costly, memory-hungry, sensitive to tuning</td><td>Limited to the quality and coverage of the fixed preference data; no explicit Reward Model to inspect or reuse</td></tr>
+  </tbody>
+</table>
+
+<div class="algorithm-box">
+  <strong class="label">Takeaway</strong>
+  <p style="margin-bottom: 0;">
+    DPO is not a different goal; it is the <em>same</em> KL-regularized objective, solved by algebra instead of by running an RL loop. This is the first of the two industry mitigations named in the Practical Issues section below. Both approaches are used in practice: DPO and its variants are popular because they are simple, while online RL methods such as PPO remain in use when fresh on-policy sampling or flexible reward signals matter.
   </p>
 </div>
 </div>
@@ -1009,54 +1449,139 @@ ul, ol {
         <li><strong>Adopting RLAIF:</strong> Replacing human annotators with <strong>AI Feedback (RLAIF)</strong> uses frontier models (like GPT-4 or Claude) as judges. AI judges operate instantly, do not suffer from fatigue, can handle complex logical tasks, and scale at a fraction of the cost.</li>
     </ol>
 </div>
-<section id="transformer-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
-            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Reinforcement Learning with Human Feedback (RLHF)Quiz</h2>
+<section id="rlhf-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+    <style>
+        #quiz-start-box { text-align: center; padding: 22px 16px; background: #f5f9ff; border: 1px solid #cfe0f5; border-radius: 10px; }
+        #quiz-start-box p { margin: 0 0 14px; color: #263238; font-size: 1rem; }
+        #start-quiz-btn { background: #1565c0; color: #fff; border: 0; border-radius: 8px; padding: 12px 34px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease; }
+        #start-quiz-btn:hover { background: #0d47a1; }
+        #start-quiz-btn:active { transform: scale(0.97); }
+        #start-quiz-btn:focus-visible { outline: 3px solid #90caf9; outline-offset: 2px; }
+    </style>
+    <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Reinforcement Learning with Human Feedback (RLHF) Quiz</h2>
 
-            <div id="quiz"></div>
+    <div id="quiz-start-box">
+        <p>30 multiple-choice questions on RL basics, the bandit and MDP views, the KL penalty, GAE, the PPO objective and practical issues, including 5 numerical questions.</p>
+        <button type="button" id="start-quiz-btn">Start Quiz</button>
+    </div>
 
-            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
-            <script src="Quiz.js"></script>
-            <script>
+    <div id="quiz"></div>
+
+    <!-- Shared animation lives in Quiz.js; this page supplies only the questions. -->
+    <script src="Quiz.js"></script>
+    <script>
+    (function () {
+        var questions = [
+                { q: "How does Reinforcement Learning differ from supervised learning?",
+                  a: "An RL agent learns by trial and error from rewards while interacting with an environment; no dataset tells it the correct answer for every input",
+                  w: ["An RL agent is trained on labelled input&ndash;output pairs, just like a supervised model", "An RL agent never receives a reward, only a loss on the next token", "An RL agent needs a larger dataset but otherwise learns the same way"] },
+                { q: "What does the subscript &theta; in &pi;<sub>&theta;</sub> denote, and what is &ldquo;learning&rdquo; in RL?",
+                  a: "&theta; is the policy&rsquo;s parameters (its weights); learning is a search over &theta; so that future actions accumulate more reward",
+                  w: ["&theta; is the discount factor; learning is choosing the best discount", "&theta; is the environment&rsquo;s state; learning is predicting the next state", "&theta; is the reward; learning is storing every reward seen"] },
+                { q: "What are the three factors in the trajectory probability p<sub>&pi;</sub>(&tau;) = &rho;<sub>0</sub>(s<sub>0</sub>) &prod; &pi;(a<sub>t</sub> | s<sub>t</sub>) p(s<sub>t+1</sub> | s<sub>t</sub>, a<sub>t</sub>)?",
+                  a: "The initial-state probability, the policy (the probability of the action given the state) and the transition dynamics (the probability of the next state)",
+                  w: ["The reward, the value function and the discount factor", "The prompt, the response and the reward model score", "The policy, the reference model and the critic"] },
+                { q: "What is Proximal Policy Optimization (PPO), and where does the page say it comes from?",
+                  a: "A general RL algorithm that nudges &theta; toward higher expected reward while clipping each update so the policy does not change too drastically; it was developed for general RL long before RLHF",
+                  w: ["An algorithm invented for RLHF that trains the Reward Model on human preferences", "A supervised method that copies the Reward Model&rsquo;s scores into the policy", "An alternative to the KL penalty that removes the reference model"] },
+                { q: "Why can standard RL not be applied directly to LLM alignment, and what does RLHF do instead?",
+                  a: "Language has no programmatic ground-truth environment to score whether text is helpful, creative or safe, so RLHF replaces the environment reward with a learned Reward Model trained on human preferences",
+                  w: ["LLMs have too many parameters for any RL algorithm to run, so RLHF removes most of them", "RLHF replaces the policy with the Reward Model", "Language is deterministic, so RL has nothing to learn from it"] },
+                { q: "In the contextual-bandit view of RLHF, what happens in one interaction?",
+                  a: "A prompt is drawn, the policy writes one complete response, the Reward Model returns one scalar score, and the interaction ends &ndash; there is no next state, like one pull of a slot-machine lever",
+                  w: ["The policy writes one token, the environment returns a new state, and the loop repeats until the end", "The Reward Model writes the response and the policy scores it", "Many prompts are scored together, and the reward flows back after each token"] },
+                { q: "In the bandit view, the gradient is &nabla;<sub>&theta;</sub>J = E[&nabla;<sub>&theta;</sub> log &pi;<sub>&theta;</sub>(c | p) &middot; r(p, c)]. What does the reward r do?",
+                  a: "It scales the update direction: a high reward pulls &theta; toward making that completion more likely, and a low or negative reward pushes &theta; away from it",
+                  w: ["It replaces the log-probability term, so the policy&rsquo;s own probabilities no longer matter", "It sets the learning rate for every update", "It is added to the prompt before generation"] },
+                { q: "How is text generation formalised as an MDP in the low-level view?",
+                  a: "The state is the prompt plus the tokens generated so far, the action is the next token from the vocabulary, and the transition is deterministic: s<sub>t+1</sub> = [s<sub>t</sub>; a<sub>t</sub>]",
+                  w: ["The state is the Reward Model score, the action is the whole response, and the transition is random", "The state is a single token, the action is the prompt, and the transition is learned", "The state is the policy&rsquo;s weights, the action is a gradient step, and the transition is the loss"] },
+                { q: "How do the bandit (macro) and MDP (micro) perspectives compare?",
+                  a: "Bandit: the action is the entire response and the reward is one global score; MDP: the action is a single token and credit is allocated per token via PPO/GAE",
+                  w: ["Bandit: the action is a single token; MDP: the action is the entire response", "Both give a reward after every token", "Bandit has token-level credit allocation, and the MDP has none"] },
+                { q: "How does DPO use the reward signal, according to the page&rsquo;s aside?",
+                  a: "It skips the policy-gradient loop entirely and optimises directly on pairs of preferred and dispreferred completions",
+                  w: ["It adds a second critic on top of the PPO loop", "It trains the Reward Model online during generation", "It sends the reward to the last token only, exactly as PPO does"] },
+                { q: "What is reward hacking, and why is a frozen reference model kept?",
+                  a: "The policy finds tricks (such as repeating &ldquo;excellent, helpful, fantastic&rdquo;) that fool the Reward Model into a huge score; the frozen reference model gives a baseline so a KL penalty can stop the policy drifting too far",
+                  w: ["The Reward Model trains itself to give high scores; the reference model is updated at every step to match it", "The policy ignores the prompt; the reference model is a second reward model", "Annotators score their own answers; the reference model removes the annotators"] },
+                { q: "How does the per-token KL penalty behave when &pi;<sub>&theta;</sub>/&pi;<sub>ref</sub> &asymp; 1 and when it is &gg; 1?",
+                  a: "When the ratio is about 1, log(1) = 0 and there is no penalty; when it is much larger than 1 the log is positive, and subtracting it reduces the net reward",
+                  w: ["When the ratio is about 1 the penalty is largest; when it is &gg; 1 it is zero", "The penalty is always zero unless the policy generates the end-of-sequence token", "The penalty is added to the reward, so a large ratio increases it"] },
+                { q: "Why can the sequence-level KL divergence not be computed directly from its definition?",
+                  a: "A response of T tokens has |V|<sup>T</sup> possible completions, and the formula sums over all of them, while training has only one sampled completion per prompt",
+                  w: ["KL divergence is undefined for language models", "The reference model has no probabilities to compare with", "The sum over completions diverges to infinity for any policy"] },
+                { q: "Why is the log-ratio of a single sampled completion a valid estimate of the KL divergence?",
+                  a: "KL(P&Vert;Q) = E<sub>x&sim;P</sub>[log P(x)/Q(x)], so one sampled log-ratio is an unbiased (noisy) single-sample estimate that averages out over many prompts",
+                  w: ["It equals the exact KL divergence whenever one sample is drawn", "It is a lower bound that is always smaller than the true KL", "It works only if the policy and reference are identical"] },
+                { q: "What does the chain rule of probability add on top of the Monte Carlo trick for the KL penalty?",
+                  a: "log &pi;(c | p) = &sum;<sub>t</sub> log &pi;(c<sub>t</sub> | s<sub>t</sub>) splits the single sequence-level number into T per-token pieces, so it can be applied as a penalty at every step",
+                  w: ["It makes the KL divergence exactly zero for every token", "It replaces sampling with an exact sum over all completions", "It lets the Reward Model score each token separately"] },
+                { q: "Where does the Reward Model&rsquo;s score enter the per-token reward, and what do the other tokens get?",
+                  a: "The scalar r<sub>RM</sub> is added only at the final token t = T; every earlier token gets just the KL penalty &minus;&beta; log(&pi;<sub>&theta;</sub>/&pi;<sub>ref</sub>)",
+                  w: ["The score is split equally across all tokens; the KL penalty is added only at the end", "The score is added at the first token; later tokens get zero reward", "Each token gets its own Reward Model score, and the KL penalty is dropped"] },
+                { q: "Numerical: With &beta; = 0.1, &pi;<sub>&theta;</sub>(a<sub>t</sub> | s<sub>t</sub>) = 0.4 and &pi;<sub>ref</sub>(a<sub>t</sub> | s<sub>t</sub>) = 0.2 at a token that is not the last, what is r<sub>t</sub>?",
+                  a: "r<sub>t</sub> = &minus;0.1 &times; ln(0.4/0.2) = &minus;0.1 &times; 0.693 &asymp; &minus;0.069",
+                  w: ["+0.069, since the policy is more confident than the reference", "&minus;0.693, forgetting to multiply by &beta;", "0, since only the last token receives a reward"] },
+                { q: "Numerical: For the same token, now at t = T with r<sub>RM</sub> = 2.0, what is r<sub>T</sub>?",
+                  a: "r<sub>T</sub> = &minus;0.069 + 2.0 &asymp; 1.93",
+                  w: ["2.0, since the KL penalty applies only before the last token", "2.069, because the KL term is added to the reward", "&minus;0.069, because the Reward Model score is ignored at the end"] },
+                { q: "What is the Critic V<sub>&eta;</sub> trained to do, and how is it used?",
+                  a: "It predicts the expected future reward from each partial sequence s<sub>t</sub>; this acts as a baseline, and comparing the actual outcome with it gives the advantage",
+                  w: ["It scores the finished response once, exactly like the Reward Model", "It generates the response tokens one at a time", "It stores the frozen weights of the original model"] },
+                { q: "What does each of the Critic, the Reference model and the Reward Model take as input?",
+                  a: "The Critic reads the prompt plus the response generated so far (a partial sequence); the Reference model and the Reward Model each read the prompt plus the full finished response",
+                  w: ["All three read only the prompt", "The Critic reads the full response, while the Reward Model and the Reference model read it token by token", "The Reference model reads the prompt only, and the Reward Model reads the Critic&rsquo;s output"] },
+                { q: "Why does RLHF use GAE with a critic, rather than a plain policy gradient with the final score?",
+                  a: "The reward lands only on the last token, so a plain policy gradient would be very high-variance; the critic&rsquo;s estimates give per-token TD errors, and GAE distributes credit backward across the sequence",
+                  w: ["The final score is unavailable during training, so GAE replaces it with random numbers", "GAE removes the need for the KL penalty", "A plain policy gradient cannot be backpropagated through the policy"] },
+                { q: "Why is the discount factor &gamma; set to 1 in standard RLHF?",
+                  a: "There is no reason to discount future tokens within a single response",
+                  w: ["Setting &gamma; = 1 makes the critic unnecessary", "&gamma; must always be 1 for every RL problem", "A discount below 1 would make the KL penalty negative"] },
+                { q: "Numerical: In GAE the TD error is &delta;<sub>t</sub> = r<sub>t</sub> + &gamma;V(s<sub>t+1</sub>) &minus; V(s<sub>t</sub>). With r<sub>t</sub> = &minus;0.07, &gamma; = 1, V(s<sub>t+1</sub>) = 0.8 and V(s<sub>t</sub>) = 0.5, what is &delta;<sub>t</sub>?",
+                  a: "&minus;0.07 + 0.8 &minus; 0.5 = 0.23, so the token turned out better than the critic expected",
+                  w: ["&minus;0.07 + 0.5 &minus; 0.8 = &minus;0.37", "&minus;0.07 &times; (0.8 &minus; 0.5) = &minus;0.021", "0.8 &minus; 0.5 = 0.30, forgetting the reward"] },
+                { q: "In one RLHF step, which of the four models receive gradients, and which are only read from?",
+                  a: "The Policy and the Critic receive gradients and are updated; the Reward Model and the Reference model run forward only and are never updated",
+                  w: ["All four models are updated, with the Reward Model updated last", "Only the Policy is updated; the other three are frozen", "The Reward Model and the Reference model are updated, and the Policy is frozen"] },
+                { q: "In the PPO clipped objective, what do the ratio r<sub>t</sub>(&theta;) and the clip do?",
+                  a: "The ratio r<sub>t</sub>(&theta;) = &pi;<sub>&theta;</sub>/&pi;<sub>old</sub> compares the current policy with the one that produced the sample, and clipping it to [1 &minus; &epsilon;, 1 + &epsilon;] stops one large advantage from causing one destabilising weight update",
+                  w: ["The ratio compares the policy with the reference model, and the clip keeps the reward positive", "The ratio is the Reward Model score, and the clip removes negative rewards", "The ratio is the critic&rsquo;s loss, and the clip makes it zero"] },
+                { q: "Numerical: With &epsilon; = 0.2, a ratio r<sub>t</sub>(&theta;) = 1.5 and an advantage A&#770;<sub>t</sub> = +2, what is min(r<sub>t</sub>A&#770;<sub>t</sub>, clip(r<sub>t</sub>, 0.8, 1.2)A&#770;<sub>t</sub>)?",
+                  a: "min(1.5 &times; 2, 1.2 &times; 2) = min(3.0, 2.4) = 2.4",
+                  w: ["3.0, since clipping is ignored when the advantage is positive", "1.2, the clipped ratio alone", "1.5, the unclipped ratio alone"] },
+                { q: "Numerical: The Critic is trained with the MSE loss against R<sub>t</sub> = A&#770;<sub>t</sub> + V<sub>&eta;</sub>(s<sub>t</sub>). With A&#770;<sub>t</sub> = 0.4 and V<sub>&eta;</sub>(s<sub>t</sub>) = 0.5, what is the value target R<sub>t</sub>?",
+                  a: "R<sub>t</sub> = 0.4 + 0.5 = 0.9",
+                  w: ["0.1, which is V &minus; A", "0.2, which is A &times; V", "0.4, which is the advantage alone"] },
+                { q: "Why does PPO-based RLHF cause &ldquo;CUDA out of memory&rdquo; errors?",
+                  a: "Four models (Policy, Reference, Reward and Value) must be hosted at the same time, which demands clusters of linked GPUs",
+                  w: ["The Reward Model needs to be retrained on every batch", "DPO is run on top of PPO, which doubles the memory", "The KL penalty stores every possible completion"] },
+                { q: "What is the trade-off when setting the KL coefficient &beta;?",
+                  a: "If &beta; is too high, the model barely learns human preferences; if it is too low, text generation breaks down completely",
+                  w: ["If &beta; is too high, the model overfits the Reward Model; if too low, the reference model is deleted", "&beta; has no effect on training, only on evaluation", "A high &beta; speeds up learning, and a low &beta; slows it"] },
+                { q: "How do DPO and RLAIF address the practical problems of PPO-based RLHF?",
+                  a: "DPO removes the separate reward and value models, roughly halving the infrastructure; RLAIF replaces human annotators with AI judges",
+                  w: ["DPO adds a second critic, and RLAIF removes the reference model", "DPO needs more GPUs but less data, and RLAIF needs more annotators", "Both methods require four models, but train faster"] }
+        ];
+        var btn = document.getElementById("start-quiz-btn");
+        btn.addEventListener("click", function () {
+            if (typeof startQuiz !== "function") {
+                btn.textContent = "Quiz.js not found";
+                btn.disabled = true;
+                return;
+            }
+            document.getElementById("quiz-start-box").style.display = "none";
             startQuiz({
-                mount: '#quiz',
+                mount: "#quiz",
                 // timeLimit: 5,   // optional: seconds per question
-                questions: [
-            { q: "What is the main &ldquo;information bottleneck&rdquo; of a classic RNN encoder&ndash;decoder (Seq2Seq) model?",
-              a: "The whole input sequence must be compressed into one fixed-length context vector",
-              w: ["The decoder can only generate one token per sequence", "The encoder has no hidden state to store information", "The output vocabulary is limited to the words in the input"] },
-            { q: "Why can Transformers be trained far more efficiently on GPUs than RNNs?",
-              a: "All token positions are processed in parallel, with no step-by-step recurrence over time",
-              w: ["They always have fewer parameters than an RNN", "They avoid matrix multiplications altogether", "They read the sequence one token at a time, but with bigger batches"] },
-            { q: "Why is positional encoding added to the token embeddings?",
-              a: "Self-attention has no built-in notion of word order, so position information must be injected",
-              w: ["To reduce the embedding dimension", "To convert tokens into integer IDs", "To normalise every embedding to unit length"] },
-            { q: "In self-attention, how are the Query, Key and Value vectors obtained?",
-              a: "By multiplying each token's vector with three learned matrices W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup>",
-              w: ["Q comes from the input, while K and V are fixed random vectors", "They are looked up from three separate vocabulary tables", "They are the output of the softmax over the attention scores"] },
-            { q: "Why are attention scores divided by &radic;d<sub>k</sub> before the softmax?",
-              a: "Large dot products would saturate the softmax and shrink its gradients",
-              w: ["To make the attention weights sum to 1", "To mask out future tokens", "To reduce the number of heads required"] },
-            { q: "What does the causal mask do in a decoder-only (GPT-style) Transformer?",
-              a: "It stops each token from attending to tokens that come after it",
-              w: ["It hides random tokens so the model must reconstruct them", "It removes padding tokens from the loss", "It stops each token from attending to itself"] },
-            { q: "What is the benefit of multi-head attention over a single head?",
-              a: "Different heads can learn to focus on different kinds of relationships in different subspaces",
-              w: ["It shortens the sequence before attention is applied", "It removes the need for positional encoding", "It lets the model skip the feed-forward layer"] },
-            { q: "How does the feed-forward network (FFN) in a Transformer layer treat the tokens?",
-              a: "Each token vector is transformed independently, using the same weights at every position",
-              w: ["It mixes information across all tokens, just like attention", "Every position has its own separately trained FFN", "It only runs on the last token of the sequence"] },
-            { q: "How does a decoder-only Transformer turn its final hidden vectors into a next-token prediction?",
-              a: "A linear projection to vocabulary size followed by a softmax over the vocabulary",
-              w: ["A softmax over the embedding dimension followed by averaging", "A nearest-neighbour lookup in the positional-encoding table", "A second self-attention block that outputs one word directly"] },
-            { q: "What is the usual order of the three LLM training stages?",
-              a: "Unsupervised pre-training &rarr; Supervised fine-tuning (SFT) &rarr; RLHF / alignment",
-              w: ["SFT &rarr; Pre-training &rarr; RLHF", "RLHF &rarr; SFT &rarr; Pre-training", "Pre-training &rarr; RLHF &rarr; SFT"] }
-        ]
+                questions: questions
             });
-            </script>
-        </section>
+            document.getElementById("quiz").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    })();
+    </script>
+</section>
 
 
 </body>
 </html>
-

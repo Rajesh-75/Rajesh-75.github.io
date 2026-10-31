@@ -4,152 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recurrent Neural Networks</title>
-    <link rel="stylesheet" href="style.css">
+    
     <!-- Hide body initially to prevent flickering -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles_common.css">
-<style>
-body {
-  visibility: hidden;
-}
-.ed-scope {
-  font-family: 'Segoe UI', sans-serif;
-  color: #1e293b;
-}
-.ed-scope .section-block {
-  margin: 30px 0;
-}
-.ed-scope .sec-num {
-  display: inline-block;
-  min-width: 26px;
-  padding: 2px 6px;
-  margin-right: 6px;
-  background: #1e3a8a;
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border-radius: 5px;
-  text-align: center;
-  vertical-align: middle;
-}
-.ed-scope h2 {
-  color: #1e3a8a;
-  border-bottom: 2px solid #3b82f6;
-  padding-bottom: 8px;
-}
-.ed-scope .step-pill {
-  display: inline-block;
-  background: #eeedfe;
-  color: #3c3489;
-  font-size: 0.8rem;
-  font-weight: 700;
-  padding: 2px 10px;
-  border-radius: 999px;
-  margin-right: 8px;
-}
-.ed-scope .callout {
-  border-radius: 8px;
-  padding: 16px 18px;
-  margin: 16px 0;
-  border: 1px solid;
-}
-.ed-scope .callout-title {
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-.ed-scope .callout-blue {
-  background:#eff6ff;
-  border-color:#93c5fd;
-}
-.ed-scope .callout-green {
-  background:#f0fdf4;
-  border-color:#86efac;
-}
-.ed-scope .callout-purple {
-  background:#f5f3ff;
-  border-color:#c4b5fd;
-}
-.ed-scope .callout-amber {
-  background:#fffbeb;
-  border-color:#fcd34d;
-}
-.ed-scope .callout-red {
-  background:#fef2f2;
-  border-color:#fca5a5;
-}
-.ed-scope .fig-wrap {
-  margin: 20px 0;
-  text-align: center;
-}
-.ed-scope .fig-wrap svg {
-  width: 100%;
-  max-width: 700px;
-  height: auto;
-}
-.ed-scope .fig-caption {
-  font-style: italic;
-  color: #64748b;
-  font-size: 0.85rem;
-  margin-top: 8px;
-}
-.ed-scope .math-block {
-  overflow-x: auto;
-  margin: 15px 0;
-}
-.ed-scope .divider {
-  border: none;
-  border-top: 1px solid #e2e8f0;
-  margin: 32px 0;
-}
-.ed-scope .code-block {
-  background-color: #0f172a;
-  color: #f8fafc;
-  padding: 20px;
-  border-radius: 8px;
-  font-family: 'Fira Code','Courier New',monospace;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  overflow-x: auto;
-  margin: 20px 0;
-  border-left: 4px solid #10b981;
-}
-.ed-scope .code-block .ch {
-  color: #64748b;
-  font-style: italic;
-}
-.ed-scope .code-block .cc {
-  color: #64748b;
-  font-style: italic;
-}
-.ed-scope table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-  margin: 15px 0;
-}
-.ed-scope table th, .ed-scope table td {
-  padding: 8px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-}
-.ed-scope table thead tr {
-  border-bottom: 2px solid #cbd5e1;
-  background: #f8fafc;
-}
-.ed-scope .bridge {
-  background: #1e3a8a;
-  color: #f8fafc;
-  padding: 22px 24px;
-  border-radius: 10px;
-  margin: 30px 0;
-  line-height: 1.7;
-}
-.ed-scope .bridge strong {
-  color: #93c5fd;
-}
-</style>
+
     <!-- Load global MathJax configuration first -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     
@@ -1553,6 +1414,110 @@ sₙ = tanh( W·sₙ₋₁       <span class="cc"># c is N-1 steps removed — s
   </div>
 
 </section>
+
+<section id="rnn-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+    <style>
+        #quiz-start-box { text-align: center; padding: 22px 16px; background: #f5f9ff; border: 1px solid #cfe0f5; border-radius: 10px; }
+        #quiz-start-box p { margin: 0 0 14px; color: #263238; font-size: 1rem; }
+        #start-quiz-btn { background: #1565c0; color: #fff; border: 0; border-radius: 8px; padding: 12px 34px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease; }
+        #start-quiz-btn:hover { background: #0d47a1; }
+        #start-quiz-btn:active { transform: scale(0.97); }
+        #start-quiz-btn:focus-visible { outline: 3px solid #90caf9; outline-offset: 2px; }
+    </style>
+    <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Recurrent Neural Networks (RNN) Quiz</h2>
+
+    <div id="quiz-start-box">
+        <p>20 multiple-choice questions on RNN basics, parameter sharing, BPTT, vanishing and exploding gradients, training and inference, the LSTM and the Encoder&ndash;Decoder, including 4 numerical questions.</p>
+        <button type="button" id="start-quiz-btn">Start Quiz</button>
+    </div>
+
+    <div id="quiz"></div>
+
+    <!-- Shared animation lives in Quiz.js; this page supplies only the questions. -->
+    <script src="Quiz.js"></script>
+    <script>
+    (function () {
+        var questions = [
+                { q: "Why can a Multilayer Perceptron not use the earlier words when it processes the current word, while an RNN can?",
+                  a: "MLP neurons connect only to the layers above and below, with no horizontal link inside a layer, so nothing carries information from one time step to the next; an RNN passes a hidden state from step to step",
+                  w: ["An MLP has too few neurons to store the earlier words", "An MLP uses an activation function that erases earlier inputs", "An RNN stores the raw word vector of every earlier word in a list"] },
+                { q: "Numerical: A one-unit RNN has W = 0.5, U = 1.0, b<sub>h</sub> = 0, previous hidden state h<sub>t&minus;1</sub> = 0.4 and input x<sub>t</sub> = 0.6. What is h<sub>t</sub> = tanh(W h<sub>t&minus;1</sub> + U x<sub>t</sub> + b<sub>h</sub>)?",
+                  a: "tanh(0.5 &times; 0.4 + 1.0 &times; 0.6) = tanh(0.8) &asymp; 0.664",
+                  w: ["0.800, forgetting to apply tanh", "tanh(0.6) &asymp; 0.537, ignoring the previous hidden state", "tanh(0.4) &asymp; 0.380, ignoring the current input"] },
+                { q: "A 5-word sentence and a 500-word sentence are fed to the same RNN using D-dimensional word vectors. How many input neurons does the RNN need?",
+                  a: "D for both: the same set of input neurons is reused at every clock tick, one word vector at a time (time over space)",
+                  w: ["5 &times; D for the short sentence and 500 &times; D for the long one", "One input neuron per word in the sentence", "One input neuron per word in the vocabulary, for both sentences"] },
+                { q: "What is the very first hidden state (before any word is read) usually set to, and why?",
+                  a: "A vector of zeros, so that the network starts with a clean slate before reading the first input",
+                  w: ["The embedding of the first word, so that no input is wasted", "A random vector that is never updated, to break symmetry", "The output probability vector of the previous sentence"] },
+                { q: "Why does an RNN reuse the same matrices U, W and V at every time step instead of having separate matrices for each step?",
+                  a: "This is parameter sharing: the RNN learns one set of rules for processing sequences that applies at any position, so it can handle sequences of any length",
+                  w: ["Separate matrices cannot be trained by gradient descent", "Sharing is done only to make each step run faster and has no effect on what is learned", "The tanh activation requires identical weights at every step"] },
+                { q: "Numerical: Using the page&rsquo;s shapes (U: H&times;D, W: H&times;H, V<sub>w</sub>: V&times;H, b<sub>h</sub>: H&times;1, b<sub>o</sub>: V&times;1) with H = 4, D = 3 and V = 5, how many parameters are there, not counting the embedding matrix?",
+                  a: "12 + 16 + 20 + 4 + 5 = 57",
+                  w: ["12 + 16 + 20 = 48, forgetting the two bias vectors", "57 &times; T for a sequence of length T, because every time step has its own copy of the weights", "72, which wrongly includes the embedding matrix E (V&times;D)"] },
+                { q: "Numerical: A 3-step sequence gives the target words the probabilities 0.5, 0.25 and 0.125. With per-step loss &minus;ln p and total loss L = (1/T) &sum; &ell;<sub>t</sub>, what is L?",
+                  a: "(0.693 + 1.386 + 2.079) / 3 = 4.159 / 3 &asymp; 1.386",
+                  w: ["4.159, forgetting to divide by T", "&minus;ln(0.292) &asymp; 1.23, averaging the probabilities before taking the log", "0.693, using only the first step"] },
+                { q: "Why is &part;L/&part;V simple to compute, while &part;L/&part;W needs Backpropagation Through Time?",
+                  a: "V connects directly to the loss at each step, so its gradient is local; W builds h<sub>t</sub> from h<sub>t&minus;1</sub>, so the effect of W on the loss at step t runs back through the whole history of hidden states",
+                  w: ["V is a smaller matrix than W, so its derivative is cheaper to compute", "W is not used in the forward pass, so its gradient has to be estimated", "V is shared across time steps while W is not"] },
+                { q: "According to the page, when do gradients vanish in BPTT?",
+                  a: "When the largest eigenvalue (spectral radius) of W is below 1 and the tanh derivative (at most 1) shrinks the signal further, so the product of Jacobians over many steps decays exponentially toward zero",
+                  w: ["When the sequence is shorter than the number of hidden units", "When the learning rate is so large that the updates overshoot", "When the loss is averaged over time instead of being summed"] },
+                { q: "Numerical: Suppose every one-step factor &part;h<sup>(j)</sup>/&part;h<sup>(j&minus;1)</sup> has size about 0.5. Roughly how large is the product across 10 steps, and what does it mean?",
+                  a: "0.5<sup>10</sup> &asymp; 0.001: the error signal from 10 steps back is almost lost",
+                  w: ["5, because the factors add up over the steps", "0.5, because the factor does not change with distance", "0.05, because it shrinks by a fixed 0.05 per step"] },
+                { q: "What happens when the spectral radius of W is well above 1, and what does the page&rsquo;s training algorithm do about it?",
+                  a: "The gradient norm grows like (&lambda;<sub>max</sub>)<sup>t&minus;i</sup>, causing huge updates and possibly NaN; the algorithm clips every gradient element to the range [&minus;5, 5]",
+                  w: ["Gradients vanish; the algorithm adds a forget gate to the RNN", "Hidden states become exactly zero; the algorithm resets h to zeros after every word", "Training becomes slower but stays stable, so no remedy is needed"] },
+                { q: "In the BPTT loop, dh_total = V<sup>T</sup>&middot;err<sub>t</sub> + W<sup>T</sup>&middot;next_dh. What do the two terms represent?",
+                  a: "The error arriving from the output at this step (the vertical path), plus the error flowing back from all later hidden states (the horizontal path)",
+                  w: ["The error of the current word plus the error of the previous word&rsquo;s embedding", "The gradient for V plus the gradient for W", "The forward activation plus the backward activation"] },
+                { q: "Unlike an MLP or CNN, an RNN completes the whole forward pass before the backward pass starts. Why?",
+                  a: "The same weights are used at every step, so each weight&rsquo;s gradient is a sum of contributions from all time steps; the sequence loss is only known at step T, and all hidden states must be cached for the backward sweep",
+                  w: ["tanh cannot be differentiated until the whole sentence has been seen", "An RNN updates only the output matrix V, which needs the final word", "Backpropagation is not defined for networks with more than one input"] },
+                { q: "Why is Truncated BPTT used, and how does it work?",
+                  a: "BPTT must store every hidden state, which causes out-of-memory errors on long sequences; so the sequence is split into chunks (e.g. 50 words), BPTT runs inside each chunk, weights are updated, and only the final hidden state is passed on as the next chunk&rsquo;s starting memory",
+                  w: ["It stops gradients from exploding by deleting the early words; the hidden state is reset to zero for every chunk", "It removes the backward pass by training only the output matrix", "It trains each chunk with its own separate set of weights"] },
+                { q: "Why are learned embeddings used instead of one-hot vectors as RNN inputs?",
+                  a: "A one-hot vector has V entries (e.g. 50,000), which makes U huge, and it encodes identity but not meaning; a small dense embedding (e.g. 300 dimensions) learned through BPTT places similar words such as &ldquo;cat&rdquo; and &ldquo;dog&rdquo; close together",
+                  w: ["A one-hot vector cannot be multiplied by a matrix", "Embeddings are fixed by hand so that similar words are close", "Embeddings make the vocabulary size V irrelevant to the output layer"] },
+                { q: "How does the inference routine generate text after training?",
+                  a: "From a seed word and h = 0, it embeds the current word, updates h, takes a softmax over the vocabulary, picks the highest-probability word (argmax), and feeds it back as the next input; no target words are used",
+                  w: ["It feeds the true next word from the training data at every step", "It computes all the words at once in a single pass without updating the hidden state", "It runs BPTT after every generated word to correct it"] },
+                { q: "What problem of the standard RNN does the LSTM address, and what do its three gates do?",
+                  a: "A standard RNN rewrites its whole memory at every step; the LSTM adds a cell state, where the forget gate erases from C<sub>t&minus;1</sub>, the input gate chooses what new information to add, and the output gate chooses what part of the cell state to expose as h<sub>t</sub>",
+                  w: ["The forget gate writes new information, the input gate erases old information, and the output gate resets h to zero", "The three gates are three separate RNNs, each reading a different word", "The gates enlarge the hidden state so that more words can be stored"] },
+                { q: "Why does the gradient flow better through the LSTM cell state, where C<sub>t</sub> = f<sub>t</sub> &odot; C<sub>t&minus;1</sub> + i<sub>t</sub> &odot; &Ctilde;<sub>t</sub>?",
+                  a: "The path from C<sub>t&minus;1</sub> to C<sub>t</sub> is only an element-wise multiplication by f<sub>t</sub>, with no repeated W matrices; if f &asymp; 1 then &part;C<sub>t</sub>/&part;C<sub>t&minus;1</sub> &asymp; 1 and the gradient passes back without decaying",
+                  w: ["&part;C<sub>t</sub>/&part;C<sub>t&minus;1</sub> equals W<sup>T</sup>, which is always larger than 1", "The cell state passes through tanh at every step, and this stops gradients from shrinking", "The LSTM gates contain no weight matrices at all"] },
+                { q: "In the RNN Encoder&ndash;Decoder, what is the context vector c and how does the Decoder use it?",
+                  a: "c is the Encoder&rsquo;s final hidden state h<sub>T</sub>, a fixed-size summary of the source sentence; it initializes the Decoder as s<sub>0</sub> = c",
+                  w: ["c is the average of all Encoder outputs and is added at every Decoder step", "c is the first Encoder hidden state h<sub>1</sub>, added to every decoding step", "c is the French vocabulary distribution produced by the softmax"] },
+                { q: "Why does the plain Encoder&ndash;Decoder struggle with long sentences, and how did Bahdanau attention address this?",
+                  a: "c is a single fixed-size vector injected only at the start, so its influence fades with every tanh step; attention lets the Decoder re-read all Encoder hidden states h<sub>1</sub>&hellip;h<sub>T</sub> with a fresh weighted sum at every decoding step",
+                  w: ["The Encoder cannot read sentences longer than the Decoder; attention shortens the source sentence", "c is re-injected at every step and grows too strong; attention reduces its size", "The Decoder has no softmax layer; attention adds one"] }
+        ];
+        var btn = document.getElementById("start-quiz-btn");
+        btn.addEventListener("click", function () {
+            if (typeof startQuiz !== "function") {
+                btn.textContent = "Quiz.js not found";
+                btn.disabled = true;
+                return;
+            }
+            document.getElementById("quiz-start-box").style.display = "none";
+            startQuiz({
+                mount: "#quiz",
+                // timeLimit: 5,   // optional: seconds per question
+                questions: questions
+            });
+            document.getElementById("quiz").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    })();
+    </script>
+</section>
+
 
 </body>
 </html>

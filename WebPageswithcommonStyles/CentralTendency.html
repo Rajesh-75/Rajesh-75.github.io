@@ -1,4 +1,4 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -143,8 +143,6 @@ body {
             </tbody>
         </table>
 
-        
-
         <h4>(1) Direct Method</h4>
         <div class="formula-container">
             $$ \bar{X} = \frac{\sum fm}{N} = \frac{32125}{633} \approx 50.75 $$
@@ -162,30 +160,65 @@ body {
             $$ \bar{X} = A + \left( \frac{\sum fd'}{N} \times i \right) = 35 + \left( \frac{997}{633} \times 10 \right) \approx 50.75 $$
         </div>
     </div>
+
+    <!-- ADDED: Properties & Special Means -->
+    <div class="data-type-card" style="border-left: 5px solid #2b6cb0;">
+        <span class="tag">Properties & Variations</span>
+        <h3>Properties of the Arithmetic Mean & Other Averages</h3>
+        
+        <p><strong>Key Properties of the Mean:</strong></p>
+        <ul>
+            <li><strong>Sum of Deviations:</strong> The algebraic sum of deviations of all observations from their arithmetic mean is always zero: $\sum (x - \bar{X}) = 0$.</li>
+            <li><strong>Change of Origin and Scale:</strong> If a constant $c$ is added/subtracted from each observation, the mean changes by $c$. If each observation is multiplied/divided by $c$, the mean is similarly multiplied/divided.</li>
+            <li><strong>Combined Mean:</strong> If two groups have means $\bar{X}_1, \bar{X}_2$ and sizes $N_1, N_2$, the combined mean is:
+                $$ \bar{X}_{12} = \frac{N_1\bar{X}_1 + N_2\bar{X}_2}{N_1 + N_2} $$
+            </li>
+            <li><strong>Sensitivity to Outliers:</strong> The mean is <strong>pulled strongly by outliers</strong> because every value is factored directly into the sum. For skewed data with extreme values, the mean becomes unrepresentative.</li>
+        </ul>
+
+        <p style="margin-top: 15px;"><strong>Alternative Means:</strong></p>
+        <ul>
+            <li><strong>Weighted Mean:</strong> Used when different observations carry varying levels of importance ($w_i$):
+                $$ \bar{X}_w = \frac{\sum w_i x_i}{\sum w_i} $$
+            </li>
+            <li><strong>Geometric Mean (GM):</strong> Useful for growth rates and compounding:
+                $$ GM = \sqrt[n]{x_1 x_2 \dots x_n} $$
+            </li>
+            <li><strong>Harmonic Mean (HM):</strong> Useful for rates and ratios. 
+                $$ HM = \frac{N}{\sum \left(\frac{1}{x}\right)} $$
+                <div style="background: #ebf8ff; padding: 8px; border-radius: 4px; margin-top: 5px; font-size: 0.9rem;">
+                    💡 <strong>ML Connection:</strong> The Harmonic Mean is precisely the formula used to compute the <strong>F1 Score</strong> in machine learning (the harmonic mean of Precision and Recall).
+                </div>
+            </li>
+        </ul>
+    </div>
+
 	<div class="median-section">
         <div class="header-section">
             <h2>Median</h2>
         </div>
 
         <div class="description-box">
-            <p>Median is defined as the size of the <strong>$(\frac{N+1}{2})^{th}$</strong> item when the items are arranged in the ascending order of magnitude.</p>
+            <p>Median is defined as the size of the middle item when items are arranged in ascending order of magnitude. Unlike the mean, <strong>the median is not pulled by outliers</strong>, making it robust for skewed data.</p>
         </div>
 
         <div class="data-type-card">
             <span class="tag">Case 1</span>
             <h3>1. Individual Observations</h3>
-            <p>For ungrouped data, arrange the values in ascending order. The Median is the value of the middle item.</p>
+            <p>For ungrouped data, arrange the values in ascending order.</p>
             <div class="formula-container">
-                $$ \text{Median} = \text{Size of } \left( \frac{N+1}{2} \right)^{th} \text{ item} $$
+                $$ \text{Position} = \left( \frac{N+1}{2} \right)^{th} \text{ item} $$
             </div>
+            <p><em>Note on Even N:</em> If $N$ is even, $\frac{N+1}{2}$ results in a half-integer (e.g., $4.5^{\text{th}}$). In this case, the median is calculated by taking the <strong>arithmetic mean of the two middle values</strong> surrounding that position.</p>
+            <p><strong>Worked Example (Even N):</strong> For data [12, 15, 18, 22, 25, 30] ($N=6$): Position = $\frac{6+1}{2} = 3.5^{\text{th}}$. Average the 3rd (18) and 4th (22) values $\rightarrow$ Median = $\frac{18 + 22}{2} = 20$.</p>
         </div>
 
         <div class="data-type-card">
             <span class="tag">Case 2</span>
             <h3>2. Discrete Frequency Distribution</h3>
-            <p>In the discrete case, the Median is defined as the size of the <strong>$(\frac{N+1}{2})^{th}$</strong> item, where $N = \sum f$. We use cumulative frequency to locate this item.</p>
+            <p>In the discrete case, we use cumulative frequency to locate the item position.</p>
             <div class="formula-container">
-                $$ \text{Median} = \text{Size of } \left( \frac{\sum f + 1}{2} \right)^{th} \text{ item} $$
+                $$ \text{Position} = \left( \frac{\sum f + 1}{2} \right)^{th} \text{ item} $$
             </div>
         </div>
 
@@ -193,8 +226,6 @@ body {
             <span class="tag">Case 3</span>
             <h3>3. Continuous Series</h3>
             <p>For grouped data, we first find the median class using $N/2$. Then, we apply the interpolation formula:</p>
-            
-            
             
             <div class="formula-container">
                 $$ \text{Median} = L_1 + \frac{\frac{N}{2} - cf}{f} \times c $$
@@ -209,7 +240,26 @@ body {
                 <li><strong>$c$:</strong> Class interval width.</li>
             </ul>
         </div>
+
+        <!-- ADDED: Quartiles, Percentiles & IQR -->
+        <div class="data-type-card" style="border-left: 5px solid #319795;">
+            <span class="tag">Quantiles</span>
+            <h3>Quartiles, Percentiles, and Interquartile Range (IQR)</h3>
+            <p>Just as the median splits data into two halves, other quantiles split data into finer segments:</p>
+            <ul>
+                <li><strong>Quartiles ($Q_1, Q_2, Q_3$):</strong> Divide data into 4 equal parts. $Q_1$ is the 25th percentile, $Q_2$ is the Median (50th percentile), and $Q_3$ is the 75th percentile.</li>
+                <li><strong>Percentiles ($P_1, P_2, \dots, P_{99}$):</strong> Divide data into 100 equal parts.</li>
+                <li><strong>Interquartile Range (IQR):</strong> The spread of the middle 50% of the data, defined as:
+                    $$ \text{IQR} = Q_3 - Q_1 $$
+                </li>
+                <li><strong>Quartile Deviation (Semi-Interquartile Range):</strong> 
+                    $$ QD = \frac{Q_3 - Q_1}{2} $$
+                </li>
+            </ul>
+            <p><em>Note:</em> These metrics form the backbone of <strong>box plots</strong> and robust outlier boundaries.</p>
+        </div>
     </div>
+
 	<div class="mode-section">
         <div class="header-section">
             <h2>Mode</h2>
@@ -231,10 +281,8 @@ body {
 
         <div class="data-type-card">
             <span class="tag">Continuous Case</span>
-            <h3>Continuous Distributions</h3>
-            <p>For grouped data, the mode is located within the modal class (the class with the highest frequency) and calculated as:</p>
-            
-            
+            <h3>Continuous Distributions (Finding the Modal Class)</h3>
+            <p>For grouped data, we first identify the <strong>modal class</strong> (the class interval carrying the highest frequency). Then, the mode is calculated as:</p>
             
             <div class="formula-container">
                 $$ \text{Mode} = L_1 + \frac{(f_1 - f_0) \times c}{(2f_1 - f_0 - f_2)} $$
@@ -249,9 +297,33 @@ body {
                 <li><strong>$c$:</strong> Class interval width.</li>
             </ul>
         </div>
-		<div class="sd-section">
+    </div>
+
+    <!-- ADDED SECTION: Measures of Dispersion -->
+    <div class="dispersion-section" style="margin-top: 50px;">
         <div class="header-section">
-            <h2>Standard Deviation</h2>
+            <h2>Measures of Dispersion</h2>
+        </div>
+        <div class="description-box">
+            <p>Measures of central tendency give the center of a dataset, but they do not reveal how scattered or spread out the values are. <strong>Measures of dispersion</strong> quantify this variability.</p>
+        </div>
+
+        <div class="data-type-card">
+            <span class="tag">Dispersion Metrics</span>
+            <h3>Other Key Measures of Dispersion</h3>
+            <ul>
+                <li><strong>Range:</strong> The difference between the highest and lowest values in the dataset. ($Range = X_{\max} - X_{\min}$). Highly sensitive to outliers.</li>
+                <li><strong>Quartile Deviation (IQR / 2):</strong> Measures the dispersion of the middle 50% of data. Extremely robust against extreme outliers.</li>
+                <li><strong>Mean Deviation (MD):</strong> The average of the absolute deviations from a central value (Mean or Median):
+                    $$ MD_{\text{Mean}} = \frac{\sum |x - \bar{X}|}{N} $$
+                </li>
+            </ul>
+        </div>
+    </div>
+
+	<div class="sd-section">
+        <div class="header-section">
+            <h2>Standard Deviation & Variance</h2>
         </div>
 
         <div class="description-box">
@@ -261,20 +333,36 @@ body {
             $$ \text{Variance} = \sigma^2 $$
             $$ \text{Standard Deviation} = \sqrt{\text{Variance}} $$
         </div>
+
+        <!-- ADDED: Population vs Sample Variance -->
+        <div class="data-type-card" style="border-left: 5px solid #d69e2e;">
+            <span class="tag">Crucial Distinction</span>
+            <h3>Population vs. Sample Variance</h3>
+            <p>Formulas differ depending on whether you analyze a complete <strong>population</strong> or a <strong>sample</strong> drawn from it:</p>
+            <ul>
+                <li><strong>Population Variance ($\sigma^2$):</strong> Divides by $N$ (total items in population).
+                    $$ \sigma^2 = \frac{\sum (x - \bar{X})^2}{N} $$
+                </li>
+                <li><strong>Sample Variance ($s^2$):</strong> Divides by $n - 1$ (degrees of freedom correction to eliminate bias in sample estimation):
+                    $$ s^2 = \frac{\sum (x - \bar{X})^2}{n - 1} $$
+                </li>
+            </ul>
+            <p style="font-size: 0.9rem; color: #555; margin-top: 5px;">
+                💡 <em>Note:</em> The sample variance notation ($s^2$) is precisely the version utilized across your <strong>Hypothesis Testing</strong> pages.
+            </p>
+        </div>
+
         <div class="data-type-card">
             <span class="tag">Individual Observations</span>
-            <h3>Mathematical Formula</h3>
-            <p>For a population, the Standard Deviation is calculated as:</p>
+            <h3>Mathematical Formula (Population)</h3>
             <div class="formula-container">
                 $$ \sigma = \sqrt{\frac{\sum (x - \bar{X})^2}{N}} $$
             </div>
-            <p>Where:</p>
+            <p><strong>Worked Numerical Example:</strong> Calculate SD for dataset [2, 4, 4, 4, 5, 5, 7, 9] ($N=8$).</p>
             <ul>
-                <li>$\sigma$: Standard Deviation</li>
-                <li>$\sum$: Summation</li>
-                <li>$x$: Individual values</li>
-                <li>$\bar{X}$: Arithmetic Mean</li>
-                <li>$N$: Total number of observations</li>
+                <li>Mean ($\bar{X}$) = $\frac{2+4+4+4+5+5+7+9}{8} = \frac{40}{8} = 5$.</li>
+                <li>Squared deviations $(x - \bar{X})^2$: $(2-5)^2=9, (4-5)^2=1, \dots, (9-5)^2=16$. Sum = $9 + 1 + 1 + 1 + 0 + 0 + 4 + 16 = 32$.</li>
+                <li>Variance ($\sigma^2$) = $\frac{32}{8} = 4$. Standard Deviation ($\sigma$) = $\sqrt{4} = 2$.</li>
             </ul>
         </div>
 
@@ -285,115 +373,124 @@ body {
                 $$ \sigma = \sqrt{\frac{\sum fd^2}{N} - \left( \frac{\sum fd}{N} \right)^2} $$
             </div>
         </div>
-		<div class="data-type-card" style="border-left: 5px solid #e74c3c;">
-    <span class="tag">Interpretation</span>
-    <h3>Why the Mean needs the Standard Deviation</h3>
-    <p>The Mean gives us the <strong>location</strong> of the data, but the Standard Deviation (SD) gives us the <strong>context</strong>. One without the other can be misleading.</p>
 
-    <div class="description-box" style="background-color: #fdf2f2;">
+        <div class="data-type-card" style="border-left: 5px solid #e74c3c;">
+            <span class="tag">Interpretation</span>
+            <h3>Why the Mean needs the Standard Deviation</h3>
+            <p>The Mean gives us the <strong>location</strong> of the data, but the Standard Deviation (SD) gives us the <strong>context</strong>. One without the other can be misleading.</p>
+
+            <div class="description-box" style="background-color: #fdf2f2;">
+                <ul>
+                    <li><strong>Low SD:</strong> The data points are close to the Mean. The average is a <strong>reliable</strong> representative of the group.</li>
+                    <li><strong>High SD:</strong> The data points are spread out far from the Mean. This suggests that the average may <strong>not</strong> be a good representation because of high volatility or outliers.</li>
+                </ul>
+            </div>
+
+            <h4>The "Consistency" Rule:</h4>
+            <table class="data-table" style="max-width: 600px; margin: 10px auto;">
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Mean Salary</th>
+                        <th>SD</th>
+                        <th>Conclusion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Company A</td>
+                        <td>Rs 500,000</td>
+                        <td>Rs 2,000</td>
+                        <td><strong>Consistent:</strong> Most people earn very close to Rs 500,000.</td>
+                    </tr>
+                    <tr>
+                        <td>Company B</td>
+                        <td>Rs 500,000</td>
+                        <td>Rs 250,000</td>
+                        <td><strong>Inconsistent:</strong> There are likely very high and very low earners.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="data-type-card" style="border-left: 5px solid #e74c3c;">
+            <span class="tag">Comparison Tool</span>
+            <h3>Coefficient of Variation (CV)</h3>
+            <p>To mathematically measure consistency across different scales, use the <strong>Coefficient of Variation</strong>:</p>
+            
+            <div class="formula-container">
+                $$ CV = \left( \frac{\sigma}{\bar{X}} \right) \times 100 $$
+            </div>
+
+            <p><strong>Interpretation:</strong> Lower CV means higher stability and uniformity; higher CV indicates high relative volatility.</p>
+        </div>
+    </div>
+
+    <!-- ADDED: Machine Learning Connections -->
+    <div class="data-type-card" style="border-left: 5px solid #2b6cb0; margin-top: 30px;">
+        <span class="tag">ML Applications</span>
+        <h3>Machine Learning Connections & Preprocessing</h3>
         <ul>
-            <li><strong>Low SD:</strong> The data points are close to the Mean. The average is a <strong>reliable</strong> representative of the group.</li>
-            <li><strong>High SD:</strong> The data points are spread out far from the Mean. This suggests that the average may <strong>not</strong> be a good representation because of high volatility or outliers.</li>
+            <li><strong>Standardization (Z-Scores):</strong> Centers data to mean 0 and scales variance to 1 using mean and standard deviation:
+                $$ z = \frac{x - \bar{X}}{\sigma} $$
+            </li>
+            <li><strong>Robust Scaling:</strong> Uses the Median and Interquartile Range (IQR) instead of Mean and SD. Highly effective when datasets contain extreme outliers.</li>
+            <li><strong>Imputing Missing Values:</strong> Missing numerical features are often filled using the <em>mean</em> (for normal distributions) or the <em>median</em> (for skewed distributions or data with outliers).</li>
+            <li><strong>Outlier Capping / Detection:</strong> Data points falling beyond $Q_3 + 1.5 \times \text{IQR}$ or below $Q_1 - 1.5 \times \text{IQR}$ are classified as outliers.</li>
         </ul>
     </div>
 
-    
-
-    <h4>The "Consistency" Rule:</h4>
-    <p>A "High SD" tells us that the "Average" is not a typical experience for most members of the group. For example:</p>
-    <table class="data-table" style="max-width: 600px; margin: 10px auto;">
-        <thead>
-            <tr>
-                <th>Scenario</th>
-                <th>Mean Salary</th>
-                <th>SD</th>
-                <th>Conclusion</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Company A</td>
-                <td>Rs5000,000</td>
-                <td>Rs2,000</td>
-                <td><strong>Consistent:</strong> Most people earn very close to Rs5000000.</td>
-            </tr>
-            <tr>
-                <td>Company B</td>
-                <td>Rs500,000</td>
-                <td>Rs25,0000</td>
-                <td><strong>Inconsistent:</strong> There are likely very high and very low earners.</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-<div class="data-type-card" style="border-left: 5px solid #e74c3c;">
-        <span class="tag">Analysis</span>
-        <h3>The Relationship: Mean vs. Standard Deviation</h3>
-        <p>The Mean gives the "center," but the Standard Deviation (SD) tells us if that center is <strong>reliable</strong>. As a rule of thumb: <strong>High SD means the average is not a good representative of the data.</strong></p>
-        
-        <div class="description-box" style="background-color: #fff5f5; border: 1px solid #feb2b2;">
-            <p>If the SD is high, the data is scattered; the "Average" might be skewed by extreme values (outliers) and does not reflect the typical experience of the group.</p>
-        </div>
-
-        
-
-        <span class="tag">Comparison Tool</span>
-        <h3>Coefficient of Variation (CV)</h3>
-        <p>To mathematically measure the consistency of the Mean, we use the <strong>Coefficient of Variation</strong>. It expresses the SD as a percentage of the Mean:</p>
-        
-        <div class="formula-container">
-            $$ CV = \left( \frac{\sigma}{\bar{X}} \right) \times 100 $$
-        </div>
-
-        <p><strong>Interpretation of CV:</strong></p>
-        <ul>
-            <li><strong>Lower CV:</strong> The data is more <strong>consistent</strong> and stable. The Mean is highly reliable.</li>
-            <li><strong>Higher CV:</strong> The data is more <strong>variable</strong> (less consistent). The Mean should be used with caution.</li>
-        </ul>
-
-        <table class="data-table" style="max-width: 600px; margin: 10px auto;">
-            <thead>
-                <tr>
-                    <th>Metric</th>
-                    <th>Low CV Case</th>
-                    <th>High CV Case</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Stability</strong></td>
-                    <td>High Stability</td>
-                    <td>Low Stability</td>
-                </tr>
-                <tr>
-                    <td><strong>Uniformity</strong></td>
-                    <td>More Uniform</td>
-                    <td>Less Uniform</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    </div>
-	<div class="median-section"> <div class="header-section">
+	<div class="median-section" style="margin-top: 40px;"> 
+        <div class="header-section">
             <h1>Measures of Skewness and Kurtosis</h1>
         </div>
 
         <div class="description-box">
-            <p>In statistics, measures of skewness and kurtosis are used to describe the shape of a probability distribution, which is simply a graph showing how often different values in a dataset occur. The most common reference point for these measures is the normal distribution, often called the "bell curve," where most data points cluster symmetrically in the middle and taper off equally at both ends. Skewness quantifies how much a distribution deviates from this symmetry; a positive skew indicates a "tail" stretching toward higher values on the right, while a negative skew indicates a tail extending toward lower values on the left. Kurtosis measures the "tailedness" of the distribution, or how the data behaves at the extreme ends compared to the bell curve. A high kurtosis (leptokurtic) signifies a sharp peak and heavy tails, suggesting more frequent outliers, whereas a low kurtosis (platykurtic) indicates a flatter top and thinner tails. Together, these tools help researchers identify how much their data "leans" or "bulges" compared to a standard normal model.While Mean and SD tell us about the center and spread, <strong>Skewness</strong> and <strong>Kurtosis</strong> describe the <strong>Shape</strong> of the distribution.</p>
+            <p>While Mean and SD tell us about the center and spread, <strong>Skewness</strong> and <strong>Kurtosis</strong> describe the <strong>Shape</strong> of the probability distribution relative to a normal distribution ("bell curve").</p>
+        </div>
+
+        <!-- ADDED: SVG Visualizations for Skewness & Kurtosis -->
+        <div class="data-type-card" style="text-align: center;">
+            <span class="tag">Visualizing Shapes</span>
+            <h3>Distribution Profiles</h3>
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 20px; margin-top: 15px;">
+                <!-- Skewness Diagram -->
+                <div>
+                    <p style="font-weight: bold; font-size: 0.9rem;">Skewness Shapes</p>
+                    <svg width="240" height="140" viewBox="0 0 240 140" style="background: #fafafa; border: 1px solid #e2e8f0; border-radius: 6px;">
+                        <!-- Normal -->
+                        <path d="M20,120 Q60,20 100,120" fill="none" stroke="#3182ce" stroke-width="2"/>
+                        <text x="50" y="132" font-size="10" fill="#3182ce">Symmetric</text>
+                        <!-- Right Skew -->
+                        <path d="M120,120 Q150,20 220,120" fill="none" stroke="#e53e3e" stroke-width="2"/>
+                        <text x="150" y="132" font-size="10" fill="#e53e3e">Right Skew</text>
+                    </svg>
+                </div>
+                <!-- Kurtosis Diagram -->
+                <div>
+                    <p style="font-weight: bold; font-size: 0.9rem;">Kurtosis Profiles (Tails / Peakedness)</p>
+                    <svg width="240" height="140" viewBox="0 0 240 140" style="background: #fafafa; border: 1px solid #e2e8f0; border-radius: 6px;">
+                        <!-- Leptokurtic (Sharp) -->
+                        <path d="M120,120 Q120,10 120,120" fill="none" stroke="#9333ea" stroke-width="2"/>
+                        <!-- Platykurtic (Flat) -->
+                        <path d="M30,120 Q120,80 210,120" fill="none" stroke="#38a169" stroke-width="2"/>
+                        <text x="40" y="132" font-size="10" fill="#38a169">Platykurtic</text>
+                        <text x="135" y="132" font-size="10" fill="#9333ea">Leptokurtic</text>
+                    </svg>
+                </div>
+            </div>
         </div>
 
         <div class="data-type-card">
             <span class="tag">Shape: Symmetry</span>
             <h3>1. Measures of Skewness</h3>
-            <p>Skewness refers to the lack of symmetry in a distribution. A "Skewed" distribution is one that is not symmetrical and stretches out more on one side than the other.</p>
+            <p>Skewness refers to the lack of symmetry in a distribution.</p>
             
-            
-
             <div class="description-box" style="background-color: #f0f4f8;">
                 <ul>
-                    <li><strong>Symmetrical:</strong> Mean = Median = Mode.</li>
-                    <li><strong>Positive Skew (Right-skewed):</strong> The tail on the right side is longer. (Mean > Median > Mode).</li>
-                    <li><strong>Negative Skew (Left-skewed):</strong> The tail on the left side is longer. (Mean < Median < Mode).</li>
+                    <li><strong>Symmetrical:</strong> $\text{Mean} = \text{Median} = \text{Mode}$.</li>
+                    <li><strong>Positive Skew (Right-skewed):</strong> Tail stretches right. $\text{Mean} > \text{Median} > \text{Mode}$.</li>
+                    <li><strong>Negative Skew (Left-skewed):</strong> Tail stretches left. $\text{Mean} < \text{Median} < \text{Mode}$.</li>
                 </ul>
             </div>
 
@@ -401,14 +498,24 @@ body {
             <div class="formula-container">
                 $$ S_k = \frac{\text{Mean} - \text{Mode}}{\sigma} \quad \text{or} \quad S_k = \frac{3(\text{Mean} - \text{Median})}{\sigma} $$
             </div>
+            <p><strong>Worked Example:</strong> If $\text{Mean} = 50$, $\text{Mode} = 44$, and $\sigma = 3$, then $S_k = \frac{50 - 44}{3} = \frac{6}{3} = 2$ (indicates strong positive skew).</p>
+
+            <h4>Bowley’s Quartile Skewness Coefficient:</h4>
+            <p>Based on quartiles, useful when extreme values distort the mean:</p>
+            <div class="formula-container">
+                $$ S_q = \frac{Q_3 + Q_1 - 2Q_2}{Q_3 - Q_1} $$
+            </div>
         </div>
 
         <div class="data-type-card">
-            <span class="tag">Shape: Peakedness</span>
-            <h3>2. Measures of Kurtosis</h3>
-            <p>Kurtosis measures the "peakedness" or "flatness" of a distribution relative to a normal distribution. It tells us about the thickness of the tails.</p>
+            <span class="tag">Shape: Peakedness & Moments</span>
+            <h3>2. Measures of Kurtosis & Moments</h3>
+            <p>Moments are statistical descriptors of the shape of a set of points. The $r^{\text{th}}$ <strong>central moment</strong> ($\mu_r$) about the mean is:</p>
+            <div class="formula-container">
+                $$ \mu_r = \frac{1}{N} \sum_{i=1}^{N} (x_i - \bar{X})^r $$
+            </div>
 
-            
+            <p>Kurtosis measures the "tailedness" relative to a normal distribution using standardized moments:</p>
 
             <table class="data-table">
                 <thead>
@@ -416,29 +523,32 @@ body {
                         <th>Type</th>
                         <th>Description</th>
                         <th>Condition ($\beta_2$)</th>
+                        <th>Excess Kurtosis ($\gamma_2 = \beta_2 - 3$)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td><strong>Leptokurtic</strong></td>
-                        <td>Sharply peaked with heavy tails.</td>
+                        <td>Sharply peaked with heavy tails (outlier-prone).</td>
                         <td>$\beta_2 > 3$</td>
+                        <td>$\gamma_2 > 0$</td>
                     </tr>
                     <tr>
                         <td><strong>Mesokurtic</strong></td>
-                        <td>Normal Distribution.</td>
+                        <td>Normal Distribution benchmark.</td>
                         <td>$\beta_2 = 3$</td>
+                        <td>$\gamma_2 = 0$</td>
                     </tr>
                     <tr>
                         <td><strong>Platykurtic</strong></td>
                         <td>Flat-topped with thin tails.</td>
                         <td>$\beta_2 < 3$</td>
+                        <td>$\gamma_2 < 0$</td>
                     </tr>
                 </tbody>
             </table>
 
             <h4>Formula for Kurtosis ($\beta_2$):</h4>
-            <p>Calculated using the fourth moment ($\mu_4$) and second moment ($\mu_2$):</p>
             <div class="formula-container">
                 $$ \beta_2 = \frac{\mu_4}{\mu_2^2} $$
             </div>
