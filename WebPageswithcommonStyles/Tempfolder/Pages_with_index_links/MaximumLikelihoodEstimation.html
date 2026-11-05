@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <!-- Hide body initially to prevent flickering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+body {
+  visibility: hidden;
+}
+</style>
+    <!-- Load global MathJax configuration first -->
+    <title>Machine Learning Tutorial</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body>
+<div class="index-link index-link-top" style="text-align:center; margin:14px 0; font-size:0.95rem;"><a href="../index.html">Go to Main Page (Index Page)</a></div>
+
+<div class="container">
+    <h1>Maximum Likelihood Estimation (MLE)</h1>
+    
+    <p>From a purely statistical perspective, <strong>Maximum Likelihood Estimation (MLE)</strong> is a method used to estimate the unknown parameters of a probability distribution based on observed data.</p>
+    
+    <p>In frequentist statistics, we assume that the observed data ($X$) comes from a specific type of distribution (like a Normal, Poisson, or Binomial distribution), but we don't know the exact "settings" or <strong>parameters</strong> ($\theta$) of that distribution. MLE provides a systematic way to find the "best" values for these parameters.</p>
+
+    <h2>1. The Likelihood Function</h2>
+    <p>The core of MLE is the <strong>Likelihood Function</strong>, denoted as $L(\theta | X)$. While it looks mathematically similar to a probability density function, the perspective is reversed:</p>
+
+    <div class="example-box">
+        <strong>Probability $P(X | \theta)$:</strong> "Given these fixed parameters, what is the probability of seeing this data?"<br><br>
+        <strong>Likelihood $L(\theta | X)$:</strong> "Given this fixed data, how plausible are these specific parameter values?". In othewords, MLE chooses the parameters that make the data we actually see as the most likely outcome to have occurred.
+    </div>
+
+    
+
+    <p>Mathematically, if we have a set of independent and identically distributed (iid) observations $x_1, x_2, \dots, x_n$, the joint likelihood is the product of their individual probabilities:</p>
+
+    <div class="formula-display">
+        $$L(\theta) = \prod_{i=1}^{n} f(x_i; \theta)$$
+    </div>
+
+    <h2>2. The Goal of Maximization</h2>
+    <p>The "Maximum" in MLE refers to the goal: we want to find the specific value of $\theta$ (denoted as $\hat{\theta}$) that maximizes the likelihood function. In plain English, we are looking for the parameter value that makes the data we actually saw the <strong>most likely outcome</strong> to have occurred.</p>
+
+    <h2>3. The Use of Log-Likelihood</h2>
+    <p>In practice, statisticians almost always work with the <strong>Log-Likelihood</strong>, $\ell(\theta) = \log L(\theta)$. This is done for two main reasons:</p>
+
+    <ul>
+        <li><strong>Mathematical Simplification:</strong> It turns products (which are hard to differentiate) into sums (which are easy to differentiate).</li>
+        <li><strong>Numerical Stability:</strong> Multiplying many small probabilities can lead to "arithmetic underflow" in computers; adding logs prevents this.</li>
+    </ul>
+
+    <div class="formula-display">
+        $$\log L(\theta) = \sum_{i=1}^{n} \log f(x_i; \theta)$$
+    </div>
+
+    <div class="grid-note">
+        <strong>Note:</strong> Since the logarithm is a "monotonically increasing" function, the value of $\theta$ that maximizes the log-likelihood is exactly the same as the one that maximizes the original likelihood.
+    </div>
+
+    <h2>4. The Statistical Process</h2>
+    <p>To find the MLE, the process typically involves:</p>
+    <ol>
+        <li>Writing down the likelihood function for the chosen distribution.</li>
+        <li>Taking the natural log to obtain the log-likelihood.</li>
+        <li>Calculating the derivative with respect to the parameter(s) $\theta$.</li>
+        <li>Setting the derivative to zero and solving for $\theta$ to find the peak.</li>
+    </ol>
+
+    
+
+    <h2>5. Why Statisticians Trust MLE</h2>
+    <p>MLE is favored because it possesses powerful "asymptotic" properties as the sample size increases:</p>
+    <ul>
+        <li><strong>Consistency:</strong> The estimate $\hat{\theta}$ converges (in probability) to the true value of the parameter. Section 6 explains why.</li>
+        <li><strong>Asymptotic Efficiency:</strong> For large samples its variance reaches the Cramér–Rao lower bound, $1/(n\,I(\theta))$, the smallest possible among (asymptotically) unbiased estimators. In small samples the MLE can be biased.</li>
+        <li><strong>Asymptotic Normality:</strong> As you collect more data, $\sqrt{n}(\hat{\theta}-\theta_0)$ approaches a Normal distribution, so the distribution of the estimate starts to look like a Normal Distribution.</li>
+    </ul>
+    <h2>6. How Does the MLE Converge to the True Parameter?</h2>
+    <p>Section 5 states that $\hat{\theta}$ converges to the true value $\theta_0$. This section explains <em>why</em> that happens, how <em>fast</em> it happens, and where the claim needs care. The idea rests on two facts: the Law of Large Numbers, and the fact that the true parameter is the unique maximiser of the <em>expected</em> log-likelihood.</p>
+
+    <h3>6.1 Intuition: Repeated Sampling</h3>
+    <p>Consider an opinion poll before a state election. Suppose the true vote share of a party is $p_0 = 0.4$. We poll $n$ voters and record the fraction $\hat{p} = k/n$ who say they will vote for the party. This $\hat{p}$ is the MLE of a Bernoulli parameter.</p>
+    <p>If we ran the poll again with a fresh random sample, we would get a slightly different $\hat{p}$. So the estimate is itself a <strong>random variable</strong>, and what matters is how its distribution behaves as $n$ grows. Its <strong>variance</strong> shrinks like $\dfrac{p_0(1-p_0)}{n}$, so its standard deviation (the standard error) shrinks like $\sqrt{p_0(1-p_0)/n}$:</p>
+
+    <table class="data-table">
+        <tr><th>Voters polled ($n$)</th><th>Variance of $\hat{p}$</th><th>Standard error of $\hat{p}$</th></tr>
+        <tr><td>100</td><td>$0.24/100 = 0.0024$</td><td>$\sqrt{0.0024}\approx 0.049$ (about 4.9 percentage points)</td></tr>
+        <tr><td>1,000</td><td>$0.24/1000 = 0.00024$</td><td>$\sqrt{0.00024}\approx 0.015$ (about 1.5 percentage points)</td></tr>
+        <tr><td>10,000</td><td>$0.24/10000 = 0.000024$</td><td>$\sqrt{0.000024}\approx 0.005$ (about 0.5 percentage points)</td></tr>
+    </table>
+
+    <div class="grid-note">
+        <strong>Note:</strong> The variance of $\hat{p}$ shrinks like $1/n$: ten times the data gives one-tenth of the variance. Equivalently, the standard error shrinks like $1/\sqrt{n}$, so you need <strong>four times</strong> the data to halve it. The distribution of estimates piles up ever more tightly around $p_0$. That is what "converges to the true value" means.
+    </div>
+
+    <h3>6.2 Why It Happens: A Three-Step Argument</h3>
+
+    <p><strong>Step 1: the sample log-likelihood converges to a fixed curve.</strong> The <em>average</em> log-likelihood is</p>
+    <div class="formula-display">
+        $$\frac{1}{n}\,\ell_n(\theta)=\frac{1}{n}\sum_{i=1}^{n}\log f(x_i;\theta).$$
+    </div>
+    <p>This is an average of iid terms. By the Law of Large Numbers, for each fixed $\theta$ it converges to</p>
+    <div class="formula-display">
+        $$\ell(\theta)=E_{\theta_0}\big[\log f(X;\theta)\big],$$
+    </div>
+    <p>where the expectation is taken under the <em>true</em> distribution, with parameter $\theta_0$.</p>
+
+    <p><strong>Step 2: that limiting curve peaks at the true parameter.</strong> Compare it with its value at $\theta_0$:</p>
+    <div class="formula-display">
+        $$\ell(\theta)-\ell(\theta_0)=E_{\theta_0}\!\left[\log\frac{f(X;\theta)}{f(X;\theta_0)}\right]=-\,\mathrm{KL}\big(f_{\theta_0}\,\|\,f_{\theta}\big)\;\le\;0 .$$
+    </div>
+    <p>The KL divergence is never negative, and it is zero only when $f_\theta = f_{\theta_0}$. So if different parameter values give different distributions (<strong>identifiability</strong>), $\theta_0$ is the <em>unique</em> maximiser of $\ell(\theta)$.</p>
+
+    <p><strong>Step 3: the peak of the sample curve follows the peak of the limit curve.</strong> The curve $\frac{1}{n}\ell_n(\theta)$ is a noisy version of $\ell(\theta)$, and the noise shrinks as $n$ grows. Under regularity conditions (for example, uniform convergence over a compact parameter set), the maximiser $\hat{\theta}_n$ is pulled to the maximiser of $\ell(\theta)$, which is $\theta_0$. This is <strong>consistency</strong>:</p>
+    <div class="formula-display">
+        $$\hat{\theta}_n \xrightarrow{\;p\;} \theta_0 .$$
+    </div>
+
+    <h3>6.3 How Fast: Asymptotic Normality and the Cramér–Rao Bound</h3>
+    <p>At the maximum the score is zero, $\ell_n'(\hat{\theta})=0$. A first-order Taylor expansion of the score around $\theta_0$ gives</p>
+    <div class="formula-display">
+        $$\hat{\theta}-\theta_0\;\approx\;-\frac{\ell_n'(\theta_0)}{\ell_n''(\theta_0)} .$$
+    </div>
+    <ul>
+        <li><strong>Numerator:</strong> $\ell_n'(\theta_0)$ is a sum of $n$ iid score terms with mean zero and variance $n\,I(\theta_0)$, where $I(\theta_0)$ is the <strong>Fisher information</strong>. By the Central Limit Theorem it is approximately normal.</li>
+        <li><strong>Denominator:</strong> $\ell_n''(\theta_0)\approx -n\,I(\theta_0)$, by the Law of Large Numbers again.</li>
+    </ul>
+    <p>Putting the two together:</p>
+    <div class="formula-display">
+        $$\sqrt{n}\,\big(\hat{\theta}-\theta_0\big)\;\xrightarrow{\;d\;}\;N\!\left(0,\;\frac{1}{I(\theta_0)}\right).$$
+    </div>
+    <p>This is the asymptotic normality listed in Section 5. The variance $1/I(\theta_0)$ is the <strong>Cramér–Rao lower bound</strong>, which is why MLE is called asymptotically efficient.</p>
+
+    <div class="example-box">
+        <strong>Check with the poll:</strong> For a Bernoulli parameter, $I(p)=\dfrac{1}{p(1-p)}$, so the limiting variance of $\hat{p}$ is $p(1-p)/n$. This reproduces the variances (and hence the standard errors) in the table above.<br><br>
+        <strong>Check with a Gaussian mean:</strong> $\hat{\mu}=\bar{x}$ has variance $\sigma^2/n$, again equal to $1/(n\,I(\mu))$ with $I(\mu)=1/\sigma^2$.
+    </div>
+
+    <h3>6.4 Caveats</h3>
+    <ul>
+        <li><strong>Convergence is in probability.</strong> For any $\varepsilon>0$, $P\big(|\hat{\theta}_n-\theta_0|>\varepsilon\big)\to 0$. A particular sample can still land far from $\theta_0$; it just becomes increasingly unlikely.</li>
+        <li><strong>Identifiability is required.</strong> If two different parameter values give the same distribution, Step 2 has no unique peak, and there is no single true value to converge to.</li>
+        <li><strong>Regularity conditions are required.</strong> Consistency can fail when the number of parameters grows with $n$. A classic case is the Neyman–Scott problem: with one unknown mean per pair of observations and a shared variance $\sigma^2$, the MLE of $\sigma^2$ converges to $\sigma^2/2$, not $\sigma^2$.</li>
+        <li><strong>Efficiency is an asymptotic statement.</strong> In finite samples the MLE can be biased. The Gaussian variance MLE, which divides by $n$, has expectation $\frac{n-1}{n}\sigma^2$. It is the large-$n$ behaviour that is unbiased and attains the Cramér–Rao bound.</li>
+    </ul>
+
+        <p>An interactive lab at the end of this page (Section 8) lets you watch this convergence happen.</p>
+
+    <h2>7. MLE in Deep Learning</h2>
+    <p>In deep learning, MLE is how networks are trained: <strong>the loss function is the negative log-likelihood</strong>. The "model family" of Section 1 is the network itself. Each choice of weights $\theta$ defines one distribution $p(y\mid x;\theta)$, and training searches for the weights under which the observed data are most likely.</p>
+
+    <h3>7.1 The Setup</h3>
+    <p>Given iid training pairs $(x_i, y_i)$, the likelihood and log-likelihood are</p>
+    <div class="formula-display">
+        $$L(\theta)=\prod_{i=1}^{n}p(y_i\mid x_i;\theta)\qquad\Rightarrow\qquad \ell(\theta)=\sum_{i=1}^{n}\log p(y_i\mid x_i;\theta).$$
+    </div>
+    <p>Maximising $\ell(\theta)$ is the same as minimising the <strong>negative log-likelihood (NLL)</strong>, $-\frac{1}{n}\ell(\theta)$. The log is used for the same two reasons as in Section 3: sums are easier to differentiate than products, and there is no arithmetic underflow.</p>
+
+    <h3>7.2 Where the Usual Loss Functions Come From</h3>
+    <p>The loss depends on which distribution you let the network output:</p>
+
+    <table class="data-table">
+        <tr><th>Network outputs</th><th>Assumed distribution</th><th>NLL per example</th><th>Familiar name</th></tr>
+        <tr><td>A real number $f_\theta(x)$</td><td>$y\sim N\big(f_\theta(x),\sigma^2\big)$</td><td>$\dfrac{(y-f_\theta(x))^2}{2\sigma^2}+\text{const}$</td><td>Mean squared error</td></tr>
+        <tr><td>A probability $\hat p$</td><td>$y\sim\text{Bernoulli}(\hat p)$</td><td>$-\big[y\log\hat p+(1-y)\log(1-\hat p)\big]$</td><td>Binary cross-entropy</td></tr>
+        <tr><td>Softmax over $K$ classes</td><td>$y\sim\text{Categorical}(\hat p_1,\dots,\hat p_K)$</td><td>$-\log\hat p_{y}$</td><td>Cross-entropy</td></tr>
+        <tr><td>Softmax over the vocabulary at each position</td><td>next token $\sim\text{Categorical}$</td><td>$-\log p_\theta(x_t\mid x_{&lt;t})$</td><td>Token-level cross-entropy</td></tr>
+    </table>
+
+    <div class="grid-note">
+        <strong>Note:</strong> The first row is the usual MLE procedure applied to Gaussian noise: the log-likelihood is proportional to $-\sum_i(y_i-f_\theta(x_i))^2$, so maximising it means minimising the sum of squared errors. In the Categorical rows, the probabilities come from the network (through a softmax) instead of being free parameters estimated from counts.
+    </div>
+
+    <h3>7.3 LLM Pretraining Is Maximum Likelihood</h3>
+    <p>By the chain rule of probability, the probability of a token sequence factorises into next-token predictions:</p>
+    <div class="formula-display">
+        $$p_\theta(x_1,\dots,x_T)=\prod_{t=1}^{T}p_\theta(x_t\mid x_{&lt;t})\quad\Rightarrow\quad \ell(\theta)=\sum_{t=1}^{T}\log p_\theta(x_t\mid x_{&lt;t}).$$
+    </div>
+    <p>The sequence log-likelihood is therefore a sum of per-token log-probabilities, and minimising the average token-level cross-entropy is exactly maximum likelihood on the text.</p>
+
+    <h3>7.4 Why Minimising NLL Is the Same as Minimising KL</h3>
+    <p>Averaged over the data distribution, the NLL is the cross-entropy between the data and the model, which splits into an entropy term and a KL term:</p>
+    <div class="formula-display">
+        $$\mathbb{E}_{p_{\text{data}}}\big[-\log p_\theta(x)\big]=H\big(p_{\text{data}}\big)+\mathrm{KL}\big(p_{\text{data}}\,\|\,p_\theta\big).$$
+    </div>
+    <p>The entropy $H(p_{\text{data}})$ does not depend on $\theta$, so minimising the cross-entropy means minimising $\mathrm{KL}(p_{\text{data}}\,\|\,p_\theta)$. This is the same KL argument as in Section 6.2: the best $\theta$ makes the model distribution as close to the data distribution as possible.</p>
+
+    <h3>7.5 What Is Different from Textbook MLE</h3>
+    <ul>
+        <li><strong>No closed form.</strong> Setting the derivative to zero cannot be solved for a deep network. We run gradient descent (SGD, Adam) on the NLL, with gradients from backpropagation. A minibatch gives a noisy estimate of the average log-likelihood gradient.</li>
+        <li><strong>Non-convex surface.</strong> The NLL has many local minima and saddle points, so training reaches a good solution, not a guaranteed global maximum.</li>
+        <li><strong>Conditional MLE.</strong> We model $p(y\mid x)$ and never $p(x)$, so this is discriminative. Language-model pretraining is the exception: there $x$ is the earlier tokens, and the model does fit the data distribution.</li>
+        <li><strong>Overfitting.</strong> A huge family can fit the training data almost perfectly, which is the degenerate end of plain MLE where the fitted distribution puts all its mass on the training points. So we add constraints: weight decay, dropout, early stopping, and held-out validation data.</li>
+    </ul>
+
+    <h3>7.6 The MAP View of Regularisation</h3>
+    <p>Adding a prior $p(\theta)$ over the weights gives <strong>maximum a posteriori (MAP)</strong> estimation, which maximises</p>
+    <div class="formula-display">
+        $$\log p(D\mid\theta)+\log p(\theta).$$
+    </div>
+    <p>A Gaussian prior on the weights, $\theta\sim N(0,\tau^2 I)$, contributes $-\frac{1}{2\tau^2}\|\theta\|^2$, which is exactly an L2 penalty (weight decay) added to the NLL loss.</p>
+
+    <h3>7.7 What the Section 6 Guarantees Say Here</h3>
+    <p>With a model family that is rich enough, a large amount of data, and an optimiser that actually finds the maximum, the trained model approaches the member of the family closest to the data distribution in KL divergence. In practice none of the three conditions holds exactly, which is why we monitor the validation loss and not only the training loss.</p>
+
+<h2>8. Interactive Lab: Watch the Poll Estimate Close In on the Truth</h2>
+    <p>Choose the true vote share $p_0$ and the number of voters polled $n$. The lab runs 500 independent polls and plots their estimates $\hat{p}$ (top). The red curve is the Normal approximation with variance $p_0(1-p_0)/n$ from Section 6.3. The bottom chart shows Steps 1 and 2 for one of those polls: its average log-likelihood curve (blue) against the limiting curve $\ell(p)$ (grey), whose peak sits exactly at $p_0$.</p>
+
+    <style>
+        .conv-lab { border: 1px solid #cfd8dc; border-radius: 8px; padding: 16px; margin: 16px 0 24px; background: #fafcff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+        .conv-lab .cl-controls { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin-bottom: 10px; }
+        .conv-lab label { font-size: 0.92rem; color: #263238; }
+        .conv-lab input[type=range] { vertical-align: middle; width: 170px; }
+        .conv-lab button { background: #1565c0; color: #fff; border: 0; border-radius: 5px; padding: 7px 14px; cursor: pointer; font-size: 0.9rem; }
+        .conv-lab button:hover { background: #0d47a1; }
+        .conv-lab .cl-stats { font-size: 0.9rem; color: #263238; background: #eef3f8; border-radius: 6px; padding: 8px 12px; margin: 8px 0 10px; line-height: 1.6; }
+        .conv-lab svg { width: 100%; height: auto; display: block; background: #fff; border: 1px solid #e0e6ea; border-radius: 6px; margin-bottom: 10px; }
+        .conv-lab .cl-cap { font-size: 0.85rem; color: #455a64; margin: 0 0 6px; }
+    </style>
+
+    <div class="conv-lab" id="conv-lab">
+        <div class="cl-controls">
+            <label>True share p₀ = <span id="cl-pv">0.40</span><br>
+                <input type="range" id="cl-p" min="0.1" max="0.9" step="0.05" value="0.4"></label>
+            <label>Voters polled n = <span id="cl-nv">100</span><br>
+                <input type="range" id="cl-n" min="0" max="9" step="1" value="4"></label>
+            <button type="button" id="cl-run">Run 500 new polls</button>
+        </div>
+        <div class="cl-stats" id="cl-stats"></div>
+        <p class="cl-cap"><strong>Distribution of the estimate p̂ over 500 repeated polls</strong> (bars) with the Normal approximation (red) and the true p₀ (green dashed).</p>
+        <svg id="cl-hist" viewBox="0 0 640 240" role="img" aria-label="Histogram of repeated poll estimates"></svg>
+        <p class="cl-cap"><strong>Average log-likelihood of one poll</strong> (blue) versus its limit ℓ(p) = p₀ log p + (1−p₀) log(1−p) (grey). Dashed lines mark p̂ (blue) and p₀ (green).</p>
+        <svg id="cl-ll" viewBox="0 0 640 200" role="img" aria-label="Sample and limiting average log-likelihood curves"></svg>
+    </div>
+
+    <script>
+    (function () {
+        var NS = [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
+        var R = 500, BINS = 100;
+        function el(id) { return document.getElementById(id); }
+        function binom(n, p) { var k = 0; for (var i = 0; i < n; i++) { if (Math.random() < p) k++; } return k; }
+        function f2(x) { return x.toFixed(3); }
+
+        function drawHist(est, p0, th) {
+            var W = 640, H = 240, L = 44, Rm = 12, T = 12, B = 30;
+            var pw = W - L - Rm, ph = H - T - B;
+            var counts = new Array(BINS).fill(0), i;
+            for (i = 0; i < est.length; i++) { counts[Math.min(BINS - 1, Math.floor(est[i] * BINS))]++; }
+            var ymax = Math.max.apply(null, counts);
+            var curve = [], p, d, y;
+            var peak = (1 / (th * Math.sqrt(2 * Math.PI))) * (1 / BINS) * R;
+            ymax = Math.max(ymax, peak) * 1.1;
+            function X(v) { return L + v * pw; }
+            function Y(c) { return T + ph - (c / ymax) * ph; }
+            var s = '';
+            for (i = 0; i <= 5; i++) {
+                s += '<line x1="' + X(i / 5) + '" y1="' + (T + ph) + '" x2="' + X(i / 5) + '" y2="' + (T + ph + 4) + '" stroke="#78909c"/>';
+                s += '<text x="' + X(i / 5) + '" y="' + (H - 10) + '" font-size="11" text-anchor="middle" fill="#455a64">' + (i / 5).toFixed(1) + '</text>';
+            }
+            var ticks = 4;
+            for (i = 0; i <= ticks; i++) {
+                var v = (ymax * i) / ticks;
+                s += '<line x1="' + L + '" y1="' + Y(v) + '" x2="' + (L + pw) + '" y2="' + Y(v) + '" stroke="#eceff1"/>';
+                s += '<text x="' + (L - 6) + '" y="' + (Y(v) + 4) + '" font-size="11" text-anchor="end" fill="#455a64">' + Math.round(v) + '</text>';
+            }
+            var bw = pw / BINS;
+            for (i = 0; i < BINS; i++) {
+                if (counts[i] > 0) {
+                    s += '<rect x="' + (X(i / BINS) + 0.3) + '" y="' + Y(counts[i]) + '" width="' + Math.max(bw - 0.6, 0.5) + '" height="' + (T + ph - Y(counts[i])) + '" fill="#90caf9"/>';
+                }
+            }
+            for (p = 0; p <= 1.0001; p += 0.0025) {
+                d = Math.exp(-0.5 * Math.pow((p - p0) / th, 2)) / (th * Math.sqrt(2 * Math.PI));
+                y = d * (1 / BINS) * R;
+                curve.push(X(p).toFixed(1) + ',' + Y(y).toFixed(1));
+            }
+            s += '<polyline points="' + curve.join(' ') + '" fill="none" stroke="#c62828" stroke-width="2"/>';
+            s += '<line x1="' + X(p0) + '" y1="' + T + '" x2="' + X(p0) + '" y2="' + (T + ph) + '" stroke="#2e7d32" stroke-width="2" stroke-dasharray="5 4"/>';
+            s += '<line x1="' + L + '" y1="' + (T + ph) + '" x2="' + (L + pw) + '" y2="' + (T + ph) + '" stroke="#78909c"/>';
+            s += '<text x="' + (L + pw / 2) + '" y="' + (H - 0) + '" font-size="11" text-anchor="middle" fill="#455a64"></text>';
+            el('cl-hist').innerHTML = s;
+        }
+
+        function drawLL(ph0, p0) {
+            var W = 640, H = 200, L = 44, Rm = 12, T = 12, B = 28;
+            var pw = W - L - Rm, ph = H - T - B;
+            function ll(a, p) { return a * Math.log(p) + (1 - a) * Math.log(1 - p); }
+            var ps = [], p;
+            for (p = 0.01; p <= 0.9901; p += 0.005) { ps.push(p); }
+            var top = -Infinity, i;
+            for (i = 0; i < ps.length; i++) { top = Math.max(top, ll(ph0, ps[i]), ll(p0, ps[i])); }
+            var bot = top - 1.6;
+            function X(v) { return L + v * pw; }
+            function Y(v) { return T + ph - ((v - bot) / (top - bot)) * ph; }
+            var s = '<defs><clipPath id="cl-clip"><rect x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph + '"/></clipPath></defs>';
+            for (i = 0; i <= 5; i++) {
+                s += '<line x1="' + X(i / 5) + '" y1="' + (T + ph) + '" x2="' + X(i / 5) + '" y2="' + (T + ph + 4) + '" stroke="#78909c"/>';
+                s += '<text x="' + X(i / 5) + '" y="' + (H - 10) + '" font-size="11" text-anchor="middle" fill="#455a64">' + (i / 5).toFixed(1) + '</text>';
+            }
+            var a = [], b = [];
+            for (i = 0; i < ps.length; i++) {
+                a.push(X(ps[i]).toFixed(1) + ',' + Y(ll(p0, ps[i])).toFixed(1));
+                b.push(X(ps[i]).toFixed(1) + ',' + Y(ll(ph0, ps[i])).toFixed(1));
+            }
+            s += '<g clip-path="url(#cl-clip)">';
+            s += '<polyline points="' + a.join(' ') + '" fill="none" stroke="#90a4ae" stroke-width="3"/>';
+            s += '<polyline points="' + b.join(' ') + '" fill="none" stroke="#1565c0" stroke-width="2"/>';
+            s += '</g>';
+            s += '<line x1="' + X(p0) + '" y1="' + T + '" x2="' + X(p0) + '" y2="' + (T + ph) + '" stroke="#2e7d32" stroke-width="2" stroke-dasharray="5 4"/>';
+            s += '<line x1="' + X(ph0) + '" y1="' + T + '" x2="' + X(ph0) + '" y2="' + (T + ph) + '" stroke="#1565c0" stroke-width="1.5" stroke-dasharray="2 3"/>';
+            s += '<line x1="' + L + '" y1="' + (T + ph) + '" x2="' + (L + pw) + '" y2="' + (T + ph) + '" stroke="#78909c"/>';
+            s += '<text x="' + (L - 6) + '" y="' + (T + 10) + '" font-size="11" text-anchor="end" fill="#455a64">peak</text>';
+            el('cl-ll').innerHTML = s;
+        }
+
+        function run() {
+            var p0 = parseFloat(el('cl-p').value);
+            var n = NS[parseInt(el('cl-n').value, 10)];
+            el('cl-pv').textContent = p0.toFixed(2);
+            el('cl-nv').textContent = n;
+            var est = [], sum = 0, r, k, i;
+            for (r = 0; r < R; r++) { k = binom(n, p0); est.push(k / n); sum += k / n; }
+            var mean = sum / R, v = 0, near = 0;
+            for (i = 0; i < R; i++) {
+                v += (est[i] - mean) * (est[i] - mean);
+                if (Math.abs(est[i] - p0) <= 0.02) near++;
+            }
+            var sd = Math.sqrt(v / R), th = Math.sqrt(p0 * (1 - p0) / n);
+            el('cl-stats').innerHTML =
+                'Mean of the 500 estimates: <strong>' + f2(mean) + '</strong> (true p₀ = ' + p0.toFixed(2) + ') &nbsp;|&nbsp; ' +
+                'Observed variance: <strong>' + (sd * sd).toFixed(6) + '</strong> vs theory p₀(1−p₀)/n = <strong>' + (th * th).toFixed(6) + '</strong><br>' +
+                'Polls landing within ±0.02 of p₀: <strong>' + Math.round(100 * near / R) + '%</strong>';
+            drawHist(est, p0, th);
+            drawLL(est[0], p0);
+        }
+        el('cl-p').addEventListener('input', run);
+        el('cl-n').addEventListener('input', run);
+        el('cl-run').addEventListener('click', run);
+        run();
+    })();
+    </script>
+
+</div>
+<section id="mle-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+            <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Quiz on Probability Theory, Random Variables and Expectations, Normal Distribution and MLE</h2>
+
+            <div id="quiz"></div>
+
+            <!-- Shared animation lives in quiz.js; this page supplies only the questions. -->
+            <script src="Quiz.js"></script>
+            <script>
+            startQuiz({
+                mount: '#quiz',
+                // timeLimit: 5,   // optional: seconds per question
+                questions: [
+            { q: "A bag contains 5 white and 6 black balls. Using the classical definition, what is the probability of drawing a white ball?",
+              a: "5/11 &ndash; favourable cases divided by total equally likely cases",
+              w: ["5/6, because white balls are compared with black balls", "6/11, because there are more black balls", "1/2, because there are two colours"] },
+            { q: "In the relative frequency (statistical) approach, how is the probability of event A defined?",
+              a: "As the limiting value of f/n, where A occurs f times in n repetitions, as n &rarr; &infin;",
+              w: ["As the ratio of favourable cases to total equally likely cases, with no experiment needed", "As a subjective degree of belief updated by Bayes&rsquo; theorem", "As f/n computed after any small, fixed number of repetitions"] },
+            { q: "Three unbiased coins are tossed. What is the probability of getting at least two heads?",
+              a: "4/8 = 1/2 &ndash; the outcomes HHH, HHT, HTH, THH",
+              w: ["3/8, counting only exactly two heads", "7/8, counting at least one head", "1/8, counting only HHH"] },
+            { q: "Two unbiased dice are thrown. What is the probability that the total is 8?",
+              a: "5/36 &ndash; the pairs (2,6), (3,5), (4,4), (5,3), (6,2)",
+              w: ["6/36 = 1/6, as for doublets", "4/36 = 1/9, leaving out the pair (4,4)", "7/36, as for the total 7 plus one more pair"] },
+            { q: "Two dice are thrown. How does P(exactly one die shows five) compare with P(at least one die shows five)?",
+              a: "10/36 versus 11/36 &ndash; the pair (5,5) is counted only in &ldquo;at least one&rdquo;",
+              w: ["Both are 11/36, since the wording makes no difference", "10/36 versus 6/36, since only the first die matters", "Both are 10/36, since (5,5) is never counted"] },
+            { q: "In how many equally likely ways can 4 cards be drawn from a pack of 52?",
+              a: "<sup>52</sup>C<sub>4</sub> = 270,725 &ndash; the order of the cards does not matter",
+              w: ["52 &times; 51 &times; 50 &times; 49 = 6,497,400, which counts every hand 24 times", "52<sup>4</sup> = 7,311,616, since each card is drawn with replacement", "52 &times; 4 = 208"] },
+            { q: "The additivity axiom says P(A &cup; B) = P(A) + P(B). When does this hold?",
+              a: "When A and B are mutually exclusive",
+              w: ["Always, for any two events A and B", "Only when A and B are independent", "Only when P(A) = P(B)"] },
+            { q: "The odds are 7 to 3 against event A. What is P(A)?",
+              a: "3/10",
+              w: ["7/10", "3/7", "7/3"] },
+            { q: "Why is P(A &cap; B) subtracted in the general addition rule P(A &cup; B) = P(A) + P(B) &minus; P(A &cap; B)?",
+              a: "Outcomes in both A and B are counted once inside P(A) and once inside P(B), so one copy must be removed",
+              w: ["To force the total probability to equal 1", "Because A and B are assumed to be independent", "To convert the union of A and B into the complement of A"] },
+            { q: "If events A and B are statistically independent, what is P(B|A), and what does it give for P(A &cap; B)?",
+              a: "P(B|A) = P(B), so P(A &cap; B) = P(A)&middot;P(B)",
+              w: ["P(B|A) = P(A), so P(A &cap; B) = P(A)&sup2;", "P(B|A) = 1 &minus; P(B), so P(A &cap; B) = P(A)(1 &minus; P(B))", "P(B|A) = P(A &cap; B)/P(B), so P(A &cap; B) = 0"] },
+            { q: "What is a random variable?",
+              a: "A real-valued function on the sample space that assigns a number X(&omega;) to every outcome &omega;",
+              w: ["A variable whose value is fixed but unknown to us", "The probability assigned to each event in the sample space", "Any quantity that can only take continuous values"] },
+            { q: "Two fair coins are tossed and X = number of heads. Why is P(X = 1) = 1/2 while P(X = 0) = 1/4?",
+              a: "Two different outcomes (TH and HT) lead to X = 1, while only TT leads to X = 0",
+              w: ["P(X = 1) is twice P(X = 0) because a head is twice as likely as a tail", "P(X = 0), P(X = 1), P(X = 2) are all 1/3 since X has three values", "P(X = 1) is the probability of at least one head"] },
+            { q: "For a continuous random variable with density p(x), what is P(a &le; X &le; b)?",
+              a: "&int;<sub>a</sub><sup>b</sup> p(x) dx &ndash; the area under the density between a and b",
+              w: ["p(b) &minus; p(a)", "p(a)&middot;(b &minus; a), for every density", "&sum; p(x) over the integers from a to b"] },
+            { q: "Given the joint distribution p(x, y) of discrete variables, how is the marginal p(x) obtained?",
+              a: "By summing the joint over all values of the other variable: p(x) = &sum;<sub>y</sub> p(x, y)",
+              w: ["By multiplying the joint by p(y)", "By dividing the joint by p(y) for each y", "By taking the largest p(x, y) over all y"] },
+            { q: "Example 3 on the page has the same marginals as the two-coin example but a different joint table. What does this show?",
+              a: "The marginals alone do not determine the joint distribution, unless the variables are independent",
+              w: ["The joint distribution is always the product of its marginals", "The marginals of Example 3 must have been computed incorrectly", "The joint can always be recovered by adding the two marginals"] },
+            { q: "In Example 3, p(0,0) = 0.4 while p(x=0) = p(y=0) = 0.5. Why are X and Y not independent?",
+              a: "Independence needs p(x,y) = p(x)p(y), but 0.4 &ne; 0.5 &times; 0.5 = 0.25",
+              w: ["Because the marginals are not uniform", "Because the joint probabilities add up to more than 1", "Because P(Y=1|X=1) equals P(Y=1)"] },
+            { q: "In Example 3 (p(1,0) = 0.1, p(1,1) = 0.4, p(x=1) = 0.5), what is P(Y = 1 | X = 1)?",
+              a: "0.4 / 0.5 = 0.8",
+              w: ["0.4, the joint probability itself", "0.5, the marginal P(Y = 1)", "0.2, the joint probability divided by 2"] },
+            { q: "For X = number of heads in two fair coin tosses, E[X] = 1 and E[X&sup2;] = 3/2. What is Var[X]?",
+              a: "1/2, using Var[X] = E[X&sup2;] &minus; E[X]&sup2;",
+              w: ["3/2, which is E[X&sup2;] itself", "1, which is E[X]", "1/4, the probability of each outcome"] },
+            { q: "What is the relationship between independence and covariance?",
+              a: "Independent variables have cov = 0, but cov = 0 does not imply independence, since it only rules out a linear relationship",
+              w: ["cov = 0 always implies independence", "Independent variables always have positive covariance", "cov = 0 means the two variables have the same distribution"] },
+            { q: "Five variables are recorded for N = 8 students. What is the size of the covariance matrix &Sigma;?",
+              a: "5 &times; 5 &ndash; one row and one column per variable, regardless of N",
+              w: ["8 &times; 8, one row and column per student", "5 &times; 8, one row per variable and one column per student", "1 &times; 5, one value per variable"] },
+            { q: "Which statement about a covariance matrix &Sigma; is correct?",
+              a: "It is symmetric, has the variances on its diagonal, and is positive semi-definite",
+              w: ["It has covariances on the diagonal and variances off the diagonal", "It is generally not symmetric, since cov[x<sub>i</sub>,x<sub>j</sub>] &ne; cov[x<sub>j</sub>,x<sub>i</sub>]", "It may have negative eigenvalues, since covariances can be negative"] },
+            { q: "What is the difference between the Law of Large Numbers and the Central Limit Theorem?",
+              a: "The Law of Large Numbers says the sample average converges to E[x]; the Central Limit Theorem says the distribution of sums or averages approaches a Normal",
+              w: ["The Law of Large Numbers says averages become Normal; the Central Limit Theorem says they converge to E[x]", "They are two names for the same result", "Both say that every distribution becomes Normal as the sample size grows, with no difference"] },
+            { q: "Where are the points of inflection of the normal curve N(&mu;, &sigma;&sup2;)?",
+              a: "At &mu; &plusmn; &sigma;",
+              w: ["At &mu; &plusmn; 2&sigma;", "At &mu;, where the curve peaks", "At &plusmn;&infin;, where the curve touches the base"] },
+            { q: "What fraction of the area under a normal curve lies within &mu; &plusmn; 2&sigma;?",
+              a: "About 95.45%",
+              w: ["About 68.27%", "About 99.73%", "Exactly 50%"] },
+            { q: "How is a normal variable X ~ N(&mu;, &sigma;&sup2;) standardised, and what is the result?",
+              a: "Z = (X &minus; &mu;)/&sigma;, which follows N(0, 1)",
+              w: ["Z = (X &minus; &mu;)/&sigma;&sup2;, which follows N(0, &sigma;)", "Z = X/&sigma;, which follows N(&mu;, 1)", "Z = (X &minus; &sigma;)/&mu;, which follows N(0, 1)"] },
+            { q: "Using the Z table (area from 0 to 1.8 is 0.4641), what is P(Z &gt; 1.8)?",
+              a: "0.5000 &minus; 0.4641 = 0.0359",
+              w: ["0.4641", "0.5000 + 0.4641 = 0.9641", "2 &times; 0.0359 = 0.0718"] },
+            { q: "X ~ N(&mu;<sub>X</sub>, &sigma;<sub>X</sub>&sup2;) and Y ~ N(&mu;<sub>Y</sub>, &sigma;<sub>Y</sub>&sup2;) are independent. What is the distribution of X + Y?",
+              a: "N(&mu;<sub>X</sub> + &mu;<sub>Y</sub>, &sigma;<sub>X</sub>&sup2; + &sigma;<sub>Y</sub>&sup2;) &ndash; the means and the variances add",
+              w: ["N(&mu;<sub>X</sub> + &mu;<sub>Y</sub>, &sigma;<sub>X</sub> + &sigma;<sub>Y</sub>), so the standard deviations add", "N(&mu;<sub>X</sub> + &mu;<sub>Y</sub>, (&sigma;<sub>X</sub> + &sigma;<sub>Y</sub>)&sup2;)", "It is generally not a normal distribution"] },
+            { q: "What do the contours of a bivariate normal look like when the two variables are correlated (&rho; &ne; 0)?",
+              a: "Concentric ellipses centred at &mu;, tilted according to the correlation",
+              w: ["Perfect circles, whatever the correlation", "Ellipses that are always aligned with the coordinate axes", "Straight lines through the mean"] },
+            { q: "For the covariance matrix &Sigma; of a multivariate normal, what do its eigenvectors and eigenvalues describe?",
+              a: "Eigenvectors give the directions of the ellipse&rsquo;s principal axes; the axis lengths are proportional to &radic;&lambda;",
+              w: ["Eigenvalues give the directions of the axes; eigenvectors give their lengths", "Eigenvectors give the mean vector; eigenvalues give the mixing weights", "Eigenvectors give the variances; eigenvalues give the correlations"] },
+            { q: "What shape do points at a constant Mahalanobis distance D<sub>M</sub> = &radic;((<b>x</b>&minus;&mu;)<sup>T</sup>&Sigma;<sup>&minus;1</sup>(<b>x</b>&minus;&mu;)) from the mean form?",
+              a: "Concentric ellipses centred on the mean &ndash; the same contours as the multivariate normal",
+              w: ["Perfect circles, exactly as with Euclidean distance", "Squares aligned with the coordinate axes", "Parallel straight lines"] },
+            { q: "How does a Gaussian Mixture Model (fitted by EM) assign a point to clusters, compared with K-means?",
+              a: "Softly: each point gets a responsibility &gamma;<sub>ik</sub> for every cluster, and these sum to 1 across the clusters",
+              w: ["Hard: each point belongs to exactly one cluster with probability 1", "Softly, but the responsibilities of all points to one cluster sum to 1", "The responsibilities equal the mixing weights &pi;<sub>k</sub> for every point"] },
+            { q: "Why does the mixture log-likelihood of a GMM have no closed-form maximiser, unlike a single Gaussian?",
+              a: "Each point&rsquo;s density is a sum over components, so the log-likelihood contains the log of a sum rather than a sum of logs",
+              w: ["Because the Gaussian density cannot be differentiated", "Because the number of components K is always unknown", "Because the mixing weights must sum to 1, which makes the derivative undefined"] },
+            { q: "What is the difference between probability P(X|&theta;) and likelihood L(&theta;|X)?",
+              a: "Probability fixes the parameters and asks how likely the data are; likelihood fixes the observed data and asks how plausible the parameter values are",
+              w: ["Probability fixes the data and varies the parameters; likelihood does the reverse", "They are the same function, and the notation only changes the letters", "Likelihood always integrates to 1 over &theta;, while probability does not"] },
+            { q: "For iid observations x<sub>1</sub>, &hellip;, x<sub>n</sub>, what is the joint likelihood L(&theta;)?",
+              a: "The product &prod; f(x<sub>i</sub>; &theta;) of the individual densities",
+              w: ["The sum &sum; f(x<sub>i</sub>; &theta;) of the individual densities", "The largest single f(x<sub>i</sub>; &theta;)", "The average of the x<sub>i</sub> raised to the power &theta;"] },
+            { q: "Why do we work with the log-likelihood instead of the likelihood?",
+              a: "It turns products into sums, which are easy to differentiate, and avoids arithmetic underflow from multiplying many small probabilities",
+              w: ["It makes the maximum value of the likelihood larger", "It moves the maximiser to a different value of &theta;, which is easier to find", "It is needed to make the estimator normally distributed"] },
+            { q: "Why does maximising log L(&theta;) give the same &theta;-hat as maximising L(&theta;)?",
+              a: "The logarithm is monotonically increasing, so the peak stays at the same &theta;",
+              w: ["The logarithm is convex, so it always has one maximum", "The logarithm makes every likelihood symmetric", "They give the same value only when n is large"] },
+            { q: "What is the usual procedure for finding the MLE?",
+              a: "Write the likelihood, take its log, differentiate with respect to &theta;, set the derivative to zero and solve",
+              w: ["Take the log of the data, average it, then set &theta; equal to that average", "Differentiate the likelihood twice and choose the &theta; with the smallest second derivative", "Set the likelihood to zero, solve for &theta;, then take the log"] },
+            { q: "What does consistency mean for the MLE?",
+              a: "&theta;-hat converges to the true parameter value as the sample size increases",
+              w: ["&theta;-hat equals the true value exactly, even for a sample of size one", "The distribution of &theta;-hat becomes Normal as the sample grows", "&theta;-hat always has zero variance"] },
+            { q: "What does maximum likelihood give when a single Gaussian is fitted to data?",
+              a: "The sample mean and sample covariance, found directly by setting the derivatives to zero with no iteration",
+              w: ["The median and the interquartile range", "Estimates that need EM iterations, as for a mixture", "A mean of zero and a covariance of one, whatever the data"] },
+            { q: "If regression targets are y<sub>i</sub> = f(x<sub>i</sub>; &theta;) + &epsilon;<sub>i</sub> with Gaussian noise &epsilon;<sub>i</sub> ~ N(0, &sigma;&sup2;), what does maximising the log-likelihood amount to?",
+              a: "Minimising the sum of squared errors &sum;(y<sub>i</sub> &minus; f(x<sub>i</sub>; &theta;))&sup2; &ndash; ordinary least squares is Gaussian-noise MLE",
+              w: ["Minimising the sum of absolute errors", "Maximising the sum of squared errors", "Minimising cross-entropy over the class labels"] }
+        ]
+            });
+            </script>
+        </section>
+
+<div class="index-link index-link-bottom" style="text-align:center; margin:14px 0; font-size:0.95rem;"><a href="../index.html">Go to Main Page (Index Page)</a></div>
+</body>
+</html>

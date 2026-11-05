@@ -1,0 +1,7 @@
+torch>=2.3
+torchvision>=0.18
+scikit-learn>=1.3
+numpy
+Pillow
+onnx          # only for export.py
+pytest        # only for tests

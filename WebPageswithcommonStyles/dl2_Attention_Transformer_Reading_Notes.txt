@@ -1,0 +1,46 @@
+
+Softmax is used for sum of weights to be less than 1
+and for non-negative it is exponential. 
+
+Creating context vector While this is quite reasonable for short sequences, it is clear that it is infeasible for long ones, such as a book chapter or even just a very long sentence.
+
+So far all the networks we have reviewed crucially relied on the input being of a well-defined size. For instance, the images in ImageNet are of size 
+ pixels and CNNs are specifically tuned to this size. Even in natural language processing the input size for RNNs is well defined and fixed
+ 
+ The name attention derives from the fact that the operation pays particular attention to the terms for which the weight 
+ is significant (i.e., large). As such, the attention over 
+ generates a linear combination of values contained in the database. In fact, this contains the above example as a special case where all but one weight is zero. We have a number of special cases:
+
+The weights 
+ are nonnegative. In this case the output of the attention mechanism is contained in the convex cone spanned by the values 
+.
+
+The weights 
+ form a convex combination, i.e., 
+ and 
+ for all 
+. This is the most common setting in deep learning.
+
+Exactly one of the weights 
+ is 
+, while all others are 
+. This is akin to a traditional database query.
+
+All weights are equal, i.e., 
+ 
+ for all 
+. This amounts to averaging across the entire database, also called average pooling in deep learning.
+
+
+As an instance of the encoder–decoder architecture, the overall architecture of the Transformer is presented in Fig. 11.7.1. As we can see, the Transformer is composed of an encoder and a decoder. In contrast to Bahdanau attention for sequence-to-sequence learning in Fig. 11.4.2, the input (source) and output (target) sequence embeddings are added with positional encoding before being fed into the encoder and the decoder that stack modules based on self-attention.
+
+The attention mechanism computes a linear combination over values 
+ via attention pooling, where weights are derived according to the compatibility between a query 
+ and keys 
+.
+One of the benefits of the attention mechanism is that it can be quite intuitive, particularly when the weights are nonnegative and sum to 
+. In this case we might interpret large weights as a way for the model to select components of relevance.
+
+Attention scoring function.
+
+The Attention Context Vector: A Custom-Made BlendThe diagram you shared reveals how the attention mechanism completely eliminates this bottleneck. Instead of forcing one hidden state to memorize everything, the Transformer keeps all intermediate token vectors in memory as Keys and Values.How it is built: When the model needs to generate the next word, it emits a Query ($\mathbf{q}$). This query looks at all the words simultaneously, calculates the scalar attention weights ($\alpha$), and performs a weighted sum of the Values ($\mathbf{v}_i$).The Result (Dynamic Flexibility): The output of this calculation is also called the Context Vector. But unlike the static RNN bottleneck, this Context Vector is dynamically custom-built on the fly for that exact moment.If the decoder is trying to translate a specific noun 40 words back, the query can instantly allocate $95\%$ of the attention weight to that exact word's Value vector, creating a Context Vector that perfectly preserves the original meaning without any memory loss.

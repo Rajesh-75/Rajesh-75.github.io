@@ -1,0 +1,148 @@
+Reference: knn.html
+Common rules: 96 (34 promoted from other pages)
+
+== 3DSurfaceplot.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   note: 8 inline style= attributes (not touched)
+== BP2.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 29 inline style= attributes (not touched)
+== CentralTendency.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 13 inline style= attributes (not touched)
+== CNN.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 348 inline style= attributes (not touched)
+== CNN_Training.html: 15 redundant removed, 11 unique kept, 4 overrides kept
+   differs from common (page override kept): h1; h2; h3; p
+   unique to this page: ul; .diagram-box; .diagram-box svg; pre.code-block; pre.code-block code; .comment; .reading-list; .reading-list p.reading-title; .reading-list ul; .reading-list li; .reading-list a
+   note: 7 inline style= attributes (not touched)
+== CNN_Training_sample.html: 0 redundant removed, 7 unique kept, 2 overrides kept
+   differs from common (page override kept): code; section
+   unique to this page: pre.code-block; .task-table th; .deploy-box; .toc; .toc ul; .toc a; .toc a:hover
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 1 inline style= attributes (not touched)
+== ComparisonTable.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 2 inline style= attributes (not touched)
+== decision-trees.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 27 inline style= attributes (not touched)
+== Dropout.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   note: 20 inline style= attributes (not touched)
+== encoder_decoder_mt.html: 1 redundant removed, 20 unique kept, 21 overrides kept
+   differs from common (page override kept): .bridge; .callout; .callout-title; .code-block; .eyebrow; .fig-caption; .fig-wrap; .fig-wrap svg; .math-block; .page-header; .page-header h1; .sec-num; body; code; h2; h3; li; p; strong; table; ul, ol
+   unique to this page: .page-wrap; .page-header .subtitle; .section-block; .callout-blue; .callout-green; .callout-amber; .callout-red; .callout-purple; .code-block pre; .cc; .ck; .ch; thead tr; thead th; tbody tr:nth-child(even); tbody tr:nth-child(odd); tbody td; .divider; .step-pill; .page-wrap
+   note: 6 inline style= attributes (not touched)
+== encoder_decoder_mt_version2.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="styles.css">
+   note: 6 inline style= attributes (not touched)
+== encoder_decoder_transformer.html: 12 redundant removed, 25 unique kept, 9 overrides kept
+   differs from common (page override kept): .callout; :root; body; code; h2; h3; li; p; ul, ol
+   unique to this page: .page-wrap; .page-header .subtitle; .section; h4; .cl-blue; .cl-teal; .cl-amber; .cl-red; .cl-purple; .cl-coral; .cl-green; .cl-pink; .cmp-table; .cmp-table thead tr; .cmp-table thead th; .cmp-table tbody tr:nth-child(even); .cmp-table tbody tr:nth-child(odd); .cmp-table tbody td; hr.divider; .label-strip; .ls-green; .ls-purple; .ls-amber; .page-wrap; .page-header h1
+   note: 14 inline style= attributes (not touched)
+== EnsembleMethods.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 2 inline style= attributes (not touched)
+== EstimationTheory.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 13 inline style= attributes (not touched)
+== GD_SVG.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   note: 2 inline style= attributes (not touched)
+== HypothesisTesting.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="Style.css">
+   note: 139 inline style= attributes (not touched)
+== KNN.html: 62 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+   note: 19 inline style= attributes (not touched)
+== LinerModelandClassification.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 253 inline style= attributes (not touched)
+== LLMEngineDev.html: 2 redundant removed, 26 unique kept, 8 overrides kept
+   differs from common (page override kept): .algorithm-box; .diagram-caption; .wrap; body; code; h1; h2; h3
+   unique to this page: block below so it's viewable standalone. Once the shared master style.css is finalized (planned for the September launch pass), delete the block and link style.css instead, the way the other pages in the series do. Class names below (.intuition-box, .algorithm-box, .data-table, .nav-bar) already match that stylesheet's conventions so the swap should be a no-op. --> <style> :root; .nav-bar; .nav-bar a; .nav-bar a:hover; .nav-bar .nav-title; .subtitle; .intuition-box; .intuition-box strong.label; .algorithm-box ol, .algorithm-box ul; .algorithm-box li; .data-table; .data-table th, .data-table td; .data-table th; .data-table tr:nth-child(even) td; .roadmap-card; .roadmap-num; .roadmap-card h4; .roadmap-card p; .status-tag; .status-upcoming; .status-current; .status-done; .diagram-frame; .callout-todo; .legend-row; .legend-swatch
+   note: 66 inline style= attributes (not touched)
+== MachineLearningPipeline.html: 0 redundant removed, 9 unique kept, 0 overrides kept
+   unique to this page: .section-divider; .mt-20; .pipeline-image; .flowchart-wrap; .flowchart-wrap svg; .flow-box; .flow-text; .flow-num; .flow-arrow
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 58 inline style= attributes (not touched)
+== MaximumLikelihoodEstimation.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+== MLBasics.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 6 inline style= attributes (not touched)
+== NaiveBayessian.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+== NaiveBayessian_a.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+== new 16.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   note: 4 inline style= attributes (not touched)
+== NN_version1.html: 1 redundant removed, 2 unique kept, 1 overrides kept
+   differs from common (page override kept): .algorithm-box
+   unique to this page: .algorithm-box ul; .algorithm-box li
+   existing stylesheet links left untouched: <link rel="stylesheet" href="Style.css">
+   note: 148 inline style= attributes (not touched)
+== NormalDistribution.html: 0 redundant removed, 27 unique kept, 0 overrides kept
+   unique to this page: .nd-widget; .nd-controls; .nd-controls; .nd-control-row label; .nd-val; .nd-widget input[type=range]; .nd-toggles; .nd-toggles label; .nd-toggles input; #ndChart; .nd-stats-bar; .nd-stat-chip; .nd-buttons; .nd-btn-secondary; .nd-btn-secondary:hover; .nd-curve; .nd-z-curve; .nd-fill-1; .nd-fill-2; .nd-fill-3; .nd-axis-line; .nd-grid-line; .nd-mean-line; .nd-hover-line; .nd-hover-dot; .nd-axis-label; .nd-hover-readout
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 71 inline style= attributes (not touched)
+== PCA.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="styles.css">
+   note: 48 inline style= attributes (not touched)
+== Probability.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 17 inline style= attributes (not touched)
+== Quiz.html: 0 redundant removed, 14 unique kept, 1 overrides kept
+   differs from common (page override kept): body
+   unique to this page: .quiz-card; #timer-container; #timer-bar; #timer-text; .option-item; .option-item:hover; .option-item input; .correct-row; .wrong-row; .btn; #submit-btn; #next-btn; #restart-btn; .btn:disabled
+   existing stylesheet links left untouched: <link rel="stylesheet" href="Style.css">
+   note: 5 inline style= attributes (not touched)
+== RandomVariableandExpectations.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 39 inline style= attributes (not touched)
+== RLHF.html: 15 redundant removed, 9 unique kept, 6 overrides kept
+   differs from common (page override kept): .algorithm-box; h1; h2; h3; p; ul, ol
+   unique to this page: .diagram-frame; .diagram-frame svg; .algorithm-box .label; .data-table; .data-table th, .data-table td; .data-table th; .data-table tr:nth-child(even); .analogy-box; .analogy-box .label
+   note: 47 inline style= attributes (not touched)
+== rlhf_mathematical_theory_and_workflow.html: 0 redundant removed, 0 unique kept, 1 overrides kept
+   differs from common (page override kept): body
+   existing stylesheet links left untouched: <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+== RNN.html: 7 redundant removed, 25 unique kept, 0 overrides kept
+   unique to this page: .ed-scope; .ed-scope .section-block; .ed-scope .sec-num; .ed-scope h2; .ed-scope .step-pill; .ed-scope .callout; .ed-scope .callout-title; .ed-scope .callout-blue; .ed-scope .callout-green; .ed-scope .callout-purple; .ed-scope .callout-amber; .ed-scope .callout-red; .ed-scope .fig-wrap; .ed-scope .fig-wrap svg; .ed-scope .fig-caption; .ed-scope .math-block; .ed-scope .divider; .ed-scope .code-block; .ed-scope .code-block .ch; .ed-scope .code-block .cc; .ed-scope table; .ed-scope table th, .ed-scope table td; .ed-scope table thead tr; .ed-scope .bridge; .ed-scope .bridge strong
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 112 inline style= attributes (not touched)
+== RNNFC.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   note: 2 inline style= attributes (not touched)
+== RNNTest.html: 7 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 11 inline style= attributes (not touched)
+== Sampling.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   note: 28 inline style= attributes (not touched)
+== SamplingndStatisticalInference.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 37 inline style= attributes (not touched)
+== SequenceLearningandAttention.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+== ShallowNeuralNetworks.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="Style.css">
+   note: 4 inline style= attributes (not touched)
+== StatisticalDataVisualization.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+== StatisticalInference.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   note: 2 inline style= attributes (not touched)
+== SVG.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   note: 20 inline style= attributes (not touched)
+== svm.html: 0 redundant removed, 40 unique kept, 0 overrides kept
+   unique to this page: .pseudo-code; .pseudo-code .kw; .pseudo-code .cm; .pseudo-code .nm; .pseudo-code .op; .pseudo-code .fn; .svm-playground; .svm-playground .widget; .svm-playground .row; .svm-playground .field; .svm-playground .field label; .svm-playground .field .val; .svm-playground select, .svm-playground input[type=range]; .svm-playground select; .svm-playground .class-toggle; .svm-playground .class-btn; .svm-playground .class-btn.plus; .svm-playground .class-btn.minus; .svm-playground .class-btn.inactive; .svm-playground .class-btn.active; .svm-playground .presets; .svm-playground .btn; .svm-playground .btn:hover; .svm-playground .btn.primary; .svm-playground .btn.primary:hover; .svm-playground .btn.warn; .svm-playground .btn.warn:hover; .svm-playground .canvas-wrap; .svm-playground canvas, .svm-playground svg.overlay; .svm-playground svg.overlay; .svm-playground #svmCanvas; .svm-playground .stats-bar; .svm-playground .stat-chip; .svm-playground .stat-chip.warn-chip; .svm-playground .legend; .svm-playground .legend .dot; .svm-playground .legend .ring; .svm-playground .caption; .svm-playground .count-note; .svm-playground .svm-tips
+   existing stylesheet links left untouched: <link rel="stylesheet" href="style.css">
+   note: 30 inline style= attributes (not touched)
+== SVM_animation.html: 0 redundant removed, 32 unique kept, 7 overrides kept
+   differs from common (page override kept): *; .widget; :root; body; h1; h3; p
+   unique to this page: .intuition-box; .row; .field; .field label; .field .val; select, input[type=range]; select; .class-toggle; .class-btn; .class-btn.plus; .class-btn.minus; .class-btn.inactive; .class-btn.active; .presets; .btn; .btn:hover; .btn.primary; .btn.primary:hover; .btn.warn; .btn.warn:hover; .canvas-wrap; canvas, svg.overlay; svg.overlay; #svmCanvas; .stats-bar; .stat-chip; .stat-chip.warn-chip; .legend; .legend .dot; .legend .ring; .caption; .count-note
+   note: 5 inline style= attributes (not touched)
+== temp.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   note: 17 inline style= attributes (not touched)
+== Transformer.html: 0 redundant removed, 0 unique kept, 0 overrides kept
+   existing stylesheet links left untouched: <link rel="stylesheet" href="styles.css">
+   note: 240 inline style= attributes (not touched)
+== transformer_architectures.html: 12 redundant removed, 18 unique kept, 9 overrides kept
+   differs from common (page override kept): .callout; :root; body; code; h2; h3; li; p; ul, ol
+   unique to this page: .page-wrap; .page-header .subtitle; .section; .cl-blue; .cl-teal; .cl-amber; .cl-red; .cl-purple; .cl-coral; .cmp-table; .cmp-table thead tr; .cmp-table thead th; .cmp-table tbody tr:nth-child(even); .cmp-table tbody tr:nth-child(odd); .cmp-table tbody td; .cmp-table .yes; .cmp-table .no; hr.divider

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <!-- Hide body initially to prevent flickering -->
+    <style>body { visibility: hidden; }</style>
+    <!-- Load global MathJax configuration first -->
+    <title>Machine Learning Tutorial</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body>
+
+    <div class="header-section">
+        <h1>Probability Theory and Applications</h1>
+    </div>
+
+    <div class="description-box">
+        <p>The theory of probability originated in games of chance related to gambling, such as throwing dice, tossing a coin, or picking cards from a deck. Today, probability is a foundational tool in domains such as <strong>AI, Machine Learning (ML), and Deep Learning (DL)</strong>.</p>
+
+<p>The probability of a given event expresses the likelihood of that event occurring. It is a value ranging from 0 to 1. A probability of 0 represents an impossible event, while 1 represents a certain event. While absolute certainty (0 or 1) is rarely assigned to complex real-world predictions, these values define the boundaries of the scale. Any value in between represents a degree of uncertainty</p>
+<div class="schools-container">
+    <p>There are four important <strong>Schools of Thought</strong> on the concept of probability:</p>
+    
+    <ul class="schools-list">
+        <li>
+            <span class="school-name">1. Classical Probability</span> 
+            <span class="school-subtext">(A Priori Approach)</span>
+        </li>
+        <li>
+            <span class="school-name">2. Statistical Probability</span> 
+            <span class="school-subtext">(Relative Frequency Theory / Empirical / A Posteriori)</span>
+        </li>
+        <li>
+            <span class="school-name">3. Personalistic or Subjective Probability</span> 
+            <span class="school-subtext">(Bayesian Theorem)</span>
+        </li>
+        <li>
+            <span class="school-name">4. Axiomatic Approach to Probability</span> 
+            <span class="school-subtext">(Modern Mathematical Foundation)</span>
+        </li>
+    </ul>
+</div>
+<p>Probability is defined as the ratio of the number of favouring cases to the total number of equally likely cases i.e. probability of the occurrence of event A is expressed as:
+    $$P(A) = \frac{\text{Number of Favourable Cases}}{\text{Total Number of Possible Cases}}$$
+</p>
+<h3>The Foundation: Sample Space ($S$)</h3>
+        <p>Before calculating probabilities, we must define the <strong>Sample Space</strong>. The Sample Space is the set of all possible outcomes of a random experiment. Each individual outcome in this space is called a <strong>Sample Point</strong>.</p>
+        
+        <ul>
+            <li><strong>Finite Sample Space:</strong> When the outcomes can be counted (e.g., tossing a coin).</li>
+            <li><strong>Infinite Sample Space:</strong> When outcomes are continuous (e.g., the time it takes for a bulb to fail).</li>
+        </ul>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Experiment</th>
+                    <th>Sample Space ($S$)</th>
+                    <th>Total Outcomes $n(S)$</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Tossing a Coin</td>
+                    <td>$\{H, T\}$</td>
+                    <td>2</td>
+                </tr>
+                <tr>
+                    <td>Rolling a Die</td>
+                    <td>$\{1, 2, 3, 4, 5, 6\}$</td>
+                    <td>6</td>
+                </tr>
+                <tr>
+                    <td>Tossing Two Coins</td>
+                    <td>$\{HH, HT, TH, TT\}$</td>
+                    <td>4</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p> Eg. A bag contains <strong>5 white and 6 black balls</strong>. Then the <strong>probability for drawing a white ball is</strong> $\frac{5}{11} $ since favourable number of balls are white and they are 6 the total no of balls is 11 </p>
+    </div>
+	<h2>1. Relative Frequency Theory of Probability</h2>
+<p>
+    Let us consider a random experiment and let 'A' be an event. 
+    Suppose the random experiment is repeated $n$ times. 
+    Let the event 'A' occur in $f$ out of these repetitions and fail to occur in $n - f$ repetitions. 
+    The ratio $\frac{f}{n}$ is called the relative frequency ratio of the event A. 
+    As the number of repetitions increases ($n \to \infty$), the ratio $\frac{f}{n}$ tends to a specific constant value. 
+    This limiting value is defined as the probability of the event A.
+    <br><br>
+    Therefore, <strong> $P(A) = \lim_{n \to \infty} \frac{f}{n}$ </strong>
+</p>
+
+    <div class="example-problem">
+    <div class="problem-header">Sample Problem: Relative Frequency Approach</div>
+    
+    <div class="problem-content">
+        Three unbiased coins are tossed. What is the probability of obtaining:
+        <br>(1) All heads, (2) Two heads, (3) One head, (4) At least one head, (5) At least two heads, (6) All tails.
+    </div>
+
+    <div class="solution-content">
+        <h3>Solution:</h3>
+        
+        <div class="solution-step">
+            <strong>Step 1: Define the Sample Space ($S$)</strong>
+            <p>Each coin toss has 2 possible outcomes (Heads or Tails), and there are 3 coins tossed
+            independently, so the total number of outcomes is $2^3 = 8$:</p>
+            <div style="font-family: monospace; font-size: 0.85rem; background: #eee; padding: 10px; text-align: center;">
+                HHH, HHT, HTH, THH, HTT, THT, TTH, TTT
+            </div>
+            <p>Hence Total Number of Cases ($N$) = 8</p>
+        </div>
+
+        <div class="solution-step">
+            <strong>Step 2: Calculate Probabilities</strong>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Favourable Cases</th>
+                        <th>Count ($f$)</th>
+                        <th>$P(A) = f/N$</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>(1) All Heads</td><td>{HHH}</td><td>1</td><td>$1/8$</td></tr>
+                    <tr><td>(2) Two Heads</td><td>{HHT, HTH, THH}</td><td>3</td><td>$3/8$</td></tr>
+                    <tr><td>(3) One Head</td><td>{HTT, THT, TTH}</td><td>3</td><td>$3/8$</td></tr>
+                    <tr><td>(4) At least 1 Head</td><td>All except {TTT}</td><td>7</td><td>$7/8$</td></tr>
+                    <tr><td>(5) At least 2 Heads</td><td>{HHH, HHT, HTH, THH}</td><td>4</td><td>$4/8 = 0.5$</td></tr>
+                    <tr><td>(6) All Tails</td><td>{TTT}</td><td>1</td><td>$1/8$</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0;">
+            <svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+                <defs>
+                    <marker id="treeArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                        <path d="M0,0 L8,4 L0,8 Z" fill="#666"/>
+                    </marker>
+                </defs>
+                <g font-family="Arial, sans-serif" font-size="11">
+                    <circle cx="30" cy="130" r="5" fill="#333"/>
+                    <line x1="35" y1="128" x2="120" y2="65" stroke="#666" stroke-width="1.2" marker-end="url(#treeArrow)"/>
+                    <line x1="35" y1="132" x2="120" y2="195" stroke="#666" stroke-width="1.2" marker-end="url(#treeArrow)"/>
+                    <text x="75" y="90" fill="#333">H (1/2)</text>
+                    <text x="75" y="175" fill="#333">T (1/2)</text>
+
+                    <circle cx="125" cy="65" r="4" fill="#333"/>
+                    <circle cx="125" cy="195" r="4" fill="#333"/>
+                    <line x1="129" y1="63" x2="220" y2="30" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="129" y1="67" x2="220" y2="100" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="129" y1="193" x2="220" y2="160" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="129" y1="197" x2="220" y2="230" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+
+                    <circle cx="225" cy="30" r="3.5" fill="#333"/>
+                    <circle cx="225" cy="100" r="3.5" fill="#333"/>
+                    <circle cx="225" cy="160" r="3.5" fill="#333"/>
+                    <circle cx="225" cy="230" r="3.5" fill="#333"/>
+
+                    <!-- third toss branches, 8 leaves -->
+                    <line x1="229" y1="28" x2="330" y2="10" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="32" x2="330" y2="45" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="98" x2="330" y2="80" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="102" x2="330" y2="115" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="158" x2="330" y2="140" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="162" x2="330" y2="175" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="228" x2="330" y2="210" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+                    <line x1="229" y1="232" x2="330" y2="245" stroke="#666" stroke-width="1" marker-end="url(#treeArrow)"/>
+
+                    <rect x="335" y="2" width="70" height="18" rx="3" fill="#e8f5e9" stroke="#43a047"/>
+                    <text x="345" y="15" fill="#2e7d32" font-weight="bold">HHH</text>
+                    <rect x="335" y="37" width="70" height="18" rx="3" fill="#fff3e0" stroke="#fb8c00"/>
+                    <text x="345" y="50" fill="#e65100" font-weight="bold">HHT</text>
+                    <rect x="335" y="72" width="70" height="18" rx="3" fill="#fff3e0" stroke="#fb8c00"/>
+                    <text x="345" y="85" fill="#e65100" font-weight="bold">HTH</text>
+                    <rect x="335" y="107" width="70" height="18" rx="3" fill="#e3f2fd" stroke="#1e88e5"/>
+                    <text x="345" y="120" fill="#0d47a1" font-weight="bold">HTT</text>
+                    <rect x="335" y="132" width="70" height="18" rx="3" fill="#fff3e0" stroke="#fb8c00"/>
+                    <text x="345" y="145" fill="#e65100" font-weight="bold">THH</text>
+                    <rect x="335" y="167" width="70" height="18" rx="3" fill="#e3f2fd" stroke="#1e88e5"/>
+                    <text x="345" y="180" fill="#0d47a1" font-weight="bold">THT</text>
+                    <rect x="335" y="202" width="70" height="18" rx="3" fill="#e3f2fd" stroke="#1e88e5"/>
+                    <text x="345" y="215" fill="#0d47a1" font-weight="bold">TTH</text>
+                    <rect x="335" y="237" width="70" height="18" rx="3" fill="#fce4ec" stroke="#d81b60"/>
+                    <text x="345" y="250" fill="#ad1457" font-weight="bold">TTT</text>
+
+                    <rect x="440" y="0" width="300" height="255" rx="8" fill="#fafafa" stroke="#ddd"/>
+                    <text x="455" y="20" font-weight="bold" fill="#333">Legend</text>
+                    <rect x="455" y="30" width="14" height="14" fill="#e8f5e9" stroke="#43a047"/>
+                    <text x="475" y="41" fill="#333">All Heads (1 outcome)</text>
+                    <rect x="455" y="52" width="14" height="14" fill="#fff3e0" stroke="#fb8c00"/>
+                    <text x="475" y="63" fill="#333">Two Heads (3 outcomes)</text>
+                    <rect x="455" y="74" width="14" height="14" fill="#e3f2fd" stroke="#1e88e5"/>
+                    <text x="475" y="85" fill="#333">One Head (3 outcomes)</text>
+                    <rect x="455" y="96" width="14" height="14" fill="#fce4ec" stroke="#d81b60"/>
+                    <text x="475" y="107" fill="#333">All Tails (1 outcome)</text>
+                    <text x="455" y="135" fill="#555" font-size="10.5">Each full path top-to-bottom is one</text>
+                    <text x="455" y="149" fill="#555" font-size="10.5">of the 8 equally-likely outcomes —</text>
+                    <text x="455" y="163" fill="#555" font-size="10.5">multiply along a path's branch</text>
+                    <text x="455" y="177" fill="#555" font-size="10.5">probabilities (1/2 &times; 1/2 &times; 1/2 = 1/8)</text>
+                    <text x="455" y="191" fill="#555" font-size="10.5">to get that outcome's probability.</text>
+                </g>
+            </svg>
+            <p style="font-size:0.85rem; color:#666; margin-top:8px;"><em>Figure: Probability tree for tossing three coins. Each of the three levels branches into Heads/Tails; the eight leaves at the right are the full sample space, color-coded by how many heads they contain.</em></p>
+        </div>
+    </div>
+    </div>
+
+	<div class="example-problem">
+    <div class="problem-header">Sample Problem: Probability with Two Dice</div>
+    
+    <div class="problem-content">
+        Two unbiased dice are thrown. Find the probability that:
+        <br>(1) Both the dice show the same number, (2) Exactly one die shows five, (3) First die shows five, (4) The total of the numbers on the dice is Eight, (5) Total of the numbers on the dice is greater than 8.
+    </div>
+
+    <div class="solution-content">
+        <h3>Solution:</h3>
+        
+        <div class="solution-step">
+            <strong>Step 1: Define the Sample Space ($S$)</strong>
+            <p>When two dice are thrown, each has 6 faces. Total possible outcomes ($6 \times 6$):</p>
+            <div style="font-family: monospace; font-size: 0.8rem; background: #eee; padding: 10px; text-align: center;">
+                (1,1) (1,2) (1,3) (1,4) (1,5) (1,6)<br>
+                (2,1) (2,2) (2,3) (2,4) (2,5) (2,6)<br>
+                (3,1) (3,2) (3,3) (3,4) (3,5) (3,6)<br>
+                (4,1) (4,2) (4,3) (4,4) (4,5) (4,6)<br>
+                (5,1) (5,2) (5,3) (5,4) (5,5) (5,6)<br>
+                (6,1) (6,2) (6,3) (6,4) (6,5) (6,6)
+            </div>
+            <p>Total Number of Cases ($N$) = 36</p>
+        </div>
+
+        <div class="solution-step">
+            <strong>Step 2: Calculate Probabilities</strong>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Favourable Cases</th>
+                        <th>Count ($f$)</th>
+                        <th>$P(A) = f/36$</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>(1) Same Number (Doublets)</td>
+                        <td>(1,1), (2,2), (3,3), (4,4), (5,5), (6,6)</td>
+                        <td>6</td>
+                        <td>$6/36 = 1/6$</td>
+                    </tr>
+                    <tr>
+                        <td>(2) Exactly one die shows five</td>
+                        <td>(1,5), (2,5), (3,5), (4,5), (6,5), (5,1), (5,2), (5,3), (5,4), (5,6)</td>
+                        <td>10</td>
+                        <td>$10/36 = 5/18$</td>
+                    </tr>
+                    <tr>
+                        <td>(3) First die shows five</td>
+                        <td>(5,1), (5,2), (5,3), (5,4), (5,5), (5,6)</td>
+                        <td>6</td>
+                        <td>$6/36 = 1/6$</td>
+                    </tr>
+                    <tr>
+                        <td>(4) Total is 8</td>
+                        <td>(2,6), (3,5), (4,4), (5,3), (6,2)</td>
+                        <td>5</td>
+                        <td>$5/36$</td>
+                    </tr>
+                    <tr>
+                        <td>(5) Total > 8</td>
+                        <td>(3,6), (4,5), (4,6), (5,4), (5,5), (5,6), (6,3), (6,4), (6,5), (6,6)</td>
+                        <td>10</td>
+                        <td>$10/36 = 5/18$</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size:0.88rem; color:#555;"><em>Note: "exactly one die shows five" (10/36) is a different event from "at least one die shows five" (11/36, which also includes (5,5)) — the wording matters here, since both readings are common but give different answers.</em></p>
+        </div>
+    </div>
+    </div>
+
+	<div class="example-problem">
+    <div class="problem-header">Sample Problem: Probability using Combinations</div>
+    
+    <div class="problem-content">
+        Four cards are drawn from a pack of 52 cards. Find the probability that:
+        <br>(a) There is one card of each suit, (b) Two cards are spades and two are hearts, (c) All the four are kings, (d) All the four are spades and one of them is a king, (e) At least one of the four cards is an ace.
+    </div>
+
+    <div class="solution-content">
+        <h3>Solution:</h3>
+        
+        <div class="solution-step">
+            <strong>Step 1: Total Outcomes ($N$)</strong>
+            <p>Total ways to draw 4 cards from 52 is given by $^{52}C_4$:</p>
+            <div style="text-align:center; padding: 10px;">
+                $$ N = \binom{52}{4} = \frac{52 \times 51 \times 50 \times 49}{4 \times 3 \times 2 \times 1} = 270,725 $$
+            </div>
+            <div class="data-type-card">
+                <span class="tag">Mathematical Foundation</span>
+                <h3>The Combination Formula ($^nC_r$)</h3>
+                <p>When drawing multiple items at once without replacement, we use the combination formula to find the number of ways to select $r$ items from a set of $n$:</p>
+
+                <div class="formula-container">
+                    $$ \binom{n}{r} = \frac{n!}{r!(n - r)!} $$
+                </div>
+
+                <p><strong>Example:</strong> Ways to pick 2 Aces from 4 Aces:</p>
+                <div style="text-align: center;">
+                    $$ \binom{4}{2} = \frac{4 \times 3}{2 \times 1} = 6 \text{ ways} $$
+                </div>
+            </div>
+        </div>
+
+        <div class="solution-step">
+            <strong>Step 2: Calculate Probabilities</strong>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Logic (Combinations)</th>
+                        <th>Probability $P(A)$</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>(a) One of each suit</strong></td>
+                        <td>One from each of 13 suits: <br> $\binom{13}{1} \times \binom{13}{1} \times \binom{13}{1} \times \binom{13}{1}$</td>
+                        <td>$$ \frac{13^4}{^{52}C_4} $$<p>Multiplication Principle (the "AND" rule): if one task can be done in $m$ ways and a second task can be done in $n$ ways, the two tasks together can be done in $m \times n$ ways. Here: take 1 Spade AND 1 Heart AND 1 Diamond AND 1 Club, so multiply the four combination counts together.</p></td>
+                    </tr>
+                    <tr>
+                        <td><strong>(b) 2 Spades & 2 Hearts</strong></td>
+                        <td>Two from 13 Spades AND two from 13 Hearts: <br> $\binom{13}{2} \times \binom{13}{2}$</td>
+                        <td>$$ \frac{78 \times 78}{270,725} $$</td>
+                    </tr>
+                    <tr>
+                        <td><strong>(c) All 4 are Kings</strong></td>
+                        <td>Four Kings from the 4 available: <br> $\binom{4}{4}$</td>
+                        <td>$$ \frac{1}{270,725} $$</td>
+                    </tr>
+                    <tr>
+                        <td><strong>(d) 4 Spades (one is King)</strong></td>
+                        <td>The King of Spades (1) AND 3 other Spades (12): <br> $\binom{1}{1} \times \binom{12}{3}$</td>
+                        <td>$$ \frac{220}{270,725} $$</td>
+                    </tr>
+                    <tr>
+                        <td><strong>(e) At least one Ace</strong></td>
+                        <td>$1 - P(\text{No Ace})$. <br> No Ace means drawing from 48 non-aces: $\binom{48}{4}$</td>
+                        <td>$$ 1 - \frac{^{48}C_4}{^{52}C_4} $$</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </div>
+
+    <h2>2. Fundamental Probability Laws</h2>
+    
+    <div class="data-type-card highlight-blue">
+        <h3>A. The Axioms of Probability</h3>
+        <p>For any event $A$ in sample space $S$:</p>
+        <ul>
+            <li><strong>Non-negativity:</strong> $P(A) \ge 0$</li>
+            <li><strong>Normalization:</strong> $P(S) = 1$</li>
+            <li><strong>Additivity:</strong> For mutually exclusive events, $P(A \cup B) = P(A) + P(B)$</li>
+        </ul>
+
+        <h3>B. The Complement Rule</h3>
+        <p>Essential for binary classification (e.g., Churn vs. No Churn):</p>
+        <div class="formula-container">
+            $$ P(A^c) = 1 - P(A) $$
+        </div>
+
+        <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0; text-align:center;">
+            <svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg" style="max-width:280px; height:auto;">
+                <rect x="10" y="10" width="280" height="160" fill="#f5f5f5" stroke="#999" stroke-width="1.5"/>
+                <circle cx="150" cy="90" r="65" fill="#ef9a9a" fill-opacity="0.55" stroke="#c62828" stroke-width="1.5"/>
+                <text x="150" y="94" text-anchor="middle" font-family="Arial" font-size="14" fill="#7f0000">A</text>
+                <text x="230" y="30" font-family="Arial" font-size="11" fill="#333">S (sample space)</text>
+                <text x="150" y="150" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#555">Shaded = A, unshaded = $A^c$</text>
+            </svg>
+            <p style="font-size:0.85rem; color:#666; margin-top:6px;"><em>Figure: The complement $A^c$ is everything in the sample space $S$ outside the shaded region $A$ — together they cover all of $S$, so $P(A)+P(A^c)=1$.</em></p>
+        </div>
+
+		<div class="example-problem">
+            <div class="problem-header">Problem: Complementary & Exhaustive Events</div>
+            <div class="problem-content">
+                There are three events A, B, C. One of which <strong>must</strong> happen and <strong>only one</strong> can happen. 
+                The odds are 7 to 3 against A, and 6 to 4 against B. Find the odds against C.
+            </div>
+            <div class="solution-content">
+                <div class="solution-step">
+                    <strong>1. Calculate P(A) and P(B):</strong>
+                    <p>Odds against A are 7 to 3 $\implies P(A) = \frac{3}{7+3} = \frac{3}{10}$</p>
+                    <p>Odds against B are 6 to 4 $\implies P(B) = \frac{4}{6+4} = \frac{4}{10}$</p>
+                </div>
+                <div class="solution-step">
+                    <strong>2. Apply Exhaustive Property:</strong>
+                    <p>Because A, B, and C are mutually exclusive and exhaustive: $P(A) + P(B) + P(C) = 1$.</p>
+                    <p>$$P(C) = 1 - (P(A) + P(B))$$</p>
+                    <p>$$P(C) = 1 - (\frac{3}{10} + \frac{4}{10}) = 1 - \frac{7}{10} = \frac{3}{10}$$</p>
+                </div>
+                <div class="solution-step">
+                    <strong>3. Find Odds Against C:</strong>
+                    <p>Since $P(C) = 3/10$, the probability of C not occurring is $P(C^c) = 7/10$.</p>
+                    <p><strong>Answer:</strong> The odds against C are <strong>7 to 3</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <h3>C. The Addition Rule (General)</h3>
+        <div class="formula-container">
+            $$ P(A \cup B) = P(A) + P(B) - P(A \cap B) $$
+        </div>
+
+        <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0; text-align:center;">
+            <svg viewBox="0 0 340 190" xmlns="http://www.w3.org/2000/svg" style="max-width:320px; height:auto;">
+                <rect x="10" y="10" width="320" height="170" fill="#f5f5f5" stroke="#999" stroke-width="1.5"/>
+                <circle cx="140" cy="95" r="65" fill="#90caf9" fill-opacity="0.55" stroke="#1565c0" stroke-width="1.5"/>
+                <circle cx="200" cy="95" r="65" fill="#a5d6a7" fill-opacity="0.55" stroke="#2e7d32" stroke-width="1.5"/>
+                <text x="105" y="99" text-anchor="middle" font-family="Arial" font-size="14" fill="#0d47a1">A</text>
+                <text x="235" y="99" text-anchor="middle" font-family="Arial" font-size="14" fill="#1b5e20"> B</text>
+                <text x="170" y="99" text-anchor="middle" font-family="Arial" font-size="11" fill="#333">A&#8745;B</text>
+                <text x="290" y="30" font-family="Arial" font-size="11" fill="#333">S</text>
+                <text x="170" y="165" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#555">Overlap counted once in each circle,</text>
+                <text x="170" y="178" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#555">so it's subtracted once to correct the double-count</text>
+            </svg>
+            <p style="font-size:0.85rem; color:#666; margin-top:6px;"><em>Figure: The overlapping region $A \cap B$ gets counted once inside $P(A)$ and once inside $P(B)$ — subtracting it once in the addition rule corrects for that double-count.</em></p>
+        </div>
+
+		<div class="example-problem">
+            <div class="problem-header">Example: General Addition Rule</div>
+            <div class="problem-content">
+                The probability that a contractor will get a plumbing contract is $2/3$ and the probability that he will not get an electric contract is $5/9$. If the probability of getting at least one contract is $4/5$, what is the probability that he will get both contracts?
+            </div>
+            <div class="solution-content">
+                <div class="solution-step">
+                    <strong>1. Identify the given probabilities:</strong>
+                    <ul>
+                        <li>$P(\text{Plumbing}) = P(A) = \frac{2}{3}$</li>
+                        <li>$P(\text{No Electric}) = P(B^c) = \frac{5}{9} \implies P(B) = 1 - \frac{5}{9} = \frac{4}{9}$</li>
+                        <li>$P(\text{At least one}) = P(A \cup B) = \frac{4}{5}$</li>
+                    </ul>
+                </div>
+                <div class="solution-step">
+                    <strong>2. Solve for "Both" ($P(A \cap B)$):</strong>
+                    <p>Using the Addition Rule formula: $P(A \cup B) = P(A) + P(B) - P(A \cap B)$</p>
+                    <p>Rearranging to find the intersection:</p>
+                    <p>$$P(A \cap B) = P(A) + P(B) - P(A \cup B)$$</p>
+                    <p>$$P(A \cap B) = \frac{2}{3} + \frac{4}{9} - \frac{4}{5}$$</p>
+                </div>
+                <div class="solution-step">
+                    <strong>3. Final Calculation (Common Denominator 45):</strong>
+                    <p>$$P(A \cap B) = \frac{30}{45} + \frac{20}{45} - \frac{36}{45} = \frac{14}{45}$$</p>
+                    <p><strong>Answer:</strong> The probability that he gets both contracts is <span class="math-highlight">14/45</span>.</p>
+                </div>
+            </div>
+        </div>
+	
+        <h3>D. Conditional Probability and Statistical Independence</h3>
+<p><strong>Conditional Probability:</strong> The probability of event $A$ occurring given that event $B$ has already occurred.</p>
+<div class="formula-container">
+    $$P(A|B) = \frac{P(A \cap B)}{P(B)} \quad \text{or} \quad P(B|A) = \frac{P(A \cap B)}{P(A)}$$
+</div>
+
+<p><strong>The General Multiplication Rule:</strong> For any two events (dependent or independent), the probability that both occur is:</p>
+<div class="formula-container">
+    $$P(A \cap B) = P(A) \cdot P(B|A)$$
+	$$ \text{If } A \text{ and } B \text{ are independent, } P(A \cap B) = P(A) \cdot P(B|A) = P(A)P(B) $$
+    $$ \text{since } P(B|A) = P(B) \text{ because } P(B|A) \text{ is not dependent on } A. $$
+</div>
+
+<p><strong>Statistical Independence:</strong> Two events are considered statistically independent if the occurrence of one does not affect the probability of the other. In this specific case, $P(B|A) = P(B)$, and the formula simplifies to:</p>
+<div class="formula-container">
+    $$P(A \cap B) = P(A) \cdot P(B)$$
+</div>
+
+		<div class="example-problem">
+            <div class="problem-header">Example: Successive Draws Without Replacement</div>
+            <div class="problem-content">
+                A bag contains 8 red and 5 white balls. Two successive draws of 3 balls are made <strong>without replacement</strong>. Find the probability that the first drawing will give 3 white balls and the second drawing will give 3 red balls.
+            </div>
+            <div class="solution-content">
+                <div class="solution-step">
+                    <strong>Step 1: Probability of First Draw (Event A - 3 White Balls)</strong>
+                    <p>Total balls = 13. We choose 3 out of 5 white balls:</p>
+                    <p>$$P(A) = \frac{\binom{5}{3}}{\binom{13}{3}} = \frac{10}{286} = \frac{5}{143}$$</p>
+                </div>
+                <div class="solution-step">
+                    <strong>Step 2: Probability of Second Draw (Event B|A - 3 Red Balls)</strong>
+                    <p>After the first draw, 10 balls remain (8 red, 2 white). We choose 3 red from 8:</p>
+                    <p>$$P(B|A) = \frac{\binom{8}{3}}{\binom{10}{3}} = \frac{56}{120} = \frac{7}{15}$$</p>
+                </div>
+                <div class="solution-step">
+                    <strong>Step 3: Joint Probability ($P(A \cap B)$)</strong>
+                    <p>Using the Multiplication Rule:</p>
+                    <p>$$P(A \cap B) = P(A) \times P(B|A) = \frac{5}{143} \times \frac{7}{15}$$</p>
+                    <p>$$P(A \cap B) = \frac{35}{2145} = \frac{7}{429}$$</p>
+                    <p><strong>Answer:</strong> The probability is <span class="math-highlight">7/429</span>.</p>
+                </div>
+
+                <div class="plot-container" style="background:#fff; padding:16px; border:1px solid #e1e8ed; border-radius:8px; margin:16px 0;">
+                    <svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+                        <defs>
+                            <marker id="drawTreeArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                                <path d="M0,0 L8,4 L0,8 Z" fill="#666"/>
+                            </marker>
+                        </defs>
+                        <g font-family="Arial, sans-serif" font-size="11.5">
+                            <rect x="10" y="90" width="120" height="40" rx="6" fill="#eeeeee" stroke="#888"/>
+                            <text x="70" y="106" text-anchor="middle" fill="#333">Bag:</text>
+                            <text x="70" y="122" text-anchor="middle" fill="#333">8R, 5W</text>
+
+                            <line x1="130" y1="100" x2="220" y2="45" stroke="#666" stroke-width="1.3" marker-end="url(#drawTreeArrow)"/>
+                            <line x1="130" y1="120" x2="220" y2="175" stroke="#666" stroke-width="1.3" marker-end="url(#drawTreeArrow)"/>
+
+                            <rect x="225" y="20" width="200" height="50" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+                            <text x="325" y="40" text-anchor="middle" fill="#0d47a1" font-weight="bold">Draw 1: 3 White</text>
+                            <text x="325" y="58" text-anchor="middle" fill="#0d47a1">$P(A)=\binom{5}{3}/\binom{13}{3}=5/143$</text>
+
+                            <rect x="225" y="155" width="200" height="40" rx="6" fill="#f5f5f5" stroke="#999"/>
+                            <text x="325" y="178" text-anchor="middle" fill="#555">(other outcome — not needed)</text>
+
+                            <line x1="425" y1="45" x2="470" y2="45" stroke="#666" stroke-width="1.3" marker-end="url(#drawTreeArrow)"/>
+
+                            <rect x="475" y="15" width="155" height="60" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+                            <text x="552" y="35" text-anchor="middle" fill="#1b5e20" font-weight="bold">Remaining:</text>
+                            <text x="552" y="50" text-anchor="middle" fill="#1b5e20">8R, 2W</text>
+                            <text x="552" y="65" text-anchor="middle" fill="#1b5e20" font-size="10.5">Draw 2: 3 Red</text>
+
+                            <text x="325" y="105" text-anchor="middle" fill="#333" font-size="11">$P(B|A)=\binom{8}{3}/\binom{10}{3}=7/15$</text>
+                            <text x="325" y="135" text-anchor="middle" fill="#333" font-weight="bold">$P(A \cap B) = 5/143 \times 7/15 = 7/429$</text>
+                        </g>
+                    </svg>
+                    <p style="font-size:0.85rem; color:#666; margin-top:8px;"><em>Figure: The bag's composition changes between draws — Draw 2's probability is computed only over the 10 balls remaining after Draw 1 removed 3 white balls. Multiplying along the path gives the joint probability.</em></p>
+                </div>
+            </div>
+        </div>
+
+	<div class="data-type-card highlight-green">
+    <span class="tag">Real-World Perspective</span>
+    <h3>Where does $P(A)$ come from?</h3>
+    <p>In textbook problems, $P(A)$ is usually a given constant. However, in practice, we derive this value in two distinct ways:</p>
+    
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Approach</th>
+                <th>Definition</th>
+                <th>Typical Use Case</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Measured Frequency</strong> (Frequentist)</td>
+                <td>Calculated from historical data. $P(A) = \frac{\text{Wins}}{\text{Total Trials}}$.</td>
+                <td>Insurance premiums, factory defect rates, coin tosses.</td>
+            </tr>
+            <tr>
+                <td><strong>Degree of Belief</strong> (Bayesian)</td>
+                <td>A subjective estimate based on expertise, intuition, or partial evidence.</td>
+                <td>Business contract bidding, weather forecasting, medical diagnosis.</td>
+            </tr>
+        </tbody>
+    </table>
+    <p><em>Note:</em> Modern AI often combines both. A model starts with a <strong>Prior</strong> (belief) and updates it as it sees more <strong>Empirical Data</strong> (frequency).</p>
+</div>
+    </div>
+
+	<h2>3. Personalistic or Subjective Probability (Bayesian Probability)</h2>
+	<div class="data-type-card"><p> We shall discuss this school of thought as a separate topic under Bayesian classification.</p></div>
+	
+</body>
+</html>

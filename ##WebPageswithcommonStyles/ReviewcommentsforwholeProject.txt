@@ -1,0 +1,4 @@
+Inline the SVGs or host them, else images breakAdd 
+.math-block {overflow-x:auto;} for mobile
+Remove polyfill.io script
+Many pages have own Styles. Remove it and integrate with Style.css

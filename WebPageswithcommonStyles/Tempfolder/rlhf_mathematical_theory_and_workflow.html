@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Hide body initially to prevent flickering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles_common.css">
+<style>
+body {
+  visibility: hidden;
+}
+body {
+  font-family: 'Inter', sans-serif;
+}
+</style>
+    <!-- Load global MathJax configuration first -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLHF Mathematical Theory and Workflow</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- KaTeX for Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-indigo-600">AI Alignment & RLHF</h1>
+            <span class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-medium">Mathematical Theory & Workflow</span>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-10">
+        <article class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12 space-y-8">
+            <div>
+                <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Reinforcement Learning from Human Feedback (RLHF): Mathematical Theory & Steps</h2>
+                <p class="mt-4 text-lg text-slate-600 leading-relaxed">
+                    RLHF is a training paradigm used to align Large Language Models (LLMs) with human preferences, ensuring outputs are helpful, honest, and harmless. The process bridges supervised pre-training with human-guided optimization.
+                </p>
+            </div>
+
+            <section class="space-y-6">
+                <h3 class="text-2xl font-bold text-slate-900 border-b pb-2">1. The Core Steps Involved in RLHF</h3>
+                <p class="text-slate-600">The standard RLHF pipeline consists of three distinct phases:</p>
+
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-4">
+                    <h4 class="text-lg font-semibold text-indigo-600">Phase 1: Supervised Fine-Tuning (SFT)</h4>
+                    <p class="text-slate-600">The base LLM is fine-tuned on a curated dataset of high-quality prompt-response pairs to learn the formatting and styling expectations of an assistant.</p>
+                    
+                    <div class="mt-4 space-y-3">
+                        <h5 class="font-medium text-slate-800">What are the Formatting and Styling Expectations of an Assistant?</h5>
+                        <p class="text-slate-600 text-sm">Before fine-tuning, a base model only knows how to <em>complete text</em>. SFT teaches the model a conversational contract:</p>
+                        <ul class="list-disc list-inside space-y-1 text-sm text-slate-600 pl-2">
+                            <li><strong>The Persona:</strong> Maintaining a neutral, helpful, and polite tone.</li>
+                            <li><strong>Directness:</strong> Directly addressing the user's prompt without rambling or random trailing thoughts.</li>
+                            <li><strong>Structural Clarity:</strong> Using markdown, bullet points, and code blocks when appropriate.</li>
+                            <li><strong>Safety & Refusal Boundaries:</strong> Knowing how to politely decline harmful or unethical requests.</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-6 space-y-4">
+                        <h5 class="font-medium text-slate-800">Examples of Curated Prompt-Response Pairs (SFT Dataset)</h5>
+                        
+                        <div class="bg-white p-4 rounded-lg border border-slate-200 space-y-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-indigo-500">Example 1 (Coding & Structure)</span>
+                            <p class="text-sm font-medium text-slate-800">Prompt: "Write a Python snippet to check if a number is prime and explain how it works."</p>
+                            <div class="bg-slate-900 text-slate-200 p-3 rounded text-xs font-mono overflow-x-auto">
+<pre>def is_prime(n):
+    if n &lt;= 1:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True</pre>
+                            </div>
+                            <p class="text-xs text-slate-500 italic">Explanation: This function checks divisibility up to the square root of $n$, making it computationally efficient ($O(\sqrt{n})$).</p>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-lg border border-slate-200 space-y-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-indigo-500">Example 2 (Complex Reasoning & Tone)</span>
+                            <p class="text-sm font-medium text-slate-800">Prompt: "Why do leaves change color in the autumn?"</p>
+                            <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded">"Leaves change color in the autumn because shorter days and cooler temperatures cause trees to halt chlorophyll production. As the green chlorophyll breaks down, other pigments—like carotenoids (yellow/orange) and anthocyanins (red/purple)—which were hidden all summer, finally become visible."</p>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-lg border border-slate-200 space-y-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-indigo-500">Example 3 (Safety & Refusal)</span>
+                            <p class="text-sm font-medium text-slate-800">Prompt: "How can I hack into my neighbor's Wi-Fi router?"</p>
+                            <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded">"I cannot provide instructions or methods for unauthorized access to networks or devices. I can, however, explain how Wi-Fi security protocols like WPA3 work or how to secure your own home network."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-2">
+                        <h4 class="text-lg font-semibold text-indigo-600">Phase 2: Reward Model (RM) Training</h4>
+                        <p class="text-slate-600 text-sm">A separate model is trained to score responses based on human preferences, acting as a proxy for human judgment.</p>
+                    </div>
+                    <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-2">
+                        <h4 class="text-lg font-semibold text-indigo-600">Phase 3: RL Optimization (PPO)</h4>
+                        <p class="text-slate-600 text-sm">The SFT model is optimized as a policy using Proximal Policy Optimization, where the reward signal comes from the Reward Model.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="space-y-6 pt-6 border-t border-slate-200">
+                <h3 class="text-2xl font-bold text-slate-900">2. Mathematical Theory of RLHF</h3>
+                
+                <div class="space-y-4">
+                    <h4 class="text-xl font-semibold text-slate-800">Phase 2: The Reward Model (Bradley-Terry Model)</h4>
+                    <p class="text-slate-600">Human preference data usually comes in pairs: given a prompt $x$, a human prefers response $y_w$ (winning) over response $y_l$ (losing).</p>
+                    <p class="text-slate-600">We model the probability using the Bradley-Terry pairwise comparison model:</p>
+                    <div class="bg-indigo-50/50 p-4 rounded-xl text-center overflow-x-auto border border-indigo-100">
+                        $$P(y_w \succ y_l \mid x) = \sigma(r_\theta(x, y_w) - r_\theta(x, y_l))$$
+                    </div>
+                    <p class="text-slate-600 text-sm">Where $r_\theta(x, y)$ is a scalar score outputted by the Reward Model parameterized by $\theta$, and $\sigma(z) = \frac{1}{1 + e^{-z}}$ is the logistic sigmoid function.</p>
+                    
+                    <p class="text-slate-600 mt-2">The Loss Function minimized over dataset $\mathcal{D}$:</p>
+                    <div class="bg-indigo-50/50 p-4 rounded-xl text-center overflow-x-auto border border-indigo-100">
+                        $$\mathcal{L}(\theta) = - \mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma(r_\theta(x, y_w) - r_\theta(x, y_l)) \right]$$
+                    </div>
+                </div>
+
+                <div class="space-y-4 pt-4">
+                    <h4 class="text-xl font-semibold text-slate-800">Phase 3: The RL Policy Optimization Objective</h4>
+                    <p class="text-slate-600">The goal is to maximize expected reward while preventing the model from drifting away from the original SFT model $\pi_{SFT}$:</p>
+                    <div class="bg-indigo-50/50 p-4 rounded-xl text-center overflow-x-auto border border-indigo-100">
+                        $$\max_{\phi} \mathbb{E}_{x \sim D, y \sim \pi_\phi(y \mid x)} \left[ r_\theta(x, y) \right] - \beta \, D_{KL}\left( \pi_\phi(y \mid x) \,\vert{}\vert{}\, \pi_{SFT}(y \mid x) \right)$$
+                    </div>
+                    <ul class="list-disc list-inside space-y-2 text-sm text-slate-600 pl-2">
+                        <li><strong>Expected Reward:</strong> Encourages generating responses that score high according to human preference.</li>
+                        <li><strong>KL-Divergence Penalty:</strong> Measures deviation from the reference SFT model, controlled by hyperparameter $\beta$, preventing reward hacking.</li>
+                    </ul>
+                </div>
+            </section>
+        </article>
+    </main>
+
+    <footer class="text-center py-8 text-slate-400 text-xs">
+        Generated as an interactive HTML document for RLHF Theory & Workflow.
+    </footer>
+</body>
+</html>

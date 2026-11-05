@@ -1,0 +1,60 @@
+
+/* style.css */
+
+/* 1. Set the Global Font and Base Size */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px; /* This is the standard base size */
+    line-height: 1.5;
+    color: #333;
+    margin: 20px;
+    padding: 0;
+}
+
+/* 2. Standardize all Headings */
+h1 {
+    font-size: 2.2rem; /* 2.2 times the base size */
+    color: #0056b3;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 10px;
+}
+
+h2 {
+    font-size: 1.8rem;
+    color: #0056b3;
+    margin-top: 30px;
+}
+
+
+h3 {
+    font-size: 1.4rem;
+    margin-top: 20px;
+}
+
+/* 3. Standardize Paragraphs and Lists */
+p, li {
+    font-size: 1rem; /* Exactly 16px */
+    margin-bottom: 10px;
+}
+
+/* 4. Keep your special classes uniform */
+.detail-description {
+    text-align: justify;
+}
+
+.code-style {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #f4f4f4;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 0.95rem;
+}
+
+
+and in the every page you have to add 
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Your Page Title</title>
+</head>

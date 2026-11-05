@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Tools for Coding: Using Assistants Responsibly</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$','$'],['\\(','\\)']] },
+  options: { skipHtmlTags: ['script','style','pre','code'], ignoreHtmlClass: 'tex2jax_ignore' },
+  startup: { pageReady: () => MathJax.startup.defaultPageReady().then(() => { document.body.style.visibility = 'visible'; }) }
+};
+document.documentElement.className += ' js';
+setTimeout(() => { document.body.style.visibility = 'visible'; }, 4000);
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- Replace this block with <link rel="stylesheet" href="styles_common.css"> once the shared stylesheet is in place -->
+<style>
+.js body { visibility: hidden; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #fff; color: #222; line-height: 1.65; margin: 0; }
+.nav-bar { background: #0056b3; padding: 10px 24px; }
+.nav-bar a { color: #fff; text-decoration: none; margin-right: 20px; font-size: 0.95rem; }
+main { max-width: 900px; margin: 0 auto; padding: 24px 20px 60px; }
+h1, h2, h3 { color: #0056b3; }
+h1 { margin-bottom: 4px; }
+h2 { border-bottom: 2px solid #d6e4f5; padding-bottom: 6px; margin-top: 44px; }
+.subtitle { color: #555; margin-top: 0; }
+.intuition-box { background: #eef5fc; border-left: 5px solid #0056b3; padding: 12px 18px; margin: 18px 0; }
+.algorithm-box { background: #f7f7f7; border: 1px solid #ccc; padding: 12px 18px; margin: 18px 0; }
+.warn-box { background: #fff4e5; border-left: 5px solid #d9822b; padding: 12px 18px; margin: 18px 0; }
+.data-table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.95rem; }
+.data-table th { background: #0056b3; color: #fff; text-align: left; padding: 8px 10px; }
+.data-table td { border: 1px solid #ccd; padding: 8px 10px; vertical-align: top; }
+.data-table tr:nth-child(even) td { background: #f5f9fe; }
+.table-wrap { overflow-x: auto; }
+pre { background: #1e2530; color: #e8edf3; padding: 14px 16px; border-radius: 6px; overflow-x: auto; font-size: 0.88rem; line-height: 1.5; }
+code { font-family: Consolas, 'Courier New', monospace; }
+p code, li code, td code { background: #eceff3; padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+.bad-label, .good-label { font-weight: 600; margin: 14px 0 -6px; }
+.bad-label { color: #b3261e; } .good-label { color: #1b7a3a; }
+figure { margin: 22px 0; } figure svg { width: 100%; height: auto; }
+figcaption { font-size: 0.9rem; color: #555; text-align: center; }
+</style>
+</head>
+<body>
+<div class="nav-bar"><a href="index.html">Home</a></div>
+<main>
+<h1>AI Tools for Coding</h1>
+<p class="subtitle">A hands-on guide to using AI assistants without shipping their mistakes</p>
+
+<h2>1. How AI assistants can help you code</h2>
+<p>A coding assistant (ChatGPT, Claude, GitHub Copilot, Cursor and similar tools) is a language model trained on a large body of code and text. It predicts plausible code from your description. That makes it very fast at routine work, and it is the reason it sometimes produces code that looks right but is not.</p>
+<div class="table-wrap"><table class="data-table">
+<tr><th>Task</th><th>How the assistant helps</th><th>Example request</th></tr>
+<tr><td>Explaining code</td><td>Walks through unfamiliar code line by line</td><td>"Explain this loss-masking snippet and what each tensor shape is."</td></tr>
+<tr><td>Boilerplate and scaffolding</td><td>Argument parsing, data loaders, config files</td><td>"Write a PyTorch <code>Dataset</code> for a folder of images with a CSV of labels."</td></tr>
+<tr><td>Debugging</td><td>Reads a stack trace and proposes causes</td><td>"Here is the traceback and the function. What are the three most likely causes?"</td></tr>
+<tr><td>Writing tests</td><td>Drafts unit tests and edge cases</td><td>"List edge cases for this function, then write pytest tests."</td></tr>
+<tr><td>Refactoring and translating</td><td>Cleans up code, ports between languages</td><td>"Convert this loop to vectorised NumPy and keep the same output."</td></tr>
+<tr><td>Learning a new library</td><td>Gives a worked example you can run</td><td>"Show a minimal example of <code>pandas.groupby</code> with two aggregations."</td></tr>
+</table></div>
+<div class="intuition-box"><b>Mental model.</b> Treat the assistant as a fast, well-read junior colleague who never says "I'm not sure." You stay responsible for the specification, the review and the result.</div>
+
+<figure>
+<svg viewBox="0 0 760 130" role="img" aria-label="Workflow loop: specify, generate, read, verify, review and ship, with a loop back to specify on failure">
+<defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#0056b3"/></marker></defs>
+<g font-family="Segoe UI, sans-serif" font-size="13" text-anchor="middle">
+<g fill="#eef5fc" stroke="#0056b3" stroke-width="1.5">
+<rect x="10" y="10" width="124" height="56" rx="6"/><rect x="158" y="10" width="124" height="56" rx="6"/>
+<rect x="306" y="10" width="124" height="56" rx="6"/><rect x="454" y="10" width="124" height="56" rx="6"/>
+<rect x="602" y="10" width="124" height="56" rx="6"/></g>
+<g fill="#003d80"><text x="72" y="43">1. Specify</text><text x="220" y="43">2. Generate</text><text x="368" y="43">3. Read and explain</text><text x="516" y="43">4. Verify</text><text x="664" y="43">5. Review and ship</text></g>
+<g stroke="#0056b3" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+<path d="M134 38 H156"/><path d="M282 38 H304"/><path d="M430 38 H452"/><path d="M578 38 H600"/>
+<path d="M516 66 V106 H72 V68" stroke-dasharray="5 3"/></g>
+<text x="294" y="124" fill="#b3261e">Verification fails: fix the specification and tests, then regenerate</text>
+</g></svg>
+<figcaption>Figure 1. The generate-and-verify loop. Generation is only step 2 of 5.</figcaption>
+</figure>
+
+<h2>2. Standard AI coding tools</h2>
+<p>Assistants come in three working modes. The higher the mode, the more the tool does on its own, and the more carefully you must review.</p>
+<div class="table-wrap"><table class="data-table">
+<tr><th>Mode</th><th>What it does</th><th>Risk and review effort</th></tr>
+<tr><td>Inline completion</td><td>Suggests the next lines as you type</td><td>Low. You see each suggestion before accepting</td></tr>
+<tr><td>Chat and edit</td><td>Answers questions and edits the files you select</td><td>Medium. Read every changed line in the diff</td></tr>
+<tr><td>Agent</td><td>Plans a task, edits many files, runs terminal commands, reads errors and retries</td><td>High. Review commands before they run, and review the full diff afterwards</td></tr>
+</table></div>
+<div class="table-wrap"><table class="data-table">
+<tr><th>Tool</th><th>Form</th><th>Windows</th><th>Linux</th><th>Project instructions file</th></tr>
+<tr><td>GitHub Copilot</td><td>Extension for VS Code, Visual Studio, JetBrains IDEs, Neovim and others; chat, agent mode, code review, CLI, cloud agent</td><td>VS Code, JetBrains and Visual Studio (Windows only)</td><td>VS Code, JetBrains, Neovim</td><td><code>.github/copilot-instructions.md</code></td></tr>
+<tr><td>Claude Code</td><td>Terminal agent; also available in editors</td><td>Windows 10 1809+ natively, or inside WSL</td><td>Native installer, or apt, dnf, apk packages</td><td><code>CLAUDE.md</code></td></tr>
+<tr><td>Cursor</td><td>AI-first code editor (VS Code style) with agent</td><td>Yes</td><td>Yes</td><td><code>.cursor/rules/</code>; also reads <code>AGENTS.md</code></td></tr>
+<tr><td>OpenAI Codex CLI</td><td>Terminal agent</td><td>Commonly run inside WSL</td><td>Yes</td><td><code>AGENTS.md</code></td></tr>
+<tr><td>Gemini CLI</td><td>Terminal agent (installed with Node.js)</td><td>Yes</td><td>Yes</td><td><code>GEMINI.md</code></td></tr>
+<tr><td>Aider, Continue</td><td>Open-source terminal tool and editor extension; can use local models</td><td>Yes</td><td>Yes</td><td>Aider reuses <code>AGENTS.md</code></td></tr>
+</table></div>
+<div class="warn-box"><b>Check before the class.</b> Plans, prices, supported operating systems and model lists change every few months. For example, the Claude Code documentation states that the free claude.ai plan does not include Claude Code access. Confirm the current details on each vendor's page, and confirm your institution's policy on which tools students may use.</div>
+
+<h2>3. Using the tools to produce industry-standard code</h2>
+<p>"Industry standard" means the code meets the team's rules, not only that it runs: it follows the style guide, is typed and documented, has tests, contains no secrets, has been reviewed by a person, and passes automated checks on every platform you support.</p>
+
+<h3>3.1 Set up the environment on Windows and Linux</h3>
+<p>Windows developers targeting Linux servers should work inside WSL2, so that the code builds and runs where it will be deployed. Native Windows is fine for Windows-targeted software. The commands are almost the same on both:</p>
+<div class="table-wrap"><table class="data-table">
+<tr><th>Task</th><th>Windows (PowerShell)</th><th>Linux (bash)</th></tr>
+<tr><td>Virtual environment</td><td><code>py -m venv .venv</code><br><code>.\.venv\Scripts\Activate.ps1</code></td><td><code>python3 -m venv .venv</code><br><code>source .venv/bin/activate</code></td></tr>
+<tr><td>Install quality tools</td><td colspan="2"><code>pip install pytest ruff mypy pre-commit</code></td></tr>
+<tr><td>Lint, types, tests</td><td colspan="2"><code>ruff check .</code> then <code>mypy .</code> then <code>pytest -q</code></td></tr>
+<tr><td>C++ build and tests (CMake)</td><td colspan="2"><code>cmake -S . -B build</code>, <code>cmake --build build</code>, <code>ctest --test-dir build</code></td></tr>
+<tr><td>C++ sanitizers</td><td>MSVC: <code>cl /std:c++20 /EHsc /Zi /fsanitize=address test.cpp</code> (Developer PowerShell). Use clang or WSL for UBSan</td><td><code>g++ -std=c++20 -g -fsanitize=address,undefined test.cpp</code></td></tr>
+<tr><td>Work on a branch</td><td colspan="2"><code>git switch -c feature/macro-f1</code></td></tr>
+</table></div>
+
+<h3>3.2 Give the tool your standards in a project file</h3>
+<p>Every tool in Section 2 reads a short instruction file from the repository, so each request starts from your team's rules instead of from nothing. Keep it brief and concrete:</p>
+<pre><code># AGENTS.md  (or CLAUDE.md / .github/copilot-instructions.md)
+## Build and test
+- Python 3.11. Run: ruff check . &amp;&amp; mypy . &amp;&amp; pytest -q
+- C++20, CMake. Run: cmake -S . -B build &amp;&amp; cmake --build build &amp;&amp; ctest --test-dir build
+## Style
+- Type hints on all public functions. Docstrings in Google style.
+- Use pathlib for paths. Open text files with encoding="utf-8".
+## Rules
+- Add or update a pytest test for every behaviour change.
+- No new dependencies without asking. Never write secrets or keys into code.
+- Code must run on both Linux and Windows.</code></pre>
+
+<h3>3.3 A safe working routine</h3>
+<div class="algorithm-box">
+<ol>
+<li><b>Branch.</b> Start from a clean Git branch so that you can discard everything with one command.</li>
+<li><b>Plan first.</b> Ask the tool for a short plan or a list of files it will change. Correct the plan before it writes code.</li>
+<li><b>One small task at a time.</b> A change you can review in ten minutes is a change you will actually review.</li>
+<li><b>Tests first or together.</b> Have the tests written, confirm they fail for the right reason, then let the tool make them pass.</li>
+<li><b>Approve commands.</b> In agent mode, read each terminal command before it runs. Be especially wary of <code>rm</code>, <code>del</code>, <code>curl ... | sh</code> and anything touching credentials or production.</li>
+<li><b>Read the whole diff</b> (<code>git diff</code>) and run the checks yourself. Do not rely on the tool's statement that the tests pass.</li>
+<li><b>Commit and open a pull request.</b> Ask a colleague to review. The continuous-integration run below is the final gate.</li>
+</ol>
+</div>
+<p>Keep agents away from secrets: do not give them production credentials, exclude files such as <code>.env</code> using the tool's ignore mechanism (for example Cursor's <code>.cursorignore</code>), and prefer a test environment, a container or WSL for anything that executes code.</p>
+
+<h3>3.4 Let CI enforce the standard on both platforms</h3>
+<p>Automated checks do not depend on anyone remembering them. This GitHub Actions workflow runs the same checks on Linux and Windows for every push:</p>
+<pre><code>name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install pytest ruff mypy
+      - run: ruff check .
+      - run: mypy .
+      - run: pytest -q</code></pre>
+
+<h3>3.5 Cross-platform mistakes that assistants often make</h3>
+<p>Assistants write code that works on the system they imagine. Typical failures: hard-coded <code>/</code> path separators, shell commands such as <code>rm -f</code> that do not exist on Windows, files opened without an encoding, and filenames that differ only by case. For example:</p>
+<pre><code>import os
+def clean(name):
+    path = "data/" + name + ".tmp"
+    os.system("rm -f " + path)        # fails on Windows, and unsafe if name is untrusted</code></pre>
+<pre><code>from pathlib import Path
+def clean(name: str) -> None:
+    path = Path("data") / f"{name}.tmp"
+    path.unlink(missing_ok=True)       # works on Linux and Windows, no shell involved</code></pre>
+<p>The Windows runner in the CI workflow above is what catches this class of error automatically.</p>
+
+<h2>4. Prompting skills for production-quality code</h2>
+<p>The quality of generated code depends on how much of the real problem you put into the prompt. Production code needs more than "make it work."</p>
+<div class="table-wrap"><table class="data-table">
+<tr><th>Skill</th><th>What to include</th></tr>
+<tr><td>Context</td><td>Language and version, libraries and versions, the surrounding code, style rules</td></tr>
+<tr><td>Contract</td><td>Function signature, input types and ranges, return value, which errors are raised and when</td></tr>
+<tr><td>Edge cases</td><td>Empty input, single element, ties, missing values, class absent from the data, very large input</td></tr>
+<tr><td>Non-functional needs</td><td>Time and memory limits, thread safety, determinism (random seeds), logging, no new dependencies</td></tr>
+<tr><td>Examples</td><td>Two or three input-to-output pairs, including a tricky one you computed by hand</td></tr>
+<tr><td>Tests alongside</td><td>Ask for tests with the code, or ask for tests first</td></tr>
+<tr><td>Assumptions</td><td>Ask it to list assumptions and anything it is unsure about</td></tr>
+<tr><td>Small steps</td><td>One function or module per request, then integrate</td></tr>
+</table></div>
+
+<p class="bad-label">Weak prompt</p>
+<pre><code>Write a Python function for macro F1 score.</code></pre>
+<p class="good-label">Strong prompt</p>
+<pre><code>Write a Python 3.11 function macro_f1(y_true, y_pred) -> float, standard library only.
+- Inputs: two equal-length lists of hashable class labels.
+- Raise ValueError if lengths differ or the lists are empty.
+- Use the union of labels in y_true and y_pred as the class set.
+- If a class has no true positives, its F1 is 0.0 (no ZeroDivisionError).
+- Example: y_true=[0,0,1,1], y_pred=[0,2,1,1] -> 5/9 (about 0.5556).
+Then: list your assumptions, and write pytest tests including that example
+and a case where one class is never predicted.</code></pre>
+<div class="intuition-box">The strong prompt is a specification. Writing it forces you to understand the problem, which is part of the learning.</div>
+
+<h2>5. How judiciously should you use generated code?</h2>
+<div class="table-wrap"><table class="data-table">
+<tr><th>Use</th><th>Examples</th><th>Guidance</th></tr>
+<tr><td>Use freely, then check</td><td>Boilerplate, plotting, file I/O, regex you will test, docstrings, unit-test drafts</td><td>Low risk, easy to verify by running</td></tr>
+<tr><td>Use with care</td><td>Data preprocessing, metrics, training loops, concurrency, anything numerical</td><td>Bugs are silent: the code runs and gives wrong numbers. Verify against an independent reference</td></tr>
+<tr><td>Avoid or restrict</td><td>Security, authentication, cryptography, safety-critical logic, code you could not explain</td><td>Use vetted libraries; have an experienced person review every line</td></tr>
+</table></div>
+<ul>
+<li><b>Explain-it-back rule.</b> If you cannot explain every line to a classmate, do not merge it.</li>
+<li><b>Learn first, then assist.</b> For a concept you are studying (for example backpropagation), write your own version first, then compare with the assistant's. Otherwise you train the tool, not yourself.</li>
+<li><b>Protect confidential material.</b> Do not paste secrets, API keys, student or patient data, or proprietary source code into a public tool. Check your organisation's policy.</li>
+<li><b>Licensing and integrity.</b> Generated code can resemble licensed code. Follow your course's and employer's rules on disclosing AI assistance.</li>
+</ul>
+
+<h2>6. Before deploying: what to do with generated code</h2>
+<div class="algorithm-box">
+<ol>
+<li><b>Read and explain it.</b> Ask the assistant to explain it too, then check that explanation against the code.</li>
+<li><b>Run static checks.</b> Linters and type checkers (<code>ruff</code>, <code>mypy</code>; <code>clang-tidy</code> for C++), with warnings treated as errors.</li>
+<li><b>Write or review tests.</b> Cover normal cases, edge cases and failure cases. Add a test that cross-checks against a trusted reference library.</li>
+<li><b>Run dynamic checks.</b> Sanitizers for C++ (<code>-fsanitize=address,undefined</code>), profiling for speed and memory, and a fixed random seed for reproducibility.</li>
+<li><b>Scan dependencies and security.</b> Confirm every imported package exists and is the well-known one. Run a vulnerability scan (<code>pip-audit</code>, <code>npm audit</code>). Look for hard-coded secrets and unsanitised input.</li>
+<li><b>Human code review.</b> A second person reviews it as if you had written it yourself.</li>
+<li><b>Continuous integration and staged rollout.</b> Tests run automatically on every change; release to a small group first, with logging and a rollback plan.</li>
+</ol>
+</div>
+
+<h2>7. How to check for hallucinations and errors</h2>
+<p>A hallucination is output that is fluent and confident but false. In code it appears in four common forms:</p>
+<div class="table-wrap"><table class="data-table">
+<tr><th>Type</th><th>Example</th><th>How to catch it</th></tr>
+<tr><td>Invented API</td><td>A function or parameter that does not exist</td><td>Run it; check the official documentation; <code>help()</code>, <code>dir()</code>, <code>hasattr()</code></td></tr>
+<tr><td>Outdated API</td><td>A method removed in the library version you have</td><td>Compare against your installed version's documentation</td></tr>
+<tr><td>Invented package</td><td>A <code>pip install</code> of a name that does not exist, or that an attacker later registers</td><td>Check the package on its official index page: maintainer, age, downloads</td></tr>
+<tr><td>Plausible but wrong logic</td><td>Off-by-one, wrong denominator, missing edge case</td><td>Hand-computed examples, property tests, reference implementations</td></tr>
+</table></div>
+<div class="warn-box"><b>The most dangerous errors are the ones that run.</b> An invented function crashes immediately and is easy to find. A wrong denominator returns a number that looks reasonable. Test the results, not just whether the code executes.</div>
+<p>Techniques that work: run the code on tiny inputs you can compute by hand; compare against an established library on random inputs; ask the assistant to "find bugs in this code" in a fresh conversation; ask it which statements it is least sure of; and always read the official documentation for any API you have not used before.</p>
+
+<h2>8. Worked examples</h2>
+<h3>Example A: a metric function that runs but is wrong</h3>
+<p>Students on this site met macro F1 earlier. The prompt "write a macro F1 function" typically returns something like this:</p>
+<pre><code>def macro_f1(y_true, y_pred):
+    classes = set(y_true)
+    f1s = []
+    for c in classes:
+        tp = sum(1 for t, p in zip(y_true, y_pred) if t == c and p == c)
+        fp = sum(1 for t, p in zip(y_true, y_pred) if t != c and p == c)
+        fn = sum(1 for t, p in zip(y_true, y_pred) if t == c and p != c)
+        precision = tp / (tp + fp)
+        recall = tp / (tp + fn)
+        f1s.append(2 * precision * recall / (precision + recall))
+    return sum(f1s) / len(f1s)</code></pre>
+<p>Reviewing it with the checklist from Section 6 finds three problems:</p>
+<ul>
+<li><b>Classes come only from <code>y_true</code>.</b> For <code>y_true=[0,0,1,1]</code>, <code>y_pred=[0,2,1,1]</code> it returns 0.833. The class-2 error is silently ignored. The correct macro F1 over classes {0, 1, 2} is 5/9 = 0.556.</li>
+<li><b>Division by zero.</b> With <code>y_pred=[0,0,0,0]</code>, class 1 is never predicted, so <code>tp + fp = 0</code> and the function crashes.</li>
+<li><b>No input validation.</b> Mismatched lengths are silently truncated by <code>zip</code>.</li>
+</ul>
+<p>The corrected version, written after tightening the prompt as in Section 4, uses the identity $F_1 = \dfrac{2\,TP}{2\,TP + FP + FN}$, which avoids the intermediate precision and recall divisions:</p>
+<pre><code>def macro_f1(y_true, y_pred):
+    if len(y_true) != len(y_pred) or len(y_true) == 0:
+        raise ValueError("y_true and y_pred must be non-empty and equal length")
+    classes = sorted(set(y_true) | set(y_pred))
+    f1s = []
+    for c in classes:
+        tp = sum(1 for t, p in zip(y_true, y_pred) if t == c and p == c)
+        fp = sum(1 for t, p in zip(y_true, y_pred) if t != c and p == c)
+        fn = sum(1 for t, p in zip(y_true, y_pred) if t == c and p != c)
+        denom = 2 * tp + fp + fn
+        f1s.append(2 * tp / denom if denom else 0.0)
+    return sum(f1s) / len(f1s)</code></pre>
+<p>The tests that catch the original bugs, including a cross-check against scikit-learn on random data:</p>
+<pre><code>import random
+from sklearn.metrics import f1_score
+from metrics import macro_f1
+
+def test_class_only_in_predictions():
+    assert abs(macro_f1([0,0,1,1], [0,2,1,1]) - 5/9) &lt; 1e-9
+
+def test_class_never_predicted():
+    assert abs(macro_f1([0,0,1,1], [0,0,0,0]) - 1/3) &lt; 1e-9
+
+def test_matches_sklearn_on_random_data():
+    rng = random.Random(0)
+    for _ in range(200):
+        n = rng.randint(1, 50)
+        y = [rng.randint(0, 4) for _ in range(n)]
+        p = [rng.randint(0, 4) for _ in range(n)]
+        assert abs(macro_f1(y, p) - f1_score(y, p, average="macro", zero_division=0)) &lt; 1e-9</code></pre>
+
+<h3>Example B: a hallucinated API</h3>
+<p>Asked for a 7-day moving average and a balanced F1 score, an assistant may suggest:</p>
+<pre><code>from sklearn.metrics import balanced_f1_score     # ImportError: no such function
+smooth = df["sales"].rolling_mean(7)              # AttributeError: Series has no rolling_mean</code></pre>
+<p>Verify before trusting:</p>
+<pre><code>python -c "import sklearn.metrics as m; print(hasattr(m, 'balanced_f1_score'))"    # False
+python -c "import sklearn.metrics as m; print([n for n in dir(m) if 'f1' in n or 'balanced' in n])"</code></pre>
+<p>The second command lists the real names (for example <code>f1_score</code> and <code>balanced_accuracy_score</code>). The moving average is <code>df["sales"].rolling(7).mean()</code>. The older <code>pd.rolling_mean</code> style belongs to a pandas version that has since been removed, which is the "outdated API" case from Section 7. When you hit an error like this, give the exact error message and your library versions back to the assistant.</p>
+
+<h3>Example C: undefined behaviour in C++</h3>
+<p>Request: "Remove all negative numbers from a <code>std::vector&lt;int&gt;</code>." A plausible answer:</p>
+<pre><code>#include &lt;vector&gt;
+
+void drop_negatives(std::vector&lt;int&gt;&amp; v) {
+    for (auto it = v.begin(); it != v.end(); ++it) {
+        if (*it &lt; 0) v.erase(it);      // BUG: erase invalidates 'it'
+    }
+}</code></pre>
+<p>After <code>erase</code>, the iterator <code>it</code> is invalid, and incrementing it is undefined behaviour. The function may even pass a small test and fail in production. It also skips the element that shifts into the erased position. Dynamic checks (Section 6, step 4) find it:</p>
+<pre><code>g++ -std=c++20 -g -fsanitize=address,undefined test.cpp &amp;&amp; ./a.out</code></pre>
+<p>The standard idiom avoids the problem entirely:</p>
+<pre><code>#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+
+void drop_negatives(std::vector&lt;int&gt;&amp; v) {
+    v.erase(std::remove_if(v.begin(), v.end(), [](int x) { return x &lt; 0; }), v.end());
+    // C++20 alternative: std::erase_if(v, [](int x) { return x &lt; 0; });
+}</code></pre>
+
+<h3>Example D: refactoring legacy code safely</h3>
+<p>Refactoring means changing the structure of code without changing what it does. It is a good job for an assistant, and also a risky one, because the assistant may "improve" behaviour without telling you. The defence is to pin down the current behaviour with tests <em>before</em> any change. Here is a working but hard-to-read function that averages exam scores per department:</p>
+<pre><code># legacy.py
+def process(data):
+    out = {}
+    for i in range(len(data)):
+        if data[i]['score'] != None:
+            if data[i]['score'] >= 0 and data[i]['score'] &lt;= 100:
+                if data[i]['dept'] in out:
+                    out[data[i]['dept']].append(data[i]['score'])
+                else:
+                    out[data[i]['dept']] = [data[i]['score']]
+    res = []
+    for k in out:
+        s = 0
+        for v in out[k]:
+            s = s + v
+        res.append((k, s/len(out[k]), len(out[k])))
+    res.sort(key=lambda x: x[1], reverse=True)
+    return res</code></pre>
+<p>What it does: it keeps scores that are not <code>None</code> and lie between 0 and 100, groups them by department, and returns <code>(dept, mean, count)</code> tuples with the highest mean first. Departments with no valid score do not appear, and ties keep first-appearance order.</p>
+
+<p><b>Step 1: write characterization tests against the original.</b> They record what the code does today, including the edge cases, and they must pass before you refactor:</p>
+<pre><code>import pytest
+from legacy import process as old
+
+ROWS = [
+    {"dept": "B", "score": 90}, {"dept": "A", "score": 90},
+    {"dept": "A", "score": None}, {"dept": "C", "score": 101},
+    {"dept": "B", "score": 0},   {"dept": "D", "score": 100},
+]
+
+def test_known_case():
+    assert old(ROWS) == [("D", 100.0, 1), ("A", 90.0, 1), ("B", 45.0, 2)]
+
+def test_ties_keep_first_appearance_order():
+    rows = [{"dept": "Y", "score": 50}, {"dept": "X", "score": 50}]
+    assert old(rows) == [("Y", 50.0, 1), ("X", 50.0, 1)]
+
+def test_empty_input():
+    assert old([]) == []</code></pre>
+
+<p><b>Step 2: give the assistant a behaviour-preserving prompt.</b></p>
+<pre><code>Refactor process() in legacy.py into average_by_dept(rows) in scores.py.
+Behaviour must not change: same return type (list of (dept, mean, count)),
+same ordering including ties, same handling of None and out-of-range scores.
+Do not add features or dependencies. Add type hints and a docstring.
+Then list every place where behaviour could differ from the original.</code></pre>
+
+<p><b>Step 3: review the result.</b> After reading it, this is the version we keep:</p>
+<pre><code># scores.py
+from collections import defaultdict
+from collections.abc import Iterable, Mapping
+from typing import Any
+
+def average_by_dept(rows: Iterable[Mapping[str, Any]]) -> list[tuple[str, float, int]]:
+    """Return (dept, mean score, count) per department, highest mean first.
+
+    Scores that are None or outside 0..100 are ignored. Departments with no
+    valid scores are omitted. Ties keep first-appearance order.
+    """
+    scores_by_dept: defaultdict[str, list[float]] = defaultdict(list)
+    for row in rows:
+        score = row["score"]
+        if score is not None and 0 &lt;= score &lt;= 100:
+            scores_by_dept[row["dept"]].append(score)
+    summary = [(dept, sum(s) / len(s), len(s)) for dept, s in scores_by_dept.items()]
+    return sorted(summary, key=lambda t: t[1], reverse=True)</code></pre>
+<p>It is shorter, typed, documented, and uses names that explain intent. The review is where behaviour changes get caught. Three things to check:</p>
+<ul>
+<li><b>Ties.</b> The tie order depends on dict insertion order and on the sort being stable. An assistant that "tidies" this into <code>sorted(..., key=lambda t: (-t[1], t[0]))</code> changes the tie order, and the tie test fails.</li>
+<li><b>Floating-point results.</b> Replacing the manual loop with <code>sum(s) / len(s)</code>, or the tempting <code>statistics.fmean</code>, can change the last digits of a float mean. On Python 3.12 in a run of 2,000 random inputs, exact comparison mismatched in 14 cases with <code>sum</code> and 27 with <code>fmean</code>. The values agree within a tiny tolerance, and for integer scores they were identical. Compare float results with a tolerance (<code>pytest.approx</code> or <code>math.isclose</code>), and treat a change in numerical method as a separate, deliberate decision.</li>
+<li><b>Errors.</b> A row with a missing <code>"score"</code> key raised <code>KeyError</code> before and still does. Silently adding <code>row.get("score")</code> would be a behaviour change.</li>
+</ul>
+
+<p><b>Step 4: compare old and new on random inputs</b> (differential testing). Point the same tests at both functions, and add a random comparison:</p>
+<pre><code>import math, random
+import pytest
+from legacy import process as old
+from scores import average_by_dept as new
+
+@pytest.mark.parametrize("process", [old, new])
+def test_known_case(process):
+    assert process(ROWS) == [("D", 100.0, 1), ("A", 90.0, 1), ("B", 45.0, 2)]
+
+@pytest.mark.parametrize("process", [old, new])
+def test_float_scores_use_tolerance(process):
+    rows = [{"dept": "A", "score": s} for s in (0.1, 0.2, 0.3)]
+    assert process(rows)[0][1] == pytest.approx(0.2)
+
+def test_old_and_new_agree_on_random_data():
+    rng = random.Random(1)
+    for _ in range(2000):
+        rows = [{"dept": rng.choice("ABC"),
+                 "score": rng.choice([None, -1, 101, rng.uniform(0, 100), rng.randint(0, 100)])}
+                for _ in range(rng.randint(0, 12))]
+        a, b = old(rows), new(rows)
+        assert [(d, n) for d, _, n in a] == [(d, n) for d, _, n in b]
+        assert all(math.isclose(x[1], y[1], rel_tol=1e-9) for x, y in zip(a, b))</code></pre>
+<p><b>Step 5: finish like any other change.</b> Run <code>ruff check .</code>, <code>mypy .</code> and <code>pytest -q</code>, read the full <code>git diff</code>, and commit the refactoring on its own, separate from any new feature, so a reviewer can see that behaviour did not change. Once the new function is trusted, delete <code>legacy.py</code> and the comparison test. The same discipline works in C++: write characterization tests (for example with GoogleTest or Catch2) first, refactor in small steps, then run <code>clang-tidy</code> and the sanitizers from Section 6.</p>
+
+<h2>Summary</h2>
+<div class="intuition-box">
+<ul>
+<li>Tools range from inline completion to agents. Higher autonomy needs more review.</li>
+<li>Give every tool your standards in a project file, and let CI check them on Linux and Windows.</li>
+<li>Assistants are fastest for explaining, scaffolding, debugging and drafting tests.</li>
+<li>Production-quality output needs a specification-quality prompt: context, contract, edge cases, examples, tests.</li>
+<li>Trust in proportion to how easily the result can be verified. Be most careful with silent numerical errors and security.</li>
+<li>Before deployment: read, lint, test against a reference, run sanitizers, check dependencies, get a human review.</li>
+<li>When refactoring, pin current behaviour with tests first, then compare old and new on random inputs.</li>
+<li>Test the results, not only that the code runs.</li>
+</ul>
+</div>
+<h3>Practice exercise</h3>
+<p>Ask an assistant for a <em>micro</em> F1 function. Without looking at the answer first, write down five edge cases. Then test the generated code against <code>f1_score(..., average="micro")</code> on random data, and list every defect you find.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Machine Learning Tutorial</title>
+    
+    <!-- Load MathJax library last --> -->
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        document.body.style.visibility = 'visible';
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body>
+
+<div class="content-wrapper">
+    <h1 class="detail-title">Normal (Gaussian) Distributions</h1>
+    
+    <p class="detail-description">
+        The Normal Distribution, also known as the Gaussian Distribution, is a widely used continuous probability distribution. Its fundamental importance lies in the fact that many natural populations follow a pattern that approximates the Normal Curve. Numerous phenomena—such as the age distribution of a specific animal species, the heights of adults, and various industrial measurements—are considered to be normally distributed. Normal distribution has an important feature that many probability distributions can be approximated to Normal distributions when the number of random variables becomes very large. As in the case of any probability distributions, Gaussian distribution gives a probability for a given random variable.
+    </p>
+
+    <div class="example-section">
+        <span class="example-header">Manufacturing Example:</span>
+        <p class="detail-description" style="margin-bottom: 0;">
+            Consider a company manufacturing screws of a specific diameter. While the machinery is precise, there will always be slight variations in measurement. Most screws will have a diameter very close to the target; however, a few will be slightly larger or smaller.
+        </p>
+    </div>
+
+    <p class="detail-description">
+        If we plot a histogram of these measurements, the highest frequency occurs at the center (the mean). As we move away from the center, the frequency decreases symmetrically on both sides. By reducing the class intervals to be infinitely small, the histogram transforms into a smooth, bell-shaped curve. This is the <strong>Normal Curve</strong>. By dividing the frequency by the total number of observations, the distribution is normalized to represent probability, where the total area under the curve is exactly 1. The ordinate at mean divides the whole part into two parts. The area to the right of the ordinate and that of left of the ordinate are both 0.5. 
+    </p>
+
+    <div class="plot-container">
+        <svg width="500" height="280" viewBox="0 0 500 280" xmlns="http://www.w3.org/2000/svg">
+            <line x1="60" y1="220" x2="60" y2="40" stroke="#333" stroke-width="2" />
+            <path d="M 55 50 L 60 40 L 65 50" fill="none" stroke="#333" stroke-width="2" /> 
+            <line x1="60" y1="220" x2="460" y2="220" stroke="#333" stroke-width="2" />
+            <path d="M 450 215 L 460 220 L 450 225" fill="none" stroke="#333" stroke-width="2" /> 
+            <line x1="260" y1="220" x2="260" y2="60" stroke="#ddd" stroke-dasharray="5,5" />
+            
+            <path d="M 60 215 C 160 215, 190 60, 260 60 C 330 60, 360 215, 460 215" 
+                  fill="none" stroke="#0056b3" stroke-width="3" />
+            
+            <path d="M 60 220 C 160 220, 190 60, 260 60 C 330 60, 360 220, 460 220 L 60 220 Z" 
+                  fill="#0056b3" fill-opacity="0.1" />
+
+            <text x="30" y="130" font-family="Arial" font-size="14" font-weight="bold" fill="#333" transform="rotate(-90, 30, 130)" text-anchor="middle">
+                Probability Density (y-axis)
+            </text>
+            
+            <text x="260" y="260" font-family="Arial" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">
+                Random Variable (x-axis)
+            </text>
+
+            <text x="260" y="235" font-family="Arial" font-size="12" font-style="italic" fill="#0056b3" text-anchor="middle">Mean (μ)</text>
+        </svg>
+        <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">
+            <em>Figure: The relationship between the Random Variable and its Probability in a Normal Distribution.</em>
+        </p>
+    </div>
+
+    <h3>Mathematical Definition of Normal Distribution</h3>
+    <p class="detail-description">
+        A continuous random variable $X$ is said to follow a <strong>Normal Distribution</strong> (Gaussian distribution) if its probability density function (PDF) is defined by the following equation:
+    </p>
+
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$f(x) = \frac{1}{\sigma \sqrt{2\pi}} e^{-\frac{1}{2} \left( \frac{x - \mu}{\sigma} \right)^2}$$
+    </div>
+
+    <p class="detail-description">
+        Where the parameters are defined as:
+    </p>
+    <ul>
+        <li>$\mu$ (Mu): The <strong>Mean</strong> or center of the distribution.</li>
+        <li>$\sigma$ (Sigma): The <strong>Standard Deviation</strong>, representing the spread.</li>
+        <li>A random variable $X$ following a Normal Distribution is typically represented as $X \sim N(\mu, \sigma^2)$, where $\mu$ is the mean and $\sigma^2$ is the variance.</li>
+        <li>$e$: The base of natural logarithms (approx. 2.718).</li>
+        <li>$\pi$: The constant Pi (approx. 3.1415).</li>
+        <li>The curve is <strong>asymptotic</strong> to the base on either side; i.e., the curve approaches nearer and nearer to the base, but never touches.</li>
+        <li>The <strong>points of inflection</strong> occur at $\mu \pm \sigma$.</li>
+        
+        <li><strong>Area Distribution (The Empirical Rule):</strong>
+            <ul class="area-distribution">
+                <li>$\mu \pm 1\sigma$ covers <strong>68.27%</strong> of the area.</li>
+                <li>$\mu \pm 2\sigma$ covers <strong>95.45%</strong> of the area.</li>
+                <li>$\mu \pm 3\sigma$ covers <strong>99.73%</strong> of the area.</li>
+            </ul>
+        </li>
+        <li><strong>Additive Property:</strong> A linear function of normal variates is also a normal variate. This property ensures that the sum or difference of independent normally distributed variables results in a new variable that is also normally distributed.</li>
+    </ul>
+    
+    <p class="detail-description" style="margin-top: 15px;">
+        The variable $X$ is defined over the <strong>theoretical range</strong> $-\infty < X < +\infty$. However, for most practical applications, the range is considered to be $\mu - 3\sigma$ to $\mu + 3\sigma$, as it encompasses nearly all possible outcomes. In this context, $X$ is treated as a Continuous Random Variable representing a single measurement, allowing us to calculate the probability of $X$ falling within any given interval under the Gaussian curve.
+    </p>
+
+    <h3>Interactive Exploration: How $\mu$ and $\sigma^2$ Shape the Curve</h3>
+    <p class="detail-description">
+        Drag the sliders below to see how the mean and variance change the bell curve. Notice that $\mu$ only slides the curve left or right, while $\sigma^2$ controls both the width <em>and</em> the peak height together — since the total area under the curve must always stay exactly 1.
+    </p>
+
+    <div class="plot-container nd-widget">
+        <div class="nd-controls">
+            <div class="nd-control-row">
+                <label>Mean (&mu;) <span class="nd-val" id="ndMuVal">0.00</span></label>
+                <input type="range" id="ndMuSlider" min="-6" max="6" step="0.1" value="0">
+            </div>
+            <div class="nd-control-row">
+                <label>Variance (&sigma;&sup2;) <span class="nd-val" id="ndVarVal">1.00</span></label>
+                <input type="range" id="ndVarSlider" min="0.2" max="9" step="0.05" value="1">
+            </div>
+        </div>
+
+        <div class="nd-toggles">
+            <label><input type="checkbox" id="ndToggleShading"> Shade &mu; &plusmn; &sigma;, 2&sigma;, 3&sigma; (empirical rule)</label>
+            <label><input type="checkbox" id="ndToggleZ"> Overlay standard normal Z-curve</label>
+            <label><input type="checkbox" id="ndToggleHover" checked> Hover to read density value</label>
+        </div>
+
+        <svg id="ndChart" viewBox="0 0 900 380"></svg>
+
+        <div class="nd-stats-bar">
+            <span class="nd-stat-chip" id="ndChipMean">&mu; = 0.00</span>
+            <span class="nd-stat-chip" id="ndChipVar">&sigma;&sup2; = 1.00</span>
+            <span class="nd-stat-chip" id="ndChipSD">&sigma; = 1.00</span>
+            <span class="nd-stat-chip" id="ndChipPeak">peak height = 0.399</span>
+        </div>
+
+        <div class="nd-buttons">
+            <button type="button" class="nd-btn-secondary" id="ndResetBtn">Reset to &mu;=0, &sigma;&sup2;=1</button>
+        </div>
+    </div>
+
+    <style>
+        .nd-widget{ font-family: inherit; }
+        .nd-controls{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:16px 28px;
+            margin-bottom:8px;
+        }
+        @media (max-width: 600px){
+            .nd-controls{ grid-template-columns:1fr; }
+        }
+        .nd-control-row label{
+            display:flex;
+            justify-content:space-between;
+            font-weight:600;
+            color:#333;
+            font-size:0.92rem;
+            margin-bottom:4px;
+        }
+        .nd-val{ color:#0056b3; font-variant-numeric:tabular-nums; }
+        .nd-widget input[type=range]{ width:100%; accent-color:#0056b3; }
+        .nd-toggles{
+            display:flex;
+            flex-wrap:wrap;
+            gap:8px 16px;
+            margin:12px 0 4px;
+            font-size:0.85rem;
+        }
+        .nd-toggles label{
+            display:flex;
+            align-items:center;
+            gap:6px;
+            cursor:pointer;
+            user-select:none;
+            padding:4px 10px;
+            border:1px solid #e1e8ed;
+            border-radius:16px;
+            background:#fff;
+        }
+        .nd-toggles input{ accent-color:#0056b3; }
+        #ndChart{ width:100%; height:auto; display:block; margin-top:6px; }
+        .nd-stats-bar{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+        .nd-stat-chip{
+            background:#eaf2fb;
+            color:#0056b3;
+            padding:5px 12px;
+            border-radius:20px;
+            font-size:0.82rem;
+            font-weight:600;
+            font-variant-numeric:tabular-nums;
+        }
+        .nd-buttons{ margin-top:12px; }
+        .nd-btn-secondary{
+            background:#fff;
+            color:#0056b3;
+            border:1px solid #0056b3;
+            padding:7px 14px;
+            border-radius:6px;
+            font-size:0.85rem;
+            cursor:pointer;
+        }
+        .nd-btn-secondary:hover{ background:#eaf2fb; }
+        .nd-curve{ fill:none; stroke:#0056b3; stroke-width:2.5; }
+        .nd-z-curve{ fill:none; stroke:#f39c12; stroke-width:2; stroke-dasharray:6 4; opacity:0.9; }
+        .nd-fill-1{ fill:#0056b3; opacity:0.28; }
+        .nd-fill-2{ fill:#0056b3; opacity:0.16; }
+        .nd-fill-3{ fill:#0056b3; opacity:0.08; }
+        .nd-axis-line{ stroke:#999; stroke-width:1; }
+        .nd-grid-line{ stroke:#dde3ea; stroke-width:1; }
+        .nd-mean-line{ stroke:#c0392b; stroke-width:1.6; stroke-dasharray:4 3; }
+        .nd-hover-line{ stroke:#555; stroke-width:1; stroke-dasharray:3 3; }
+        .nd-hover-dot{ fill:#0056b3; stroke:#fff; stroke-width:1.5; }
+        .nd-axis-label{ font-size:12px; fill:#555; font-family:Arial, sans-serif; }
+        .nd-hover-readout{ font-size:12px; fill:#222; font-weight:600; font-family:Arial, sans-serif; }
+    </style>
+
+    <p style="font-size: 0.85rem; color: #666; margin-top: 8px;">
+        <em>Tip: turn on the empirical-rule shading and watch the percentages hold steady at 68% / 95% / 99.7% no matter how you stretch &sigma; &mdash; only the width of the shaded band changes, not the proportion of area inside it.</em>
+    </p>
+
+    <script>
+    (function(){
+        const svg = document.getElementById('ndChart');
+        const svgNS = "http://www.w3.org/2000/svg";
+        const W = 900, H = 380;
+        const marginL = 55, marginR = 30, marginT = 20, marginB = 45;
+        const plotW = W - marginL - marginR, plotH = H - marginT - marginB;
+        const xMin = -12, xMax = 12;
+
+        function xToPx(x){ return marginL + (x - xMin) / (xMax - xMin) * plotW; }
+        function pxToX(px){ return xMin + (px - marginL) / plotW * (xMax - xMin); }
+
+        function normalPDF(x, mu, variance){
+            const sigma = Math.sqrt(variance);
+            return (1 / (sigma * Math.sqrt(2*Math.PI))) * Math.exp(-((x-mu)**2)/(2*variance));
+        }
+
+        function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+        function el(tag, attrs){
+            const e = document.createElementNS(svgNS, tag);
+            for(const k in attrs) e.setAttribute(k, attrs[k]);
+            return e;
+        }
+
+        function draw(){
+            const mu = parseFloat(document.getElementById('ndMuSlider').value);
+            const variance = parseFloat(document.getElementById('ndVarSlider').value);
+            const sigma = Math.sqrt(variance);
+            const showShading = document.getElementById('ndToggleShading').checked;
+            const showZ = document.getElementById('ndToggleZ').checked;
+
+            document.getElementById('ndMuVal').textContent = mu.toFixed(2);
+            document.getElementById('ndVarVal').textContent = variance.toFixed(2);
+            document.getElementById('ndChipMean').textContent = 'μ = ' + mu.toFixed(2);
+            document.getElementById('ndChipVar').textContent = 'σ² = ' + variance.toFixed(2);
+            document.getElementById('ndChipSD').textContent = 'σ = ' + sigma.toFixed(2);
+            document.getElementById('ndChipPeak').textContent = 'peak height = ' + normalPDF(mu, mu, variance).toFixed(3);
+
+            clearSVG();
+
+            const peak = normalPDF(mu, mu, variance);
+            const zPeak = showZ ? normalPDF(0, 0, 1) : 0;
+            const yMax = Math.max(peak, zPeak) * 1.25 || 0.05;
+            function yToPx(y){ return marginT + plotH - (y / yMax) * plotH; }
+
+            for(let gx = Math.ceil(xMin/2)*2; gx <= xMax; gx += 2){
+                svg.appendChild(el('line', {x1:xToPx(gx), y1:marginT, x2:xToPx(gx), y2:marginT+plotH, class:'nd-grid-line'}));
+            }
+
+            if(showShading){
+                const bands = [[3,'nd-fill-3'],[2,'nd-fill-2'],[1,'nd-fill-1']];
+                bands.forEach(([k, cls])=>{
+                    let d = `M ${xToPx(mu-k*sigma)} ${yToPx(0)} `;
+                    const steps = 80;
+                    for(let i=0;i<=steps;i++){
+                        const x = mu-k*sigma + (2*k*sigma)*i/steps;
+                        d += `L ${xToPx(x)} ${yToPx(normalPDF(x,mu,variance))} `;
+                    }
+                    d += `L ${xToPx(mu+k*sigma)} ${yToPx(0)} Z`;
+                    svg.appendChild(el('path', {d, class:cls}));
+                });
+            }
+
+            let d = '';
+            const steps = 240;
+            for(let i=0;i<=steps;i++){
+                const x = xMin + (xMax-xMin)*i/steps;
+                const y = normalPDF(x, mu, variance);
+                d += (i===0 ? 'M ' : 'L ') + xToPx(x) + ' ' + yToPx(y) + ' ';
+            }
+            svg.appendChild(el('path', {d, class:'nd-curve'}));
+
+            if(showZ){
+                let dz = '';
+                for(let i=0;i<=steps;i++){
+                    const x = xMin + (xMax-xMin)*i/steps;
+                    const y = normalPDF(x, 0, 1);
+                    dz += (i===0 ? 'M ' : 'L ') + xToPx(x) + ' ' + yToPx(y) + ' ';
+                }
+                svg.appendChild(el('path', {d: dz, class:'nd-z-curve'}));
+                const lbl = el('text', {x:xToPx(2.3), y:yToPx(normalPDF(2,0,1))-6, class:'nd-axis-label', fill:'#f39c12'});
+                lbl.textContent = 'Standard Normal (μ=0, σ=1)';
+                svg.appendChild(lbl);
+            }
+
+            svg.appendChild(el('line', {x1:xToPx(mu), y1:marginT, x2:xToPx(mu), y2:marginT+plotH, class:'nd-mean-line'}));
+
+            svg.appendChild(el('line', {x1:marginL, y1:marginT+plotH, x2:marginL+plotW, y2:marginT+plotH, class:'nd-axis-line'}));
+            svg.appendChild(el('line', {x1:marginL, y1:marginT, x2:marginL, y2:marginT+plotH, class:'nd-axis-line'}));
+            for(let gx = Math.ceil(xMin/2)*2; gx <= xMax; gx += 2){
+                const t = el('text', {x:xToPx(gx), y:marginT+plotH+18, class:'nd-axis-label', 'text-anchor':'middle'});
+                t.textContent = gx;
+                svg.appendChild(t);
+            }
+            const yLbl = el('text', {x:14, y:marginT+plotH/2, class:'nd-axis-label', 'text-anchor':'middle', transform:`rotate(-90, 14, ${marginT+plotH/2})`});
+            yLbl.textContent = 'Density';
+            svg.appendChild(yLbl);
+
+            const capture = el('rect', {x:marginL, y:marginT, width:plotW, height:plotH, fill:'transparent'});
+            capture.addEventListener('mousemove', function(evt){
+                if(!document.getElementById('ndToggleHover').checked) return;
+                const rect = svg.getBoundingClientRect();
+                const scaleX = W / rect.width;
+                const px = (evt.clientX - rect.left) * scaleX;
+                const x = pxToX(px);
+                const y = normalPDF(x, mu, variance);
+                drawHover(x, y, yToPx, xToPx);
+            });
+            capture.addEventListener('mouseleave', removeHover);
+            svg.appendChild(capture);
+        }
+
+        function drawHover(x, y, yToPx, xToPx){
+            removeHover();
+            const g = el('g', {id:'ndHoverGroup'});
+            g.appendChild(el('line', {x1:xToPx(x), y1:yToPx(0), x2:xToPx(x), y2:yToPx(y), class:'nd-hover-line'}));
+            g.appendChild(el('circle', {cx:xToPx(x), cy:yToPx(y), r:4.5, class:'nd-hover-dot'}));
+            const t = el('text', {x:xToPx(x)+8, y:yToPx(y)-8, class:'nd-hover-readout'});
+            t.textContent = `x=${x.toFixed(2)}, f(x)=${y.toFixed(3)}`;
+            g.appendChild(t);
+            svg.appendChild(g);
+        }
+        function removeHover(){
+            const g = document.getElementById('ndHoverGroup');
+            if(g) g.remove();
+        }
+
+        document.getElementById('ndMuSlider').addEventListener('input', draw);
+        document.getElementById('ndVarSlider').addEventListener('input', draw);
+        document.getElementById('ndToggleShading').addEventListener('change', draw);
+        document.getElementById('ndToggleZ').addEventListener('change', draw);
+        document.getElementById('ndToggleHover').addEventListener('change', draw);
+        document.getElementById('ndResetBtn').addEventListener('click', ()=>{
+            document.getElementById('ndMuSlider').value = 0;
+            document.getElementById('ndVarSlider').value = 1;
+            draw();
+        });
+
+        draw();
+    })();
+    </script>
+
+    <h3>Standardized Normal Distribution</h3>
+    <p class="detail-description"> If X is a random variable following a normal distribution with mean $\mu$ and standard deviation $\sigma$, then the variable $Z$ = $\frac{x - \mu}{\sigma}$ is known as the <strong>Standard Normal Variable</strong>. It is usually represented as $Z \sim N(0,1)$, where 0 is the mean and 1 is the variance of the standard Normal Distribution.</p>
+    <p class="detail-description">
+    When we standardize the distribution ($ \mu=0, \sigma=1 $), the complex Gaussian equation simplifies significantly. This is the version used to calculate <strong>Z-scores</strong> and probability tables:The table is used to compute the area within two values of any variable following ND.
+</p>
+
+<div style="background: #f4f4f9; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 1px solid #d1d1e0;">
+    <span style="font-size: 1.2rem;">
+        $$f(x) = \frac{1}{\sqrt{2\pi}} e^{-\frac{x^2}{2}}$$
+    </span>
+</div>
+
+<p class="detail-description">
+    In this form, the total area under the curve is exactly <strong>1</strong>, and the curve is perfectly centered at zero. 
+    The Z-Score table is useful to compute the area between two values of any variable following the Standard Normal Distribution.
+</p>
+
+<div class="example-section">
+    For example, when $Z = 1.17$, the table value is $0.3790$. This represents the area between zero and $1.17$, written as:
+    <div style="text-align:center;">$P(0 < Z < 1.17) = 0.3790$</div>
+    <br>
+    Because the curve is symmetrical, the area is the same for both negative and positive values of $Z$. 
+    That is: $P(-1.17 < Z < 0) = P(0 < Z < 1.17) = 0.3790$.
+</div>
+<p class="detail-description">
+    If neither value is zero, for example $P(-1.78 < Z < 1.78)$, we must calculate the area from each point to zero and then sum them (if they are on opposite sides of the mean):
+</p>
+
+<div class="example-section" style="text-align:center;">
+    $P(-1.78 < Z < 1.78) = P(-1.78 < Z < 0) + P(0 < Z < 1.78)$ <br>
+    $= 0.4625 + 0.4625 = 0.9250$
+</div>
+<div class="example-section" style="text-align:center;">
+    $P(Z > 1.8) = P(0 < Z < \infty) - P(0 < Z < 1.8)$ <br>
+    $P(Z > 1.8) = 0.5000 - 0.4641 = 0.0359$
+</div>
+
+<div class="plot-container">
+    <svg width="500" height="320" viewBox="0 0 500 320" xmlns="http://www.w3.org/2000/svg">
+        <line x1="60" y1="220" x2="60" y2="40" stroke="#333" stroke-width="2" />
+        <path d="M 55 50 L 60 40 L 65 50" fill="none" stroke="#333" stroke-width="2" /> 
+        <line x1="60" y1="220" x2="460" y2="220" stroke="#333" stroke-width="2" />
+        <path d="M 450 215 L 460 220 L 450 225" fill="none" stroke="#333" stroke-width="2" /> 
+
+        <defs>
+            <clipPath id="tailClip">
+                <rect x="380" y="0" width="100" height="280" />
+            </clipPath>
+        </defs>
+        <path d="M 60 220 C 160 220, 190 60, 260 60 C 330 60, 360 220, 460 220 L 60 220 Z" 
+              fill="#d9534f" fill-opacity="0.4" clip-path="url(#tailClip)" />
+
+        <line x1="260" y1="220" x2="260" y2="60" stroke="#333" stroke-width="1.5" stroke-dasharray="5,5" />
+        
+        <path d="M 60 215 C 160 215, 190 60, 260 60 C 330 60, 360 215, 460 215" 
+              fill="none" stroke="#0056b3" stroke-width="3" />
+
+        <line x1="65" y1="275" x2="255" y2="275" stroke="#666" stroke-width="1" />
+        <path d="M 75 270 L 65 275 L 75 280" fill="none" stroke="#666" stroke-width="1" />
+        <path d="M 245 270 L 255 275 L 245 280" fill="none" stroke="#666" stroke-width="1" />
+        <text x="160" y="295" font-family="Arial" font-size="12" fill="#666" text-anchor="middle">Area = 0.5000</text>
+        <text x="50" y="235" font-family="Arial" font-size="16" fill="#333" text-anchor="middle">-∞</text>
+
+        <line x1="265" y1="275" x2="455" y2="275" stroke="#666" stroke-width="1" />
+        <path d="M 275 270 L 265 275 L 275 280" fill="none" stroke="#666" stroke-width="1" />
+        <path d="M 445 270 L 455 275 L 445 280" fill="none" stroke="#666" stroke-width="1" />
+        <text x="360" y="295" font-family="Arial" font-size="12" fill="#666" text-anchor="middle">Area = 0.5000</text>
+        <text x="470" y="235" font-family="Arial" font-size="16" fill="#333" text-anchor="middle">+∞</text>
+        
+        <text x="30" y="130" font-family="Arial" font-size="14" font-weight="bold" fill="#333" transform="rotate(-90, 30, 130)" text-anchor="middle">
+            Probability Density
+        </text>
+        <text x="260" y="235" font-family="Arial" font-size="12" font-weight="bold" fill="#333" text-anchor="middle">0 (Mean)</text>
+        <text x="380" y="235" font-family="Arial" font-size="12" font-weight="bold" fill="#d9534f" text-anchor="middle">1.8</text>
+        
+        <text x="430" y="170" font-family="Arial" font-size="12" font-weight="bold" fill="#d9534f" text-anchor="middle">P(Z > 1.8)</text>
+    </svg>
+</div>
+
+<div class="svg-flex-layout">
+        
+        <div class="svg-column">
+            <div class="example-section" style="text-align:center; border-left:none;">
+                $P(Z > 1.8) = 0.5000 - 0.4641 = 0.0359$
+            </div>
+            <div class="plot-container">
+                <svg width="100%" height="250" viewBox="0 0 500 320" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="60" y1="220" x2="60" y2="40" stroke="#333" stroke-width="2" />
+                    <line x1="60" y1="220" x2="460" y2="220" stroke="#333" stroke-width="2" />
+                    <defs>
+                        <clipPath id="tailClip2">
+                            <rect x="380" y="0" width="100" height="280" />
+                        </clipPath>
+                    </defs>
+                    <path d="M 60 220 C 160 220, 190 60, 260 60 C 330 60, 360 220, 460 220 L 60 220 Z" 
+                          fill="#d9534f" fill-opacity="0.4" clip-path="url(#tailClip2)" />
+                    <line x1="260" y1="220" x2="260" y2="60" stroke="#333" stroke-width="1.5" stroke-dasharray="5,5" />
+                    <path d="M 60 215 C 160 215, 190 60, 260 60 C 330 60, 360 215, 460 215" fill="none" stroke="#0056b3" stroke-width="3" />
+                    <text x="260" y="240" font-family="Arial" font-size="12" text-anchor="middle">0 (Mean)</text>
+                    <text x="380" y="240" font-family="Arial" font-size="12" fill="#d9534f" font-weight="bold" text-anchor="middle">1.8</text>
+                    <text x="430" y="170" font-family="Arial" font-size="12" font-weight="bold" fill="#d9534f" text-anchor="middle">P(Z > 1.8)</text>
+                </svg>
+            </div>
+        </div>
+
+        <div class="svg-column">
+            <div class="example-section" style="text-align:center; border-left:none;">
+                $P(Z < 1.2) = 0.5000 + 0.3849 = 0.8849$
+            </div>
+            <div class="plot-container">
+                <svg width="100%" height="250" viewBox="0 0 500 320" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="60" y1="220" x2="60" y2="40" stroke="#333" stroke-width="2" />
+                    <line x1="60" y1="220" x2="460" y2="220" stroke="#333" stroke-width="2" /> 
+                    <defs>
+                        <clipPath id="leftTailClip">
+                            <rect x="60" y="0" width="280" height="280" />
+                        </clipPath>
+                    </defs>
+                    <path d="M 60 220 C 160 220, 190 60, 260 60 C 330 60, 360 220, 460 220 L 60 220 Z" 
+                          fill="#5cb85c" fill-opacity="0.4" clip-path="url(#leftTailClip)" />
+                    <line x1="340" y1="220" x2="340" y2="105" stroke="#449d44" stroke-width="2" stroke-dasharray="4,2" />
+                    <line x1="260" y1="220" x2="260" y2="60" stroke="#333" stroke-width="1" stroke-dasharray="5,5" />
+                    <path d="M 60 215 C 160 215, 190 60, 260 60 C 330 60, 360 215, 460 215" fill="none" stroke="#0056b3" stroke-width="3" />
+                    <text x="260" y="240" font-family="Arial" font-size="12" text-anchor="middle">0</text>
+                    <text x="340" y="240" font-family="Arial" font-size="12" fill="#449d44" font-weight="bold" text-anchor="middle">1.2</text>
+                    <text x="180" y="150" font-family="Arial" font-size="14" font-weight="bold" fill="#449d44" text-anchor="middle">P(Z < 1.2)</text>
+                </svg>
+            </div>
+        </div>
+
+    </div>
+    
+<div class="plot-container" style="text-align: center; margin: 20px 0; background: #fff; padding: 10px; border: 1px solid #eee; border-radius: 4px;">
+    <svg viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+        <line x1="50" y1="250" x2="550" y2="250" stroke="#000" stroke-width="2" />
+        <line x1="300" y1="250" x2="300" y2="50" stroke="#888" stroke-dasharray="5,5" />
+
+        <path d="M 150,250 L 150,186 
+                 C 200,140 250,50 300,50 
+                 C 350,50 400,140 450,186 
+                 L 450,250 Z" 
+              fill="#5cb85c" opacity="0.3" />
+
+        <path d="M 50,248 
+                 C 100,248 130,240 150,186 
+                 C 200,140 250,50 300,50 
+                 C 350,50 400,140 450,186 
+                 C 470,240 500,248 550,248" 
+              fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" />
+
+        <line x1="150" y1="250" x2="150" y2="186" stroke="#449d44" stroke-width="1.5" stroke-dasharray="3,2" />
+        <line x1="450" y1="250" x2="450" y2="186" stroke="#449d44" stroke-width="1.5" stroke-dasharray="3,2" />
+
+        <text x="300" y="275" text-anchor="middle" font-family="Arial" font-size="14">Z = 0</text>
+        <text x="150" y="275" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#449d44">-1.5</text>
+        <text x="450" y="275" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#449d44">1.5</text>
+
+        <text x="300" y="150" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#2d6a2e">
+            P(-1.5 < Z < 1.5)
+        </text>
+        <text x="300" y="175" text-anchor="middle" font-family="Arial" font-size="14" fill="#2d6a2e">
+            Area ≈ 0.8664
+        </text>
+    </svg>
+</div>  
+<p class="detail-description"><strong>Key Rule for Calculations:</strong> To find the total area relative to a positive $Z$-value, consider the two halves of the curve. To compute the area <strong>less than</strong> a positive $Z$ (e.g., $P(Z &lt; 1.2)$), you take the entire left half $P(-\infty &lt; Z &lt; 0) = 0.5$ and <strong>add</strong> the area between zero and your value. Conversely, to compute the area <strong>greater than</strong> a positive $Z$ (the upper tail), you take the entire right half $P(0 &lt; Z &lt; \infty) = 0.5$ and <strong>subtract</strong> the area between zero and your value.</p>
+
+<div class="example-section">
+        <span class="example-header">Detailed Calculation Example:</span>
+        <p class="detail-description">
+            A Random Variable $X$ follows a normal distribution with mean $\mu = 45$ and standard deviation $\sigma = 10$. Find the probability for an item to fall: (1) Beyond 60 and (2) Between 40 and 56.
+        </p>
+		
+
+        <div style="text-align: center; background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #eee;">
+    <svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+        <defs>
+            <path id="curveShape" d="M 50,250 
+                                     C 150,250 180,250 220,180 
+                                     C 250,130 270,50 300,50 
+                                     C 330,50 350,130 380,180 
+                                     C 420,250 450,250 550,250 
+                                     L 550,250 L 50,250 Z" />
+            
+            <clipPath id="clipBetween">
+                <rect x="250" y="0" width="160" height="300" />
+            </clipPath>
+            
+            <clipPath id="clipBeyond">
+                <rect x="450" y="0" width="150" height="300" />
+            </clipPath>
+        </defs>
+
+        <line x1="50" y1="250" x2="550" y2="250" stroke="#000" stroke-width="2" />
+
+        <use href="#curveShape" fill="#3498db" fill-opacity="0.4" clip-path="url(#clipBetween)" />
+
+        <use href="#curveShape" fill="#e74c3c" fill-opacity="0.4" clip-path="url(#clipBeyond)" />
+
+        <path d="M 50,250 
+                 C 150,250 180,250 220,180 
+                 C 250,130 270,50 300,50 
+                 C 330,50 350,130 380,180 
+                 C 420,250 450,250 550,250" 
+              fill="none" stroke="#333" stroke-width="2.5" />
+
+        <line x1="300" y1="250" x2="300" y2="50" stroke="#888" stroke-dasharray="5,5" />
+        
+        <text x="300" y="275" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold">μ=45 (Z=0)</text>
+        
+        <line x1="250" y1="250" x2="250" y2="215" stroke="#2980b9" stroke-width="1" />
+        <text x="235" y="275" text-anchor="middle" font-family="Arial" font-size="11" fill="#2980b9">40 (-0.5)</text>
+        
+        <line x1="410" y1="250" x2="410" y2="225" stroke="#2980b9" stroke-width="1" />
+        <text x="410" y="290" text-anchor="middle" font-family="Arial" font-size="11" fill="#2980b9">56 (1.1)</text>
+        
+        <line x1="450" y1="250" x2="450" y2="235" stroke="#c0392b" stroke-width="1" />
+        <text x="475" y="275" text-anchor="middle" font-family="Arial" font-size="11" fill="#c0392b">60 (1.5)</text>
+
+        <rect x="50" y="20" width="12" height="12" fill="#e74c3c" opacity="0.6" />
+        <text x="70" y="31" font-family="Arial" font-size="11">Beyond 60</text>
+        <rect x="50" y="40" width="12" height="12" fill="#3498db" opacity="0.6" />
+        <text x="70" y="51" font-family="Arial" font-size="11">40 to 56</text>
+    </svg>
+</div>
+
+        <div class="detail-description">
+            <strong>(i) Probability beyond 60 ($x > 60$)</strong>
+            <p>Convert to $Z$: $z = \frac{60 - 45}{10} = 1.5$.<br>
+            $P(x > 60) = P(z > 1.5) = 0.5000 - P(0 < z < 1.5) = 0.5000 - 0.4332 = 0.0668$.</p>
+            
+            <strong>(ii) Probability between 40 and 56 ($40 < x < 56$)</strong>
+            <p>Convert boundaries: $z_1 = \frac{40-45}{10} = -0.5$ and $z_2 = \frac{56-45}{10} = 1.1$.<br>
+            $P(40 < x < 56) = P(-0.5 < z < 1.1) = 0.1915 + 0.3643 = 0.5558$.</p>
+        </div>
+    </div>
+	<div class="example-section">
+        <span class="example-header">Another real life example :</span>
+        <p class="detail-description">
+        In a competitive examination, 5000 students appeared for a paper in Statistics (let's say, a GATE exam). The average mark was 62 and the standard deviation was 12. If there are only 100 vacancies (rankings), find the minimum mark that one should secure to get selected against a vacancy.  </p></div>
+		<div class="detail-description">
+    $\mu = 62$ and $\sigma = 12$ <br>
+    
+    There are $100$ vacancies out of $5,000$ students, i.e., 
+    $\frac{100}{5000} \times 100 = 2\%$. <br>
+    The probability of selection is $0.02$. <br>
+    
+    $\therefore P(Z > z_1) = 0.02$ <br>
+    
+    The area from the mean to $z_1$ is $P(0 < Z < z_1) = 0.5000 - 0.02 = 0.4800$. <br>
+    
+    From the Z-Table, the value for $0.4800$ is $z = 2.05$. <br>
+    
+    $$Z = \frac{x - \mu}{\sigma}$$
+    $$2.05 = \frac{x - 62}{12}$$
+    $$x - 62 = 12 \times 2.05$$
+    $$x = 24.6 + 62 = 86.6$$
+    
+    <strong>Conclusion:</strong> Therefore, the minimum mark required is <strong>86.6</strong>.
+</div>
+            
+    <h3>Proof for The Additive Property</h3>
+    <p class="detail-description">
+        A significant characteristic of the Normal Distribution is that it is <strong>stable</strong> under linear combinations. This means that if you add two independent normally distributed random variables, the resulting variable is also normally distributed.
+    </p>
+
+    <div style="background: #fff8f0; padding: 20px; border-radius: 4px; border-left: 4px solid #f39c12; margin: 15px 0;">
+        <strong>Mathematical Proof Sketch:</strong>
+        <p style="font-size: 0.95rem;">
+            Given independent $X \sim N(\mu_X, \sigma_X^2)$ and $Y \sim N(\mu_Y, \sigma_Y^2)$, let $Z = X + Y$. Using Moment Generating Functions (MGF):
+        </p>
+        <p style="text-align: center;">
+            $M_Z(t) = M_X(t) \cdot M_Y(t)$ <br>
+            $M_Z(t) = e^{\mu_X t + \frac{1}{2}\sigma_X^2 t^2} \cdot e^{\mu_Y t + \frac{1}{2}\sigma_Y^2 t^2}$ <br>
+            $M_Z(t) = e^{(\mu_X + \mu_Y)t + \frac{1}{2}(\sigma_X^2 + \sigma_Y^2)t^2}$
+        </p>
+        <p style="font-size: 0.95rem; margin-top: 10px;">
+            Because the result is in the form $e^{\mu_{new} t + \frac{1}{2}\sigma_{new}^2 t^2}$, we conclude that $Z \sim N(\mu_X + \mu_Y, \sigma_X^2 + \sigma_Y^2)$.
+        </p>
+    </div>
+
+    <h2 class="detail-title" style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">Multivariate Normal Distributions</h2>
+
+    <h3>1. Key Components: Mean Vector and Covariance Matrix</h3>
+    <p class="detail-description">
+        In multiple dimensions, the distribution is characterized by two primary structures that generalize the univariate mean and variance.
+    </p>
+
+    <div class="example-section">
+        <span class="example-header">The Mean Vector ($\boldsymbol{\mu}$)</span>
+        <p class="detail-description">
+            It is perfectly fine to say $\boldsymbol{\mu}$ denotes the Mean, but it is more precise to call it the <strong>Mean Vector</strong>. In one dimension, $\mu$ is a single number. In a multivariate distribution, $\boldsymbol{\mu}$ is a vector containing the means of every individual variable:
+        </p>
+        <div style="text-align: center;">
+            $$\boldsymbol{\mu} = \begin{bmatrix} \mu_1 \\ \mu_2 \\ \vdots \\ \mu_n \end{bmatrix}$$
+        </div>
+    </div>
+
+    <div class="example-section">
+        <span class="example-header">The Covariance Matrix ($\Sigma$)</span>
+        <p class="detail-description">
+            It is incorrect to call $\Sigma$ (or its inverse) the "Standard Deviation."
+        </p>
+        <ul>
+            <li><strong>$\Sigma$ is the Covariance Matrix:</strong> It contains the variances of each variable on the diagonal and the covariances between pairs of variables on the off-diagonals.</li>
+            <li><strong>Standard Deviation vs. Variance:</strong> In 1D, standard deviation is $\sigma$ and variance is $\sigma^2$. In multivariate math, $\Sigma$ is the "matrix version" of variance ($s^2$), not standard deviation ($s$).</li>
+        </ul>
+    </div>
+    
+
+    <h3>2. The Mathematical Foundation</h3>
+    <p class="detail-description">The PDF of a bivariate normal distribution (where $N=2$) is given by:</p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$f(\mathbf{x}) = \frac{1}{2\pi \sqrt{|\Sigma|}} \exp\left( -\frac{1}{2} (\mathbf{x} - \boldsymbol{\mu})^T \Sigma^{-1} (\mathbf{x} - \boldsymbol{\mu}) \right)$$
+    </div>
+    <p class="detail-description">For the density $f(\mathbf{x})$ to be a constant (a contour), the exponent must be constant:</p>
+    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 15px 0; border: 1px solid #e1e8ed;">
+        $$(\mathbf{x} - \boldsymbol{\mu})^T \Sigma^{-1} (\mathbf{x} - \boldsymbol{\mu}) = c^2$$
+    </div>
+    <p class="detail-description">This quadratic form is the equation of an ellipse. Therefore, the contours of a Multivariate Normal Distribution are always concentric ellipses centered at the mean $\boldsymbol{\mu}$.</p>
+
+    <h3>3. What the Contours Tell You</h3>
+    <p class="detail-description">The shape and orientation of these ellipses are entirely determined by the Covariance Matrix ($\Sigma$):</p>
+    
+    <div class="grid-list">
+        <div class="grid-item">
+            <span class="tag">Circle</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">If the variables are independent and have equal variance ($\sigma_1 = \sigma_2$ and $\rho = 0$), the contours are perfect circles.</p>
+        </div>
+        <div class="grid-item">
+            <span class="tag">Axis-Aligned Ellipse</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">If the variables are independent but have different variances, the ellipses stretch along the $x$ or $y$ axis.</p>
+        </div>
+        <div class="grid-item">
+            <span class="tag">Tilted Ellipse</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">If there is a correlation ($\rho \neq 0$) between variables, the ellipse tilts. The angle represents the strength and direction of correlation.</p>
+        </div>
+    </div>
+    
+
+    <h3>4. Connection to Eigenvalues and Eigenvectors</h3>
+    <p class="detail-description">To physically "derive" or draw the plot, mathematicians look at the Spectral Decomposition of the covariance matrix $\Sigma$:</p>
+    <ul>
+        <li><strong>Eigenvectors:</strong> Define the direction of the principal axes (the "tilt") of the ellipse.</li>
+        <li><strong>Eigenvalues ($\lambda$):</strong> Define the lengths of the axes. The width of the contour in the direction of an eigenvector is proportional to $\sqrt{\lambda}$.</li>
+    </ul>
+
+    <h3>5. Why this matters in Neyman-Pearson</h3>
+    <div class="highlight-box">
+        <p class="detail-description">Returning to our earlier discussion on Neyman-Pearson, if you are testing two multivariate hypotheses:</p>
+        <p style="text-align: center;">$H_0: \mathbf{x} \sim N(\boldsymbol{\mu}_0, \Sigma)$ &nbsp;&nbsp; $H_1: \mathbf{x} \sim N(\boldsymbol{\mu}_1, \Sigma)$</p>
+        <p class="detail-description">The "Likelihood Ratio" effectively compares two sets of these contour ellipses. The Optimal Decision Boundary where the ratio is constant ($k$) will actually be a straight line (or hyperplane in higher dimensions) that cuts through the intersection of these overlapping ellipses.</p>
+    </div>
+    
+
+    <h3>6. High-Dimensional "ND" (N > 2)</h3>
+    <p class="detail-description">If you have more than two dimensions (ND), you cannot visualize the full contour in a single 2D plot. Instead, you use:</p>
+    <ul>
+        <li><strong>Slice:</strong> Fix $N-2$ variables at their mean and plot the remaining two.</li>
+        <li><strong>Projection:</strong> Project the $N$-dimensional "hyper-ellipsoid" onto a 2D plane.</li>
+        <li><strong>Pair Plots:</strong> A grid of 2D contour plots showing every possible pair of variables.</li>
+    </ul>
+
+    <h2 class="detail-title" style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">Normal Distribution in Machine Learning &amp; Deep Learning</h2>
+    <p class="detail-description">
+        The Gaussian shows up throughout ML and DL for two reinforcing reasons: the <strong>Central Limit Theorem</strong> means aggregated noise and averaged quantities genuinely tend toward it, and its exponential-quadratic form is <strong>mathematically convenient</strong> &mdash; log-likelihoods become simple quadratics, and many operations (sums, marginals, conditionals) stay Gaussian. The sections below trace that convenience through classical ML, deep learning, and the statistical machinery underneath both.
+    </p>
+
+    <h3>Statistical Foundations</h3>
+    <div class="grid-list">
+        <div class="grid-item">
+            <span class="tag">MLE &harr; Least Squares</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                Assume regression targets $y_i = f(x_i;\theta) + \epsilon_i$ with noise $\epsilon_i \sim N(0,\sigma^2)$. The log-likelihood is
+                $$\ell(\theta) = -\frac{n}{2}\log(2\pi\sigma^2) - \frac{1}{2\sigma^2}\sum_i (y_i - f(x_i;\theta))^2$$
+                Maximizing $\ell(\theta)$ over $\theta$ is identical to minimizing $\sum_i (y_i-f(x_i;\theta))^2$ &mdash; ordinary least squares is Gaussian-noise MLE in disguise.
+            </p>
+        </div>
+        <div class="grid-item">
+            <span class="tag">CLT &amp; Confidence Intervals</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                By the Central Limit Theorem, a sample mean $\bar{X}_n$ approaches $N(\mu, \sigma^2/n)$ as $n$ grows, regardless of the underlying population. This is why an average metric across CV folds (accuracy, loss) is treated as approximately normal, justifying confidence intervals of the form $\bar{X} \pm z^{*}\frac{\sigma}{\sqrt{n}}$.
+            </p>
+        </div>
+    </div>
+
+    <h3>Classical Machine Learning</h3>
+    <div class="example-section">
+        <span class="example-header">Gaussian Naive Bayes</span>
+        <p class="detail-description" style="margin-bottom:0;">
+            This follows exactly the density-to-classification route you saw in the K-NN tutorial &mdash; model each class-conditional feature density and combine with Bayes' theorem &mdash; except here $p(x_j \mid C_k)$ is assumed Gaussian, $N(x_j; \mu_{jk}, \sigma_{jk}^2)$, instead of estimated via K-NN density estimation. Under the naive independence assumption, $p(\mathbf{x} \mid C_k) = \prod_j p(x_j \mid C_k)$, and classification follows $p(C_k \mid \mathbf{x}) \propto p(C_k)\prod_j p(x_j \mid C_k)$.
+        </p>
+    </div>
+
+    <div class="example-section">
+        <span class="example-header">Anomaly Detection &amp; Mahalanobis Distance</span>
+        <p class="detail-description" style="margin-bottom:0;">
+            Fit $N(\boldsymbol{\mu}, \Sigma)$ to "normal" data, then flag points with low density as anomalies. The natural distance metric here is the <strong>Mahalanobis distance</strong>
+            $$D_M(\mathbf{x}) = \sqrt{(\mathbf{x}-\boldsymbol{\mu})^T \Sigma^{-1} (\mathbf{x}-\boldsymbol{\mu})}$$
+            &mdash; literally the square root of the quadratic form $c^2$ from the multivariate section above. Contours of constant $D_M$ are exactly the concentric ellipses you already saw; a point far outside the inner ellipses is a candidate anomaly.
+        </p>
+    </div>
+
+    <div style="background: #fff8f0; padding: 20px; border-radius: 4px; border-left: 4px solid #f39c12; margin: 15px 0;">
+        <strong>Deep Dive: The EM (Expectation-Maximization) Algorithm, via Gaussian Mixture Models</strong>
+        <p class="detail-description">
+            You've likely already seen <strong>K-means</strong>: pick $K$ centroids, assign each point to its nearest centroid (a hard, all-or-nothing assignment), recompute each centroid as the mean of its assigned points, and repeat. It's simple and fast, but has two real limits: every cluster is forced to be round and roughly the same size (since it only uses Euclidean distance to a centroid), and every point must commit 100% to exactly one cluster, even when it genuinely sits between two.However,K-Means makes an arbitrary choice, which can lead to poor results in noisy datasets.
+        </p>
+        <p class="detail-description">
+            <strong>EM generalizes exactly these two limits.</strong> Each cluster stops being a single point (a centroid) and becomes a full Gaussian &mdash; a mean <em>and</em> a covariance, so it can be circular, elongated, or tilted. And each data point no longer gets one hard label; it gets a <em>soft(soft means You have a 70% chance of belonging to Group A, a 25% chance of Group B, and a 5% chance of Group C." (Probabilistic degrees of membership.In contrast,hard means you belong entirely to Group A. End of story." (Binary: Yes or No, 1 or 0). )</em>, probabilistic degree of membership across every cluster. This generalized model &mdash; a weighted mixture of Gaussians instead of a set of centroids &mdash; is called a <strong>Gaussian Mixture Model (GMM)</strong>, and EM is the algorithm that fits it, alternating between updating the soft memberships and updating the Gaussians until both settle down.By modeling data as a mixture of Gaussians, GMMs provide "soft" assignments. For every point, the model calculates the probability that it belongs to cluster A, cluster B, etc. This is far more realistic for data that has overlapping boundaries.For example,Point $i$ is assigned to cluster $k$ because cluster $k$ gives it the highest responsibility (or posterior probability), while the other clusters give it low responsibilities.
+			By adjusting the covariance, the model can "stretch" to fit clusters that are elliptical or oriented diagonally, capturing structural patterns that K-Means would ignore.
+        </p>
+
+        <div class="intuition-box" style="border-left-color:#c0392b; background:#fdf2f2; padding:16px 20px; margin:16px 0; border-radius:0 6px 6px 0;">
+            <strong class="label" style="color:#c0392b; display:block; margin-bottom:6px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.04em;">Why Not Just Maximize the Likelihood Directly?</strong>
+            <p style="margin-top:0;">
+                For a single Gaussian fit to labeled data, maximum likelihood has a clean, direct answer: differentiate the log-likelihood with respect to $\mu$ and $\Sigma$, set the derivatives to zero, and solve &mdash; you get the sample mean and sample covariance in one shot, no iteration required. A GMM breaks this cleanliness for two related reasons.
+            </p>
+            <p>
+                <strong>The circular dependency:</strong> to estimate each component's $\mu_k, \Sigma_k$, you'd want to know which points belong to it. But which points belong to component $k$ depends on the responsibilities $\gamma_{ik}$ &mdash; and computing those requires already knowing $\mu_k, \Sigma_k$ for every component. Neither side of this can be solved first; each depends on the other.
+            </p>
+            <p style="margin-bottom:0;">
+                <strong>The mathematical reason a closed form doesn't exist:</strong> for a single Gaussian, the log-likelihood turns a product of densities into a <em>sum</em> of log-terms (since $\log(ab) = \log a + \log b$), which is what makes differentiating and solving so clean. For a mixture, each point's density is itself a <em>sum</em> over components ($\sum_k \pi_k N(x_i;\mu_k,\Sigma_k)$) before you take the log &mdash; so the log-likelihood contains $\log$ of a sum, not a sum of logs. That expression doesn't decompose into separate, independently solvable pieces the way the single-Gaussian case does, so setting its derivative to zero gives no closed-form solution.
+            </p>
+            <p style="margin-bottom:0; margin-top:10px;">
+                EM sidesteps both problems by introducing a per-point <em>latent</em> variable &mdash; which component actually generated this point &mdash; and alternating between estimating it (E-step) and re-fitting the Gaussians given that estimate (M-step). Neither step alone requires solving the whole circular problem at once; each is a clean, closed-form calculation conditional on the other's current value, and iterating the two together provably climbs the (otherwise intractable) mixture log-likelihood until it settles at a local maximum.
+            </p>
+        </div>
+
+        <p class="detail-description">
+            A GMM models the data density as a weighted sum of $K$ Gaussians:
+        </p>
+        <p style="text-align:center;">$$p(\mathbf{x}) = \sum_{k=1}^{K} \pi_k \, N(\mathbf{x}; \boldsymbol{\mu}_k, \Sigma_k), \qquad \sum_k \pi_k = 1$$.</p>
+        <p class="detail-description" style="margin-bottom:4px;">Notation used above and in the E-step / M-step below:</p>
+        <ul>
+            <li>$K$: the number of Gaussian components you choose to fit (e.g., the number of clusters you expect in the data).</li>
+            <li>$\pi_k$: the <strong>mixing weight</strong> of component $k$ &mdash; the overall proportion of the data belonging to that component, with $\sum_k \pi_k = 1$.</li>
+            <li>$N(\mathbf{x}; \boldsymbol{\mu}_k, \Sigma_k)$: the multivariate Gaussian density for component $k$ (same $N(\cdot)$ from earlier on this page), with its own mean vector $\boldsymbol{\mu}_k$ and covariance matrix $\Sigma_k$.</li>
+            <li>$\mathbf{x}_i$: the $i$-th data point (a vector &mdash; e.g. 2D or higher-dimensional, following the bold vector notation from the Multivariate section above).</li>
+            <li>$\gamma_{ik}$: the <strong>responsibility</strong> &mdash; the probability that point $\mathbf{x}_i$ was generated by component $k$, given the current parameter estimates. For a fixed $i$, the responsibilities across all $k$ sum to 1.</li>
+            <li>$N_k$: the <strong>effective (soft) count</strong> of points assigned to component $k$ &mdash; the sum of $\mathbf{x}_i$'s responsibilities $\gamma_{ik}$ across every data point. Unlike a hard count, this is usually not a whole number.</li>
+            <li>$N$: the total number of data points, used in $\pi_k = N_k/N$ to turn the soft count back into a proportion.</li>
+            <li>$T$ (in $(\mathbf{x}_i-\boldsymbol{\mu}_k)(\mathbf{x}_i-\boldsymbol{\mu}_k)^T$): matrix transpose &mdash; this outer product of a vector with itself is what builds up the covariance matrix, exactly as in the Multivariate section's $\Sigma$.</li>
+			<p></p>
+        </ul>
+
+        <div class="plot-container" style="background:#fff; margin:16px 0;">
+            <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+                <rect x="20" y="105" width="160" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+                <text x="100" y="130" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">Initialize</text>
+                <text x="100" y="147" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">&pi;_k, &mu;_k, &Sigma;_k</text>
+                <text x="100" y="161" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">(e.g. from K-means)</text>
+
+                <path d="M 180 140 L 225 140" stroke="#0056b3" stroke-width="2" fill="none" marker-end="url(#emArrow)"/>
+
+                <rect x="230" y="105" width="160" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+                <text x="310" y="130" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">E-step</text>
+                <text x="310" y="147" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">compute &gamma;_ik</text>
+                <text x="310" y="161" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">(soft assignment)</text>
+
+                <path d="M 390 140 L 435 140" stroke="#0056b3" stroke-width="2" fill="none" marker-end="url(#emArrow)"/>
+
+                <rect x="440" y="105" width="160" height="70" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+                <text x="520" y="130" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#0056b3">M-step</text>
+                <text x="520" y="147" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">update &pi;_k, &mu;_k, &Sigma;_k</text>
+                <text x="520" y="161" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#333">(responsibility-weighted)</text>
+
+                <path d="M 460 105 C 440 60, 360 60, 340 103" stroke="#c0392b" stroke-width="2" fill="none" stroke-dasharray="5,3" marker-end="url(#emArrowRed)"/>
+                <text x="400" y="55" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#c0392b">repeat until log-likelihood converges</text>
+
+                <path d="M 520 175 L 520 210" stroke="#449d44" stroke-width="2" fill="none" marker-end="url(#emArrowGreen)"/>
+
+                <rect x="400" y="215" width="240" height="60" rx="8" fill="#eefaee" stroke="#449d44" stroke-width="2"/>
+                <text x="520" y="240" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#2d6a2e">Converged</text>
+                <text x="520" y="257" text-anchor="middle" font-family="Arial" font-size="10.5" fill="#2d6a2e">final GMM + soft cluster assignments</text>
+
+                <defs>
+                    <marker id="emArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                        <path d="M0,0 L8,4 L0,8 Z" fill="#0056b3"/>
+                    </marker>
+                    <marker id="emArrowRed" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                        <path d="M0,0 L8,4 L0,8 Z" fill="#c0392b"/>
+                    </marker>
+                    <marker id="emArrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                        <path d="M0,0 L8,4 L0,8 Z" fill="#449d44"/>
+                    </marker>
+                </defs>
+            </svg>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">
+                <em>Figure: EM alternates between the E-step and M-step. Each pass is guaranteed to never decrease the data log-likelihood, so the loop provably settles down rather than oscillating forever.</em>
+            </p>
+        </div>
+
+        <p class="detail-description">
+            <strong>Input:</strong> the raw data points $\mathbf{x}_1, \ldots, \mathbf{x}_N$ (unlabeled &mdash; no class information) and a chosen number of components $K$, plus some initial guess for $\pi_k, \boldsymbol{\mu}_k, \Sigma_k$ (often from a quick K-means run, as in the diagram above).
+        </p>
+        <p class="detail-description">
+            <strong>Output:</strong> the fitted parameters $\pi_k, \boldsymbol{\mu}_k, \Sigma_k$ for every component, and the responsibilities $\gamma_{ik}$ &mdash; a soft, probabilistic cluster assignment for every point, rather than one hard label per point.
+        </p>
+        <p class="detail-description">The two steps in the diagram, written out:</p>
+        <p class="detail-description" style="margin-bottom:4px;"><strong>E-step</strong> &mdash; compute the responsibility of component $k$ for point $\mathbf{x}_i$, which is just Bayes' theorem again:</p>
+        <p style="text-align:center;">$$\gamma_{ik} = \frac{\pi_k \, N(\mathbf{x}_i;\boldsymbol{\mu}_k,\Sigma_k)}{\sum_j \pi_j \, N(\mathbf{x}_i;\boldsymbol{\mu}_j,\Sigma_j)}$$</p>
+        <p class="detail-description" style="margin-bottom:4px;">
+            $\gamma_{ik}$ is normalized by construction: dividing by the sum over every component $j$ forces $\sum_k \gamma_{ik} = 1$ for each point $i$, so it's a genuine posterior probability, $P(\text{component } k \mid \mathbf{x}_i)$, not just a raw score. Matching each piece of the formula to Bayes' theorem, $P(k\mid x) = \frac{P(k)\,P(x\mid k)}{P(x)}$:
+        </p>
+        <table class="data-table" style="width:100%; border-collapse:collapse; margin-bottom:12px;">
+            <tr style="background:#f4f4f9;">
+                <th style="text-align:left; padding:6px 10px; border:1px solid #e1e8ed;">Bayes' theorem term</th>
+                <th style="text-align:left; padding:6px 10px; border:1px solid #e1e8ed;">In the GMM formula</th>
+                <th style="text-align:left; padding:6px 10px; border:1px solid #e1e8ed;">Meaning</th>
+            </tr>
+            <tr>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">Prior, $P(k)$</td>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">$\pi_k$</td>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">Before seeing the point, how likely is component $k$ overall (its mixing weight)</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">Likelihood, $P(x\mid k)$</td>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">$N(\mathbf{x}_i;\boldsymbol{\mu}_k,\Sigma_k)$</td>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">If the point did come from component $k$, how probable is a value like this</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">Evidence, $P(x)$</td>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">$\sum_j \pi_j N(\mathbf{x}_i;\boldsymbol{\mu}_j,\Sigma_j)$</td>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">Total probability of seeing this point at all, marginalizing over every component &mdash; the normalizer</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">Posterior, $P(k\mid x)$</td>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">$\gamma_{ik}$</td>
+                <td style="padding:6px 10px; border:1px solid #e1e8ed;">After seeing the point, the updated belief that it came from component $k$</td>
+            </tr>
+        </table>
+        <p class="detail-description" style="margin-bottom:4px;"><strong>M-step</strong> &mdash; re-estimate each component using the responsibilities as soft weights:</p>
+        <p style="text-align:center;">
+            $$N_k = \sum_i \gamma_{ik}, \quad \boldsymbol{\mu}_k = \frac{1}{N_k}\sum_i \gamma_{ik}\mathbf{x}_i, \quad \Sigma_k = \frac{1}{N_k}\sum_i \gamma_{ik}(\mathbf{x}_i-\boldsymbol{\mu}_k)(\mathbf{x}_i-\boldsymbol{\mu}_k)^T, \quad \pi_k = \frac{N_k}{N}$$
+        </p>
+        <p class="detail-description">
+            This is where the K-means connection from the top of this box becomes exact, not just a loose analogy: <strong>K-means is the limiting case</strong> of this same EM procedure as every $\Sigma_k \to$ a shared, vanishing isotropic covariance. In that limit, the soft responsibilities $\gamma_{ik}$ collapse to hard 0/1 nearest-centroid assignments, and the M-step update above becomes exactly the K-means centroid update. GMM/EM is the strictly more general algorithm; K-means is what you get by throwing away the covariance and the soft assignment.
+        </p>
+
+        <p class="detail-description" style="margin-top:14px;">
+            <strong>From fitted parameters to an actual clustering:</strong> notice EM's output above is $\pi_k, \boldsymbol{\mu}_k, \Sigma_k$ and the responsibility matrix $\gamma_{ik}$ &mdash; not a single cluster label per point. Getting from there to clusters takes one more step, and there are two ways to take it:
+        </p>
+        <ul>
+            <li>
+                <strong>Hard assignment (the usual choice):</strong> assign each point $\mathbf{x}_i$ to whichever component has the highest responsibility, $\underset{k}{\arg\max}\ \gamma_{ik}$. This is called the <strong>MAP (Maximum a Posteriori) assignment</strong> &mdash; you're picking the single most probable component instead of keeping the full probability spread. This is what you'd use to produce a K-means-style cluster label per point.
+            </li>
+            <li>
+                <strong>Keep the soft assignment:</strong> for points near a cluster boundary, forcing a single label throws away real information &mdash; a point with $\gamma_{i1}=0.51,\ \gamma_{i2}=0.49$ is genuinely ambiguous, and collapsing it to "cluster 1" hides that. Many downstream uses (e.g. flagging uncertain points, or feeding soft memberships into another model) keep the full $\gamma_{ik}$ vector instead of a hard label.
+            </li>
+            <li>
+                <strong>Assigning a brand-new point:</strong> for a point that wasn't in the training data, no retraining is needed &mdash; just plug it into the E-step formula above with the already-fitted $\pi_k, \boldsymbol{\mu}_k, \Sigma_k$ to get its responsibilities, then take the argmax if a hard label is required. This is exactly how a fitted GMM makes predictions on new data.
+            </li>
+        </ul>
+        <p class="detail-description">
+            One more thing EM does <em>not</em> decide for you: the value of $K$ itself. Since adding more components can never decrease the training log-likelihood, picking $K$ by likelihood alone always favors more clusters &mdash; overfitting, in the limit, all the way to one Gaussian per point. In practice $K$ is chosen with a penalized criterion like <strong>BIC</strong> or <strong>AIC</strong> (which subtract a complexity penalty for extra parameters), or by held-out log-likelihood on validation data.
+        </p>
+    </div>
+
+    <h3>Deep Learning</h3>
+    <div class="grid-list">
+        <div class="grid-item">
+            <span class="tag">Weight Initialization</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                Xavier/Glorot initialization draws weights from $N\!\left(0, \frac{2}{\text{fan\_in}+\text{fan\_out}}\right)$; He initialization (for ReLU networks) uses $N\!\left(0, \frac{2}{\text{fan\_in}}\right)$. Both choose the variance to keep activation and gradient magnitudes roughly stable across layers, preventing vanishing/exploding signals.
+                <br><br>
+                <strong>fan_in</strong> = number of input connections into the layer (forward-pass activation variance depends on this); <strong>fan_out</strong> = number of output connections leaving it (backward-pass gradient variance depends on this). Xavier averages both since it balances forward and backward signal; He uses only fan_in, with an extra factor of 2 to offset ReLU zeroing out roughly half of all activations.
+            </p>
+        </div>
+        <div class="grid-item">
+            <span class="tag">Batch / Layer Normalization</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                For each mini-batch, activations are standardized exactly like the $Z$-transform earlier on this page: $\hat{x} = \frac{x - \mu_{\text{batch}}}{\sqrt{\sigma_{\text{batch}}^2+\epsilon}}$, then rescaled with learned parameters $y = \gamma\hat{x}+\beta$ to keep flexibility while stabilizing optimization.
+            </p>
+        </div>
+        <div class="grid-item">
+            <span class="tag">Variational Autoencoders</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                The encoder outputs $\mu(x), \sigma(x)$ for an approximate posterior $q(z\mid x) = N(z; \mu(x), \sigma(x)^2 I)$. The reparameterization trick $z = \mu(x) + \sigma(x)\odot\epsilon$, $\epsilon\sim N(0,I)$, makes sampling differentiable, while a KL term pulls $q(z\mid x)$ toward the prior $N(0,I)$.
+            </p>
+        </div>
+        <div class="grid-item">
+            <span class="tag">Diffusion Models</span>
+            <p style="font-size: 0.9rem; margin-top:5px;">
+                The forward process repeatedly adds small Gaussian noise, $x_t = \sqrt{1-\beta_t}\,x_{t-1} + \sqrt{\beta_t}\,\epsilon_t$, until the data becomes pure $N(0,I)$ noise. The network is trained to reverse this &mdash; predicting and removing noise at each step to walk back from noise to data.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

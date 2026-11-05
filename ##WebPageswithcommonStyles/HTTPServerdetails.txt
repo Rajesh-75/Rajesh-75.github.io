@@ -1,0 +1,3 @@
+python -m http.server
+
+Press Control+Shift+R for refreshing the page, if old page is loading 

@@ -1,0 +1,4 @@
+pip install -r resnet_cls/requirements.txt
+python -m resnet_cls.train --data-dir data --output-dir runs/exp1
+python -m resnet_cls.predict --checkpoint runs/exp1/best.pt some_image.png
+python -m pytest resnet_cls/tests

@@ -1,0 +1,96 @@
+<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
+    <svg viewBox="0 0 950 480" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+        <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#475569" />
+            </marker>
+            <marker id="redArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#e11d48" />
+            </marker>
+        </defs>
+
+        <!-- Title Header -->
+        <text x="475" y="25" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Framework for Evaluating LLMs and LLM-Reliant Systems</text>
+        <text x="475" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#64748b">Based on Rudd et al. (Google) — Three Fundamental Pillars</text>
+
+        <!-- PILLAR 1: Datasets -->
+        <g transform="translate(30, 70)">
+            <rect width="270" height="340" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+            <text x="135" y="25" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#1e293b">1. Evaluation Datasets</text>
+            <text x="135" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#64748b">The 5 D's &amp; Curation Approaches</text>
+            
+            <!-- 5 D's Box -->
+            <rect x="15" y="55" width="240" height="135" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="1"/>
+            <text x="135" y="75" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#334155">The 5 D's Principles</text>
+            <text x="25" y="95" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">• <b>Defined Scope:</b> Aligned with specific tasks</text>
+            <text x="25" y="112" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">• <b>Demonstrative:</b> Mimics production usage</text>
+            <text x="25" y="129" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">• <b>Diverse:</b> Captures problem variety</text>
+            <text x="25" y="146" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">• <b>Decontaminated:</b> Isolated from training data</text>
+            <text x="25" y="163" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">• <b>Dynamic:</b> Evolving living body of work</text>
+
+            <!-- Sources Box -->
+            <rect x="15" y="200" width="240" height="120" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="1"/>
+            <text x="135" y="220" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#334155">Curation Approaches</text>
+            <text x="25" y="240" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">1. <b>Benchmarks:</b> Quick initial insights</text>
+            <text x="25" y="258" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">2. <b>Human Golden:</b> SME &amp; annotated sets</text>
+            <text x="25" y="276" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">3. <b>Synthetic Silver:</b> Frontier distillation</text>
+            <text x="25" y="294" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">    &amp; automated scraping pipelines</text>
+        </g>
+
+        <!-- PILLAR 2: Metrics -->
+        <g transform="translate(325, 70)">
+            <rect width="280" height="340" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+            <text x="140" y="25" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#1e293b">2. Metrics Selection</text>
+            <text x="140" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#64748b">Balanced Scorecard of Multiple Measures</text>
+            
+            <rect x="15" y="55" width="250" height="265" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="1"/>
+            
+            <text x="25" y="80" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#1e293b">• Term Overlap Metrics</text>
+            <text x="35" y="97" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">ROUGE (Summarization) &amp; BLEU (Translation)</text>
+            
+            <text x="25" y="125" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#1e293b">• Semantic Similarity Metrics</text>
+            <text x="35" y="142" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">Vector embeddings &amp; cosine similarity</text>
+
+            <text x="25" y="170" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#1e293b">• NLI / Entailment Metrics</text>
+            <text x="35" y="187" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">Assesses factual consistency (Premise/Hypothesis)</text>
+
+            <text x="25" y="215" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#1e293b">• LLM Autorater Metrics</text>
+            <text x="35" y="232" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">Point-wise scores &amp; Side-by-Side (SxS) stats</text>
+
+            <text x="25" y="260" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#1e293b">• Perplexity (PPL)</text>
+            <text x="35" y="277" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">Estimates response probability without truth</text>
+        </g>
+
+        <!-- PILLAR 3: Methodology -->
+        <g transform="translate(630, 70)">
+            <rect width="290" height="340" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+            <text x="145" y="25" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#1e293b">3. Methodology &amp; Execution</text>
+            <text x="145" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#64748b">Addressing Real-World Challenges</text>
+            
+            <rect x="15" y="55" width="260" height="265" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="1"/>
+            
+            <text x="25" y="85" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#1e293b">Handling Non-Determinism</text>
+            <text x="25" y="105" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">Stochastic computations, chained model calls,</text>
+            <text x="25" y="120" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">and API inconsistencies create noise.</text>
+
+            <text x="25" y="155" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#1e293b">Self-Consistency Strategy</text>
+            <text x="25" y="175" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">• Sample multiple responses using non-zero temperature</text>
+            <text x="25" y="193" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">• Select the most frequent output to reduce noise</text>
+
+            <text x="25" y="230" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#1e293b">Iterative Improvement</text>
+            <text x="25" y="250" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">Using evaluation outputs as actionable guidance</text>
+            <text x="25" y="267" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">throughout development and deployment lifecycles.</text>
+        </g>
+
+        <!-- Flow Connectors -->
+        <path d="M 300,240 L 325,240" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <path d="M 605,240 L 630,240" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- Feedback Loop -->
+        <path d="M 775,410 L 775,445 L 165,445 L 165,410" fill="none" stroke="#e11d48" stroke-width="1.8" stroke-dasharray="5,4" marker-end="url(#redArrow)"/>
+        <text x="470" y="437" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-weight="bold" fill="#e11d48">Continuous Evaluation &amp; Iterative Dataset Refinement</text>
+    </svg>
+    <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
+        <em>Accurate framework mapping: <b>1. Datasets</b> (The 5 D's and curation sources), <b>2. Metrics</b> (Term overlap, semantic, NLI, autoraters, perplexity), and <b>3. Methodology</b> (Handling non-determinism via self-consistency) from Rudd et al.</em>
+    </p>
+</div>

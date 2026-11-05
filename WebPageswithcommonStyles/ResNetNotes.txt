@@ -1,0 +1,179 @@
+# ResNet — full discussion summary
+
+## 1. The core difference: plain CNN vs. residual block
+
+A plain CNN block computes a full mapping `H(x)` from its input:
+```
+plain_block(x):  out = conv → relu → conv → relu → return out    # out = H(x)
+```
+
+A residual block instead learns a *correction* `F(x)` and adds the input back:
+```
+residual_block(x):
+    identity = x
+    out = conv → relu → conv                # out = F(x)
+    out = out + identity                    # F(x) + x
+    out = relu(out)                         # ReLU applied AFTER the addition
+```
+If a block's optimal behavior is "do nothing," a residual block can drive `F(x) → 0` and pass `x` through untouched. A plain block has no such option — it always transforms its input, for better or worse.
+
+**Why plain deep networks fail (the degradation problem):** accuracy on very deep plain CNNs gets *worse* with added depth, even on *training* data — not overfitting, but an optimization difficulty. Deep plain nets struggle to learn even an identity mapping when that's what's optimal.
+
+## 2. Mechanics of the addition
+
+- The addition is **element-wise**, not concatenation (unlike DenseNet, which concatenates channels instead).
+- `x` and `F(x)` must have the **exact same shape** (channels × height × width). When a stage changes channel count or downsamples, a **1×1 projection conv** reshapes the identity path so the addition is valid.
+- `x` is **not the raw image** except going into the very first block. Everywhere else it's a learned feature-map tensor — a stack of channels, each a 2D grid of activations with spatial structure but no direct pixel/visual meaning.
+- `F(x) = 0` does **not** mean features are discarded — it means `out = 0 + x = x`, so all of `x`'s features are preserved. What's skipped is the block's *own contribution*, not the incoming signal.
+
+## 3. ResNet is not "just a vanishing-gradient fix"
+
+Gradient flow is one benefit, not the only one:
+- **Optimization ease** — identity is the default; blocks only need to learn deviations from it.
+- **Enables extreme depth** — ResNet-152 trains where comparably deep plain nets don't.
+- **Feature reuse** — early-layer features stay directly accessible to later layers via shortcuts.
+- **Implicit ensemble effect** (Veit et al., 2016) — a network with L residual blocks behaves like an ensemble of ~2^L variable-depth paths. Deleting a block from a trained ResNet barely hurts accuracy (graceful degradation); deleting a layer from a trained plain CNN breaks it.
+- **Not CNN-specific** — Transformers use exactly this pattern: `x = x + Attention(x)` and `x = x + FFN(x)`. This is why very deep Transformers are trainable at all.
+
+## 4. "Does ResNet ignore layers?" — the precise version
+
+No layer is literally skipped at runtime — every block executes on every forward pass. What's true is an *algebraic* fact: unrolling the recursion `h_l = h_{l-1} + F_l(h_{l-1})` gives
+```
+h_L = h_0 + F_1(h_0) + F_2(h_1) + ... + F_L(h_{L-1})
+```
+a **sum of terms**, not a single nested composition. Expanding this is mathematically equivalent to summing over 2^L paths, each corresponding to a different subset of blocks being "active" vs. bypassed for that term — this is the rigorous version of "the network can act as if it used fewer layers."
+
+## 5. "Doesn't the network arbitrarily choose which layer to ignore?" — no
+
+The residual formula is applied **uniformly to every block by architecture**, before any training happens — there's no selection logic. What varies per block is only the **learned weights inside F_l**, set by ordinary gradient descent minimizing the loss. For some blocks, a large `F_l(x)` reduces loss; for others, a near-zero `F_l(x)` does. Nothing inspects blocks or decides anything — the architecture just makes "do nothing" a cheap, always-safe option, and gradient descent gravitates there only when it's genuinely optimal for that block.
+
+## 6. Code: forward and backward, explicitly
+
+Built a from-scratch NumPy implementation (Conv2D, ReLU, PlainBlock, ResidualBlock — no autograd) to make both passes explicit:
+
+**Forward** — `self.identity = x` is the entire skip connection; `out = F(x) + x` is the residual addition; ReLU applied after the sum.
+
+**Backward** — the key mechanic:
+```python
+d_add = self.relu_out.backward(d_out)
+d_F_branch = d_add            # gradient copied unchanged into the conv path
+d_identity_branch = d_add     # gradient copied unchanged into the skip path
+...
+d_x = d_conv_path + d_identity_branch   # the two branches are SUMMED back together
+```
+This follows directly from `∂(a+b)/∂a = ∂(a+b)/∂b = 1` — the incoming gradient is copied, not split proportionally, into both branches.
+
+**Empirical demo** — stacked 20 blocks with deliberately weakened weights (`×0.3`) to simulate poor conditioning:
+- Plain CNN, 20 layers: gradient at the input **underflowed to exactly 0**.
+- ResNet, 20 layers: gradient at the input stayed at norm **≈ 11.9**.
+
+Same weak weights, same depth — only the skip connection differed.
+
+## 7. "Isn't this just a trick, like dropout?" — why it isn't
+
+Dropout is stochastic (random masking during training only, removed at test time) — an approximate-ensembling regularizer. A skip connection is a fixed, deterministic term in the forward equation, identical during training and inference — it changes the function's actual structure and derivative, not what's being regularized.
+
+**Rigorous justification — eigenvalue shift:**
+For any feedforward net, `∂L/∂h₀ = ∂L/∂h_L · ∏ (∂h_l/∂h_{l-1})`.
+- Plain: `∂h_l/∂h_{l-1} = J_l`. A product of L Jacobians with eigenvalues < 1 shrinks geometrically (same reason `0.9^100 ≈ 0.00003`).
+- Residual: `∂h_l/∂h_{l-1} = I + J_l`. The identity shifts every eigenvalue of `J_l` by exactly +1, so even if `J_l`'s eigenvalues collapse toward 0, `I + J_l`'s stay near 1. The product can't collapse the same way.
+- Expanding `∏(I + J_l)` algebraically reproduces the same "sum over 2^L paths" result from section 4 — the ensemble view and the gradient-preservation view are the *same* algebraic fact, not two separate claims.
+
+**Independent evidence:** Li et al. (2018) visualized loss landscapes and showed residual networks have dramatically smoother, closer-to-convex surfaces than plain deep networks, which are visibly jagged.
+
+**Reframe: ResNet as Euler-discretized ODE.** A continuous dynamical system `dh(t)/dt = F(h(t))`, integrated with one step of forward Euler, gives exactly `h(t+1) = h(t) + F(h(t))` — the ResNet block equation. Chen et al. (2018, "Neural ODEs") formalized this: a ResNet is a discrete approximation of a continuous flow. Under this view, `x` is a *state being incrementally refined*, not "protected by a hack" — the same logic numerical ODE solvers use small stable steps instead of recomputing a solution from scratch.
+
+Conclusion reached: it's fair to call "add the identity" the entire mechanical intervention — but it's the same category of move as other well-justified numerical techniques (stable reformulations, preconditioning, small-step discretization), not an arbitrary patch.
+
+## 8. How many identity mappings happen?
+
+Exactly **once per residual block**, on every forward pass, unconditionally — not something that varies per input. Standard ResNet variants:
+
+| Model | Residual blocks |
+|---|---|
+| ResNet-18 | 8 |
+| ResNet-34 | 16 |
+| ResNet-50 | 16 (bottleneck blocks) |
+| ResNet-101 | 33 |
+| ResNet-152 | 50 |
+
+Blocks where channel count or spatial size changes use a 1×1 **projection shortcut** instead of a pure identity, just to make shapes match before adding.
+
+## 9. Residual connections in an MLP (not CNN-specific)
+
+```
+Plain MLP layer:     h_l = ReLU(W_l·h_{l-1} + b_l)
+Residual MLP block:  h_l = ReLU( (W_l·h_{l-1} + b_l) + h_{l-1} )
+```
+Same addition, same gradient-split backward pass, same `I + J` argument — none of it depended on convolution specifically. If dimensions change between layers, a learned linear projection `P` on the shortcut plays the same role the 1×1 conv does in CNNs: `h_l = ReLU(F(h_{l-1}) + P·h_{l-1})`.
+
+**Direct tie-in to the Transformer pages already built:** the Transformer FFN sub-layer, `h = h + FFN(LayerNorm(h))`, *is* a residual MLP block — same structure, already seen by students, just not named as such at the time.
+
+## 10. Worked example: 4-layer MLP, 3 neurons per layer
+
+Using the standard "2 layers per block" convention (same grouping ResNet uses):
+```
+h1 = ReLU(W1·x + b1)
+h2 = ReLU(W2·h1 + b2 + x)        <- skip connection #1
+h3 = ReLU(W3·h2 + b3)
+h4 = ReLU(W4·h3 + b4 + h2)       <- skip connection #2
+```
+**Answer: 2 skip connections** for 4 layers, grouped in pairs. Since every layer is the same width (3 neurons), every addition here is a plain vector addition with no projection needed — the cleanest possible residual example.
+
+The grouping itself (2 layers/block vs. 1 vs. spanning the whole stack) is a design choice/hyperparameter, not something dictated by the layer count — the original paper's 2-per-block convention was an empirical choice, not a mathematical requirement.
+
+## 11. "Block" vs. "layer" — precise definitions
+
+- **Layer** — a single atomic computational step with its own weights: one conv, one dense/linear transform, one batch norm, one activation. The smallest named unit in a diagram.
+- **Block** — a *group of consecutive layers* wrapped by one skip connection. A block is defined by where you start counting `x` and where you add it back: `x + F(x)`, where `F` is however many layers you chose to put inside.
+
+**This is why "4 layers → how many skip connections?" has no single fixed answer** — it depends on the layers-per-block grouping, a separate design choice on top of the layer count:
+
+| Grouping choice | Layers per block | Blocks in a 4-layer network | Skip connections |
+|---|---|---|---|
+| ResNet's standard convention | 2 | 2 | 2 |
+| Skip on every layer | 1 | 4 | 4 |
+| One big block | 4 | 1 | 1 |
+
+**Terminology trap:** "ResNet-50 has 50 layers" counts every weighted operation (50 total), *not* blocks. ResNet-50 actually has 16 blocks (each a 3-layer "bottleneck": 1×1 → 3×3 → 1×1 conv), and 16×3 = 48, plus the initial stem conv and final FC layer = 50 layers total. Architecture names (ResNet-50, ResNet-101) count layers; the gradient-flow story is about block count — easy to conflate the two.
+
+## 12. What `x` actually is, precisely
+
+`x` is generic shorthand for **whatever tensor a given block receives as input** — its meaning is *relative to where you are in the network*, not a fixed object. Concretely:
+
+- **Shape:** `x` is always a tensor of shape `(C, H, W)` — a stack of channels, each a 2D grid with spatial structure. It is *not* a flat vector, and each channel is *not* a color channel except at the very start.
+- **At the very first block:** `x` is derived from the raw image, but it is not the raw pixels themselves. It's the output of the network's "stem" (an initial conv + pooling), so even here `x` is already a multi-channel feature-map tensor (e.g. 64 channels), not the original 3-channel RGB image.
+- **At every block after that:** `x` is purely a learned feature-map tensor with no direct visual/pixel meaning. A given channel might respond to "vertical edges," "fur texture," or something with no human-readable label at all — it's a point in a learned representation space, not an image.
+- **Why "it's a kind of image" is a useful-but-risky shorthand:** `x` retains spatial axes (height and width), so any single channel can be *visualized* as a grayscale heatmap, and neighboring positions in `x` still correspond to neighboring regions of the original input. That's the loose sense in which it "looks like an image." But treating `x` as literally pixel data leads to wrong reasoning the moment you ask what a specific value in it "means."
+- **`x` is re-bound at every layer, not a single fixed object across the network.** In the equation `h_l = h_{l-1} + F_l(h_{l-1})`, "x" for block `l` really means `h_{l-1}` — the previous block's output. So when the residual formula is written generically as `H(x) = F(x) + x`, that `x` is local to whichever block you're looking at, not the network's original input `h_0`, except when discussing the very first block.
+- **Same role outside CNNs:** in the MLP/Transformer case (sections 9–10), `x` plays the identical role but as a flat vector instead of a spatial tensor — "whatever this block received as input," nothing more specific than that.
+
+## 13. Definition of "residual"
+
+"Residual" names the *quantity* `F(x)` computes, not the block or the addition themselves. Derivation:
+
+- Let `H(x)` be the block's *desired* output. A plain block asks its layers to learn `H(x)` directly, from scratch.
+- Define the residual as the gap between the desired output and the input, borrowing the term directly from statistics/numerical analysis ("residual" = target minus current estimate, i.e. what's left over):
+  ```
+  F(x) := H(x) − x
+  ```
+  `x` is treated as a free, zero-cost first approximation of `H(x)`; `F(x)` is only responsible for the leftover error in that approximation.
+- Rearranging gives the forward pass already implemented: `H(x) = F(x) + x`. The `+x` isn't a bolted-on trick — it's the algebraic consequence of defining the layers' job as "learn the leftover," not "learn the full mapping."
+
+**Why this reframing is the actual contribution**, not just the mechanism: it changes the *learning problem* the layers face. Instead of "learn this arbitrary complicated function H," the layers are asked "learn only the correction on top of identity" — a far easier target, which is exactly why `F(x) → 0` is such a natural, reachable solution when identity happens to be optimal for that block.
+
+Tying to the block/layer vocabulary from section 11:
+```
+block           = a group of consecutive layers, treated as one unit
+F(x)            = "the residual" — what the layers inside the block actually compute
+residual block  = a block whose layers are trained to output a residual F(x),
+                   with x added back to reconstruct H(x)
+```
+
+## 14. "Skip connection" — the name is misleading about execution
+
+"Skip" wrongly suggests the layers inside the block are bypassed or not run. They aren't — every layer in the block executes in full, on every forward pass; `F(x)` is always fully computed. Nothing is conditionally avoided.
+
+What's actually being described is the **diagram's topology**, not the execution: when the block is drawn as boxes in sequence, the identity arrow is drawn going from before the block straight to after it, visually passing over/around the boxes in the picture. The name describes that the arrow bypasses the *boxes in the drawing*, not that the *computation* is skipped.
+
+More accurate framing: the layers run and compute a residual `F(x)`, **and** the input is *also* carried forward unchanged in parallel, to be added back. Both the layer path and the identity path execute, every time — they're parallel and additive, not alternative or conditional. "Shortcut connection" (also used in the literature) is arguably the better term for this reason: "shortcut" implies an additional path existing alongside the main one, whereas "skip" implies something is omitted.

@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNN Training Discussion Summary</title>
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+          ignoreHtmlClass: 'tex2jax_ignore'
+        },
+        startup: {
+          pageReady: () => {
+            return MathJax.startup.defaultPageReady().then(() => {
+              document.body.style.visibility = 'visible';
+            });
+          }
+        }
+      };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background-color: #f9f9f9;
+            visibility: hidden; /* revealed once MathJax finishes typesetting */
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #1a365d;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            font-size: 28px;
+        }
+        h2 {
+            color: #2b6cb0;
+            font-size: 20px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #2d3748;
+            font-size: 16px;
+        }
+        p { margin: 10px 0; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+        strong { color: #1a202c; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f7fafc;
+            color: #4a5568;
+            font-weight: 600;
+        }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .highlight-box {
+            background-color: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .caution-box {
+            background-color: #fffaf0;
+            border-left: 4px solid #dd6b20;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .explain-box {
+            background-color: #f5f3ff;
+            border-left: 4px solid #7c3aed;
+            padding: 16px 20px;
+            margin: 16px 0 24px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .explain-box .q-label {
+            display: inline-block;
+            background-color: #7c3aed;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-bottom: 8px;
+        }
+        .explain-box p:first-of-type { margin-top: 4px; }
+        .math-block {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 14px 20px;
+            margin: 16px 0;
+            overflow-x: auto;
+            text-align: center;
+        }
+        code {
+            background-color: #edf2f7;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 0.92em;
+        }
+        .diagram-box {
+            background-color: #fbfbfc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 18px 0;
+            overflow-x: auto;
+        }
+        .diagram-box svg {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .diagram-caption {
+            text-align: center;
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+        pre.code-block {
+            background-color: #1a202c;
+            color: #e2e8f0;
+            padding: 18px 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 16px 0;
+        }
+        pre.code-block code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+        .comment { color: #a0aec0; }
+        .reading-list {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #ddd6fe;
+        }
+        .reading-list p.reading-title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            color: #6d28d9;
+            margin: 0 0 6px 0;
+        }
+        .reading-list ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+        .reading-list li {
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        .reading-list a {
+            color: #4c1d95;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+   <h1>CNN Training</h1>
+    <p>This tutorial explores the key challenges in large-scale CNN training for image recognition and outlines practical techniques for resolving them.</p>
+
+    <h2>1. Standard Training Workflow Sequence</h2>
+    <p>To systematically approach a new project, we mapped out the industry-standard progression:</p>
+    <ul>
+        <li><strong>Data Prep:</strong> Cleaning, scaling/normalising pixel values, splitting datasets (Train/Val/Test), and applying geometric/color augmentations.</li>
+        <li><strong>Architecture:</strong> Choosing between building a custom network from scratch or leveraging transfer learning with pre-trained backbones (e.g., ResNet, MobileNet).</li>
+        <li><strong>Optimization:</strong> Selecting appropriate loss functions (e.g., Cross-Entropy) and optimizers (e.g., Adam), alongside learning rate decay policies.</li>
+        <li><strong>Monitoring:</strong> Training in small mini-batches while tracking training vs. validation loss curves to catch under- or overfitting.</li>
+    </ul>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>What are "geometric/color augmentations"?</strong></p>
+        <p>They're label-preserving transformations applied to training images to artificially expand the effective size and diversity of the dataset, forcing the network to learn features that are invariant to irrelevant variation.</p>
+        <ul>
+            <li><strong>Geometric</strong> (change spatial arrangement): rotation, horizontal/vertical flip, random crop, translation, scaling/zoom, shear, elastic deformation (common in medical imaging to simulate tissue warping).</li>
+            <li><strong>Color / photometric</strong> (change pixel intensity, not layout): brightness/contrast jitter, hue/saturation shifts, Gaussian noise injection, random erasing/cutout.</li>
+        </ul>
+        <p>Intuition: a cow is still a cow if you flip the image or brighten it. Exposing the network to these variations stops it from latching onto incidental correlations (e.g., "cows are always in bright green fields"). In code this is a stochastic transform applied on-the-fly to each image before it enters a batch (e.g., <code>torchvision.transforms</code>, <code>albumentations</code>) — not a one-time step that permanently multiplies the dataset on disk.</p>
+        <p>Elastic deformation specifically: it warps the image locally &mdash; like the image is on a thin rubber sheet pushed and stretched unevenly &mdash; by moving each pixel according to a random displacement field that's been Gaussian-smoothed so nearby pixels shift in similar directions. This mimics how real tissue stretches, compresses, and shears during slide preparation or natural anatomical variation. It's the augmentation credited with letting U-Net train end-to-end from very few annotated images.</p>
+        <div class="reading-list">
+            <p class="reading-title">FURTHER READING</p>
+            <ul>
+                <li><a href="https://arxiv.org/abs/1505.04597" target="_blank" rel="noopener">Ronneberger, Fischer &amp; Brox (2015) &mdash; U-Net: Convolutional Networks for Biomedical Image Segmentation</a> &mdash; the paper that made elastic deformation famous in medical imaging.</li>
+                <li><a href="https://cognitivemedium.com/assets/rmnist/Simard.pdf" target="_blank" rel="noopener">Simard, Steinkraus &amp; Platt (2003) &mdash; Best Practices for Convolutional Neural Networks Applied to Visual Document Analysis</a> &mdash; the original paper defining elastic distortion via a Gaussian-smoothed displacement field.</li>
+                <li><a href="https://arxiv.org/pdf/2303.01178" target="_blank" rel="noopener">Garcea et al. &mdash; Augmenting Medical Imaging: A Comprehensive Catalogue of 65 Techniques</a> &mdash; survey with a section on elastic deformation and grid distortion, plus practical caveats.</li>
+            </ul>
+            <p style="margin-top:8px;">Ready-to-use implementations: <code>torchvision.transforms.ElasticTransform</code> or <code>albumentations.ElasticTransform</code>.</p>
+        </div>
+    </div>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>How is "training in small mini-batches while tracking training vs. validation loss" actually done?</strong></p>
+        <p><em>Mini-batch training:</em> instead of computing the gradient over the whole dataset at once (accurate but memory-prohibitive) or one sample at a time (fast but noisy), the training set is split into batches of, say, 32–256 images. For each batch: forward pass &rarr; compute loss &rarr; backpropagate &rarr; update weights. One full pass over all batches is one epoch — a practical compromise driven by GPU memory and a favorable noise-vs-speed tradeoff.</p>
+        <p><em>Tracking loss curves:</em> at the end of every epoch, compute the average loss on the training set and on a held-out validation set (never trained on), and plot both against epoch number.</p>
+        <ul>
+            <li>Both curves fall together &rarr; healthy learning.</li>
+            <li>Training loss falls, validation loss rises or plateaus &rarr; <strong>overfitting</strong>.</li>
+            <li>Both curves stay high and flat &rarr; <strong>underfitting</strong>.</li>
+        </ul>
+        <p>This is just two numbers logged per epoch and plotted — the "monitoring" is the diagnostic signal that tells you <em>when</em> to intervene, not an algorithm in itself.</p>
+    </div>
+
+    <div class="diagram-box">
+        <svg viewBox="0 0 680 190" role="img" aria-label="Mini-batch training loop with epoch-level loss tracking">
+            <defs>
+                <marker id="arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M2 1L8 5L2 9" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+            </defs>
+            <g>
+                <rect x="40" y="40" width="130" height="56" rx="8" fill="#f7fafc" stroke="#a0aec0" stroke-width="1"/>
+                <text x="105" y="60" text-anchor="middle" font-size="14" font-weight="600" fill="#2d3748">Mini-batch</text>
+                <text x="105" y="78" text-anchor="middle" font-size="12" fill="#4a5568">32-256 images</text>
+            </g>
+            <g>
+                <rect x="190" y="40" width="130" height="56" rx="8" fill="#ebf8ff" stroke="#3182ce" stroke-width="1"/>
+                <text x="255" y="60" text-anchor="middle" font-size="14" font-weight="600" fill="#1a365d">Forward pass</text>
+                <text x="255" y="78" text-anchor="middle" font-size="12" fill="#2b6cb0">Compute loss</text>
+            </g>
+            <g>
+                <rect x="340" y="40" width="130" height="56" rx="8" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+                <text x="405" y="60" text-anchor="middle" font-size="14" font-weight="600" fill="#7b341e">Backprop</text>
+                <text x="405" y="78" text-anchor="middle" font-size="12" fill="#c05621">Update weights</text>
+            </g>
+            <g>
+                <rect x="490" y="40" width="130" height="56" rx="8" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+                <text x="555" y="60" text-anchor="middle" font-size="14" font-weight="600" fill="#234e52">Epoch end</text>
+                <text x="555" y="78" text-anchor="middle" font-size="12" fill="#285e61">Log &amp; compare</text>
+            </g>
+            <line x1="170" y1="68" x2="188" y2="68" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr1)"/>
+            <line x1="320" y1="68" x2="338" y2="68" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr1)"/>
+            <line x1="470" y1="68" x2="488" y2="68" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr1)"/>
+            <path d="M405 96 L405 130 L105 130 L105 96" fill="none" stroke="#a0aec0" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr1)"/>
+            <text x="255" y="145" text-anchor="middle" font-size="12" fill="#718096">&#8635; repeats for every batch in the epoch</text>
+        </svg>
+        <p class="diagram-caption">Fig. 1 &mdash; mini-batch loop within an epoch, with train/val loss logged once per epoch</p>
+    </div>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>What kind of "fine-tuning models" are we talking about?</strong></p>
+        <p>This refers to <strong>transfer learning</strong>: taking a network pre-trained on a large generic dataset (typically ImageNet, ~1.2M images, 1000 classes) and adapting it to a specific task instead of training from random weight initialization. Common backbones: ResNet, MobileNet (edge/low-compute), EfficientNet, VGG, and increasingly ViT (Vision Transformer) variants.</p>
+        <ul>
+            <li><strong>Feature extraction:</strong> freeze all pre-trained convolutional layers <em>[frozen = the layer's weights are fixed at their pretrained values and never updated; feeding the same image through them on training step 1 or step 5000 produces the exact same output feature map every time]</em>, only train a new classification head on top. Good when the new dataset is small and similar in domain.</li>
+            <li><strong>Fine-tuning:</strong> unfreeze some or all pre-trained layers <em>[unfrozen = those weights receive gradients and update a little each step, so the same image's output feature map slowly drifts as training progresses]</em> and continue training them at a low learning rate along with the new head. Good when the domain (e.g., medical imaging) differs substantially from natural images.</li>
+        </ul>
+        <p>Why it helps with data scarcity: the early/middle layers of an ImageNet-trained CNN already encode generic, reusable features (edges, textures, simple shapes) — you're only adapting the final task-specific decision boundary, not learning those from zero.</p>
+        <p><strong>Important:</strong> the backbone's output is not the raw input pixels. Each convolutional stage produces a stack of <strong>feature maps</strong> &mdash; e.g. a 256&times;256&times;64 tensor (256&times;256 spatial grid, 64 channels) after an early layer, shrinking spatially and growing in channel depth deeper into the network (e.g. 7&times;7&times;512 near the end). Only the very first layer ever sees raw pixel values (typically H&times;W&times;3 for RGB); everything downstream is passing learned feature maps forward, and it's <em>those</em> feature maps &mdash; not pixels &mdash; that get frozen, fine-tuned, or fed into the new head.</p>
+    </div>
+
+    <div class="diagram-box">
+        <svg viewBox="0 0 680 260" role="img" aria-label="Transfer learning pipeline showing early frozen layers seeing raw pixels and later fine-tuned layers producing feature maps, feeding a new head">
+            <defs>
+                <marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M2 1L8 5L2 9" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+            </defs>
+            <text x="40" y="24" font-size="12" fill="#718096">Only the first conv layer sees raw pixels &mdash; everything after is feature maps</text>
+            <rect x="40" y="40" width="440" height="180" rx="16" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1"/>
+            <text x="60" y="65" font-size="14" font-weight="600" fill="#4c1d95">Pretrained backbone</text>
+            <rect x="70" y="90" width="180" height="110" rx="10" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+            <text x="160" y="115" text-anchor="middle" font-size="14" font-weight="600" fill="#234e52">Early layers</text>
+            <text x="160" y="133" text-anchor="middle" font-size="12" fill="#285e61">Raw pixels in (H&#215;W&#215;3)</text>
+            <text x="160" y="151" text-anchor="middle" font-size="12" fill="#285e61">Edges, corners</text>
+            <text x="160" y="169" text-anchor="middle" font-size="12" fill="#285e61">Generic, always frozen</text>
+            <rect x="270" y="90" width="180" height="110" rx="10" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+            <text x="360" y="115" text-anchor="middle" font-size="14" font-weight="600" fill="#7b341e">Later layers</text>
+            <text x="360" y="133" text-anchor="middle" font-size="12" fill="#c05621">Feature maps out</text>
+            <text x="360" y="151" text-anchor="middle" font-size="12" fill="#c05621">(e.g. 7&#215;7&#215;512)</text>
+            <text x="360" y="169" text-anchor="middle" font-size="12" fill="#c05621">Domain-specific, fine-tune</text>
+            <line x1="250" y1="145" x2="268" y2="145" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr3)"/>
+            <rect x="560" y="100" width="100" height="70" rx="8" fill="#f7fafc" stroke="#a0aec0" stroke-width="1"/>
+            <text x="610" y="128" text-anchor="middle" font-size="14" font-weight="600" fill="#2d3748">New head</text>
+            <text x="610" y="146" text-anchor="middle" font-size="12" fill="#4a5568">Trained on</text>
+            <text x="610" y="161" text-anchor="middle" font-size="12" fill="#4a5568">your data</text>
+            <line x1="480" y1="135" x2="558" y2="135" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr3)"/>
+            <text x="60" y="240" font-size="12" fill="#718096">May unfreeze &amp; fine-tune later layers at low LR if the target domain differs a lot</text>
+        </svg>
+        <p class="diagram-caption">Fig. 2 &mdash; early frozen layers see raw pixels and learn generic edges/corners; later fine-tuned layers pass domain-specific feature maps (not pixels) on to the new head</p>
+    </div>
+
+    <h2>2. Core CNN Training Challenges &amp; Mitigations</h2>
+    <p>While foundational innovations solved early absolute "showstoppers" like vanishing gradients, training deep networks still presents significant hurdles:</p>
+    <ul>
+        <li><strong>Overfitting &amp; Spurious Correlations:</strong> CNNs easily memorize training data or exploit "cheats" (e.g., memorising a green grass background instead of learning what a cow looks like). <em>Mitigation: Data augmentation, dropout, and early stopping.</em></li>
+        <li><strong>Data &amp; Hardware Scale:</strong> Modern architectures processing ultra-high-resolution images create massive memory bottlenecks. Furthermore, fine-tuning models for specialized domains constantly suffers from <strong>extreme data scarcity and severe class imbalance</strong>.</li>
+        <li><strong>Hyperparameter Tuning:</strong> Finding the optimal combination of learning rates, batch sizes, and architectures remains a complex, trial-and-error engineering problem.</li>
+    </ul>
+
+    <div class="explain-box">
+        <span class="q-label">STUDENT Q&amp;A</span>
+        <p><strong>How is hyperparameter tuning actually done "by trial and error"?</strong></p>
+        <p>Not literally random guessing — there are structured search strategies, roughly in order of sophistication:</p>
+        <ul>
+            <li><strong>Manual search:</strong> adjust one hyperparameter at a time based on observed loss curves.</li>
+            <li><strong>Grid search:</strong> define a discrete set of values for each hyperparameter (e.g., LR &isin; {1e-2, 1e-3, 1e-4}, batch size &isin; {32, 64, 128}) and exhaustively train a model for every combination. Expensive — combinations grow fast.</li>
+            <li><strong>Random search:</strong> sample combinations randomly from specified ranges instead of exhaustively; often more efficient than grid search for the same compute budget.</li>
+            <li><strong>Bayesian optimization / automated tools</strong> (e.g., Optuna, Ray Tune): build a probabilistic model of how hyperparameters map to validation performance and intelligently pick the next combination to try — an informed search rather than blind trial.</li>
+        </ul>
+        <p>Each "trial" = train the model (or a cheap shortened proxy of it) end-to-end and record validation performance. "Error" = the model doesn't converge well, overfits, or underperforms, prompting an adjustment and retry. It's fundamentally trial-and-error because the loss landscape as a function of hyperparameters is non-convex, expensive to evaluate, and has no closed-form gradient to optimize directly.</p>
+    </div>
+
+  <h2>3. Data Imbalance Issue in Training</h2>
+
+<p>In this section we discuss the challenges posed by data imbalance during CNN training. Standard Empirical Risk Minimization quietly fails whenever a class is severely underrepresented, and it fails in two structurally different ways depending on <em>where</em> the rare classes sit relative to the majority. We first work through a fully numeric example of <strong>One-Sided Tail Data</strong>, where every rare class fans out on a single side of one dominant class, then contrast it with <strong>Two-Sided Tail Data</strong>, where two structurally different rare tails flank a majority "normal" class from opposite directions and therefore need a different fix.</p>
+
+<h3>3.1 One-Sided Tail Data</h3>
+
+<p>Let the total dataset consist of $N = 1000$ images distributed across $K = 25$ anomaly classes. The data distribution follows a severe power-law (long-tail) distribution partitioned into three distinct mathematical operational regimes:</p>
+
+<ul>
+    <li><strong>Head Tier ($K_{\text{head}} = 1$):</strong> Class 1 where $n_1 = 300$ images.</li>
+    <li><strong>Mid Tier ($K_{\text{mid}} = 3$):</strong> Classes 2, 3, 4 where $n_k = 80$ images each ($\sum n_k = 240$).</li>
+    <li><strong>Long-Tail Tier ($K_{\text{tail}} \approx 21$):</strong> Remaining classes sharing $\sum n_k = 460$ images, characterized by single-digit counts ($1 \le n_k \le 10$) up to $n_k = 22$.</li>
+</ul>
+
+<div class="caution-box">
+    <strong>Why This Breaks Training, in Plain Terms:</strong>
+    <p>Cross-entropy loss is just an average over all training examples. Since Class 1 alone supplies 300 of the 1000 images, its gradient contribution dominates that average — the optimizer spends most of its effort getting Class 1 right, because that's where most of the loss (and most of the achievable improvement) comes from.</p>
+    <p>A class with only 2–3 images barely moves the average loss at all, so its gradient signal is too weak to carve out a stable region for it in the classifier's output space. In effect, the network is never given a strong enough reason to "make room" for that class, so it predicts it correctly close to never.</p>
+    <p>On top of this, you can't even reliably measure the problem: with only 2–3 examples per rare class, there aren't enough samples to hold some out for validation without leaving almost nothing to train on — so stratified train/test splitting itself becomes unreliable at that tier.</p>
+</div>
+
+<h4>Algorithmic Metrics &amp; Evaluation</h4>
+<p>To avoid deceptive performance evaluation, precision, recall, and $F_1$ must be evaluated per class $k$, then aggregated globally:</p>
+<div class="math-block">
+    $$\text{Precision}_k = \frac{TP_k}{TP_k + FP_k} \qquad \text{Recall}_k = \frac{TP_k}{TP_k + FN_k} \qquad F_{1,k} = \frac{2 \cdot \text{Precision}_k \cdot \text{Recall}_k}{\text{Precision}_k + \text{Recall}_k}$$
+</div>
+
+<p><strong>Macro-averaging</strong> calculates the unweighted mean of $F_{1,k}$ across all $K$ classes, assigning equal weight to every anomaly type regardless of sample size:</p>
+<div class="math-block">
+    $$\text{Macro-F1} = \frac{1}{K}\sum_{k=1}^{K} F_{1,k}$$
+</div>
+<p><strong>Micro-averaging</strong> aggregates individual counts globally and is structurally dominated by the head tier, masking total failure on rare anomalies. <strong>Global Accuracy</strong> is fundamentally untrustworthy; a naive model predicting Class 1 exclusively yields 30% baseline accuracy while achieving 0% recall across the remaining 24 classes.</p>
+
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: left;">
+    <thead>
+        <tr style="background-color: #f2f2f2;">
+            <th style="width: 25%;">What You See (Symptom)</th>
+            <th style="width: 40%;">Why It Happens (Plain English)</th>
+            <th style="width: 35%;">What to Do (Fix)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>High Overall Accuracy, but Low Macro-F1 Score</strong></td>
+            <td><strong>The Model Is Cheating by Counting Popular Classes:</strong><br>
+            The model correctly guesses the few large, "popular" classes (which make up 54% of all images) while failing on all 21 rare classes. Overall Accuracy looks high because it counts total images, but Macro-F1 grades every class equally, exposing that the rare categories are being ignored completely.</td>
+            <td><strong>Stop using Accuracy as your main metric.</strong> Track <em>Macro-F1</em> and per-class <em>Recall</em> so poor performance on rare classes isn't hidden behind popular ones.</td>
+        </tr>
+        <tr>
+            <td><strong>Mid-Sized Classes (~80 images) Give Unstable & Poor Results</strong></td>
+            <td><strong>Piggybacking on Large Classes & Gradient Bullying:</strong><br>
+            With 80 images, the model lacks enough data to build unique visual filters from scratch and gets overpowered by Class 1 (300 images). It forces the 80-image classes to "borrow" Class 1's filters, leading to severe overfitting on background details and lighting quirks.</td>
+            <td><strong>Combine 3 Engineering Fixes:</strong><br>
+    1. <strong>Transfer Learning:</strong> Provides ready-made, pre-trained visual feature maps, supplying the missing features that the model fails to learn when trained from scratch with limited data.<br>
+    2. <strong>Weighted Loss:</strong> Multiplies error penalties for small classes so 80 images exert equal learning force as 300 images.<br>
+    3. <strong>Data Augmentation:</strong> Rotates and crops images on the fly to multiply sample variety without gathering new data.</td>
+</tr>
+        </tr>
+    <tr>
+    <td><strong>Tiny Tail Classes (&lt;10 images) Have a 0% Detection Rate</strong></td>
+    <td>
+        <strong>Complete Learning Starvation (No Gradient Signals):</strong><br>
+        When a class has fewer than 10 images, it almost never appears in random training batches, so its loss is rarely calculated. Without loss, there are no gradients; without gradients, the network's weights never update to recognize that class. The AI effectively acts as if that class doesn't exist.<br><br>
+        Even when a tail image is sampled, its gradient signal gets drowned out during mini-batch averaging:
+        <br><br>
+        <div style="text-align: center; font-family: monospace; background-color: #f9f9f9; padding: 6px; border-radius: 4px;">
+            Batch Gradient = (1 / N) * Σ (Gradient_i)
+        </div>
+        <br>
+        The single tail gradient is averaged with 31 or 63 majority-class gradients, causing <strong>gradient swamping</strong> where the strong signals from large classes completely erase the tiny update from the rare class.
+    </td>
+    <td><strong>Switch to Few-Shot Learning:</strong> Don't train a standard classifier. Instead, use a Siamese or Prototypical Network to map images into feature vectors and check if a new image is visually close in distance to your few sample images.You give them 1 sample photo of the rare bird to hold in their hand. When shown a new unknown picture, you ask: "Does this new picture look almost identical to the sample in your hand?</td>
+</tr>
+        <tr>
+            <td><strong>Rare Classes Keep Getting Confused With Each Other</strong></td>
+            <td><strong>Overlapping Visual Features:</strong><br>
+            The rare classes look visually similar, and because the model lacks enough sample images, it cannot learn where one class ends and the other begins.</td>
+            <td><strong>Inject Extra Visual Rules:</strong> Feed fixed, hand-crafted feature descriptors (like basic texture or edge rules) directly into the final decision layer to help separate look-alike classes.</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="highlight-box">
+    <strong>Architectural Redesign (Two-Stage Pipeline):</strong> Do not force all 25 classes into a single flat Softmax layer. Instead, restructure the problem hierarchically:
+    <br><br>
+    <strong>Stage 1:</strong> An ordinary supervised CNN optimizing a 5-class problem: Class 1, 2, 3, 4, and an integrated "Out-of-Distribution / Rare Anomaly" background bucket (pooling all 460 tail images).
+    <br>
+    <strong>Stage 2:</strong> Images routed to the "Rare Anomaly" bucket are processed by a distance-based metric learning framework (Nearest Centroid) to identify the specific rare anomaly type without using Softmax classification.
+	
+</div>
+
+<h3>3.2 One-Sided Tail: Algorithmic &amp; Hybrid Solutions</h3>
+<p>To fix this performance bottleneck without collecting more data, we established a multi-pronged strategy. The objective throughout is to prevent the model from ignoring the single rare tail.</p>
+
+<h4>Algorithmic Adjustments</h4>
+<ul>
+    <li><strong>Cost-Sensitive Loss:</strong> Switch to <strong>Focal Loss</strong>,
+        $$\mathcal{L} = -\alpha (1-p_{\mathrm{t}})^\gamma \log(p_{\mathrm{t}})$$
+        which down-weights easy background examples ($p_{\mathrm{t}}$ near 1) via the $(1-p_{\mathrm{t}})^\gamma$ term, forcing the remaining gradient budget onto the hard, rare-tail examples. Alternatively, apply <strong>Weighted Cross-Entropy</strong> with a single positive class scalar weight ($w_{\mathrm{pos}} \gg 1$).</li>
+    <li><strong>Resampling:</strong> Use a batch sampler (like PyTorch's <code>WeightedRandomSampler</code>) to force an artificial 50/50 class balance in every GPU training batch, and apply heavy data augmentation exclusively to the minority-class images.</li>
+    <li><strong>Output / Thresholding:</strong> With a single output logit $z \in \mathbb{R}$ passed through Sigmoid, adjust the decision threshold down from $0.5$ (e.g., to $0.15$) to maximize recall for the rare tail.</li>
+    <li><strong>Evaluation Metrics:</strong> Move away from plain "Accuracy" and judge the model using <strong>F1-Score</strong> or <strong>AUC-ROC</strong> instead (see the Precision/Recall/F1 definitions above).</li>
+</ul>
+
+<h4>Integrating Hand-Crafted Medical Feature Extraction</h4>
+<p>Because your project involves <strong>medical imaging</strong>, we concluded that injecting traditional, deterministic domain knowledge is an excellent way to compensate for data scarcity.</p>
+<ul>
+    <li><strong>The Hybrid Approach:</strong> Build a dual-branch network that extracts abstract global features using a CNN, extracts explicit traditional metrics (like <strong>GLCM</strong> for tissue texture, <strong>LBP</strong> for micro-patterns, or <strong>Active Contours</strong> for geometric boundaries) via hand-crafted algorithms, and <strong>concatenates</strong> them before the final classification layer.</li>
+    <li><strong>Why it helps:</strong> It gives the network a mathematical "cheat sheet," reducing the number of images needed to infer basic structural or texture regularities on its own.</li>
+</ul>
+
+<h3>3.3 Two-Sided Tail Distributions</h3>
+<p>Unlike the one-sided long tail above (one majority class, rarity fanning out on a single side), a <strong>two-sided tail</strong> has a majority class in the middle with two structurally different rare tails on opposite sides. It's still a CNN <strong>image</strong> classification task: a camera photographs each manufactured part, and the network sorts it into one of five ordered categories — Severely Undersize / Undersize / In-Spec / Oversize / Severely Oversize.</p>
+
+<div class="highlight-box">
+    <strong>Real industry example: machine-vision quality control.</strong> An inline camera photographs each manufactured part (machined parts, molded components, semiconductor dies, pharmaceutical tablets), and a measured feature — diameter, coating thickness, solder-joint size — must fall within an <strong>Upper Specification Limit (USL)</strong> and <strong>Lower Specification Limit (LSL)</strong>. Most parts are in-spec (majority); defects occur in two directions — undersize or oversize — each with its own severity levels, so each tail is itself a small long tail. This is Six Sigma / SPC territory, where <strong>Cp</strong> and <strong>Cpk</strong> quantify how well a process stays within both limits. For $N=1000$ part images labeled into the five severity classes:
+    <div class="math-block">
+        $$C_p = \frac{USL - LSL}{6\sigma} \qquad C_{pk} = \min\left(\frac{USL-\mu}{3\sigma},\ \frac{\mu-LSL}{3\sigma}\right)$$
+    </div>
+    $C_p$ measures whether the tolerance band is wide enough for the process's natural spread ($6\sigma$); $C_{pk}$ additionally penalizes the process for being off-center. A value of $C_{pk} < 1.33$ is the usual signal that off-spec parts (your two rare tails) will keep appearing at a non-negligible rate no matter how tightly you control the mean.
+</div>
+
+<div class="diagram-box">
+    <svg viewBox="0 0 680 240" role="img" aria-label="Illustrative two-sided tail distribution for a dimensional quality inspection problem">
+        <line x1="40" y1="200" x2="630" y2="200" stroke="#a0aec0" stroke-width="1"/>
+        <g>
+            <rect x="60" y="178" width="90" height="22" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+            <text x="105" y="172" text-anchor="middle" font-size="12" fill="#7b341e">~15</text>
+            <text x="105" y="216" text-anchor="middle" font-size="11" fill="#7b341e">Severely undersize</text>
+        </g>
+        <g>
+            <rect x="175" y="148" width="90" height="52" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+            <text x="220" y="142" text-anchor="middle" font-size="12" fill="#7b341e">~70</text>
+            <text x="220" y="216" text-anchor="middle" font-size="11" fill="#7b341e">Undersize</text>
+        </g>
+        <g>
+            <rect x="290" y="60" width="90" height="140" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+            <text x="335" y="52" text-anchor="middle" font-size="13" font-weight="600" fill="#234e52">~800</text>
+            <text x="335" y="216" text-anchor="middle" font-size="11" font-weight="600" fill="#234e52">In-spec (majority)</text>
+        </g>
+        <g>
+            <rect x="405" y="140" width="90" height="60" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+            <text x="450" y="134" text-anchor="middle" font-size="12" fill="#7b5e12">~80</text>
+            <text x="450" y="216" text-anchor="middle" font-size="11" fill="#7b5e12">Oversize</text>
+        </g>
+        <g>
+            <rect x="520" y="182" width="90" height="18" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+            <text x="565" y="176" text-anchor="middle" font-size="12" fill="#7b5e12">~10</text>
+            <text x="565" y="216" text-anchor="middle" font-size="11" fill="#7b5e12">Severely oversize</text>
+        </g>
+        <text x="105" y="232" text-anchor="middle" font-size="11" fill="#718096">&larr; LSL direction</text>
+        <text x="565" y="232" text-anchor="middle" font-size="11" fill="#718096">USL direction &rarr;</text>
+    </svg>
+    <p class="diagram-caption">Fig. 4 — illustrative shape of a two-sided tail: one majority class in the middle, two independent rare tails extending in opposite directions, each with its own internal severity levels</p>
+</div>
+
+<p><strong>Worked example:</strong> target diameter $10.00\text{mm}$, $LSL = 9.90\text{mm}$, $USL = 10.10\text{mm}$, process at $\mu = 10.01\text{mm}$, $\sigma = 0.03\text{mm}$:</p>
+<div class="math-block">
+    $$C_{pk} = \min\left(\frac{10.10-10.01}{0.09},\ \frac{10.01-9.90}{0.09}\right) = \min(1.00,\ 1.22) = 1.00$$
+</div>
+<p>$C_{pk}=1.00$ is below the $1.33$ comfort threshold, which is why ~25 of 1000 parts fall outside spec despite the mean being near target — the undersize tail is thinner since $\mu$ sits closer to the USL side.</p>
+
+<p><strong>Strategy implication:</strong> separating in-spec from defective is easy; the hard part is fine-grained severity <em>within</em> each tail, where samples thin out fast the further out you go. The same two-stage idea from §3.2 applies, <strong>duplicated on both sides</strong>: an easy 3-way split (undersize / in-spec / oversize) first, then two separate few-shot models — one per tail — since the two failure directions shouldn't share one embedding space. (The same shape shows up elsewhere too — chip binning, vital-sign alerts, credit scoring — just not as image-classification tasks.)</p>
+
+<h3>3.4 Two-Sided Tail: Algorithmic Solutions</h3>
+<p>The objective here is to maintain feature discriminability at <em>both</em> ends of the spectrum without letting them cancel each other out or get overwhelmed by the center.</p>
+<ul>
+    <li>
+        <strong>Loss Function Adjustment:</strong>
+        <ul>
+            <li>Switch from single binary classification to <strong>Ordinal Cross-Entropy</strong> or <strong>Multi-Class Focal Loss</strong> treating $C = \{\text{Left Tail}, \text{Normal}, \text{Right Tail}\}$ — the same Focal Loss weighting introduced in §3.2 applies here per-class, once for each tail independently.</li>
+            <li>If modeled as a regression task (predicting continuous severity), use <strong>Asymmetric Huber Loss</strong> or <strong>Focal L1 Loss</strong> to heavily penalize errors occurring at both low ($y < \theta_{\text{low}}$) and high ($y > \theta_{\text{high}}$) target values.</li>
+        </ul>
+    </li>
+    <li>
+        <strong>Sampling &amp; Batching:</strong> Use <strong>Stratified Multi-Tail Samplers</strong> (e.g., Triplet Batching) to guarantee that every GPU batch contains a fixed balance — for example $33\%$ Left Tail, $34\%$ Normal, and $33\%$ Right Tail — since plain random sampling starves both tails simultaneously rather than just one.
+    </li>
+    <li>
+        <strong>Architecture Modification:</strong> Single-sided heads easily learn a linear cutoff, but two-sided tails require non-monotonic decision functions. Adding <strong>ordinal anchor heads</strong>, or two separate classification branches (Branch A for Left Tail vs. Rest; Branch B for Right Tail vs. Rest), prevents optimization gradient interference between the two opposing extremes.
+    </li>
+</ul>
+
+<h3>3.5 Other Distribution Shapes: The General Multi-Class Long-Tail</h3>
+<p>The two patterns above are simplified cases of a broader shape you'll see called <strong>long-tailed recognition</strong> in the literature: many classes (not just the 1 head + 3 mid classes from §3.1) whose frequencies fall off along a smooth curve, conventionally split into <strong>head</strong> (abundant), <strong>body/medium</strong>, and <strong>tail</strong> (a handful of images each) classes — the same $K_{\text{head}}/K_{\text{mid}}/K_{\text{tail}}$ split already used for the 25-class anomaly set in §3.1, just generalized to dozens or hundreds of classes instead of 4.</p>
+
+<div class="highlight-box">
+    <strong>Real-world examples of the general long-tail shape:</strong> species/wildlife image classification (a handful of common species dominate a dataset while thousands of rarer species have only a few images each), retail product-defect catalogs (a few frequent defect types against a long catalog of rare ones), and industrial fault classification (a handful of common failure modes vs. dozens of rare ones). The frequency decay is often modeled as a power law/Zipf-style relation,
+    <div class="math-block">
+        $$n_k \propto k^{-s}$$
+    </div>
+    where $k$ is a class's frequency rank and $s$ controls how steep the drop-off is — a larger $s$ means a smaller handful of head classes dominate even more heavily.
+</div>
+
+<p>Because it's the same underlying shape as §3.1's tiered example — just more tiers, more classes — the diagnostic tools (per-class $F_1$, macro- vs. micro-averaging) and mitigations from §3.2 (weighted loss, transfer learning, augmentation, two-stage head/tail routing, few-shot learning for the deepest tail) carry over directly, so this shape doesn't need its own algorithmic-solutions subsection.</p>
+
+<h3>3.6 Summary: One-Sided vs. Two-Sided vs. Multi-Class Long-Tail Comparison</h3>
+
+<div class="diagram-box">
+    <svg viewBox="0 0 720 270" role="img" aria-label="Bar-chart comparison of one-sided, two-sided, and multi-class long-tail distribution shapes">
+        <!-- Panel A: One-Sided -->
+        <line x1="10" y1="220" x2="230" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <rect x="25" y="60" width="18" height="160" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="34" y="52" text-anchor="middle" font-size="10" fill="#234e52">300</text>
+        <rect x="47" y="177" width="18" height="43" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="69" y="177" width="18" height="43" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="91" y="177" width="18" height="43" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="113" y="208" width="18" height="12" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="135" y="212" width="18" height="8" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="157" y="215" width="18" height="5" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="179" y="217" width="18" height="3" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="201" y="219" width="18" height="1" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="120" y="245" text-anchor="middle" font-size="12" font-weight="600" fill="#2d3748">(a) One-Sided Tail (&sect;3.1)</text>
+        <text x="120" y="259" text-anchor="middle" font-size="10" font-style="italic" fill="#718096">K=25: 1 head + 3 mid + 21 rare</text>
+
+        <!-- Panel B: Two-Sided -->
+        <line x1="250" y1="220" x2="470" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <rect x="265" y="195" width="28" height="25" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="301" y="160" width="28" height="60" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="337" y="60" width="28" height="160" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="351" y="52" text-anchor="middle" font-size="10" fill="#234e52">800</text>
+        <rect x="373" y="150" width="28" height="70" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="409" y="200" width="28" height="20" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="360" y="245" text-anchor="middle" font-size="12" font-weight="600" fill="#2d3748">(b) Two-Sided Tail (&sect;3.3)</text>
+        <text x="360" y="259" text-anchor="middle" font-size="10" font-style="italic" fill="#718096">majority center, tails on both sides</text>
+
+        <!-- Panel C: Multi-Class Long-Tail -->
+        <line x1="490" y1="220" x2="710" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <rect x="500" y="60" width="12" height="160" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <rect x="515" y="140" width="12" height="80" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <rect x="530" y="167" width="12" height="53" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="545" y="180" width="12" height="40" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="560" y="188" width="12" height="32" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <rect x="575" y="193" width="12" height="27" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="590" y="197" width="12" height="23" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="605" y="200" width="12" height="20" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="620" y="202" width="12" height="18" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="635" y="204" width="12" height="16" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="650" y="205" width="12" height="15" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <rect x="665" y="207" width="12" height="13" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="600" y="245" text-anchor="middle" font-size="12" font-weight="600" fill="#2d3748">(c) Multi-Class Long-Tail (&sect;3.5)</text>
+        <text x="600" y="259" text-anchor="middle" font-size="10" font-style="italic" fill="#718096">power-law decay, head&rarr;body&rarr;tail</text>
+    </svg>
+    <p class="diagram-caption">Fig. 5 &mdash; statistical shape comparison: (a) a single one-sided tail (the 25-class anomaly set from &sect;3.1), (b) a two-sided tail flanking a central majority (the five-class tolerance example from &sect;3.3), and (c) a smooth multi-class power-law long-tail (&sect;3.5) &mdash; teal = head/majority, gold = mid/body, orange = tail classes</p>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Dimension</th>
+            <th>One-Sided Tail Data</th>
+            <th>Two-Sided Tail Data</th>
+            <th>Multi-Class Long-Tail (§3.5)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Loss Landscape</strong></td>
+            <td>The massive amount of normal data overpowers the rare cases. This forces the model's updates to constantly favor predicting the normal state.</td>
+            <td>There is always gradient conflict.Imagine pushing a box left while someone else pushes it right with equal force—the box doesn't move. In neural networks, the error signals from the two extreme ends push the network's weights in opposite directions, canceling each other out and trapping the AI in the middle.</td>
+            <td>The same head-dominance effect as One-Sided, but replicated across every tail class at once: the head tier's loss contribution swamps the average, and each of the $K_{\text{tail}}$ classes individually gets too weak a gradient to carve out its own decision region.</td>
+        </tr>
+        <tr>
+            <td><strong>Data Imbalance</strong></td>
+            <td>Asymmetric ($1:N$ where $N \gg 1$). One minority positive class vs. majority negative class.</td>
+            <td>Symmetric or Asymmetric Multi-Region ($N_{\text{left}} \ll N_{\text{mid}} \gg N_{\text{right}}$). Two distinct minority tails flanking a majority center.</td>
+            <td>Continuous power-law decay across $K$ classes ranked by frequency: $n_k \propto k^{-s}$. Not two or three discrete regions, but a smooth head &rarr; body &rarr; tail gradient over dozens or hundreds of classes.</td>
+        </tr>
+        <tr>
+            <td><strong>Batch Composition</strong></td>
+            <td>Standard random sampling leads to GPU batches containing zero tail samples.</td>
+            <td>Standard random sampling starves <em>both</em> tails simultaneously, or severely over-represents the center.</td>
+            <td>Standard random sampling starves <em>most</em> of the $K_{\text{tail}}$ classes simultaneously — with enough tail classes, a typical batch may contain no tail samples at all, or at most one class's worth.</td>
+        </tr>
+        <tr>
+            <td><strong>Boundary Mechanics</strong></td>
+            <td>Single decision hyperplane separating normal vs. extreme tail.</td>
+            <td>Two separate decision hyperplanes (or a non-linear closed manifold) separating Left Tail $\leftarrow$ Normal $\rightarrow$ Right Tail.</td>
+            <td>$K$-way Softmax decision regions, where head classes claim disproportionately large regions of the feature space and each tail class is squeezed into a sliver — the boundary problem is the one-sided problem repeated once per tail class.</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+
+	<h4>Overfitting: Mechanism, Diagnosis, and Fixes</h4>
+<p>A network overfits when it has enough capacity (parameters) to memorize the idiosyncrasies of the specific training images — a particular background, a specific lighting artifact, noise in a handful of pixels — rather than the true, generalizable pattern that defines the class. Memorizing noise still drives training loss down, but does nothing for images the network hasn't seen, so validation loss stops improving and eventually rises.</p>
+
+<div class="caution-box">
+    <strong>Why This Happens, in Plain Terms:</strong>
+    <p>Every model sits somewhere on a bias–variance tradeoff. Early in training, the network is still learning genuinely useful, generalizable features — both train and validation loss fall together (low variance regime). Past a certain point, the "easy" generalizable signal is exhausted, and the only way to keep pushing training loss down is to start fitting sample-specific noise (high variance regime). Since that noise is different in every image, fitting it on the training set actively hurts performance on the validation set — the two loss curves diverge.</p>
+    <p>This is exactly why a single loss number is a poor stopping signal: training loss will happily keep falling long after it has stopped meaning anything useful.</p>
+</div>
+
+<p><strong>Worked example:</strong> training a CNN on $N=500$ images with early stopping disabled, logging loss every 5 epochs:</p>
+
+<table>
+    <thead>
+        <tr><th>Epoch</th><th>Train Loss</th><th>Val Loss</th><th>Generalization Gap</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>1</td><td>0.85</td><td>0.88</td><td>0.03</td></tr>
+        <tr><td>5</td><td>0.42</td><td>0.51</td><td>0.09</td></tr>
+        <tr><td>10</td><td>0.21</td><td>0.38</td><td>0.17</td></tr>
+        <tr><td><strong>15</strong></td><td><strong>0.09</strong></td><td><strong>0.35</strong></td><td><strong>0.26</strong></td></tr>
+        <tr><td>20</td><td>0.03</td><td>0.42</td><td>0.39</td></tr>
+        <tr><td>25</td><td>0.01</td><td>0.55</td><td>0.54</td></tr>
+        <tr><td>30</td><td>0.005</td><td>0.70</td><td>0.695</td></tr>
+    </tbody>
+</table>
+<p>Validation loss bottoms out at epoch 15 ($0.35$) and rises every epoch after — the network has moved from learning to memorizing. The generalization gap, $L_{\text{val}} - L_{\text{train}}$, is the number to actually watch: it grows monotonically once overfitting begins, well before the raw validation number looks alarming.</p>
+
+<div class="diagram-box">
+    <svg viewBox="0 0 680 260" role="img" aria-label="Train and validation loss curves diverging, marking the early stopping point">
+        <line x1="40" y1="220" x2="640" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <line x1="40" y1="40" x2="40" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <text x="340" y="245" text-anchor="middle" font-size="12" fill="#718096">Epoch</text>
+        <text x="20" y="130" text-anchor="middle" font-size="12" fill="#718096" transform="rotate(-90 20 130)">Loss</text>
+        <polyline points="40,60 140,130 240,175 340,195 440,204 540,209 640,211" fill="none" stroke="#319795" stroke-width="2.5"/>
+        <polyline points="40,55 140,120 240,155 340,163 440,148 540,116 640,72" fill="none" stroke="#dd6b20" stroke-width="2.5"/>
+        <line x1="340" y1="40" x2="340" y2="220" stroke="#c05621" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="340" y="30" text-anchor="middle" font-size="12" font-weight="600" fill="#c05621">Early stopping point (epoch 15)</text>
+        <rect x="470" y="45" width="14" height="14" fill="#319795"/>
+        <text x="490" y="56" font-size="12" fill="#234e52">Train Loss</text>
+        <rect x="470" y="65" width="14" height="14" fill="#dd6b20"/>
+        <text x="490" y="76" font-size="12" fill="#7b341e">Validation Loss</text>
+    </svg>
+    <p class="diagram-caption">Fig. 6 — train loss keeps falling while validation loss bottoms out and rises; the divergence point is where memorization overtakes generalization</p>
+</div>
+
+<div class="highlight-box">
+    <strong>Regularization Toolkit:</strong>
+    <ul>
+        <li><strong>L2 Weight Decay:</strong> add a penalty on large weights to the loss, $\mathcal{L}_{\text{reg}} = \mathcal{L}_{\text{CE}} + \lambda \sum_i w_i^2$. Large weights let the network fit sharp, idiosyncratic patterns; penalizing them keeps the decision function smoother and less able to memorize noise.</li>
+        <li><strong>Dropout:</strong> zero out each neuron's activation independently with probability $p$ during training. This prevents any single neuron from becoming a dedicated "memorizer" for a specific training example, since it can't rely on any other specific neuron being present on a given forward pass.</li>
+        <li><strong>Early Stopping:</strong> stop training at $t^{*} = \arg\min_t L_{\text{val}}(t)$ — the epoch of minimum validation loss — rather than a fixed epoch count.</li>
+        <li><strong>Data Augmentation</strong> (already covered in §1): directly increases effective dataset diversity, raising the amount of genuine signal available before the network is forced to resort to memorization.</li>
+    </ul>
+</div>
+<h4>Why Cross-Entropy, and Why Adam Over Plain SGD</h4>
+<p>Cross-entropy loss isn't an arbitrary choice — for a classification network outputting a probability $\hat p_c$ per class, it is the loss that falls out of maximum-likelihood estimation under a categorical distribution:</p>
+<div class="math-block">
+    $$\mathcal{L}_{\text{CE}} = -\sum_{c=1}^{K} y_c \log(\hat p_c)$$
+</div>
+<p>where $y_c$ is 1 for the true class and 0 otherwise. Minimizing this is mathematically identical to maximizing the likelihood the network assigns to the correct labels.</p>
+
+<p><strong>Vanilla SGD</strong> updates every parameter by the same fixed step size in the direction of the gradient:</p>
+<div class="math-block">
+    $$\theta_t = \theta_{t-1} - \eta\, g_t$$
+</div>
+<p><strong>Adam</strong> instead tracks a running estimate of each parameter's gradient mean ($m_t$) and squared magnitude ($v_t$), then scales the step per-parameter:</p>
+<div class="math-block">
+    $$m_t = \beta_1 m_{t-1} + (1-\beta_1) g_t \qquad v_t = \beta_2 v_{t-1} + (1-\beta_2) g_t^2$$
+    $$\theta_t = \theta_{t-1} - \eta \frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}$$
+</div>
+<p>Intuition: $m_t$ smooths out noisy, oscillating gradient directions the way momentum smooths a ball rolling downhill. Dividing by $\sqrt{v_t}$ means a parameter that has recently seen large gradients gets a smaller effective step (preventing overshoot), while a parameter with small or sparse gradients — common in early conv filters that only activate on rare patterns — gets a relatively larger step. This adaptive, per-parameter scaling is why Adam typically converges faster and needs far less learning-rate tuning than plain SGD, especially in the first several epochs.</p>
+
+<div class="diagram-box">
+    <svg viewBox="0 0 680 240" role="img" aria-label="Loss versus epoch comparing Adam and plain SGD convergence speed">
+        <line x1="40" y1="220" x2="640" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <line x1="40" y1="40" x2="40" y2="220" stroke="#a0aec0" stroke-width="1"/>
+        <text x="340" y="238" text-anchor="middle" font-size="12" fill="#718096">Epoch</text>
+        <text x="20" y="130" text-anchor="middle" font-size="12" fill="#718096" transform="rotate(-90 20 130)">Loss</text>
+        <polyline points="40,58 140,130 240,175 340,195 440,204 540,209 640,211" fill="none" stroke="#319795" stroke-width="2.5"/>
+        <polyline points="40,58 140,85 240,121 340,144 440,162 540,175 640,184" fill="none" stroke="#dd6b20" stroke-width="2.5"/>
+        <rect x="470" y="45" width="14" height="14" fill="#319795"/>
+        <text x="490" y="56" font-size="12" fill="#234e52">Adam</text>
+        <rect x="470" y="65" width="14" height="14" fill="#dd6b20"/>
+        <text x="490" y="76" font-size="12" fill="#7b341e">Plain SGD</text>
+    </svg>
+    <p class="diagram-caption">Fig. 7 — Adam's adaptive per-parameter step size drives faster early convergence than a fixed global learning rate</p>
+</div>
+
+<p><strong>Caveat worth knowing:</strong> Adam's speed advantage is mostly early. On long training runs with a carefully tuned learning-rate schedule, SGD with momentum sometimes reaches a <em>better</em> final validation result than Adam — which is why some large-scale training recipes still use SGD + warmup + cosine decay rather than Adam by default. Adam is the safer, lower-effort choice; well-tuned SGD is the higher-effort, occasionally higher-ceiling choice.</p>
+
+<p><strong>Learning-rate decay</strong>, briefly: rather than a single fixed $\eta$, common schedules shrink the step size as training progresses — large steps early to explore quickly, small steps later to fine-tune without overshooting the minimum:</p>
+<div class="math-block">
+    $$\text{Step decay: } \eta_t = \eta_0 \cdot \gamma^{\lfloor t/s \rfloor} \qquad \text{Cosine annealing: } \eta_t = \eta_{\min} + \tfrac{1}{2}(\eta_0-\eta_{\min})\left(1+\cos\left(\tfrac{\pi t}{T}\right)\right)$$
+</div>
+<h4>Worked Example: Why Random Search Beats Grid Search</h4>
+<p>Suppose you're tuning $d=3$ hyperparameters — learning rate, batch size, dropout rate — with $k=4$ candidate values each. A full grid search requires:</p>
+<div class="math-block">
+    $$k^d = 4^3 = 64 \text{ trials}$$
+</div>
+<p>But here's the catch: across all 64 trials, learning rate is only ever tested at <strong>4 distinct values</strong> — the same is true for batch size and dropout. If it turns out only learning rate actually matters much for validation performance (a common outcome in practice), 60 of those 64 trials are wasted re-testing combinations of batch size and dropout that don't move the needle.</p>
+<p>Random search instead draws each hyperparameter independently from a continuous range. With $n=20$ trials — <strong>31% of the grid's compute</strong> — learning rate alone gets tested at up to 20 distinct values, a 5&times; finer sweep of the one dimension that matters, for less than a third of the cost:</p>
+
+<table>
+    <thead>
+        <tr><th>Strategy</th><th>Trials for Comparable Coverage</th><th>Distinct Values per Hyperparameter</th><th>Best For</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Grid Search</strong></td><td>64</td><td>4</td><td>Small spaces ($d \le 2$), guaranteed exhaustive coverage</td></tr>
+        <tr><td><strong>Random Search</strong></td><td>~20</td><td>20</td><td>Larger spaces where only 1–2 hyperparameters actually matter</td></tr>
+        <tr><td><strong>Bayesian Optimization</strong></td><td>~15–20</td><td>Adaptive</td><td>Expensive-to-train models where every trial's result should inform the next choice</td></tr>
+    </tbody>
+</table>
+
+<div class="diagram-box">
+    <svg viewBox="0 0 680 220" role="img" aria-label="Bar chart comparing trials needed for grid, random, and Bayesian hyperparameter search">
+        <line x1="60" y1="200" x2="620" y2="200" stroke="#a0aec0" stroke-width="1"/>
+        <rect x="100" y="54" width="120" height="146" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="160" y="44" text-anchor="middle" font-size="13" font-weight="600" fill="#7b341e">64</text>
+        <text x="160" y="216" text-anchor="middle" font-size="12" fill="#7b341e">Grid Search</text>
+        <rect x="280" y="154" width="120" height="46" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="340" y="144" text-anchor="middle" font-size="13" font-weight="600" fill="#234e52">20</text>
+        <text x="340" y="216" text-anchor="middle" font-size="12" fill="#234e52">Random Search</text>
+        <rect x="460" y="159" width="120" height="41" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <text x="520" y="149" text-anchor="middle" font-size="13" font-weight="600" fill="#7b5e12">18</text>
+        <text x="520" y="216" text-anchor="middle" font-size="12" fill="#7b5e12">Bayesian Opt.</text>
+    </svg>
+    <p class="diagram-caption">Fig. 8 — trials needed for comparable hyperparameter-space coverage across the three search strategies (illustrative)</p>
+</div>
+
+<p><strong>Bayesian optimization</strong> pushes this further by using every trial's result to choose the next one, rather than sampling blindly: a surrogate model (typically a Gaussian Process) fits the observed (hyperparameters, validation score) pairs, and an acquisition function picks the next point expected to improve on the best score so far:</p>
+<div class="math-block">
+    $$x_{t+1} = \arg\max_x\ \mathbb{E}\big[\max(f(x) - f(x^{+}), 0)\big]$$
+</div>
+<p>where $f(x^{+})$ is the best validation score observed so far. This is why Bayesian tools like Optuna or Ray Tune tend to reach a good configuration in fewer trials than blind random search — each trial is chosen to be maximally informative given everything learned so far, not just another independent guess.</p>
+
+<h2>4. Putting It All Together: A Practical CNN Training Approach</h2>
+
+<p>Every piece covered above answers a different question that comes up during CNN training. Laid out as a single sequence, here's how they fit together:</p>
+
+<div class="highlight-box">
+    <strong>The five-step approach:</strong>
+    <ol>
+        <li><strong>Run the standard workflow first</strong> (&sect;1) — train/val split, epoch loop, log train and val loss every epoch. Nothing below matters if this loop isn't in place and monitored.</li>
+        <li><strong>Diagnose the shape of your class distribution</strong> (&sect;3) — balanced, one-sided tail, two-sided tail, or a multi-class long-tail. Plot per-class counts before choosing anything else; the shape determines every decision that follows.</li>
+        <li><strong>Apply the matching imbalance strategy</strong> — weighted loss and resampling for a mild one-sided tail (&sect;3.2), a two-stage/duplicated-branch approach for a two-sided tail (&sect;3.4), or head/body/tail-aware few-shot methods for a multi-class long-tail (&sect;3.5). Skip this step entirely if the distribution is already balanced.</li>
+        <li><strong>Train with a sensible default loss/optimizer</strong> (Cross-Entropy + Adam), and watch the train-vs-val loss curves from step 1 for the overfitting signature — rising val loss while train loss keeps falling. Apply augmentation, dropout, or early stopping the moment that gap opens, not after.</li>
+        <li><strong>Tune what's left with Random Search or Bayesian Optimization</strong>, not Grid Search — and only after the data and architecture decisions above are locked in, since retuning hyperparameters on top of a shifting data strategy wastes most of the search.</li>
+    </ol>
+</div>
+
+<div class="diagram-box">
+    <svg viewBox="0 0 680 500" role="img" aria-label="Flowchart of the five-step practical CNN training approach">
+        <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#718096"/>
+            </marker>
+        </defs>
+
+        <rect x="90" y="20" width="500" height="46" rx="6" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="340" y="48" text-anchor="middle" font-size="12.5" fill="#234e52">1. Standard workflow — train/val split, epoch loop, monitor loss (&sect;1)</text>
+
+        <line x1="340" y1="66" x2="340" y2="104" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <rect x="90" y="106" width="500" height="46" rx="6" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <text x="340" y="134" text-anchor="middle" font-size="12.5" fill="#7b5e12">2. Diagnose the data distribution shape (&sect;3)</text>
+
+        <line x1="200" y1="152" x2="140" y2="192" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="340" y1="152" x2="340" y2="192" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="480" y1="152" x2="540" y2="192" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <rect x="95" y="194" width="150" height="42" rx="5" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="170" y="219" text-anchor="middle" font-size="11" fill="#7b341e">One-Sided (&sect;3.1&ndash;3.2)</text>
+        <rect x="265" y="194" width="150" height="42" rx="5" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="340" y="219" text-anchor="middle" font-size="11" fill="#7b341e">Two-Sided (&sect;3.3&ndash;3.4)</text>
+        <rect x="435" y="194" width="150" height="42" rx="5" fill="#fff5f0" stroke="#dd6b20" stroke-width="1"/>
+        <text x="510" y="219" text-anchor="middle" font-size="11" fill="#7b341e">Multi-Class LT (&sect;3.5)</text>
+
+        <line x1="170" y1="236" x2="320" y2="278" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="340" y1="236" x2="340" y2="278" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="510" y1="236" x2="360" y2="278" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <rect x="90" y="280" width="500" height="46" rx="6" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="340" y="308" text-anchor="middle" font-size="12.5" fill="#234e52">3. Apply the matching imbalance-handling strategy</text>
+
+        <line x1="340" y1="326" x2="340" y2="364" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <rect x="90" y="366" width="500" height="52" rx="6" fill="#fffbeb" stroke="#d69e2e" stroke-width="1"/>
+        <text x="340" y="388" text-anchor="middle" font-size="12.5" fill="#7b5e12">4. Train with Cross-Entropy + Adam — watch train vs.</text>
+        <text x="340" y="405" text-anchor="middle" font-size="12.5" fill="#7b5e12">val loss for overfitting</text>
+
+        <line x1="340" y1="418" x2="340" y2="456" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <rect x="90" y="458" width="500" height="42" rx="6" fill="#e6fffa" stroke="#319795" stroke-width="1"/>
+        <text x="340" y="483" text-anchor="middle" font-size="12.5" fill="#234e52">5. Tune remaining hyperparameters: Random Search / Bayesian Opt.</text>
+    </svg>
+    <p class="diagram-caption">Fig. 9 &mdash; the five-step practical approach to CNN training, from workflow setup through final hyperparameter tuning, with the imbalance-diagnosis branch (&sect;3) sitting at the center of the pipeline</p>
+</div>
+
+<p><strong>A note before the full review:</strong> the ordering above is deliberate — data-distribution diagnosis (step 2) comes before loss/optimizer choice and hyperparameter tuning (steps 4&ndash;5) because an imbalance strategy changes what "good" training even looks like (e.g., which metric to watch, how batches are composed), and re-tuning on top of a shifting data strategy wastes most of a search budget.</p>
+
+</div>
+
+</body>
+</html>

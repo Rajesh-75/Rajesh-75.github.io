@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLHF Training — Complete Walkthrough</title>
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+          ignoreHtmlClass: 'tex2jax_ignore'
+        },
+        startup: {
+          pageReady: () => {
+            return MathJax.startup.defaultPageReady().then(() => {
+              document.body.style.visibility = 'visible';
+            });
+          }
+        }
+      };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background-color: #f9f9f9;
+            visibility: hidden; /* revealed once MathJax finishes typesetting */
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #1a365d;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            font-size: 28px;
+        }
+        h2 {
+            color: #2b6cb0;
+            font-size: 20px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #2d3748;
+            font-size: 16px;
+        }
+        p { margin: 10px 0; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+        strong { color: #1a202c; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f7fafc;
+            color: #4a5568;
+            font-weight: 600;
+        }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .highlight-box {
+            background-color: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .caution-box {
+            background-color: #fffaf0;
+            border-left: 4px solid #dd6b20;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .explain-box {
+            background-color: #f5f3ff;
+            border-left: 4px solid #7c3aed;
+            padding: 16px 20px;
+            margin: 16px 0 24px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .explain-box .q-label {
+            display: inline-block;
+            background-color: #7c3aed;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-bottom: 8px;
+        }
+        .explain-box p:first-of-type { margin-top: 4px; }
+        .math-block {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 14px 20px;
+            margin: 16px 0;
+            overflow-x: auto;
+            text-align: center;
+        }
+        code {
+            background-color: #edf2f7;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 0.92em;
+        }
+        .diagram-frame {
+            background-color: #fbfbfc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 18px 0;
+            overflow-x: auto;
+        }
+        .diagram-caption {
+            text-align: center;
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+        .algorithm-box {
+            background-color: #f5f8ff;
+            border: 1px solid #cfe0fa;
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin: 20px 0;
+        }
+        .algorithm-box .label {
+            display: block;
+            font-weight: 700;
+            color: #1a365d;
+            font-size: 13px;
+            letter-spacing: 0.02em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="tutorial-section" style="font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #334; max-width: 900px; margin: 0 auto; padding: 20px;">
+  
+  <h2>3.1 What is Reinforcement Learning (RL)?</h2>
+  <p>
+    Before diving into Large Language Models and alignment, we must understand the foundational mechanics of <strong>Reinforcement Learning (RL)</strong>. Unlike supervised learning—where a dataset explicitly tells the model the exact "correct" answer for every input—an RL agent learns entirely through <strong>trial and error</strong> by interacting with an environment.
+  </p>
+
+  <div class="algorithm-box">
+    <strong class="label">An Intuitive Analogy: Training a Dog</strong>
+    <p style="margin-bottom: 15px;">
+      To build intuition for how RL works, imagine training a dog to sit on command. The dog starts with no prior instruction and figures out what to do based on consequences:
+    </p>
+    <ul style="list-style-type: disc; padding-left: 20px; margin-bottom: 0;">
+      <li style="margin-bottom: 8px;"><strong>State ($s_t$):</strong> The dog's current position and posture at time step $t$ (e.g., standing up or wandering around).</li>
+      <li style="margin-bottom: 8px;"><strong>Action ($a_t$):</strong> What the dog chooses to do next (e.g., sit down, bark, or run away).</li>
+      <li style="margin-bottom: 8px;"><strong>Reward ($r_t$):</strong> The feedback signal. Giving the dog a tasty treat yields a positive reward ($+1$), while ignoring or correcting bad behavior yields a neutral or negative reward ($0$ or $-1$).</li>
+      <li style="margin-bottom: 8px;"><strong>Policy ($\pi$):</strong> The dog's internal decision-making strategy. Over time, the policy learns which actions yield treats for specific commands.</li>
+      <li><strong>Transition:</strong> How the physical world updates. If the dog is standing and decides to bend its legs, the physical laws of movement transition it into a new posture ($s_{t+1}$).</li>
+    </ul>
+  </div>
+
+  <div class="diagram-frame">
+    <svg viewBox="0 0 620 330" xmlns="http://www.w3.org/2000/svg" style="max-width:520px; height:auto; display:block; margin:0 auto;">
+      <defs>
+        <marker id="rlArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#233"/>
+        </marker>
+      </defs>
+      <g font-family="Segoe UI, sans-serif" font-size="14">
+
+        <!-- Agent -->
+        <rect x="200" y="20" width="220" height="90" rx="18" fill="#eaf2fb" stroke="#0056b3" stroke-width="2.5"/>
+        <text x="310" y="58" text-anchor="middle" fill="#003d82" font-weight="700" font-size="15">Agent</text>
+        <text x="310" y="82" text-anchor="middle" fill="#003d82" font-size="14">&#960;<tspan font-size="10" baseline-shift="sub">&#952;</tspan>(&#183;)</text>
+
+        <!-- Target Environment -->
+        <rect x="200" y="210" width="220" height="90" rx="10" fill="#eef1f5" stroke="#667" stroke-width="2.5"/>
+        <text x="310" y="248" text-anchor="middle" fill="#445" font-weight="700" font-size="15">Target</text>
+        <text x="310" y="270" text-anchor="middle" fill="#445" font-weight="700" font-size="15">Environment</text>
+
+        <!-- Left path: environment -> agent, carries s_t, r_t -->
+        <path d="M200,255 L120,255 L120,65 L196,65" fill="none" stroke="#233" stroke-width="2" marker-end="url(#rlArrow)"/>
+        <text x="100" y="150" text-anchor="middle" fill="#233" font-style="italic" font-size="15">s<tspan font-size="10" baseline-shift="sub">t</tspan></text>
+        <text x="100" y="172" text-anchor="middle" fill="#233" font-style="italic" font-size="15">r<tspan font-size="10" baseline-shift="sub">t</tspan></text>
+
+        <!-- Right path: agent -> environment, carries a_t -->
+        <path d="M420,65 L500,65 L500,255 L424,255" fill="none" stroke="#233" stroke-width="2" marker-end="url(#rlArrow)"/>
+        <text x="522" y="163" text-anchor="middle" fill="#233" font-style="italic" font-size="15">a<tspan font-size="10" baseline-shift="sub">t</tspan></text>
+
+      </g>
+    </svg>
+    <p class="diagram-caption">Figure 4: Standard RL loop &#8212; the agent &#960;<tspan font-size="10">&#952;</tspan>(&#183;)
+      picks an action a<tspan font-size="8">t</tspan> given the current state; the environment returns
+      the next state s<tspan font-size="8">t</tspan> and a reward r<tspan font-size="8">t</tspan>.</p>
+  </div>
+
+  <p>
+    Notice that Figure 4 writes the policy as $\pi_\theta(\cdot)$ rather than just $\pi$. The subscript
+    $\theta$ denotes the policy's <strong>parameters</strong> — in a neural-network policy, these are
+    simply its weights. Framed this way, "learning" in RL is really a search over $\theta$: the agent
+    repeatedly acts, observes the resulting state and reward, and adjusts $\theta$ so that future
+    actions accumulate more reward. The RL loop in Figure 4 is exactly this search running again and
+    again, one interaction at a time.
+  </p>
+
+  <h3>3.1.2 Mapping the RL Loop to Math (The Trajectory Distribution)</h3>
+  <p>
+    In formal reinforcement learning, a complete episode or sequence of interactions (called a <strong>trajectory</strong> $\tau$) is modeled as a joint probability distribution over states and actions. Mathematically, this trajectory probability is expressed as:
+  </p>
+
+  <div class="math-block">
+    $$p_\pi(\tau) = \rho_0(s_0) \prod_{t=0}^{T-1} \pi(a_t \mid s_t) \, p(s_{t+1} \mid s_t, a_t)$$
+  </div>
+
+  <p>Every term in this equation breaks down directly into our components:</p>
+  <ul style="list-style-type: disc; padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>$\rho_0(s_0)$:</strong> The probability of starting at an initial state $s_0$ (e.g., the dog standing at the start of training).</li>
+    <li style="margin-bottom: 8px;"><strong>$\pi(a_t \mid s_t)$:</strong> The <strong>Policy</strong> — the probability of taking action $a_t$ given the current state $s_t$.</li>
+    <li style="margin-bottom: 8px;"><strong>$p(s_{t+1} \mid s_t, a_t)$:</strong> The <strong>Transition Dynamics</strong> — the probability of landing in a new state $s_{t+1}$ given the current state and action.</li>
+  </ul>
+
+  <p>
+    We now have a name for what RL is searching for ($\theta$) and a formal description of the loop
+    it runs (the trajectory distribution above). What's still missing is the actual update rule: a
+    concrete procedure for adjusting $\theta$ after each interaction so that expected reward goes up.
+    This, too, is a general <strong>reinforcement learning</strong> question, with no connection yet
+    to language models — one widely-used answer is <strong>Proximal Policy Optimization
+    (PPO)</strong>, an RL algorithm that nudges $\theta$ in the direction of higher expected reward
+    while "clipping" each update so the policy doesn't change too drastically in a single step. PPO
+    was developed for general RL problems long before it was adopted for RLHF; we'll reuse it as-is
+    when we get to the policy-update step in Section 3.2.
+  </p>
+
+</div>
+
+<div class="tutorial-section" style="font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #334; max-width: 900px; margin: 0 auto; padding: 20px;">
+  <h2>3.2 Why RL cannot be used in LLM, Instead RLHF</h2>
+  <p>
+    Applying classical Reinforcement Learning directly to Large Language Models fails because standard RL assumes an open-ended environment with fixed physical rewards and dynamic state transitions driven by environmental physics. In contrast, language generation requires a specialized formulation where the "state" is a fixed prompt combined with generated tokens, and the reward cannot be measured by a static rulebook. Instead, <strong> Reinforcement Learning from Human Feedback (RLHF) </strong> replaces environmental rewards with a learned neural network proxy (<strong>the Reward Model</strong>) that evaluates an entire response completion at once. Because there's no ongoing back-and-forth with an environment, the whole prompt-to-completion exchange is treated as a single-step interaction, as shown in the figure 5, rather than the many-step trajectory in Figure 4.
+  </p>
+
+  <div class="explain-box">
+    <span class="q-label">INTUITION</span>
+    <p><strong>What's a "bandit problem"?</strong> The name comes from a slot machine &#8212; an old
+      "one-armed bandit." You pull the lever once, see what you win, and that's it; there's no
+      state carried forward to the next pull. RLHF treats each prompt the same way: the policy
+      generates one full response, the reward model scores it once, and the interaction ends
+      there &#8212; no next state, no planning several moves ahead. That's exactly why the
+      state-transition arrows from Figure 4 (s<sub>t</sub> &#8594; s<sub>t+1</sub>) don't appear in
+      Figure 5: every generated token in the response is judged together, as part of one single
+      "pull of the lever," not as a sequence of separate environment steps.</p>
+  </div>
+
+  <div class="diagram-frame">
+    <!-- Redesigned Clear Left-to-Right Pipeline Diagram -->
+    <svg viewBox="0 0 760 310" xmlns="http://www.w3.org/2000/svg" style="max-width:680px; height:auto; display:block; margin:0 auto;">
+      <defs>
+        <marker id="cleanArrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#233"/>
+        </marker>
+        <marker id="feedbackArrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#8a6d1d"/>
+        </marker>
+      </defs>
+      <g font-family="Segoe UI, sans-serif" font-size="13">
+
+        <!-- Step 1: Prompt Source / Environment -->
+        <rect x="20" y="40" width="150" height="90" rx="8" fill="#eef1f5" stroke="#667" stroke-width="2"/>
+        <text x="95" y="70" text-anchor="middle" fill="#445" font-weight="700" font-size="14">1. Prompt Source</text>
+        <text x="95" y="92" text-anchor="middle" fill="#556" font-size="11.5">Fixed Prompt (<tspan font-style="italic">p</tspan>)</text>
+        <text x="95" y="112" text-anchor="middle" fill="#778" font-size="10.5">No state transition</text>
+
+        <!-- Arrow 1 -> 2 -->
+        <path d="M172,85 L228,85" fill="none" stroke="#233" stroke-width="2" marker-end="url(#cleanArrow)"/>
+        <text x="200" y="72" text-anchor="middle" fill="#233" font-size="11">prompt</text>
+
+        <!-- Step 2: Policy (LLM Agent) -->
+        <rect x="230" y="40" width="160" height="90" rx="12" fill="#f5a623" stroke="#c9820f" stroke-width="2"/>
+        <text x="310" y="70" text-anchor="middle" fill="#332200" font-weight="700" font-size="14">2. Policy (&#960;<tspan font-size="10" baseline-shift="sub">&#952;</tspan>)</text>
+        <text x="310" y="92" text-anchor="middle" fill="#332200" font-size="11.5">LLM generates</text>
+        <text x="310" y="112" text-anchor="middle" fill="#332200" font-size="11">entire completion (<tspan font-style="italic">c</tspan>)</text>
+
+        <!-- Arrow 2 -> 3 -->
+        <path d="M392,85 L448,85" fill="none" stroke="#233" stroke-width="2" marker-end="url(#cleanArrow)"/>
+        <text x="420" y="72" text-anchor="middle" fill="#233" font-size="11">completion</text>
+
+        <!-- Step 3: Reward Model -->
+        <rect x="450" y="40" width="160" height="90" rx="8" fill="#eaf2fb" stroke="#0056b3" stroke-width="2"/>
+        <text x="530" y="70" text-anchor="middle" fill="#003d82" font-weight="700" font-size="14">3. Reward Model</text>
+        <text x="530" y="92" text-anchor="middle" fill="#003d82" font-size="11.5">Evaluates whole response</text>
+        <text x="530" y="112" text-anchor="middle" fill="#003d82" font-size="11">Outputs scalar reward (<tspan font-style="italic">r</tspan>)</text>
+
+        <!-- Step 4: Policy Update Box (Bottom Center) -->
+        <rect x="230" y="195" width="380" height="85" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+        <text x="420" y="222" text-anchor="middle" fill="#5b21b6" font-weight="700" font-size="14">4. Policy Optimization / Update (PPO)</text>
+        <text x="420" y="246" text-anchor="middle" fill="#4c1d95" font-size="12">&#952;<tspan font-size="9" baseline-shift="sub">t+1</tspan> = &#952;<tspan font-size="9" baseline-shift="sub">t</tspan> + &#945;&#8711;<tspan font-size="9" baseline-shift="sub">&#952;</tspan>J(&#960;<tspan font-size="9" baseline-shift="sub">&#952;</tspan>) using Reward Signal</text>
+        <text x="420" y="266" text-anchor="middle" fill="#6d28d9" font-size="10.5">Treats prompt-to-response as a single bandit step</text>
+
+        <!-- Feedback Arrow from Reward Model down to Policy Update -->
+        <path d="M530,132 L530,165 L480,165 L480,191" fill="none" stroke="#8a6d1d" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#feedbackArrow)"/>
+        <text x="548" y="155" fill="#8a6d1d" font-size="11">Score (<tspan font-style="italic">r</tspan>)</text>
+
+        <!-- Loopback Arrow from Policy Update back to Policy Agent -->
+        <path d="M230,237 L195,237 L195,105 L224,105" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#cleanArrow)"/>
+        <text x="163" y="175" text-anchor="middle" fill="#7c3aed" font-size="11">Weights Updated (&#952;)</text>
+
+      </g>
+    </svg>
+    <p class="diagram-caption">Figure 5: The RLHF Pipeline &mdash; flowing sequentially from Prompt Source (1) through Policy Generation (2) and Reward Model evaluation (3) down into the PPO Policy Update (4), emphasizing the single-step bandit nature without complex physical state transitions. The reward $r$ produced in step 3 is the only signal that flows back into step 4, where it scales how much the policy's weights move.</p>
+  </div>
+
+  <p>
+    Figure 5 lays out this single-step exchange as a left-to-right pipeline: a prompt is drawn from a
+    fixed source, the policy &pi;<sub>&theta;</sub> generates one full completion in response, and the
+    reward model scores that completion once, producing a single scalar reward $r$. The objective being
+    optimized is simply the expected reward, $J(\theta) = \mathbb{E}[r(p,c)]$, and its gradient,
+    $\nabla_\theta J(\theta) = \mathbb{E}[\nabla_\theta \log \pi_\theta(c \mid p) \cdot r(p,c)]$, shows
+    exactly how $r$ is used: it scales the direction that makes a completion more or less likely, so a
+    high-reward completion pulls $\theta$ toward it and a low-reward one pushes $\theta$ away. That
+    reward-scaled update is what flows into the PPO update step introduced in Section 3.1.2 &#8212; the
+    same general RL algorithm, unchanged &#8212; which adjusts the policy's weights before the next batch
+    of prompts is drawn.
+  </p>
+  <div class="algorithm-box">
+  <strong class="label">Pulling and Pushing Away: How the Objective Function Updates Behavior</strong>
+  <p style="margin-bottom: 12px;">
+    The policy gradient mechanism alters generation probabilities through signed reward scaling:
+  </p>
+  <ol style="margin-top: 5px; padding-left: 20px; margin-bottom: 0;">
+    <li style="margin-bottom: 8px;">
+      <strong>Log-Probability Gradients:</strong> The term $\nabla_\theta \log \pi_\theta(c \mid p)$ defines the exact direction in weight space that increases the likelihood of generating a given completion.
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Pulling Towards (Positive Reward):</strong> When $r(p,c) > 0$, multiplying the gradient by a positive scalar keeps the vector aligned. Gradient ascent steps <em>in</em> that direction, increasing the token's probability and pulling it into the model's repertoire.
+    </li>
+    <li>
+      <strong>Pushing Away (Negative/Low Reward):</strong> When $r(p,c) < 0$, multiplying by a negative scalar inverts the gradient direction. Gradient ascent then steps <em>away</em> from those parameters, suppressing the probability and pushing bad or unwanted behaviors out of the model.
+    </li>
+  </ol>
+</div>
+
+  <p style="font-size: 0.92em; color: #667;">
+    <em>Aside:</em> Direct Preference Optimization (DPO), covered in a later section, uses the reward
+    signal in a fundamentally different way &#8212; it skips the policy-gradient loop above entirely and
+    optimizes directly on pairs of preferred/dispreferred completions. We'll return to that contrast once
+    the PPO picture is complete.
+  </p>
+
+</div>
+
+</body>
+</html>

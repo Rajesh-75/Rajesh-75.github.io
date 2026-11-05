@@ -1,0 +1,83 @@
+Steps for Non-Linear SVM
+
+Data Preparation:
+
+Gather and clean your data, ensuring it's properly formatted for the SVM algorithm.
+
+Split the data into training and testing sets.
+
+Choose a Kernel:
+
+Select an appropriate kernel function based on the nature of your data and the complexity of the non-linear relationships you expect. RBF is often a good starting point.
+
+Parameter Tuning:
+
+SVMs have hyperparameters that need to be tuned for optimal performance. These include:
+
+C (Regularization Parameter): Controls the trade-off between maximizing the margin and minimizing the classification error.
+
+Gamma (Kernel Parameter): Affects the width of the kernel function (for RBF).
+
+Techniques like cross-validation or grid search can be used to find the best combination of hyperparameters.
+
+Training the Model:
+
+Use the training data and the chosen kernel to train the SVM model. The algorithm will find the optimal hyperplane that separates the classes in the higher-dimensional space.
+
+Prediction and Evaluation:
+
+Use the trained model to make predictions on the testing data.
+
+Evaluate the model's performance using metrics like accuracy, precision, recall, or F1-score, depending on your specific needs.
+
+The core optimization problem that Support Vector Machines (SVMs) solve is to find the optimal hyperplane that best separates data points of different classes. This "best" separation is defined by maximizing the margin between the hyperplane and the closest data points of each class.
+
+Here's a breakdown of the optimization process:
+
+1. Defining the Hyperplane
+
+In a binary classification problem, the goal is to find a hyperplane that divides the data points into two classes.
+
+This hyperplane can be defined by the equation: w * x + b = 0
+
+w is a vector of weights, perpendicular to the hyperplane.
+
+x is a data point.
+
+b is the bias, which determines the position of the hyperplane.
+
+2. Maximizing the Margin
+
+The margin is the distance between the hyperplane and the closest data points from each class (these closest points are called "support vectors").
+
+The goal is to find the hyperplane that maximizes this margin. A larger margin generally leads to better generalization performance on unseen data.
+
+3. Formulating the Optimization Problem
+
+The optimization problem can be formulated as follows:
+
+Maximize: 2 / ||w|| (which is equivalent to maximizing the margin)
+
+Subject to: y_i * (w * x_i + b) >= 1 for all data points (x_i, y_i)
+
+y_i is the class label (+1 or -1) for data point x_i.
+
+This constraint ensures that all data points are correctly classified and lie outside the margin.
+
+4. Solving the Optimization Problem
+
+This is a constrained optimization problem that can be solved using various techniques, such as:
+
+Quadratic Programming (QP): The SVM optimization problem can be transformed into a QP problem, which can be solved efficiently using specialized algorithms.
+
+Dual Formulation: The dual formulation of the SVM optimization problem is often easier to solve and can lead to more efficient algorithms.
+
+5. Non-Linear SVMs and the Kernel Trick
+
+For non-linearly separable data, the kernel trick is used to map the data points to a higher-dimensional space where a linear hyperplane can be found.
+
+The kernel function implicitly computes the dot product between data points in this higher-dimensional space, without actually transforming the data.
+
+This allows the SVM to find non-linear decision boundaries in the original input space.
+
+In summary, the SVM optimization process aims to find the hyperplane that maximizes the margin between classes, leading to better generalization performance. This is achieved by solving a constrained optimization problem, often using techniques like Quadratic Programming or the dual formulation.
