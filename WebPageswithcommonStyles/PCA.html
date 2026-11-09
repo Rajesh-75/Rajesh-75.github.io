@@ -128,6 +128,34 @@ section ul{ line-height: 1.6; }
 .pcaa-track .row{ color:var(--ink-faint,#6F8AA4); }
 .pcaa-track .row.on{ color:var(--ink,#14304D); font-weight:700; }
 
+
+/* ===== Scree / cumulative variance widget ===== */
+.scree{ border:1px solid var(--rule,#B9CADA); background:var(--card,#fff); border-radius:3px; padding:14px 16px 14px; margin:16px 0 20px; }
+.scree svg{ display:block; width:100%; height:auto; }
+.scree .sc-grid{ stroke:var(--rule,#B9CADA); stroke-width:1; opacity:.6; }
+.scree .sc-tick{ font-family:var(--font-data,monospace); font-size:11px; fill:var(--ink-soft,#3C5A78); }
+.scree .sc-tick-r{ fill:var(--query,#B23A48); }
+.scree .sc-axis{ font-family:var(--font-display,monospace); font-size:10.5px; letter-spacing:.06em; fill:var(--ink-faint,#6F8AA4); }
+.scree .sc-axis-r{ fill:var(--query,#B23A48); }
+.scree .sc-bar{ stroke:none; }
+.scree .sc-kept{ fill:var(--class-a,#1F6F8B); }
+.scree .sc-dropped{ fill:var(--ink-faint,#6F8AA4); opacity:.35; }
+.scree .sc-val{ font-family:var(--font-data,monospace); font-size:10.5px; fill:var(--ink,#14304D); }
+.scree .sc-kaiser{ stroke:var(--ink-faint,#6F8AA4); stroke-width:1; stroke-dasharray:2 4; }
+.scree .sc-kaiser-lbl{ font-family:var(--font-data,monospace); font-size:10px; fill:var(--ink-faint,#6F8AA4); }
+.scree .sc-thr{ stroke:var(--query,#B23A48); stroke-width:1.2; stroke-dasharray:6 4; opacity:.75; }
+.scree .sc-cum{ fill:none; stroke:var(--query,#B23A48); stroke-width:2; }
+.scree .sc-pt{ fill:var(--card,#fff); stroke:var(--query,#B23A48); stroke-width:2; }
+.scree .sc-pt-k{ fill:var(--query,#B23A48); }
+.scree-controls{ margin:8px 2px 4px; font-size:13.5px; color:var(--ink-soft,#3C5A78); }
+.scree-controls label{ display:inline-flex; align-items:center; gap:10px; }
+.scree-controls input[type=range]{ width:200px; }
+.scree-readout{ margin:6px 2px 0; font-size:15px; color:var(--ink,#14304D); line-height:1.55; }
+
+.refs{ margin:28px 0 0; padding-top:4px; border-top:1px solid var(--rule,#B9CADA); }
+.refs h4{ margin-top:18px; }
+.refs ol{ margin:6px 0 0; padding-left:22px; font-size:14.5px; line-height:1.55; color:var(--ink-soft,#3C5A78); }
+.refs li{ margin-bottom:6px; }
 </style>
 </head>
 <body>
@@ -139,7 +167,7 @@ section ul{ line-height: 1.6; }
         
         <div class="hero" id="pca-introduction">
             <h1>Principal Component Analysis (PCA)</h1>
-            <p class="lede">Principal Component Analysis (PCA) is a powerful statistical technique used to reduce the dimensionality of a dataset (for instance features) while retaining as much structural variance and information as possible. It accomplishes this by transforming a set of correlated features into a new coordinate system of uncorrelated orthogonal axes called principal components.</p>
+            <p class="lede">Principal Component Analysis (PCA) is a powerful statistical technique used to reduce the dimensionality of a dataset (for instance features) while retaining as much structural variance and information as possible. It does this by rotating the data onto new, uncorrelated axes called principal components.</p>
         </div>
 
         <section id="pca-animation">
@@ -341,6 +369,213 @@ section ul{ line-height: 1.6; }
         </p>
     </div>
 </section>
+<section id="pca-why-variance">
+    <h2>Why Variance, and How Much to Keep</h2>
+    <p>
+        Steps 3 and 4 quietly assumed two things: that the "direction of maximum variance" is an eigenvector of \(\Sigma\), and that its eigenvalue is the variance along that direction. This section proves both, and then uses them to decide how many components \(k\) to keep.
+    </p>
+
+    <h4>The intuition</h4>
+    <p>
+        Reducing dimensions means squashing the data onto fewer axes. While squashing, we want the samples to stay as distinguishable from each other as possible, so we keep the directions along which they spread out the most. A direction along which every sample has almost the same value tells us nothing about how the samples differ, so it is the safest one to drop. Variance is simply the measure of that spread.
+    </p>
+
+    <div class="derivation-box">
+        <h3>Derivation: the best direction is an eigenvector</h3>
+        <p>
+            <strong>Step 1: variance along one direction.</strong> Take any unit vector \(v\) (so \(v^T v = 1\)). The score of sample \(i\) along \(v\) is the single number \(z_i^T v\). Because every column of \(Z\) has mean 0, these scores also have mean 0, so their variance is
+        </p>
+        <div class="formula-card">
+            $$\operatorname{Var}(Zv)=\frac{1}{n-1}\sum_{i=1}^{n}\left(z_i^T v\right)^2=\frac{1}{n-1}\,v^T Z^T Z\,v=v^T\Sigma\,v$$
+        </div>
+        <p>
+            <strong>Step 2: maximize it.</strong> We want the unit vector with the largest variance. Adding the constraint with a Lagrange multiplier \(\lambda\):
+        </p>
+        <div class="formula-card">
+            $$\max_{v}\; v^T\Sigma v\;\;\text{subject to}\;\; v^T v=1
+            \qquad\Longrightarrow\qquad
+            \mathcal{L}(v,\lambda)=v^T\Sigma v-\lambda\,(v^T v-1)$$
+        </div>
+        <p>Setting the gradient to zero:</p>
+        <div class="formula-card">
+            $$\frac{\partial \mathcal{L}}{\partial v}=2\Sigma v-2\lambda v=0\quad\Longrightarrow\quad \Sigma v=\lambda v$$
+        </div>
+        <p>
+            This is exactly the eigenvector equation from Step 3, so every candidate for the best direction is an eigenvector of \(\Sigma\).
+        </p>
+        <p>
+            <strong>Step 3: what is the variance?</strong> Substitute \(\Sigma v=\lambda v\) back into Step 1:
+        </p>
+        <div class="formula-card">
+            $$\operatorname{Var}(Zv)=v^T\Sigma v=v^T(\lambda v)=\lambda\,v^T v=\lambda$$
+        </div>
+        <p>
+            The variance along an eigenvector is its eigenvalue, so the maximum is reached by the eigenvector with the <strong>largest</strong> \(\lambda\). That is PC1. For PC2 we repeat the maximization with the extra requirement that \(v\) is orthogonal to \(v_1\). Because \(\Sigma\) is symmetric, its eigenvectors are mutually orthogonal, so the answer is the eigenvector with the second largest eigenvalue, and so on down the list.
+        </p>
+        <p>
+            This also explains why the component scores are uncorrelated: for \(i \neq j\), \(\operatorname{Cov}(Zv_i, Zv_j)=v_i^T\Sigma v_j=\lambda_j\, v_i^T v_j=0\).
+        </p>
+        <p class="takeaway">
+            Takeaway for students: an eigenvalue is not an abstract "strength". \(\lambda_j\) is exactly the variance of the data after projecting it onto \(v_j\). That is why Step 4 sorts by eigenvalue.
+        </p>
+    </div>
+
+    <h4>Variance is conserved: PCA only redistributes it</h4>
+    <p>
+        The total variance of the data is the sum of the diagonal of \(\Sigma\). Rotating the axes does not change that sum (the trace is invariant), so
+    </p>
+    <div class="formula-card">
+        $$\sum_{j=1}^{D}\lambda_j=\operatorname{trace}(\Sigma)=\sum_{j=1}^{D}\operatorname{Var}(z_j)=D$$
+    </div>
+    <p>
+        The last equality holds because standardization gave every feature variance 1 (without standardization, the sum is the total of the raw feature variances instead). PCA neither creates nor destroys variance: it moves it from \(D\) correlated features into \(D\) uncorrelated components, packing as much as possible into PC1, then PC2, and so on.
+    </p>
+    <p>
+        Dropping the last \(D-k\) components therefore discards exactly \(\sum_{j>k}\lambda_j\) of the total. The same quantity is the reconstruction error. Mapping the \(k\) scores back to \(D\) features gives \(\hat z_i = W_k W_k^T z_i\), and
+    </p>
+    <div class="formula-card">
+        $$\frac{1}{n-1}\sum_{i=1}^{n}\lVert z_i-\hat z_i\rVert^2=\sum_{j=k+1}^{D}\lambda_j$$
+    </div>
+    <p>
+        So "keep as much variance as possible" and "lose as little as possible when reconstructing" are the same goal.
+    </p>
+
+    <h4>How much to keep: explained variance ratio</h4>
+    <p>
+        Since the eigenvalues add up to the total variance, each one can be read as a share of it:
+    </p>
+    <div class="formula-card">
+        $$\text{EVR}_j=\frac{\lambda_j}{\sum_{m=1}^{D}\lambda_m},\qquad
+        C_k=\sum_{j=1}^{k}\text{EVR}_j=\frac{\lambda_1+\dots+\lambda_k}{\lambda_1+\dots+\lambda_D}$$
+    </div>
+    <p>
+        \(\text{EVR}_j\) is the fraction of the total variance carried by component \(j\), and \(C_k\) (the cumulative explained variance) is the fraction kept by the first \(k\) components. Common ways to choose \(k\):
+    </p>
+    <ul>
+        <li><strong>Cumulative threshold:</strong> take the smallest \(k\) with \(C_k\) above a target, often 90&ndash;95%. The target reflects how much loss you can tolerate.</li>
+        <li><strong>Scree plot elbow:</strong> plot \(\lambda_j\) against \(j\) and keep the components before the curve flattens; the later ones add little.</li>
+        <li><strong>Kaiser rule</strong> (standardized data only): keep components with \(\lambda_j>1\), i.e. those that carry more variance than a single original feature. This is a rough heuristic, best used as a sanity check.</li>
+        <li><strong>The purpose decides:</strong> for visualization, \(k\) is fixed at 2 or 3 whatever \(C_k\) is. For preprocessing, treat \(k\) as a hyperparameter and pick it by validation performance of the downstream model.</li>
+    </ul>
+
+    <h4>Try it: scree plot and cumulative variance</h4>
+    <p>
+        <strong>What it shows:</strong> the bars are the eigenvalues of 8 standardized features (they add up to 8), and the red line is the cumulative variance \(C_k\) kept by the first \(k\) components (right axis, 100% = all 8 components). <strong>How to use it:</strong> drag the slider to set a target such as 90%. The dashed line marks it, and the filled dot and the sentence below give the smallest \(k\) that reaches it. <strong>Example:</strong> at 90%, \(k = 4\), because PC1 to PC4 carry 7.2 of the 8 units of variance (90%), so 8 features are compressed to 4 while losing only 10% of the variance.
+    </p>
+    <div class="scree" id="scree-widget">
+        <svg id="scree-svg" viewBox="0 0 560 300" role="img" aria-label="Scree plot of eigenvalues with cumulative explained variance line"></svg>
+        <div class="scree-controls">
+            <label>Variance threshold
+                <input type="range" id="scree-thr" min="50" max="99" value="90" step="1">
+                <b id="scree-thr-val">90%</b>
+            </label>
+        </div>
+        <p class="scree-readout" id="scree-readout"></p>
+    </div>
+    <p class="takeaway">
+        One assumption is hidden in all of this: PCA treats "large variance" as "important". That is often true, since signal usually spreads more than noise, but it is an assumption. PCA never looks at labels, so a low-variance direction can still be the one that matters for your task.
+    </p>
+    <div class="refs">
+        <h4>References for this section</h4>
+        <ol>
+            <li>C. M. Bishop, <em>Pattern Recognition and Machine Learning</em>, Springer, 2006. Section 12.1, Principal Component Analysis: 12.1.1 (maximum variance formulation, the Lagrange-multiplier derivation) and 12.1.2 (minimum-error formulation, the reconstruction error).</li>
+            <li>T. Hastie, R. Tibshirani and J. Friedman, <em>The Elements of Statistical Learning</em>, 2nd ed., Springer, 2009. Section 14.5.1, Principal Components.</li>
+            <li>I. T. Jolliffe, <em>Principal Component Analysis</em>, 2nd ed., Springer, 2002. Chapter 6 covers choosing the number of components (cumulative variance, scree plot, Kaiser rule).</li>
+            <li>R. B. Cattell, "The scree test for the number of factors", <em>Multivariate Behavioral Research</em>, 1(2), 245&ndash;276, 1966.</li>
+            <li>H. F. Kaiser, "The application of electronic computers to factor analysis", <em>Educational and Psychological Measurement</em>, 20(1), 141&ndash;151, 1960.</li>
+            <li>H. Hotelling, "Analysis of a complex of statistical variables into principal components", <em>Journal of Educational Psychology</em>, 24(6), 417&ndash;441 and 24(7), 498&ndash;520, 1933.</li>
+        </ol>
+    </div>
+</section>
+
+<script>
+(function () {
+    var lam = [3.6, 1.9, 1.1, 0.6, 0.4, 0.2, 0.15, 0.05];   // D = 8 standardized features, sum = 8
+    var D = lam.length;
+    var total = lam.reduce(function (a, b) { return a + b; }, 0);
+    var cum = [], run = 0;
+    for (var i = 0; i < D; i++) { run += lam[i]; cum.push(run / total); }
+
+    var svg = document.getElementById('scree-svg');
+    var slider = document.getElementById('scree-thr');
+    var thrVal = document.getElementById('scree-thr-val');
+    var readout = document.getElementById('scree-readout');
+    if (!svg || !slider) { return; }
+
+    var NS = 'http://www.w3.org/2000/svg';
+    var W = 560, H = 300, L = 50, R = 50, T = 22, B = 46;
+    var pw = W - L - R, ph = H - T - B;
+    var band = pw / D, bw = band * 0.62, yMax = 4;
+
+    function yL(v) { return T + ph * (1 - v / yMax); }      // left axis: eigenvalue
+    function yR(f) { return T + ph * (1 - f); }             // right axis: cumulative fraction
+    function xC(i) { return L + band * (i + 0.5); }
+
+    function el(name, attrs, text) {
+        var e = document.createElementNS(NS, name);
+        for (var k in attrs) { e.setAttribute(k, attrs[k]); }
+        if (text !== undefined) { e.textContent = text; }
+        return e;
+    }
+
+    function draw() {
+        var thr = parseInt(slider.value, 10) / 100;
+        var kStar = D;
+        for (var i = 0; i < D; i++) { if (cum[i] >= thr - 1e-9) { kStar = i + 1; break; } }
+
+        while (svg.firstChild) { svg.removeChild(svg.firstChild); }
+
+        // gridlines + left axis ticks (eigenvalue)
+        for (var t = 0; t <= yMax; t++) {
+            svg.appendChild(el('line', { x1: L, x2: L + pw, y1: yL(t), y2: yL(t), 'class': 'sc-grid' }));
+            svg.appendChild(el('text', { x: L - 8, y: yL(t) + 4, 'text-anchor': 'end', 'class': 'sc-tick' }, String(t)));
+        }
+        // right axis ticks (cumulative %)
+        [0, 25, 50, 75, 100].forEach(function (p) {
+            svg.appendChild(el('text', { x: L + pw + 8, y: yR(p / 100) + 4, 'class': 'sc-tick sc-tick-r' }, p + '%'));
+        });
+        svg.appendChild(el('text', { x: L, y: 12, 'class': 'sc-axis' }, 'eigenvalue \u03BB'));
+        svg.appendChild(el('text', { x: L + pw, y: 12, 'text-anchor': 'end', 'class': 'sc-axis sc-axis-r' }, 'cumulative variance'));
+
+        // Kaiser line (lambda = 1)
+        svg.appendChild(el('line', { x1: L, x2: L + pw, y1: yL(1), y2: yL(1), 'class': 'sc-kaiser' }));
+        svg.appendChild(el('text', { x: L + pw - 4, y: yL(1) - 4, 'text-anchor': 'end', 'class': 'sc-kaiser-lbl' }, '\u03BB = 1 (Kaiser)'));
+
+        // bars
+        for (var j = 0; j < D; j++) {
+            var kept = (j < kStar);
+            var y = yL(lam[j]);
+            svg.appendChild(el('rect', {
+                x: xC(j) - bw / 2, y: y, width: bw, height: yL(0) - y,
+                'class': kept ? 'sc-bar sc-kept' : 'sc-bar sc-dropped'
+            }));
+            svg.appendChild(el('text', { x: xC(j), y: y - 5, 'text-anchor': 'middle', 'class': 'sc-val' }, lam[j].toFixed(2)));
+            svg.appendChild(el('text', { x: xC(j), y: yL(0) + 16, 'text-anchor': 'middle', 'class': 'sc-tick' }, 'PC' + (j + 1)));
+        }
+
+        // threshold line
+        svg.appendChild(el('line', { x1: L, x2: L + pw, y1: yR(thr), y2: yR(thr), 'class': 'sc-thr' }));
+
+        // cumulative line + markers
+        var pts = cum.map(function (c, idx) { return xC(idx) + ',' + yR(c); }).join(' ');
+        svg.appendChild(el('polyline', { points: pts, 'class': 'sc-cum' }));
+        cum.forEach(function (c, idx) {
+            svg.appendChild(el('circle', { cx: xC(idx), cy: yR(c), r: (idx === kStar - 1 ? 5.5 : 3.5), 'class': idx === kStar - 1 ? 'sc-pt sc-pt-k' : 'sc-pt' }));
+        });
+
+        thrVal.textContent = Math.round(thr * 100) + '%';
+        var kept = (cum[kStar - 1] * 100).toFixed(1);
+        var lost = (100 - cum[kStar - 1] * 100).toFixed(1);
+        readout.textContent = 'To retain at least ' + Math.round(thr * 100) + '% of the variance, keep k = ' + kStar +
+            ' of ' + D + ' components. They carry ' + kept + '% of the total variance; the ' + (D - kStar) +
+            ' dropped components carry ' + lost + '%.';
+    }
+
+    slider.addEventListener('input', draw);
+    draw();
+})();
+</script>
+
         <section id="pca-step-5">
             <h2>5. Data Transformation (Projection)</h2>
             <p>
