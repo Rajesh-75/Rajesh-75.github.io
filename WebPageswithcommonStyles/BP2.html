@@ -245,6 +245,7 @@ body {
             <tr><td><strong>Linear Regression</strong></td><td>$\frac{1}{N}\|Xw - y\|^2$</td><td>$\frac{2}{N} X^T (Xw - y)$</td><td>Closed-form derivative</td></tr>
             <tr><td><strong>Logistic Regression</strong></td><td>Cross-entropy</td><td>$\frac{1}{N} X^T (\sigma(Xw) - y)$</td><td>Closed-form derivative</td></tr>
             <tr><td><strong>Neural Network</strong></td><td>Any differentiable loss</td><td>$\frac{\partial L}{\partial W_i},\ \frac{\partial L}{\partial b_i}$ for every layer $i$</td><td><strong>Backpropagation</strong> (chain rule, layer by layer)</td></tr>
+            <tr><td><strong>Any model in a framework</strong></td><td>Any differentiable loss</td><td>Computed by the framework</td><td><strong>Automatic differentiation</strong> (see <a href="#automatic-differentiation">Automatic Differentiation</a> below)</td></tr>
         </tbody>
     </table>
     <p>A neural network is a long chain of nested functions, so its gradient is not a single closed-form expression. <strong>Backpropagation</strong> applies the chain rule backward through the layers and reuses intermediate results, which gives the derivative for every weight in one backward sweep. Whatever model or method supplies $\nabla_\theta L$, the optimizer (Gradient Descent, SGD, Mini-Batch SGD, Adam, ...) then uses it in the same way. The rest of this section works through Backpropagation for a single layer of a neural network.</p>
@@ -463,6 +464,236 @@ def backward_layer(dA, W, b, A_prev, Z, eta):
             </tr>
         </tbody>
     </table>
+
+  <!-- ===================== AUTOMATIC DIFFERENTIATION SECTION ===================== -->
+  <!-- Paste after the "Summary for NumPy Implementation" table, still inside the backprop-section div, before the quiz. -->
+  <h2 id="automatic-differentiation">Automatic Differentiation: Letting the Computer Apply the Chain Rule</h2>
+    <p>In the worked example above we derived $dZ$, $dW$ and $dA_{i-1}$ by hand for one sigmoid layer. If we change the layer (a different activation, a normalization layer, an attention block), we must derive and code a new set of formulas. <strong>Automatic Differentiation (AD)</strong> removes this work: it computes exact derivatives of any function written as a program, by applying the chain rule mechanically. Libraries such as PyTorch (<code>torch.autograd</code>), TensorFlow (<code>GradientTape</code>) and JAX (<code>jax.grad</code>) are built on it. To see how it works, we start from the chain rule itself.</p>
+
+    <h3>1. The Chain Rule</h3>
+    <p>If $y$ depends on $x$ through an intermediate variable $u$, that is $x \to u \to y$, then:</p>
+    <div class="formula-container">
+        $$\frac{dy}{dx} = \frac{dy}{du} \cdot \frac{du}{dx}$$
+    </div>
+    <p>When $y$ reaches $x$ through <strong>several</strong> intermediate variables $v_1, \dots, v_k$ (several paths), the contributions add up:</p>
+    <div class="formula-container">
+        $$\frac{\partial y}{\partial x} = \sum_{j=1}^{k} \frac{\partial y}{\partial v_j} \cdot \frac{\partial v_j}{\partial x}$$
+    </div>
+    <div class="intuition-box">
+        <strong>Intuition:</strong> multiply derivatives <strong>along</strong> a path, add the results <strong>across</strong> paths. Everything in this section is this one rule, applied in a smart order.
+    </div>
+
+    <h3>2. An Example Function, Differentiated by Hand</h3>
+    <p>Take a function of two inputs (a classic example in the AD literature):</p>
+    <div class="formula-container">
+        $$y = f(x_1, x_2) = \ln x_1 + x_1 x_2 - \sin x_2$$
+    </div>
+    <p>Applying the rules for $\ln$, products, $\sin$ and sums:</p>
+    <div class="formula-container">
+        $$\frac{\partial y}{\partial x_1} = \frac{1}{x_1} + x_2 \qquad\qquad \frac{\partial y}{\partial x_2} = x_1 - \cos x_2$$
+    </div>
+    <p>At $(x_1, x_2) = (2, 5)$ this gives $\frac{\partial y}{\partial x_1} = 0.5 + 5 = 5.5$ and $\frac{\partial y}{\partial x_2} = 2 - \cos 5 \approx 1.7163$.</p>
+    <p>This function is small, so the derivation is easy. Now imagine the same job for a network with hundreds of operations and millions of parameters:</p>
+    <ul>
+        <li>The closed-form expression for each $\frac{\partial L}{\partial \theta}$ becomes enormous, and a single slip gives a wrong gradient that still "trains" silently.</li>
+        <li>Every change to the model (swap an activation, add a layer) means deriving and re-coding everything.</li>
+    </ul>
+    <p>The chain rule itself is not the difficulty: it is a single rule, and applying it to one composition takes only a few lines of code. The difficulty is that we must apply it by hand to a <em>specific</em> function. We first derive that function's closed-form derivative (as we just did) and then type the formula into code. That formula is valid only for that one function, so every change to the model sends us back to the derivation. Notice what the example actually used: derivative rules for a handful of <strong>elementary operations</strong> ($+$, $\times$, $\ln$, $\sin$). If a program can break <em>any</em> function into such operations, it can apply those rules and the chain rule by itself, with no hand derivation. That is the role of the computation graph.</p>
+
+    <h3>3. The Computation Graph</h3>
+    <p>We rewrite $f$ as a sequence of elementary steps, each producing one intermediate variable $v_i$. This list is called the <strong>evaluation trace</strong>:</p>
+    <table class="data-table">
+        <thead>
+            <tr style="background-color: #f4f4f4;"><th>Node</th><th>Operation</th><th>Value at $(x_1,x_2)=(2,5)$</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>$v_1$</td><td>$x_1$</td><td>2</td></tr>
+            <tr><td>$v_2$</td><td>$x_2$</td><td>5</td></tr>
+            <tr><td>$v_3$</td><td>$\ln v_1$</td><td>0.6931</td></tr>
+            <tr><td>$v_4$</td><td>$v_1 \cdot v_2$</td><td>10</td></tr>
+            <tr><td>$v_5$</td><td>$\sin v_2$</td><td>$-0.9589$</td></tr>
+            <tr><td>$v_6$</td><td>$v_3 + v_4$</td><td>10.6931</td></tr>
+            <tr><td>$v_7$</td><td>$v_6 - v_5$ &nbsp;(this is $y$)</td><td>11.6521</td></tr>
+        </tbody>
+    </table>
+    <p>Drawing each $v_i$ as a node and an arrow from every input of an operation to its result gives the <strong>computation graph</strong>:</p>
+    <div style="text-align: center; margin: 30px 0; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+<svg viewBox="0 0 900 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Computation graph of y = ln(x1) + x1*x2 - sin(x2) with local derivatives on the edges" style="max-width:100%;height:auto;display:block;margin:0 auto;font-family:'Segoe UI',Arial,sans-serif;">
+<defs><marker id="ad-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3498db"/></marker><marker id="ad-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e74c3c"/></marker></defs><rect width="900" height="470" fill="#ffffff"/>
+<line x1="160.0" y1="164" x2="280.0" y2="84" stroke="#3498db" stroke-width="1.8" marker-end="url(#ad-b)"/>
+<line x1="160.0" y1="164" x2="280.0" y2="224" stroke="#3498db" stroke-width="1.8" marker-end="url(#ad-b)"/>
+<line x1="160.0" y1="364" x2="280.0" y2="224" stroke="#3498db" stroke-width="1.8" marker-end="url(#ad-b)"/>
+<line x1="160.0" y1="364" x2="280.0" y2="374" stroke="#3498db" stroke-width="1.8" marker-end="url(#ad-b)"/>
+<line x1="430.0" y1="84" x2="515.0" y2="154" stroke="#3498db" stroke-width="1.8" marker-end="url(#ad-b)"/>
+<line x1="430.0" y1="224" x2="515.0" y2="154" stroke="#3498db" stroke-width="1.8" marker-end="url(#ad-b)"/>
+<line x1="665.0" y1="154" x2="720.0" y2="264" stroke="#3498db" stroke-width="1.8" marker-end="url(#ad-b)"/>
+<line x1="430.0" y1="374" x2="720.0" y2="264" stroke="#3498db" stroke-width="1.8" marker-end="url(#ad-b)"/>
+<rect x="10.0" y="137.0" width="150" height="54" rx="8" fill="#eaf2fb" stroke="#2980b9" stroke-width="1.8"/><text x="85" y="159" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₁ = x₁</text><text x="85" y="179" text-anchor="middle" font-size="13" fill="#566573">value = 2</text>
+<rect x="10.0" y="337.0" width="150" height="54" rx="8" fill="#eaf2fb" stroke="#2980b9" stroke-width="1.8"/><text x="85" y="359" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₂ = x₂</text><text x="85" y="379" text-anchor="middle" font-size="13" fill="#566573">value = 5</text>
+<rect x="280.0" y="57.0" width="150" height="54" rx="8" fill="#eaf2fb" stroke="#2980b9" stroke-width="1.8"/><text x="355" y="79" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₃ = ln v₁</text><text x="355" y="99" text-anchor="middle" font-size="13" fill="#566573">value = 0.693</text>
+<rect x="280.0" y="197.0" width="150" height="54" rx="8" fill="#eaf2fb" stroke="#2980b9" stroke-width="1.8"/><text x="355" y="219" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₄ = v₁ · v₂</text><text x="355" y="239" text-anchor="middle" font-size="13" fill="#566573">value = 10</text>
+<rect x="280.0" y="347.0" width="150" height="54" rx="8" fill="#eaf2fb" stroke="#2980b9" stroke-width="1.8"/><text x="355" y="369" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₅ = sin v₂</text><text x="355" y="389" text-anchor="middle" font-size="13" fill="#566573">value = −0.959</text>
+<rect x="515.0" y="127.0" width="150" height="54" rx="8" fill="#eaf2fb" stroke="#2980b9" stroke-width="1.8"/><text x="590" y="149" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₆ = v₃ + v₄</text><text x="590" y="169" text-anchor="middle" font-size="13" fill="#566573">value = 10.693</text>
+<rect x="720.0" y="237.0" width="150" height="54" rx="8" fill="#eaf2fb" stroke="#2980b9" stroke-width="1.8"/><text x="795" y="259" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₇ = v₆ − v₅  (y)</text><text x="795" y="279" text-anchor="middle" font-size="13" fill="#566573">value = 11.652</text>
+<rect x="178.0" y="113.0" width="84.0" height="22" rx="11" fill="#f4f9fe" stroke="#3498db"/><text x="220.0" y="128.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1f618d">1/v₁ = 0.5</text>
+<rect x="182.4" y="178.2" width="56.0" height="22" rx="11" fill="#f4f9fe" stroke="#3498db"/><text x="210.4" y="193.7" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1f618d">v₂ = 5</text>
+<rect x="182.4" y="294.2" width="56.0" height="22" rx="11" fill="#f4f9fe" stroke="#3498db"/><text x="210.4" y="309.7" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1f618d">v₁ = 2</text>
+<rect x="167.5" y="358.0" width="105.0" height="22" rx="11" fill="#f4f9fe" stroke="#3498db"/><text x="220.0" y="373.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1f618d">cos v₂ = 0.28</text>
+<rect x="462.0" y="108.0" width="21.0" height="22" rx="11" fill="#f4f9fe" stroke="#3498db"/><text x="472.5" y="123.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1f618d">1</text>
+<rect x="462.0" y="178.0" width="21.0" height="22" rx="11" fill="#f4f9fe" stroke="#3498db"/><text x="472.5" y="193.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1f618d">1</text>
+<rect x="682.0" y="198.0" width="21.0" height="22" rx="11" fill="#f4f9fe" stroke="#3498db"/><text x="692.5" y="213.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1f618d">1</text>
+<rect x="517.5" y="324.5" width="28.0" height="22" rx="11" fill="#f4f9fe" stroke="#3498db"/><text x="531.5" y="340.0" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1f618d">−1</text>
+<text x="450" y="30" text-anchor="middle" font-size="14" fill="#2c3e50" font-weight="600">y = ln x₁ + x₁·x₂ − sin x₂   evaluated at (x₁, x₂) = (2, 5)</text>
+<text x="450" y="452" text-anchor="middle" font-size="12.5" fill="#7f8c8d">Blue arrows: forward pass. Each label is the local derivative ∂(child)/∂(parent) of that single operation.</text>
+</svg>
+    </div>
+    <p>Each edge carries a <strong>local derivative</strong> $\frac{\partial v_j}{\partial v_i}$. It depends only on that one elementary operation, so it is trivial to compute (for example $\frac{\partial (v_1 v_2)}{\partial v_1} = v_2$). The chain rule from Section 1 now reads: <em>multiply the local derivatives along each path from an input to $y$, and add over paths.</em> For our example:</p>
+    <table class="data-table">
+        <thead>
+            <tr style="background-color: #f4f4f4;"><th>Input</th><th>Path</th><th>Product of local derivatives</th></tr>
+        </thead>
+        <tbody>
+            <tr><td rowspan="2">$x_1$</td><td>$v_1 \to v_3 \to v_6 \to v_7$</td><td>$0.5 \cdot 1 \cdot 1 = 0.5$</td></tr>
+            <tr><td>$v_1 \to v_4 \to v_6 \to v_7$</td><td>$5 \cdot 1 \cdot 1 = 5$</td></tr>
+            <tr><td colspan="2"><strong>Sum: $\frac{\partial y}{\partial x_1}$</strong></td><td><strong>5.5</strong></td></tr>
+            <tr><td rowspan="2">$x_2$</td><td>$v_2 \to v_4 \to v_6 \to v_7$</td><td>$2 \cdot 1 \cdot 1 = 2$</td></tr>
+            <tr><td>$v_2 \to v_5 \to v_7$</td><td>$\cos 5 \cdot (-1) \approx -0.2837$</td></tr>
+            <tr><td colspan="2"><strong>Sum: $\frac{\partial y}{\partial x_2}$</strong></td><td><strong>1.7163</strong></td></tr>
+        </tbody>
+    </table>
+    <p>These match the hand-derived values. But listing every path does not scale: in a deep network the number of paths grows exponentially with depth. AD avoids listing paths by <em>accumulating</em> the products node by node, and there are two orders in which to do it.</p>
+
+    <h3>4. Two Ways to Accumulate: Forward and Reverse</h3>
+    <p>Both methods compute exactly the same sum of path products. They differ only in the <strong>direction</strong> in which the products are accumulated: from the inputs toward $y$ (forward), or from $y$ back toward the inputs (reverse).</p>
+
+    <div class="derivative-step">
+        <span class="tag" style="background:#3498db;">Method 1</span>
+        <h4>Forward Accumulation (Forward Mode)</h4>
+        <p>Pick <strong>one input</strong>, say $x_1$, and track how every node changes with it. Define the <strong>tangent</strong> of a node as $\dot{v}_i = \frac{\partial v_i}{\partial x_1}$. Seed the inputs with $\dot{x}_1 = 1$, $\dot{x}_2 = 0$, then propagate through the graph <em>together with the forward pass</em>:</p>
+        <div class="formula-container">
+            $$\dot{v}_j = \sum_{i \,\in\, \text{inputs of } j} \frac{\partial v_j}{\partial v_i}\, \dot{v}_i$$
+        </div>
+        <p>The table shows two sweeps: one seeded at $x_1$, one seeded at $x_2$.</p>
+        <table class="data-table">
+            <thead>
+                <tr style="background-color: #f4f4f4;"><th>Node</th><th>Tangent rule</th><th>Sweep 1: $\dot{v}_i = \frac{\partial v_i}{\partial x_1}$</th><th>Sweep 2: $\dot{v}_i = \frac{\partial v_i}{\partial x_2}$</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>$v_1$</td><td>seed</td><td>1</td><td>0</td></tr>
+                <tr><td>$v_2$</td><td>seed</td><td>0</td><td>1</td></tr>
+                <tr><td>$v_3$</td><td>$\dot{v}_1 / v_1$</td><td>0.5</td><td>0</td></tr>
+                <tr><td>$v_4$</td><td>$\dot{v}_1 v_2 + v_1 \dot{v}_2$</td><td>5</td><td>2</td></tr>
+                <tr><td>$v_5$</td><td>$\cos(v_2)\,\dot{v}_2$</td><td>0</td><td>0.2837</td></tr>
+                <tr><td>$v_6$</td><td>$\dot{v}_3 + \dot{v}_4$</td><td>5.5</td><td>2</td></tr>
+                <tr><td>$v_7 = y$</td><td>$\dot{v}_6 - \dot{v}_5$</td><td><strong>5.5</strong></td><td><strong>1.7163</strong></td></tr>
+            </tbody>
+        </table>
+        <div class="intuition-box">
+            <strong>Key point:</strong> one forward sweep gives the derivative of <strong>all outputs with respect to one input</strong>. The gradient of a function with $n$ inputs needs $n$ sweeps. Nothing has to be stored: each tangent is computed alongside its value and can be discarded when no longer needed.
+        </div>
+    </div>
+
+    <div class="derivative-step">
+        <span class="tag" style="background:#e74c3c;">Method 2</span>
+        <h4>Reverse Accumulation (Reverse Mode)</h4>
+        <p>Now pick <strong>one output</strong>, $y$, and track how it depends on every node. Define the <strong>adjoint</strong> of a node as $\bar{v}_i = \frac{\partial y}{\partial v_i}$. This takes two phases:</p>
+        <ol>
+            <li><strong>Forward pass:</strong> evaluate the function and <em>store</em> every intermediate value (we need them for the local derivatives).</li>
+            <li><strong>Backward pass:</strong> seed $\bar{v}_7 = 1$ (since $\frac{\partial y}{\partial y} = 1$) and move from the output toward the inputs. Each node collects contributions from <strong>every node that consumed it</strong>:</li>
+        </ol>
+        <div class="formula-container">
+            $$\bar{v}_i = \sum_{j \,\in\, \text{consumers of } i} \bar{v}_j \cdot \frac{\partial v_j}{\partial v_i}$$
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr style="background-color: #f4f4f4;"><th>Node</th><th>Adjoint computation</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>$\bar{v}_7$</td><td>seed</td><td>1</td></tr>
+                <tr><td>$\bar{v}_6$</td><td>$\bar{v}_7 \cdot 1$</td><td>1</td></tr>
+                <tr><td>$\bar{v}_5$</td><td>$\bar{v}_7 \cdot (-1)$</td><td>$-1$</td></tr>
+                <tr><td>$\bar{v}_4$</td><td>$\bar{v}_6 \cdot 1$</td><td>1</td></tr>
+                <tr><td>$\bar{v}_3$</td><td>$\bar{v}_6 \cdot 1$</td><td>1</td></tr>
+                <tr><td>$\bar{v}_2 = \frac{\partial y}{\partial x_2}$</td><td>$\bar{v}_4 \cdot v_1 + \bar{v}_5 \cdot \cos v_2 = 1\cdot 2 + (-1)\cdot 0.2837$</td><td><strong>1.7163</strong></td></tr>
+                <tr><td>$\bar{v}_1 = \frac{\partial y}{\partial x_1}$</td><td>$\bar{v}_3 \cdot \frac{1}{v_1} + \bar{v}_4 \cdot v_2 = 0.5 + 5$</td><td><strong>5.5</strong></td></tr>
+            </tbody>
+        </table>
+        <div style="text-align: center; margin: 30px 0; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+<svg viewBox="0 0 900 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Reverse accumulation on the computation graph: adjoints flow from y back to x1 and x2" style="max-width:100%;height:auto;display:block;margin:0 auto;font-family:'Segoe UI',Arial,sans-serif;">
+<defs><marker id="ad-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3498db"/></marker><marker id="ad-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e74c3c"/></marker></defs><rect width="900" height="470" fill="#ffffff"/>
+<line x1="280.0" y1="84" x2="160.0" y2="164" stroke="#e74c3c" stroke-width="1.8" marker-end="url(#ad-r)"/>
+<line x1="280.0" y1="224" x2="160.0" y2="164" stroke="#e74c3c" stroke-width="1.8" marker-end="url(#ad-r)"/>
+<line x1="280.0" y1="224" x2="160.0" y2="364" stroke="#e74c3c" stroke-width="1.8" marker-end="url(#ad-r)"/>
+<line x1="280.0" y1="374" x2="160.0" y2="364" stroke="#e74c3c" stroke-width="1.8" marker-end="url(#ad-r)"/>
+<line x1="515.0" y1="154" x2="430.0" y2="84" stroke="#e74c3c" stroke-width="1.8" marker-end="url(#ad-r)"/>
+<line x1="515.0" y1="154" x2="430.0" y2="224" stroke="#e74c3c" stroke-width="1.8" marker-end="url(#ad-r)"/>
+<line x1="720.0" y1="264" x2="665.0" y2="154" stroke="#e74c3c" stroke-width="1.8" marker-end="url(#ad-r)"/>
+<line x1="720.0" y1="264" x2="430.0" y2="374" stroke="#e74c3c" stroke-width="1.8" marker-end="url(#ad-r)"/>
+<rect x="10.0" y="137.0" width="150" height="54" rx="8" fill="#fdf2f0" stroke="#c0392b" stroke-width="1.8"/><text x="85" y="159" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₁ = x₁</text>
+<rect x="10.0" y="337.0" width="150" height="54" rx="8" fill="#fdf2f0" stroke="#c0392b" stroke-width="1.8"/><text x="85" y="359" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₂ = x₂</text>
+<rect x="280.0" y="57.0" width="150" height="54" rx="8" fill="#fdf2f0" stroke="#c0392b" stroke-width="1.8"/><text x="355" y="79" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₃ = ln v₁</text>
+<rect x="280.0" y="197.0" width="150" height="54" rx="8" fill="#fdf2f0" stroke="#c0392b" stroke-width="1.8"/><text x="355" y="219" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₄ = v₁ · v₂</text>
+<rect x="280.0" y="347.0" width="150" height="54" rx="8" fill="#fdf2f0" stroke="#c0392b" stroke-width="1.8"/><text x="355" y="369" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₅ = sin v₂</text>
+<rect x="515.0" y="127.0" width="150" height="54" rx="8" fill="#fdf2f0" stroke="#c0392b" stroke-width="1.8"/><text x="590" y="149" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₆ = v₃ + v₄</text>
+<rect x="720.0" y="237.0" width="150" height="54" rx="8" fill="#fdf2f0" stroke="#c0392b" stroke-width="1.8"/><text x="795" y="259" text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">v₇ = v₆ − v₅  (y)</text>
+<rect x="753.0" y="300.0" width="84.0" height="22" rx="11" fill="#fffafa" stroke="#e74c3c"/><text x="795.0" y="315.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#b03a2e">∂y/∂v₇ = 1</text>
+<rect x="548.0" y="190.0" width="84.0" height="22" rx="11" fill="#fffafa" stroke="#e74c3c"/><text x="590.0" y="205.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#b03a2e">∂y/∂v₆ = 1</text>
+<rect x="309.5" y="410.0" width="91.0" height="22" rx="11" fill="#fffafa" stroke="#e74c3c"/><text x="355.0" y="425.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#b03a2e">∂y/∂v₅ = −1</text>
+<rect x="313.0" y="260.0" width="84.0" height="22" rx="11" fill="#fffafa" stroke="#e74c3c"/><text x="355.0" y="275.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#b03a2e">∂y/∂v₄ = 1</text>
+<rect x="313.0" y="120.0" width="84.0" height="22" rx="11" fill="#fffafa" stroke="#e74c3c"/><text x="355.0" y="135.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#b03a2e">∂y/∂v₃ = 1</text>
+<rect x="29.0" y="400.0" width="112.0" height="22" rx="11" fill="#eafaf1" stroke="#27ae60"/><text x="85.0" y="415.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1e8449">∂y/∂x₂ = 1.716</text>
+<rect x="36.0" y="200.0" width="98.0" height="22" rx="11" fill="#eafaf1" stroke="#27ae60"/><text x="85.0" y="215.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1e8449">∂y/∂x₁ = 5.5</text>
+<text x="450" y="30" text-anchor="middle" font-size="14" fill="#2c3e50" font-weight="600">Reverse accumulation: start with ∂y/∂y = 1 and sweep backward</text>
+<text x="450" y="458" text-anchor="middle" font-size="12.5" fill="#7f8c8d">Red arrows: backward pass. x₁ and x₂ each feed two nodes, so their adjoints are sums of two contributions.</text>
+</svg>
+        </div>
+        <div class="intuition-box">
+            <strong>Key point:</strong> one backward sweep gave <strong>both</strong> $\frac{\partial y}{\partial x_1}$ and $\frac{\partial y}{\partial x_2}$. In general, one backward sweep gives the derivative of <strong>one output with respect to all inputs</strong>, at a cost that is a small constant multiple of one forward evaluation, no matter how many inputs there are. The price is memory: the forward values must be kept until the backward pass uses them. Note also the "+" in $\bar{v}_1$ and $\bar{v}_2$: a variable used in several places receives the <strong>sum</strong> of the contributions (this is why PyTorch accumulates gradients into <code>.grad</code>).
+        </div>
+    </div>
+
+    <h3>5. Forward vs Reverse: Which One Do We Use?</h3>
+    <p>For a function $f:\mathbb{R}^n \to \mathbb{R}^m$, the matrix of all derivatives is the Jacobian ($m \times n$). Forward mode produces it one <em>column</em> at a time, reverse mode one <em>row</em> at a time.</p>
+    <table class="data-table">
+        <thead>
+            <tr style="background-color: #f4f4f4;"><th></th><th>Forward Accumulation</th><th>Reverse Accumulation</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Direction</strong></td><td>Inputs $\to$ outputs, alongside the forward pass</td><td>Outputs $\to$ inputs, after a complete forward pass</td></tr>
+            <tr><td><strong>Quantity propagated</strong></td><td>Tangent $\dot{v}_i = \partial v_i / \partial x_k$</td><td>Adjoint $\bar{v}_i = \partial y_l / \partial v_i$</td></tr>
+            <tr><td><strong>One sweep gives</strong></td><td>One Jacobian column (one input, all outputs)</td><td>One Jacobian row (one output, all inputs)</td></tr>
+            <tr><td><strong>Sweeps for the full Jacobian</strong></td><td>$n$ (number of inputs)</td><td>$m$ (number of outputs)</td></tr>
+            <tr><td><strong>Memory</strong></td><td>No need to store intermediates</td><td>Must store forward values for the backward pass</td></tr>
+            <tr><td><strong>Better when</strong></td><td>Few inputs, many outputs ($n \ll m$)</td><td>Many inputs, few outputs ($n \gg m$)</td></tr>
+        </tbody>
+    </table>
+    <p>In machine learning the loss $L$ is a <strong>single scalar</strong> ($m = 1$) while the parameters number in the millions ($n \gg 1$). Reverse mode gets the entire gradient $\nabla_\theta L$ in one backward sweep, whereas forward mode would need one sweep per parameter. This is why deep learning frameworks use reverse mode.</p>
+
+    <h3>6. Back to Backpropagation</h3>
+    <p><strong>Backpropagation is reverse accumulation applied to the computation graph of a neural network.</strong> The quantities we derived earlier are exactly adjoints and local rules:</p>
+    <ul>
+        <li>$dA = \frac{\partial L}{\partial A_i}$ is the adjoint of the node $A_i$.</li>
+        <li>$dZ = dA \cdot \sigma'(Z)$ is the local rule of the sigmoid node.</li>
+        <li>$dW = dZ \cdot A_{i-1}^T$ and $dA_{i-1} = W^T \cdot dZ$ are the local rules of the matrix-multiplication node, which has two inputs ($W$ and $A_{i-1}$) and so passes an adjoint to each.</li>
+        <li>We cache $Z$ and $A_{i-1}$ during the forward pass for the same reason reverse mode stores intermediates.</li>
+    </ul>
+    <p>A framework such as PyTorch records the graph while the forward pass runs. Every operation it provides knows its own local derivative rule, so calling <code>backward()</code> performs the reverse sweep for any combination of operations, with no hand derivation. For our example function:</p>
+    <div class="algorithm-box" style="border: 2px solid #2980b9; border-radius: 6px; background-color: #fdfdfd; padding: 15px 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+        <strong>PyTorch: reverse-mode AD on the example function</strong>
+        <pre style="margin:10px 0 0; background:#f8f9fa; border:1px solid #ddd; border-radius:4px; padding:12px 15px; overflow-x:auto; font-size:0.9rem; line-height:1.5;"><code>import torch
+
+x1 = torch.tensor(2.0, requires_grad=True)
+x2 = torch.tensor(5.0, requires_grad=True)
+
+y = torch.log(x1) + x1 * x2 - torch.sin(x2)   # forward pass builds the graph
+y.backward()                                  # one reverse sweep
+
+print(y.item())        # 11.652...
+print(x1.grad.item())  # 5.5      = dy/dx1
+print(x2.grad.item())  # 1.7163.. = dy/dx2</code></pre>
+    </div>
+    <p>The printed gradients match the hand derivation and both accumulation tables. Forward mode is also available in the frameworks (for example <code>torch.func.jvp</code> and <code>jax.jvp</code>) and is useful when a function has few inputs and many outputs.</p>
+  <!-- =================== END AUTOMATIC DIFFERENTIATION SECTION =================== -->
 </div>
 <section id="gradient-descent-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
             <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Gradient Descent and Backpropagation Quiz</h2>
