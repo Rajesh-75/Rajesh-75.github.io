@@ -51,7 +51,7 @@ body {
         Gradient Descent is the cornerstone of mathematical optimization and the backbone of many ML algorithms, such as <strong>Linear/Logistic Regression</strong> and <strong>Support Vector Machines (SVMs)</strong>. It is also the "learning engine" of Neural Networks and every major deep learning architecture (CNN, RNN, LSTM, Transformers/LLMs). In this tutorial we first present Gradient Descent in its generic form, then show how the gradient is computed, using Linear/Logistic Regression as simple examples and <strong>Backpropagation</strong> in a neural network layer as the worked example.
     </p>
 
-    <h2>Gradient Descent</h2>
+    <h2 id="gradient-descent">Gradient Descent</h2>
     <p>The generic optimization framework used to train machine learning models:</p>
     
     <div class="algorithm-box" style="border: 2px solid #2980b9; border-radius: 6px; background-color: #fdfdfd; padding: 15px 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
@@ -101,7 +101,7 @@ body {
 </div>
 			
     <div style="padding-left: 20px; border-left: 3px solid #3498db; margin: 30px 0;">
-    <h3>Batch Gradient Descent (BGD)</h3>
+    <h3 id="batch-gd">Batch Gradient Descent (BGD)</h3>
     <p>
         <strong>Batch Gradient Descent (BGD)</strong> is the most straightforward and deterministic version of the gradient descent algorithm. In this approach, the model calculates the error for <strong>every single example</strong> in the entire training dataset before any weights are updated. 
     </p>
@@ -144,7 +144,7 @@ body {
     </ul>
 </div>
 	<div style="padding-left: 20px; border-left: 3px solid #3498db; margin: 30px 0;">
-        <h3>Stochastic Gradient Descent (SGD)</h3>
+        <h3 id="sgd">Stochastic Gradient Descent (SGD)</h3>
         <p>
             <strong>Stochastic Gradient Descent (SGD)</strong> is a powerful and widely used optimization algorithm in machine learning designed to minimize a model's loss function. Unlike Batch Gradient Descent, which computes the gradient using the entire training dataset for every single update, SGD performs parameter updates using only a single training example (or a small "mini-batch") at each step.
         </p
@@ -188,7 +188,7 @@ body {
         </ul>
     </div>
 	<div style="padding-left: 20px; border-left: 3px solid #3498db; margin: 30px 0;">
-    <h3>Mini-Batch Stochastic Gradient Descent (Mini-batch SGD)</h3>
+    <h3 id="minibatch-sgd">Mini-Batch Stochastic Gradient Descent (Mini-batch SGD)</h3>
     <p>
         <strong>Mini-Batch Stochastic Gradient Descent (Mini-batch SGD)</strong> is the most common variation of gradient descent used in modern deep learning because it strikes a perfect balance between Batch Gradient Descent and pure SGD. 
     </p>
@@ -235,7 +235,7 @@ body {
     </ul>
 </div>
 
-  <h2>Computing the Gradient $\nabla_\theta L$</h2>
+  <h2 id="computing-gradient">Computing the Gradient $\nabla_\theta L$</h2>
     <p>Gradient Descent needs $\nabla_\theta L$, but it does not say how to compute it. This depends on the model:</p>
     <table class="data-table">
         <thead>
@@ -250,7 +250,7 @@ body {
     </table>
     <p>A neural network is a long chain of nested functions, so its gradient is not a single closed-form expression. <strong>Backpropagation</strong> applies the chain rule backward through the layers and reuses intermediate results, which gives the derivative for every weight in one backward sweep. Whatever model or method supplies $\nabla_\theta L$, the optimizer (Gradient Descent, SGD, Mini-Batch SGD, Adam, ...) then uses it in the same way. The rest of this section works through Backpropagation for a single layer of a neural network.</p>
 
-  <h2>Worked Example: Backpropagation in a Neural Network</h2>
+  <h2 id="backprop-worked-example">Worked Example: Backpropagation in a Neural Network</h2>
     <h3>1. The Variables</h3>
     <div class="variable-list">
         <ul>
@@ -261,6 +261,7 @@ body {
             <li>$L$: The total Loss (the error).</li>
         </ul>
     </div>
+    <p style="font-size: 0.9rem;"><em>Notation:</em> the layer index here is $i$. On the <a href="NN_version1.html">Neural Networks page</a> the same quantities are written $\mathbf{a}^{(l)}$, $\mathbf{W}^{(l)}$, $\mathbf{z}^{(l)}$ with layer index $l$, so $A_i, W_i, Z_i$ correspond to $\mathbf{a}^{(l)}, \mathbf{W}^{(l)}, \mathbf{z}^{(l)}$.</p>
 
     <h3>2. The Three Key Derivatives</h3>
     <p>During Backpropagation, we receive $\frac{\partial L}{\partial A_i}$ from the layer ahead. We then perform three specific differentiations:</p>
@@ -422,7 +423,7 @@ def backward_layer(dA, W, b, A_prev, Z, eta):
     return dA_prev                      # becomes dA for layer i-1</code></pre>
     </div>
     <p>Each derivative $\frac{\partial L}{\partial w_{jk}}$ on a connection is one component of $\nabla_\theta L$, so the last two lines of the algorithm are exactly the generic update $\theta \leftarrow \theta - \eta \, \nabla_\theta L$ applied to the weights and biases.</p>
-    <h3>3. Visualizing the "Chain"</h3>
+    <h3 id="backprop-chain">3. Visualizing the "Chain"</h3>
     <p>Each layer calculates its own local derivative and multiplies it by the one it received:</p>
     <div class="formula-container" style="background: #f8f9fa; padding: 15px; text-align: center;">
         $$\frac{\partial L}{\partial W_i} = \underbrace{\frac{\partial L}{\partial A_n} \cdot \dots \frac{\partial A_{i+1}}{\partial A_i}}_{\text{Received Error}} \cdot \underbrace{\frac{\partial A_i}{\partial Z_i} \cdot \frac{\partial Z_i}{\partial W_i}}_{\text{Local Gradient}}$$
@@ -470,7 +471,7 @@ def backward_layer(dA, W, b, A_prev, Z, eta):
   <h2 id="automatic-differentiation">Automatic Differentiation: Letting the Computer Apply the Chain Rule</h2>
     <p>In the worked example above we derived $dZ$, $dW$ and $dA_{i-1}$ by hand for one sigmoid layer. If we change the layer (a different activation, a normalization layer, an attention block), we must derive and code a new set of formulas. <strong>Automatic Differentiation (AD)</strong> removes this work: it computes exact derivatives of any function written as a program, by applying the chain rule mechanically. Libraries such as PyTorch (<code>torch.autograd</code>), TensorFlow (<code>GradientTape</code>) and JAX (<code>jax.grad</code>) are built on it. To see how it works, we start from the chain rule itself.</p>
 
-    <h3>1. The Chain Rule</h3>
+    <h3 id="chain-rule">1. The Chain Rule</h3>
     <p>If $y$ depends on $x$ through an intermediate variable $u$, that is $x \to u \to y$, then:</p>
     <div class="formula-container">
         $$\frac{dy}{dx} = \frac{dy}{du} \cdot \frac{du}{dx}$$
@@ -693,6 +694,7 @@ print(x1.grad.item())  # 5.5      = dy/dx1
 print(x2.grad.item())  # 1.7163.. = dy/dx2</code></pre>
     </div>
     <p>The printed gradients match the hand derivation and both accumulation tables. Forward mode is also available in the frameworks (for example <code>torch.func.jvp</code> and <code>jax.jvp</code>) and is useful when a function has few inputs and many outputs.</p>
+    <p><strong>This is not limited to fully connected networks.</strong> A CNN, an RNN or a Transformer is also a graph of operations, so the same reverse sweep trains it. When one parameter is used in several places (a convolution kernel at every position, an RNN's recurrent weights at every time step), there are several paths from the loss to that parameter, and by the chain rule from Section 1 the contributions <em>add</em>: its gradient is the sum over all its uses. For these gradients used inside a complete training loop (initialization, BatchNorm, Dropout, Adam/AdamW and early stopping), see <a href="NN_version1.html#training-loop">The Full Training Loop</a> on the Neural Networks page.</p>
   <!-- =================== END AUTOMATIC DIFFERENTIATION SECTION =================== -->
 </div>
 <section id="gradient-descent-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
