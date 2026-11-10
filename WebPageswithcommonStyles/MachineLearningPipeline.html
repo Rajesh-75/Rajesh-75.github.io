@@ -71,7 +71,7 @@
 
     <h2>The ML Pipeline</h2>
     <ul>
-        <li><strong>Data Ingestion:</strong> Gathering and loading data from various sources (databases, APIs, files).</li>
+        <li><strong>Data Ingestion:</strong> Gathering and loading data from various sources (databases, APIs, files, logs, sensors, web crawls) in any form: tabular, text, image, audio or video.</li>
         <li><strong>Preprocessing:</strong> Cleaning the data, handling missing values, and dealing with inconsistencies.</li>
         <li><strong>Feature Engineering:</strong> Transforming raw data into features that better represent the underlying problem to the predictive models.</li>
         <li><strong>Model Training:</strong> Feeding the prepared data to the chosen algorithm to learn patterns.</li>
@@ -161,12 +161,12 @@
     <ul>
         <li>Internal Sources: Databases (OLTP), logs, Sensor data, CRM systems.</li>
         <li>External Sources: Third-party APIs, public datasets, web scraping.</li>
-        <li>Specific Data Types: Sources for unstructured data like images/video (e.g., ImageNet, COCO) or proprietary camera feeds.</li>
+        <li>Specific Data Types: Sources for unstructured data such as images/video (e.g., ImageNet, COCO) or proprietary camera feeds, text (e.g., Common Crawl, Wikipedia dumps), and audio (e.g., LibriSpeech, Common Voice).</li>
     </ul>
 
     <h4 class="mt-20">How LLM Engines Gather Data</h4>
     <p class="detail-description">
-        Large Language Models present a distinct data acquisition problem: instead of a bounded, labeled dataset for one task, they need an enormous, broad-coverage sample of text (and increasingly images, audio, and code) to learn general language and reasoning patterns from. Typical sources include:
+        <a href="LLMEngineDev.html">Large Language Models</a> present a distinct data acquisition problem: instead of a bounded, labeled dataset for one task, they need an enormous, broad-coverage sample of text (and increasingly images, audio, and code) to learn general language and reasoning patterns from. Typical sources include:
     </p>
     <ul>
         <li><strong>Web Crawls:</strong> Large-scale scrapes of the public internet (e.g., Common Crawl) form the bulk of pre-training data, filtered and deduplicated to remove low-quality or repeated pages.</li>
@@ -194,9 +194,10 @@
 
     <h4>1. Storage Solutions</h4>
     <ul>
-        <li>Data Lake: Stores raw, uncleaned, unstructured data (S3, GCS).</li>
+        <li>Data Lake: Stores raw, uncleaned, unstructured data (<a href="https://en.wikipedia.org/wiki/Amazon_S3" target="_blank" rel="noopener noreferrer">S3</a>, <a href="https://en.wikipedia.org/wiki/Google_Cloud_Storage" target="_blank" rel="noopener noreferrer">GCS</a>).</li>
         <li>Data Warehouse: Stores structured, cleaned data optimized for analytical querying.</li>
         <li>Feature Store: Stores curated feature vectors for consistent batch training and real-time inference.</li>
+        <li>Vector Database: Stores embeddings (numeric vector representations of text, images or audio) so that similar items can be found by similarity search; central to retrieval-augmented generation (RAG) for LLMs (e.g., Pinecone, Milvus, pgvector).</li>
     </ul>
 
     <h4>2. Data Governance and Security</h4>
@@ -262,7 +263,7 @@
     <h3>3. Data Reduction 📉</h3>
     <p class="detail-description">Obtains a reduced representation to improve efficiency.</p>
     <ul>
-        <li>Dimensionality Reduction: Feature Selection or Extraction (PCA).</li>
+        <li>Dimensionality Reduction: Feature Selection or Extraction <a href="PCA.html">(PCA)</a>.</li>
         <li>Data Compression and Numerosity Reduction.</li>
     </ul>
 
@@ -293,8 +294,8 @@
         This manual extraction looked different depending on the field, since each type of data needed its own hand-designed descriptors:
     </p>
     <ul>
-        <li><strong>Image Processing:</strong> Before CNNs, images were converted into feature vectors using techniques like <strong>SIFT</strong> (Scale-Invariant Feature Transform) and <strong>HOG</strong> (Histogram of Oriented Gradients) to capture edges and shapes, <strong>color histograms</strong> to summarize color distribution, and hand-crafted <strong>edge/corner detectors</strong> (e.g., Canny, Harris) to locate structurally important points.</li>
-        <li><strong>Natural Language Processing:</strong> Text was converted into numerical features using <strong>Bag-of-Words</strong> and <strong>TF-IDF</strong> (term frequency weighting), <strong>n-grams</strong> (capturing short word sequences), and hand-built lexicons for sentiment or part-of-speech tagging.</li>
+        <li><strong>Image Processing:</strong> Before CNNs, images were converted into feature vectors using techniques like <strong><a href="https://en.wikipedia.org/wiki/Scale-invariant_feature_transform" target="_blank" rel="noopener noreferrer">SIFT</a></strong> (Scale-Invariant Feature Transform) and <strong><a href="https://en.wikipedia.org/wiki/Histogram_of_oriented_gradients" target="_blank" rel="noopener noreferrer">HOG</a></strong> (Histogram of Oriented Gradients) to capture edges and shapes, <strong>color histograms</strong> to summarize color distribution, and hand-crafted <strong>edge/corner detectors</strong> (e.g., Canny, Harris) to locate structurally important points.</li>
+        <li><strong>Natural Language Processing:</strong> Text was converted into numerical features using <strong><a href="https://en.wikipedia.org/wiki/Bag-of-words_model" target="_blank" rel="noopener noreferrer">Bag-of-Words</a></strong> and <strong><a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf" target="_blank" rel="noopener noreferrer">TF-IDF</a></strong> (term frequency weighting), <strong><a href="https://en.wikipedia.org/wiki/N-gram" target="_blank" rel="noopener noreferrer">n-grams</a></strong> (capturing short word sequences), and hand-built lexicons for sentiment or part-of-speech tagging.</li>
         <li><strong>Audio & Speech:</strong> Raw waveforms were reduced to features like <strong>MFCCs</strong> (Mel-Frequency Cepstral Coefficients) and spectral energy bands, which better represent how humans perceive sound than the raw signal does.</li>
         <li><strong>Time-Series & Sensor Data:</strong> Signals were summarized with statistical descriptors such as rolling means, variance, peak counts, and frequency-domain features (via Fourier or wavelet transforms).</li>
     </ul>
@@ -453,7 +454,7 @@
         <li><strong>Overfitting:</strong> Signaled by a large gap between low training error and high test error. Address it by adding regularization (L1/L2, dropout), gathering more training data, using early stopping, applying cross-validation, or simplifying the model.</li>
     </ul>
 
-    <h4 class="mt-20">Regularization: Balancing Underfitting and Overfitting</h4>
+    <h4 class="mt-20" id="regularization">Regularization: Balancing Underfitting and Overfitting</h4>
     <p class="detail-description">
         <strong>Regularization</strong> is the main technique used to control this trade-off directly. It works by adding a penalty term to the Cost Function that discourages the model from becoming unnecessarily complex, so the optimizer is no longer just minimizing training error—it's minimizing training error <em>plus</em> a cost for complexity. Common forms include:
     </p>
@@ -481,7 +482,7 @@
     </p>
 
     <ul>
-        <li><strong>In Testing (Final Evaluation):</strong> After training and tuning are complete, the model is evaluated once against the <strong>test set</strong>—data it has never influenced any decision on, not even indirectly through validation. This is the one-time, final confirmation of overfitting (or its absence) referenced in the "Generalization Check" step of the Evaluation Phase below, and it's meant to reflect real-world performance, not to guide further tuning.</li>
+        <li><strong>In Testing (Final Evaluation):</strong> After training and tuning are complete, the model is evaluated once against the <strong>test set</strong>—data it has never influenced any decision on, not even indirectly through validation. This is the one-time, final confirmation of overfitting (or its absence) referenced in the "Generalization Check" step of the Evaluation Phase below, and it's meant to reflect real-world performance, not to guide further tuning. The full protocol (train/validation/test splits, nested cross-validation, leakage rules) is in <a href="ModelPerformanceEvaluation.html#part-1">The Evaluation Protocol</a>.</li>
     </ul>
 
     <div class="flowchart-wrap" role="img" aria-label="Chart showing training loss decreasing steadily across epochs while validation loss decreases then rises, with the divergence point marking where overfitting begins during training">
@@ -696,19 +697,19 @@
     <p class="detail-description">
        In a professional ML pipeline, the Model Evaluation step acts as the final gatekeeper, ensuring that the patterns learned during training are truly predictive and not just the result of memorization <strong>(overfitting)</strong>. This stage is conducted using a <strong>Test Dataset</strong>—a subset of data that was strictly withheld during the training phase to simulate real-world conditions.
     </p>
-    <p class="detail-description">The evaluation process typically follows these four critical steps:</p>
+    <p class="detail-description">The evaluation process typically follows these four critical steps. Each is summarized here from the pipeline point of view; the full treatment (metrics, formulas, protocols) is on the <a href="ModelPerformanceEvaluation.html">Model Performance Evaluation page</a>, linked under each step.</p>
 
     <h3>1. Quantitative Scoring</h3>
-    <p class="detail-description">The model generates predictions for the test set, which are compared against the ground truth using specific metrics such as <strong>Accuracy, Precision, and Recall for classification, or Root Mean Square Error (RMSE) for regression</strong>.</p>
+    <p class="detail-description">Predictions on the test set are scored against the ground truth with task-appropriate metrics, for example <strong>Accuracy, Precision and Recall for classification, or Root Mean Square Error (RMSE) for regression</strong>. <em>Details:</em> <a href="ModelPerformanceEvaluation.html#part-2">Classification Metrics</a> and <a href="ModelPerformanceEvaluation.html#part-3">Regression and Other Task Metrics</a>.</p>
 
     <h3>2. Generalization Check</h3>
-    <p class="detail-description">Compare the <strong>training error against the test error</strong>; a large gap between the two signals that the model has overfit and requires better <strong>regularization</strong>.</p>
+    <p class="detail-description">Compare the <strong>training error against the test error</strong>; a large gap signals overfitting, and the fixes are the regularization techniques described <a href="#regularization">above</a>. <em>Details:</em> <a href="ModelPerformanceEvaluation.html#part-1">The Evaluation Protocol</a> (training curves, learning curves, data leakage).</p>
 
     <h3>3. Residual &amp; Error Analysis</h3>
-    <p class="detail-description">Beyond aggregate metrics, this step involves a granular examination of failure cases. By using tools like a <strong>Confusion Matrix</strong>, identification of whether the model consistently fails on specific classes (e.g., mistaking 'dogs' for 'cats') allows for targeted improvements.</p>
+    <p class="detail-description">Beyond aggregate metrics, examine the failure cases. A <strong>Confusion Matrix</strong>, for example, shows whether the model consistently fails on specific classes (e.g., mistaking 'dogs' for 'cats'), which points to targeted improvements. <em>Details:</em> <a href="ModelPerformanceEvaluation.html#part-5">Beyond the Headline Number</a> (error and residual analysis, robustness, subgroup checks).</p>
 
     <h3>4. Deployment Readiness Check</h3>
-    <p class="detail-description">Beyond statistical performance, the model is checked against practical constraints — inference latency, memory footprint, and alignment with the business metric it was built to improve — before it is cleared for release.</p>
+    <p class="detail-description">Beyond statistical performance, the model must meet practical constraints &mdash; inference latency, memory footprint, and alignment with the business metric it was built to improve &mdash; before it is cleared for release. <em>Details:</em> <a href="ModelPerformanceEvaluation.html#part-5">Beyond the Headline Number</a> (cost, robustness and fairness checks).</p>
 	<div class="flowchart-wrap" role="img" aria-label="Flowchart: Quantitative Scoring, Generalization Check, and Residual and Error Analysis grouped as one offline evaluation pass, feeding into a separate Deployment Readiness gate; a Pass decision either proceeds to Deployment or loops back to retraining">
         <svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -1007,7 +1008,7 @@
 
     <h4 style="color: var(--class-a); margin-top: 28px;">The Macro Level: "How good is this model version, overall?"</h4>
     <p>
-      This runs offline against fixed, pre-existing benchmark datasets—not live production traffic—split by task type: <a href="LLMPerformanceEvaluation.html">BLEU/chrF for translation, ROUGE/BERTScore for summarization, MMLU/HumanEval for reasoning</a>. These feed into human and LLM-judge preference testing (Chatbot Arena, MT-Bench) as a second gate. These tools <em>measure</em> quality rather than <em>create</em> it; the actual fix for a failing model (retraining, fine-tuning, RLHF) happens separately, informed by evaluation findings.
+      This runs offline against fixed, pre-existing benchmark datasets—not live production traffic—split by task type: <a href="ModelPerformanceEvaluation.html#metrics-landscape">BLEU/chrF for translation, ROUGE/BERTScore for summarization, MMLU/HumanEval for reasoning</a>. These feed into human and LLM-judge preference testing (Chatbot Arena, MT-Bench) as a second gate. These tools <em>measure</em> quality rather than <em>create</em> it; the actual fix for a failing model (retraining, fine-tuning, RLHF) happens separately, informed by evaluation findings. Why these scores can mislead is covered in <a href="ModelPerformanceEvaluation.html#real-world-issues">Are Traditional Metrics Reliable?</a>
     </p>
     <p>
       Because macro scores are averaged across thousands of examples, a model can score well overall while still occasionally failing on individual requests—which is precisely what this level cannot catch.
@@ -1032,7 +1033,7 @@
         </p>
       </li>
       <li style="margin-bottom: 10px;">
-        <strong>LLM-as-Judge:</strong> Does it pass a quality/safety rubric? A rubric is a written scoring guide given to a judge model, e.g.:
+        <strong><a href="ModelPerformanceEvaluation.html#validation-strategies">LLM-as-Judge</a>:</strong> Does it pass a quality/safety rubric? A rubric is a written scoring guide given to a judge model, e.g.:
         <blockquote style="margin: 8px 0; padding: 10px 14px; background: var(--card); border-left: 3px solid var(--rule); font-size: 14px; font-style: italic;">
           "Rate this response 1–5 on: accuracy, relevance, absence of harmful content, and tone. Score substance only—do not reward length."
         </blockquote>
