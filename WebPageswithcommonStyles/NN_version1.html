@@ -94,8 +94,8 @@ body {
     <ol class="process-list">
         <li><strong>Forward Pass:</strong> Data is fed through the network to generate predictions (detailed in Sections 1-4).</li>
         <li><strong>Loss Calculation:</strong> A function measures how far off the predictions were from the true labels (Section 5).</li>
-        <li><strong>Backpropagation:</strong> The error is propagated backward to compute gradients.</li>
-        <li><strong>Weight Update:</strong> An optimizer (like Adam) uses gradients to update weights.</li>
+        <li><strong><a href="BP2.html#backprop-worked-example">Backpropagation</a>:</strong> The error is propagated backward to compute gradients.</li>
+        <li><strong>Weight Update:</strong> An <a href="BP2.html#gradient-descent">optimizer</a> (like Adam) uses gradients to update weights.</li>
     </ol>
     </div>
 	
@@ -161,10 +161,14 @@ body {
         </div>
         Without non-linearity, your deep network with millions of parameters would have the same "expressive power" 
         as a single-layer Linear Regression—unable to learn curves, circles, or complex decision boundaries.
+<p style="margin-top: 10px;">
+        <strong>This is not specific to dense layers.</strong> A composition of linear maps is linear whatever structure $W$ has: two stacked convolutions with no activation between them equal a single (larger) convolution. That is why every architecture carries its own non-linearities: ReLU between convolutions in a CNN, tanh/sigmoid in RNN and LSTM cells, and the softmax in attention plus the activation in the feed-forward block of a Transformer.
+        </p>
+    </div>
 		<div class="description-box">
     <h3>Scaling to Deep Neural Networks (DNNs): From Scalars to Tensors</h3>
     <p>
-        While shallow networks use individual scalar indices (like $n_1^{(l)}$), a general <strong>Deep Neural Network (DNN)</strong> scales this architecture across arbitrary depth ($L$ layers) and width ($d_l$ neurons) using full <strong>matrix and vector operations</strong>.
+        While shallow networks use individual scalar indices (like $n_1^{(l)}$), a general <strong>Deep Neural Network (DNN)</strong> scales this architecture across arbitrary depth ($L$ layers) and width ($d_l$ neurons) using full <strong>matrix and vector operations</strong>. &ldquo;DNN&rdquo; is the umbrella term: MLPs, <strong>CNNs</strong>, <strong>RNNs/LSTMs</strong> and <strong>Transformers</strong> (the networks behind LLMs) are all Deep Neural Networks. They differ in how each layer is wired, but each is a stack of layers of the form described next.
     </p>
     <p>
         For any hidden layer $l$, the entire layer's linear pre-activation vector $\mathbf{z}^{(l)}$ is computed simultaneously via matrix multiplication:
@@ -176,10 +180,34 @@ body {
         Where $\mathbf{W}^{(l)} \in \mathbb{R}^{d_l \times d_{l-1}}$ is the weight matrix mapping the previous layer's outputs to the current layer, $\mathbf{b}^{(l)}$ is the bias vector, and $\mathbf{a}^{(l)} = f(\mathbf{z}^{(l)})$ applies the non-linear activation element-wise. This tensor-based formulation allows modern hardware (GPUs/TPUs) to process millions of parameters concurrently.
     </p>
 </div>
-    </div></p>
+
+    <div style="border-left: 5px solid #8e44ad; background: #faf5ff; padding: 18px; border-radius: 8px; margin: 20px 0;">
+        <h4 style="margin-top: 0; color: #6b2c91;">Is $\mathbf{W}$ Only an MLP Idea? What the Weight Matrix Means in Every Architecture</h4>
+        <p>
+            The formula above is written for a <strong>fully connected (dense)</strong> layer, but the idea behind it is general. Every layer of every network is a function of the previous layer's output with learnable parameters $\theta^{(l)}$. Here $f^{(l)}$ denotes the <em>whole layer</em>, including its activation (the same meaning it has in the Universal Approximation section below), not the activation function alone:
+        </p>
+        <div style="text-align: center; margin: 10px 0;">
+            $$\mathbf{a}^{(l)} = f^{(l)}\big(\mathbf{a}^{(l-1)};\ \theta^{(l)}\big)$$
+        </div>
+        <p>
+            In a dense layer, $\theta^{(l)}=\{\mathbf{W}^{(l)},\mathbf{b}^{(l)}\}$ and every entry of $\mathbf{W}$ is free. The other architectures keep the same recipe (a <strong>learnable linear map followed by a non-linearity</strong>) but <strong>constrain</strong> $\mathbf{W}$ in two ways: some entries are forced to zero (<em>local connectivity</em>), and some entries are forced to be equal (<em>weight sharing</em>). These constraints encode an assumption about the data: nearby pixels are related, or the same rule applies at every time step or token position.
+        </p>
+        <p><strong>Concrete example.</strong> A 1-D convolution with kernel $(k_1,k_2,k_3)$ applied to 5 inputs to give 3 outputs is exactly a matrix multiplication with this structured $\mathbf{W}$:</p>
+        <div style="text-align: center; margin: 10px 0;">
+            $$\begin{bmatrix} z_1\\ z_2\\ z_3 \end{bmatrix} = \begin{bmatrix} k_1 & k_2 & k_3 & 0 & 0\\ 0 & k_1 & k_2 & k_3 & 0\\ 0 & 0 & k_1 & k_2 & k_3 \end{bmatrix} \begin{bmatrix} a_1\\ a_2\\ a_3\\ a_4\\ a_5 \end{bmatrix}$$
+        </div>
+        <p>
+            A dense layer of the same shape would have 15 free weights; the convolution has only 3, because the zeros are fixed and the same three values repeat in every row. Nothing else about the layer changes: it is still $\mathbf{z}=\mathbf{W}\mathbf{a}+\mathbf{b}$ followed by an activation.
+        </p>
+        
+        <p style="font-size: 0.9rem;">
+            <em>Notation:</em> for clarity this page keeps writing $\mathbf{W}^{(l)}\mathbf{a}^{(l-1)}$. Read $\mathbf{W}$ as "the layer's learnable linear map", whose structure is chosen by the architecture. The dedicated pages show the exact structure: <a href="CNN.html">CNN</a>, RNN/LSTM, and <a href="transformer_architectures.html">Transformers</a>.
+        </p>
+    </div>
+    </p>
         </li>
 
-	<li class="section-item" style="list-style-type: none; margin-bottom: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+	<li class="section-item" style="list-style-type: none; margin-bottom: 30px;">
     <span class="section-title" style="font-size: 1.4rem; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db;">
 	
         5. Final Layer (L4) & Loss Evaluation
@@ -205,7 +233,7 @@ body {
     </p>
 	<img src="loss_landscape.png" alt="3D Loss Landscape" style="max-width: 100%; height: auto; border-radius: 5px;">	
 
-    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-family: sans-serif;">
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
     <thead>
         <tr style="background-color: #34495e; color: white; text-align: left;">
             <th style="padding: 12px; border: 1px solid #ddd;">Loss Function</th>
@@ -259,19 +287,19 @@ body {
 </li>
 </div>
 <div class="description-box">
-    <h3>Gradient and Back Propogation</h3>
+    <h3>Gradient and Back Propagation</h3>
 	<div class="tutorial-content">
 	<p class="description-box">
     Loss function is a surface with several minimums. Some of these minimums are called 
     <strong>global minimums</strong> and <strong>local minimums</strong>. A core of the 
     Neural Network training is finding these points. A minimum corresponds to a point where 
     <strong>$$\nabla L(w) = 0 ...(5)$$.</strong> 
-    where $\nabla L(w)$ is the gradient of the Loss Function.Rather than using a single equation to solve (5) for weights, a repetitive, step-by-step method locates the lowest point of error, much like walking down a hill This gradient is computed 
-    by differentiating $L(w)$ with respect to weights ($w$).The most straightforward way to use gradient information is to update weights by taking a small step in the opposite direction of the gradient. This is calculated using the formula:$$w(\tau) = w(\tau-1) - \eta \nabla L(w(\tau-1))....(6)$$.In this equation, the positive value $\eta$ is called the learning rate.The symbol $\tau$ represents a discrete time index, representing the specific iteration count within the sequence of weight updates. After each update, the gradient is calculated again for the new weights, and the process repeats. Because the weights constantly move toward the sharpest possible drop in error, this method is known as <a href="BP2.html"><strong>gradient descent or steepest descent</strong></a>. 
+    where $\nabla L(w)$ is the gradient of the Loss Function.Rather than using a single equation to solve (5) for weights, a repetitive, step-by-step method locates the lowest point of error, much like walking down a hill <a href="BP2.html#computing-gradient">This gradient is computed</a> 
+    by differentiating $L(w)$ with respect to weights ($w$).The most straightforward way to use gradient information is to update weights by taking a small step in the opposite direction of the gradient. This is calculated using the formula:$$w(\tau) = w(\tau-1) - \eta \nabla L(w(\tau-1))....(6)$$.In this equation, the positive value $\eta$ is called the learning rate.The symbol $\tau$ represents a discrete time index, representing the specific iteration count within the sequence of weight updates. After each update, the gradient is calculated again for the new weights, and the process repeats. Because the weights constantly move toward the sharpest possible drop in error, this method is known as <a href="BP2.html#gradient-descent"><strong>gradient descent or steepest descent</strong></a>. 
 	<div class="algorithm-box" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; margin: 20px 0;">
-    <strong class="label" style="color: #0369a1; display: block; margin-bottom: 10px; font-size: 1.05rem;">AutoGrad for Back Propogation</strong>
+    <strong class="label" style="color: #0369a1; display: block; margin-bottom: 10px; font-size: 1.05rem;">Autograd: How the Gradient Is Computed</strong>
     <p style="margin: 0; line-height: 1.7; color: #1e293b;">
-        While gradient descent is theoretically driven by backpropagation via the chain rule, modern deep learning libraries implement this through <strong>Autograd</strong>—an automatic differentiation engine that programmatically computes exact analytical derivatives to yield the precise parameter gradients $\mathbf{g}_t = \nabla L(\theta_t)$ required for loss minimization. To accomplish this, the engine dynamically constructs a computation graph during the forward pass—recording every intermediate tensor operation along with its local derivative function—which is then traversed in reverse during the backward pass to evaluate local Jacobians and accumulate gradients. Once these gradients are extracted, they feed directly into AdamW,which is discussed below.
+        In practice we never differentiate $L$ by hand. Deep learning libraries such as PyTorch use <strong>Autograd</strong> (automatic differentiation): during the forward pass the library records every operation in a computation graph, and one backward sweep through that graph computes $\mathbf{g}_t = \nabla L(\theta_t)$, the gradient with respect to every parameter, exactly. These gradients are then passed to the optimizer, such as AdamW, discussed below. The derivation of how the backward sweep works (forward versus reverse accumulation) is given in <a href="BP2.html#automatic-differentiation">Automatic Differentiation</a>.
     </p>
 	<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
         <svg viewBox="0 0 1000 480" xmlns="http://www.w3.org/2000/svg" style="max-width: 50%; height: auto;">
@@ -349,15 +377,19 @@ body {
             <text x="500" y="300" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#334155">Weight taps (&#8706;L/&#8706;w&#8321;, &#8706;L/&#8706;w&#8322;, &#8706;L/&#8706;w&#8323;) are exactly what Eq. (6) uses to update each weight.</text>
         </svg>
         <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
-            <em>The forward pass (top, solid) computes $a_1, a_2, a_3, L$ left to right, and remembers every operation used. The backward pass (dashed red) walks the same graph right to left exactly once, and at each node multiplies the gradient handed to it from downstream by that node's own local derivative &mdash; the chain rule, applied mechanically. This single backward sweep is what fills in every $\partial L/\partial w_i$ used by Eq. (6).</em>
+            <em>The forward pass (top, solid) computes $a_1, a_2, a_3, L$ left to right, and remembers every operation used. The backward pass (dashed red) walks the same graph right to left exactly once, and at each node multiplies the gradient handed to it from downstream by that node's own local derivative &mdash; the chain rule, applied mechanically. This single backward sweep is what fills in every $\partial L/\partial w_i$ used by Eq. (6). For a layer-by-layer hand derivation of these local derivatives, see the <a href="BP2.html#backprop-worked-example">worked backpropagation example</a>.</em>
         </p>
+    </div>
+    <div style="border-left: 5px solid #8e44ad; background: #faf5ff; padding: 14px 18px; border-radius: 8px; margin: 20px 0;">
+        <strong style="color: #6b2c91;">Backpropagation in other architectures.</strong>
+        The same chain-rule sweep trains CNNs, RNNs and Transformers, and gradient descent and Adam/AdamW are unchanged. The one addition is <strong>parameter sharing</strong>: when a parameter is used in several places (a convolution kernel at every position, an RNN's $\mathbf{W}_h$ at every time step), its gradient is the <strong>sum</strong> of the contributions from every use. This is the "add across paths" rule of the <a href="BP2.html#chain-rule">chain rule</a>. The vanishing/exploding gradient problem discussed next also appears in all of them: across depth in CNNs and Transformers, and across time steps in RNNs.
     </div>
 </div>
 
 <div class="description-box">
     <h3>Vanishing and Exploding Gradients: A Consequence of the Chain Rule</h3>
     <p style="line-height: 1.6; color: #333;">
-        The backward sweep above multiplies local derivatives together, layer after layer. For a weight sitting near the input of an $L$-layer network, that gradient is a product of roughly $L$ terms:
+        The <a href="BP2.html#backprop-chain">backward sweep</a> above multiplies local derivatives together, layer after layer. For a weight sitting near the input of an $L$-layer network, that gradient is a product of roughly $L$ terms:
     </p>
     <div class="math-display" style="text-align: center; margin: 10px 0;">
         $$\frac{\partial L}{\partial w^{(1)}} \;=\; \frac{\partial L}{\partial a^{(L)}} \cdot \prod_{l=2}^{L} \Big( h'\big(z^{(l)}\big)\cdot w^{(l)} \Big)$$
@@ -877,13 +909,16 @@ body {
         <p style="font-size: 0.85rem; margin-top: 15px;">
             <em>Note:</em> In Large Language Models, $n$ is often 4096 or higher, leading to millions of connections per layer.
         </p>
+
+        <p style="margin-top: 15px;"><strong>The same counting in other architectures.</strong> The formula above is for a dense layer. Weight sharing changes the count completely: a convolution or recurrent cell reuses the same parameters at every position or time step, so its size does not depend on the image size or sequence length. The CNN page works through this in its <a href="CNN.html">parameter-count section</a>.</p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; background-color: white;"><thead><tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e0;"><th style="padding: 10px; text-align: left;">Layer type</th><th style="padding: 10px; text-align: left;">Parameters</th><th style="padding: 10px; text-align: left;">Example</th></tr></thead><tbody><tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px; vertical-align: top;">Dense</td><td style="padding: 10px; vertical-align: top;">$n_{in}\cdot n_{out}+n_{out}$</td><td style="padding: 10px; vertical-align: top;">$224\times224\times3=150{,}528$ inputs to 1000 units: about 150.5 million weights</td></tr><tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px; vertical-align: top;">Convolution ($k\times k$)</td><td style="padding: 10px; vertical-align: top;">$k\cdot k\cdot C_{in}\cdot C_{out}+C_{out}$</td><td style="padding: 10px; vertical-align: top;">$3\times3$, 3 channels in, 64 out: $3\cdot3\cdot3\cdot64=1{,}728$ weights, whatever the image size</td></tr><tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px; vertical-align: top;">RNN cell</td><td style="padding: 10px; vertical-align: top;">$d_h(d_h+d_x)+d_h$</td><td style="padding: 10px; vertical-align: top;">$d_h=512,\ d_x=256$: 393,728 parameters, whatever the sequence length</td></tr><tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px; vertical-align: top;">Transformer layer</td><td style="padding: 10px; vertical-align: top;">about $12d^2$ (weights only)</td><td style="padding: 10px; vertical-align: top;">$d=4096$: about 201 million per layer</td></tr></tbody></table>
     </div>
 </div>
 
 <div class="description-box">
-    <h3>Putting It All Together: The Full Training Loop</h3>
+    <h3 id="training-loop">Putting It All Together: The Full Training Loop</h3>
     <p style="line-height: 1.6; color: #333;">
-        Every mechanism on this page — initialization, BatchNorm, Dropout, the loss surface, backprop, Adam/AdamW, early stopping — is a piece of one single loop. It's worth seeing them assembled in the order they actually fire. Weight initialization (He/Xavier) happens exactly <strong>once</strong>, before training begins — it is not repeated per epoch. Everything after that is a nested loop: an outer loop over <strong>epochs</strong>, and an inner loop over <strong>mini-batches</strong> within each epoch. Within a single mini-batch's forward pass, BatchNorm and Dropout sit on opposite sides of the activation function at every layer: BatchNorm normalizes the pre-activation $z^{(l)}$, then the activation $h(\cdot)$ runs, then Dropout randomly zeroes out the resulting $a^{(l)}$ before it moves to the next layer.
+        Every mechanism on this page — initialization, BatchNorm, Dropout, the loss surface, <a href="BP2.html#backprop-worked-example">backprop</a>, Adam/AdamW, early stopping — is a piece of one single loop. It's worth seeing them assembled in the order they actually fire. Weight initialization (He/Xavier) happens exactly <strong>once</strong>, before training begins — it is not repeated per epoch. Everything after that is a nested loop: an outer loop over <strong>epochs</strong>, and an inner loop over <strong><a href="BP2.html#minibatch-sgd">mini-batches</a></strong> within each epoch. Within a single mini-batch's forward pass, BatchNorm and Dropout sit on opposite sides of the activation function at every layer: BatchNorm normalizes the pre-activation $z^{(l)}$, then the activation $h(\cdot)$ runs, then Dropout randomly zeroes out the resulting $a^{(l)}$ before it moves to the next layer.
     </p>
     <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
         <svg viewBox="0 0 900 790" xmlns="http://www.w3.org/2000/svg" style="max-width: 88%; height: auto;">
@@ -1153,7 +1188,7 @@ a larger weight sitting in a flat region.
 
 <p>
 <span>\(h_{qq}\)</span> is computed with a backward pass structurally identical to
-ordinary backpropagation (see the backprop derivation page), but propagating
+ordinary backpropagation (see the <a href="BP2.html#backprop-worked-example">backprop derivation page</a>), but propagating
 second derivatives instead of first. Using the same
 <span>\(z^{(l)} = W^{(l)} a^{(l-1)}\)</span>, <span>\(a^{(l)} = f(z^{(l)})\)</span>
 notation established there, and writing the diagonal curvature at a
@@ -1405,144 +1440,14 @@ answers "how many of these parameters were ever necessary?"
         Weight Initialization above assumes you start from <strong>random</strong> weights. <strong>Transfer Learning</strong> asks a different question: why start from noise at all, if a related task has already been trained on? The idea is old — Lorien Pratt's 1993 <strong>Discriminability-Based Transfer (DBT)</strong> algorithm copied weights from a source network into a target network, then used an information-theoretic score to decide, per hidden unit, whether to keep, shrink, or randomly reset that unit's incoming weights. This was for small, shallow networks, decades before CNNs — the underlying insight (reuse learned weights instead of learning from scratch) is unchanged since then; only the mechanics of <em>how</em> to adapt those weights have evolved.
     </p>
     <p style="line-height: 1.6; color: #333;">
-        The modern era simplified DBT's per-weight rescaling into two coarser, far more practical strategies, both starting from a network pretrained on a large source dataset:
-    </p>
-    <ul style="line-height: 1.8; color: #444;">
-        <li><strong>Feature extraction (freeze + new head):</strong> keep the pretrained network's weights fixed, remove its final output layer, attach a new, randomly-initialized "head" for the target task, and train only that head. Cheap, and effective when the target dataset is small.</li>
-        <li><strong>Fine-tuning:</strong> unfreeze some or all of the pretrained layers and continue training on the target task, typically with a much smaller learning rate than training from scratch would use — the network is nudged toward the new task rather than re-learning it. In practice the learning rate is often graded by depth (<strong>discriminative fine-tuning</strong>): a tiny LR for early layers, which Yosinski et al. (2014) showed learn generic, broadly-transferable features, and a somewhat larger LR for later layers, which are more task-specific and benefit from adapting more.</li>
-    </ul>
-
-    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
-        <svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
-            <defs>
-                <marker id="tlArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                    <path d="M0,0 L8,4 L0,8 Z" fill="#334155" />
-                </marker>
-                <marker id="tlArrowRed" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                    <path d="M0,0 L8,4 L0,8 Z" fill="#b91c1c" />
-                </marker>
-            </defs>
-            <text x="480" y="22" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Transfer Learning — Generalized, for Any Neural Network</text>
-
-            <!-- SOURCE NETWORK ROW -->
-            <text x="480" y="46" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#1e3a8a">Source Network — Pretrained on Task A (large dataset)</text>
-
-            <g font-family="Segoe UI, sans-serif">
-                <rect x="30" y="58" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-                <text x="105" y="88" text-anchor="middle" font-size="12" fill="#334155">Input</text>
-
-                <rect x="210" y="58" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-                <text x="285" y="88" text-anchor="middle" font-size="12" fill="#334155">Layer L1</text>
-
-                <rect x="390" y="58" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-                <text x="465" y="88" text-anchor="middle" font-size="12" fill="#334155">Layer L2</text>
-
-                <rect x="570" y="58" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-                <text x="645" y="88" text-anchor="middle" font-size="12" fill="#334155">Layer L3</text>
-
-                <rect x="750" y="58" width="160" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-                <text x="830" y="82" text-anchor="middle" font-size="12" fill="#334155">Output</text>
-                <text x="830" y="97" text-anchor="middle" font-size="10" fill="#64748b">(Task A)</text>
-            </g>
-
-            <line x1="180" y1="83" x2="206" y2="83" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-            <line x1="360" y1="83" x2="386" y2="83" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-            <line x1="540" y1="83" x2="566" y2="83" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-            <line x1="720" y1="83" x2="746" y2="83" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-
-            <!-- discard output arrow -->
-            <line x1="850" y1="108" x2="850" y2="130" stroke="#b91c1c" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#tlArrowRed)"/>
-            <rect x="770" y="130" width="160" height="34" rx="5" fill="#fef2f2" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="4,3"/>
-            <text x="850" y="151" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#7f1d1d">Discarded — task-specific</text>
-
-            <!-- central transfer arrow -->
-            <line x1="285" y1="108" x2="285" y2="185" stroke="#0e7490" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#tlArrow)"/>
-            <line x1="465" y1="108" x2="465" y2="185" stroke="#0e7490" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#tlArrow)"/>
-            <line x1="645" y1="108" x2="645" y2="185" stroke="#0e7490" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#tlArrow)"/>
-            <text x="480" y="177" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#0e7490">Transfer weights L1, L2, L3 into a new network</text>
-
-            <!-- OPTION 1: FEATURE EXTRACTION -->
-            <text x="30" y="205" font-family="Segoe UI, sans-serif" font-size="12.5" font-weight="bold" fill="#92400e">Option 1 — Feature Extraction: freeze L1&ndash;L3, train only the new head</text>
-
-            <g font-family="Segoe UI, sans-serif">
-                <rect x="30" y="215" width="150" height="50" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
-                <text x="105" y="238" text-anchor="middle" font-size="11" fill="#334155">New Input</text>
-                <text x="105" y="252" text-anchor="middle" font-size="9.5" fill="#64748b">(Task B)</text>
-
-                <rect x="210" y="215" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2" stroke-dasharray="3,3"/>
-                <text x="285" y="236" text-anchor="middle" font-size="12" fill="#334155">L1</text>
-                <text x="285" y="252" text-anchor="middle" font-size="9.5" fill="#4338ca">frozen</text>
-
-                <rect x="390" y="215" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2" stroke-dasharray="3,3"/>
-                <text x="465" y="236" text-anchor="middle" font-size="12" fill="#334155">L2</text>
-                <text x="465" y="252" text-anchor="middle" font-size="9.5" fill="#4338ca">frozen</text>
-
-                <rect x="570" y="215" width="150" height="50" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2" stroke-dasharray="3,3"/>
-                <text x="645" y="236" text-anchor="middle" font-size="12" fill="#334155">L3</text>
-                <text x="645" y="252" text-anchor="middle" font-size="9.5" fill="#4338ca">frozen</text>
-
-                <rect x="750" y="215" width="160" height="50" rx="6" fill="#fff7ed" stroke="#b45309" stroke-width="2"/>
-                <text x="830" y="236" text-anchor="middle" font-size="12" fill="#334155">New Head</text>
-                <text x="830" y="251" text-anchor="middle" font-size="9.5" fill="#b45309">random init, trainable</text>
-            </g>
-            <line x1="180" y1="240" x2="206" y2="240" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-            <line x1="360" y1="240" x2="386" y2="240" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-            <line x1="540" y1="240" x2="566" y2="240" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-            <line x1="720" y1="240" x2="746" y2="240" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-
-            <!-- OPTION 2: FINE-TUNING -->
-            <text x="30" y="308" font-family="Segoe UI, sans-serif" font-size="12.5" font-weight="bold" fill="#15803d">Option 2 — Fine-Tuning: unfreeze L1&ndash;L3 (LR graded by depth) + train new head</text>
-
-            <g font-family="Segoe UI, sans-serif">
-                <rect x="30" y="318" width="150" height="50" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
-                <text x="105" y="341" text-anchor="middle" font-size="11" fill="#334155">New Input</text>
-                <text x="105" y="355" text-anchor="middle" font-size="9.5" fill="#64748b">(Task B)</text>
-
-                <rect x="210" y="318" width="150" height="50" rx="6" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
-                <text x="285" y="339" text-anchor="middle" font-size="12" fill="#334155">L1</text>
-                <text x="285" y="355" text-anchor="middle" font-size="9.5" fill="#15803d">tiny LR (generic)</text>
-
-                <rect x="390" y="318" width="150" height="50" rx="6" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
-                <text x="465" y="339" text-anchor="middle" font-size="12" fill="#334155">L2</text>
-                <text x="465" y="355" text-anchor="middle" font-size="9.5" fill="#15803d">small LR</text>
-
-                <rect x="570" y="318" width="150" height="50" rx="6" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
-                <text x="645" y="339" text-anchor="middle" font-size="12" fill="#334155">L3</text>
-                <text x="645" y="355" text-anchor="middle" font-size="9.5" fill="#15803d">larger LR (task-specific)</text>
-
-                <rect x="750" y="318" width="160" height="50" rx="6" fill="#fff7ed" stroke="#b45309" stroke-width="2"/>
-                <text x="830" y="339" text-anchor="middle" font-size="12" fill="#334155">New Head</text>
-                <text x="830" y="354" text-anchor="middle" font-size="9.5" fill="#b45309">random init, trainable</text>
-            </g>
-            <line x1="180" y1="343" x2="206" y2="343" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-            <line x1="360" y1="343" x2="386" y2="343" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-            <line x1="540" y1="343" x2="566" y2="343" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-            <line x1="720" y1="343" x2="746" y2="343" stroke="#334155" stroke-width="2" marker-end="url(#tlArrow)"/>
-
-            <!-- LEGEND -->
-            <rect x="30" y="405" width="18" height="18" fill="#eef2ff" stroke="#4338ca" stroke-width="2" stroke-dasharray="3,3"/>
-            <text x="55" y="419" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Frozen (pretrained, no gradient update)</text>
-
-            <rect x="380" y="405" width="18" height="18" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
-            <text x="405" y="419" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">Fine-tuned (pretrained, LR graded by depth — smaller for early layers)</text>
-
-            <rect x="720" y="405" width="18" height="18" fill="#fff7ed" stroke="#b45309" stroke-width="2"/>
-            <text x="745" y="419" font-family="Segoe UI, sans-serif" font-size="11" fill="#334155">New (random init, trained at normal LR)</text>
-
-            <text x="480" y="450" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-style="italic" fill="#64748b">Generalizes to any architecture: replace L1&ndash;L3 with ResNet/VGG conv blocks, a Transformer's encoder</text>
-            <text x="480" y="465" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-style="italic" fill="#64748b">stack, or a pretrained LLM's decoder layers &mdash; the freeze / fine-tune / new-head logic is identical.</text>
-        </svg>
-        <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
-            <em>The same procedure, applied at whatever granularity the architecture calls for: whole layers for a small MLP, residual blocks for a ResNet, encoder blocks for a Transformer, or attention/MLP sub-layers for LoRA adapters in an LLM.</em>
-        </p>
-    </div>
-
-    <p style="line-height: 1.6; color: #333;">
-        For today's Large Language Models, the same freeze/fine-tune spectrum reappears under new names: <strong>SFT (Supervised Fine-Tuning)</strong>, covered on the LLM Engine page, is full fine-tuning applied to a pretrained LLM's weights; <strong>LoRA (Low-Rank Adaptation)</strong> is a parameter-efficient middle ground — the pretrained weights stay entirely frozen, and a small pair of low-rank matrices is trained alongside each frozen weight matrix to approximate the update, making it possible to adapt a multi-billion-parameter model by training only a tiny fraction of new parameters.
+        The modern era simplified DBT's per-weight rescaling into two coarser, far more practical strategies, both starting from a network pretrained on a large source dataset: <strong>feature extraction</strong> (freeze the pretrained layers and train only a new output head) and <strong>fine-tuning</strong> (also update the pretrained layers, usually with a small learning rate). The idea applies at whatever granularity the architecture calls for: whole layers for a small MLP, residual blocks for a ResNet, encoder blocks for a Transformer, or low-rank adapters in an LLM.
     </p>
     <div class="intuition-box">
-        <strong>Why this matters.</strong> Transfer learning is arguably the single biggest reason deep learning became practical at scale. Before it, every new task needed its own network trained from zero, requiring huge labeled datasets few had. CNNs pretrained on ImageNet made it possible to build a strong image classifier from a few hundred labeled photos instead of millions. Transformers and LLMs pushed this further: pretraining on massive unlabeled text builds one general-purpose network, and SFT/LoRA adapt it to a target task or behavior using a tiny fraction of the compute and data pretraining required. Nearly every modern CNN, Transformer, and LLM deployed in practice is a fine-tuned descendant of a pretrained model, not a network trained from scratch.
+        <strong>Why this matters.</strong> Transfer learning is arguably the single biggest reason deep learning became practical at scale. Before it, every new task needed its own network trained from zero, requiring huge labeled datasets few had. Now one network is pretrained once on a large dataset and adapted to many tasks with a fraction of the data and compute. Nearly every modern CNN, Transformer, and LLM deployed in practice is a fine-tuned descendant of a pretrained model, not a network trained from scratch.
     </div>
+    <p style="line-height: 1.6; color: #333;">
+        <strong>Where the details are.</strong> Freeze versus fine-tune, learning rates graded by depth, and the ImageNet example are covered with code in <a href="CNN.html#transfer-learning">Transfer Learning in CNNs</a>. How the same ideas appear for language models (SFT and LoRA) is covered on the <a href="LLMEngineDev.html">LLM Engine page</a>.
+    </p>
 </div>
 
 <div class="description-box">
