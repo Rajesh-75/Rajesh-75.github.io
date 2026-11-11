@@ -771,6 +771,106 @@
 
     <hr class="section-divider">
 
+    <h2 id="covariate-shift">Covariate Shift: When Real-World Data Looks Different</h2>
+    <p class="detail-description">
+        A model learns from training data. After deployment, it sees <strong>new data</strong>. If the new inputs look different from the data the model trained on, the model can start making mistakes &mdash; even though nothing is wrong with the model itself.
+    </p>
+
+    <h3>A Simple Example</h3>
+    <p class="detail-description">
+        Suppose a model is trained to detect pneumonia from chest X-rays taken at <strong>Hospital A</strong>. Later it is used at <strong>Hospital B</strong>, whose X-ray machine produces darker, noisier images. Pneumonia still looks like pneumonia &mdash; the medical truth has not changed. Only the <em>look of the images</em> has changed. The model has seen very few images like these, so it becomes unreliable.
+    </p>
+
+    <h3>What Does &ldquo;Covariate Shift&rdquo; Mean?</h3>
+    <p class="detail-description">
+        &ldquo;Covariate&rdquo; is just another word for the <strong>input</strong> $x$ (the features, or the image). Covariate shift means:
+    </p>
+    <ul>
+        <li><strong>The inputs change:</strong> $p_{\text{train}}(x) \neq p_{\text{deploy}}(x)$</li>
+        <li><strong>The rule stays the same:</strong> $p_{\text{train}}(y \mid x) = p_{\text{deploy}}(y \mid x)$ &mdash; the same image still deserves the same diagnosis.</li>
+    </ul>
+
+    <div class="flowchart-wrap" role="img" aria-label="Two bell curves: training inputs in blue centred on the left, deployment inputs in orange centred further right. The right-hand part of the orange curve is marked as a region where the model has seen few training examples.">
+        <svg viewBox="0 0 900 310" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="covArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 z" fill="#c94f4f"/>
+                </marker>
+            </defs>
+            <!-- legend -->
+            <rect x="70" y="14" width="16" height="16" fill="#2c6fbb" fill-opacity="0.35" stroke="#2c6fbb"/>
+            <text x="94" y="27" font-size="14" fill="#1a1a1a">Training data (Hospital A)</text>
+            <rect x="330" y="14" width="16" height="16" fill="#e8892b" fill-opacity="0.35" stroke="#e8892b"/>
+            <text x="354" y="27" font-size="14" fill="#1a1a1a">Deployment data (Hospital B)</text>
+            <!-- curves -->
+            <path d="M80,240 C180,240 220,70 300,70 C380,70 420,240 520,240 Z" fill="#2c6fbb" fill-opacity="0.30" stroke="#2c6fbb" stroke-width="2"/>
+            <path d="M340,240 C440,240 480,70 560,70 C640,70 680,240 780,240 Z" fill="#e8892b" fill-opacity="0.30" stroke="#e8892b" stroke-width="2"/>
+            <!-- axis -->
+            <line x1="60" y1="240" x2="830" y2="240" stroke="#555" stroke-width="2"/>
+            <text x="445" y="272" text-anchor="middle" font-size="14" fill="#1a1a1a">Input feature (for example, average image brightness)</text>
+            <text x="300" y="60" text-anchor="middle" font-size="12" fill="#2c6fbb">Typical training input</text>
+            <text x="560" y="60" text-anchor="middle" font-size="12" fill="#b4601a">Typical deployment input</text>
+            <!-- problem region -->
+            <path d="M700,150 L700,228" fill="none" stroke="#c94f4f" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#covArrow)"/>
+            <text x="700" y="140" text-anchor="middle" font-size="12" fill="#c94f4f" font-weight="bold">Few training examples here:</text>
+            <text x="700" y="156" text-anchor="middle" font-size="12" fill="#c94f4f" font-weight="bold">the model is unsure</text>
+        </svg>
+    </div>
+    <p class="image-title">Figure: Covariate shift. The model trained on the blue inputs, but deployment sends orange inputs, many of which the model rarely saw.</p>
+
+    <h3>Why Does the Test Score Not Warn Us?</h3>
+    <p class="detail-description">
+        The test set was held out from the <em>same source</em> as the training data, so it looks just like the training data. The model scores well on it. Deployment data comes from a different place, so a good test score does not guarantee good real-world performance.
+    </p>
+
+    <h3>Covariate Shift vs. Other Kinds of Shift</h3>
+    <table style="width:100%; border-collapse: collapse; margin: 16px 0; font-size: 0.95rem;">
+        <thead>
+            <tr style="background:#eef4fb;">
+                <th style="padding:10px; border:1px solid #ddd; text-align:left;">Type</th>
+                <th style="padding:10px; border:1px solid #ddd; text-align:left;">What changes?</th>
+                <th style="padding:10px; border:1px solid #ddd; text-align:left;">Example</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="padding:10px; border:1px solid #ddd;"><strong>Covariate shift</strong></td>
+                <td style="padding:10px; border:1px solid #ddd;">The inputs look different; the rule is the same</td>
+                <td style="padding:10px; border:1px solid #ddd;">A new X-ray machine gives darker images</td>
+            </tr>
+            <tr>
+                <td style="padding:10px; border:1px solid #ddd;"><strong>Label shift</strong></td>
+                <td style="padding:10px; border:1px solid #ddd;">How often each answer occurs changes</td>
+                <td style="padding:10px; border:1px solid #ddd;">Pneumonia becomes far more common in winter</td>
+            </tr>
+            <tr>
+                <td style="padding:10px; border:1px solid #ddd;"><strong>Concept drift</strong></td>
+                <td style="padding:10px; border:1px solid #ddd;">The rule itself changes</td>
+                <td style="padding:10px; border:1px solid #ddd;">Spammers change tactics, so &ldquo;what counts as spam&rdquo; changes</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>How Do We Notice It?</h3>
+    <ul>
+        <li><strong>Compare the inputs.</strong> Plot histograms or averages of each feature for training data and new data. Do they match?</li>
+        <li><strong>Play &ldquo;spot the difference.&rdquo;</strong> Label training rows as 0 and new rows as 1, then train a simple classifier to tell them apart. If it can do this easily, the two datasets look different.</li>
+        <li><strong>Check a small labelled sample.</strong> Get correct answers for a few new examples and measure the real accuracy.</li>
+    </ul>
+
+    <h3>What Can We Do About It?</h3>
+    <ul>
+        <li><strong>Collect and label a little data from the new setting</strong>, then retrain or fine-tune the model on it.</li>
+        <li><strong>Data augmentation.</strong> During training, randomly change brightness, contrast, and noise so the model has already seen many &ldquo;looks.&rdquo;</li>
+        <li><strong>Normalize the inputs</strong> so that different sources look more alike.</li>
+        <li><strong>Re-weight training examples</strong> (a slightly more advanced idea): give more importance to training examples that look like the deployment data, using the weight $w(x) = \dfrac{p_{\text{deploy}}(x)}{p_{\text{train}}(x)}$.</li>
+    </ul>
+    <p class="detail-description">
+        This is closely related to the <a href="#monitoring">monitoring</a> step below: noticing covariate shift early is one of the main reasons a deployed model is watched continuously.
+    </p>
+
+    <hr class="section-divider">
+
     <h2>Deployment</h2>
     <p class="detail-description">
         Deployment is the stage where a trained, evaluated model stops being a research artifact and starts generating real predictions for real users or systems. A model that scores well offline is not yet useful — it has to be packaged, served reliably, and watched over time, since data in the real world keeps changing after training ends.
@@ -794,13 +894,13 @@
         Models are updated over time as new data becomes available, so deployments track versions the same way software does. If a newly deployed model underperforms in production, having a previous version ready to roll back to limits the damage. Techniques like <strong>canary releases</strong> (routing a small fraction of traffic to the new model first) and <strong>A/B testing</strong> (comparing two model versions on live traffic) help validate a new version before it fully replaces the old one.
     </p>
 
-    <h3>4. Monitoring &amp; Model Drift</h3>
+    <h3 id="monitoring">4. Monitoring &amp; Model Drift</h3>
     <p class="detail-description">
         A deployed model keeps making predictions long after training ends, but the world it was trained on doesn't stand still. Monitoring typically tracks:
     </p>
     <ul>
         <li><strong>Performance Metrics:</strong> Accuracy, latency, and error rates in production, compared against the offline evaluation numbers.</li>
-        <li><strong>Data Drift:</strong> Whether the distribution of incoming data is diverging from the training data (e.g., new user behavior, seasonal shifts).</li>
+        <li><strong>Data Drift:</strong> Whether the distribution of incoming data is diverging from the training data (e.g., new user behavior, seasonal shifts). This is called <a href="#covariate-shift">covariate shift</a>.</li>
         <li><strong>Concept Drift:</strong> Whether the underlying relationship between inputs and the correct output has changed, even if the input distribution looks the same.</li>
     </ul>
     <p class="detail-description">
