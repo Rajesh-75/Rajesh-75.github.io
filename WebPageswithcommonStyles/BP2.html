@@ -87,6 +87,68 @@ body {
     <p>
         These parameters are the variables of the <strong>Loss Function</strong>. During training, the <strong>Derivative</strong> is computed specifically with respect to these weights. This tells the model exactly how to "nudge" each parameter to minimize the error.
     </p>
+    <p>
+        <strong>A second view: gradient descent in function space.</strong> The figure above follows the <em>parameters</em> moving down the loss landscape. The figure below shows what the same step does to the <em>model itself</em>. Plot the model's output $f_\theta(x)$ against the input $x$, and mark the required value (the target) at each training point $x_i$.
+    </p>
+    <div style="text-align: center; margin: 20px 0;">
+<svg viewBox="0 0 900 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gradient descent in function space: the model output curve moves toward the target at every training point" style="max-width:100%; height:auto; display:block; margin:0 auto; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+<defs><marker id="gd-up" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0,0 L14,7 L0,14 z" fill="#27ae60"/></marker><marker id="gd-dn" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0,0 L14,7 L0,14 z" fill="#e67e22"/></marker></defs>
+<rect x="0" y="0" width="900" height="470" fill="#ffffff"/>
+<line x1="70" y1="330" x2="875" y2="330" stroke="#2c3e50" stroke-width="2"/>
+<polygon points="875,330 865,325 865,335" fill="#2c3e50"/>
+<line x1="70" y1="330" x2="70" y2="25" stroke="#2c3e50" stroke-width="2"/>
+<polygon points="70,25 65,35 75,35" fill="#2c3e50"/>
+<text x="460" y="382" text-anchor="middle" font-size="14" fill="#566573">input x  (training points x₁ … x₅)</text>
+<text x="24" y="185" text-anchor="middle" font-size="14" fill="#566573" transform="rotate(-90 24 185)">model output  y</text>
+<line x1="163.6" y1="330" x2="163.6" y2="131.2" stroke="#95a5a6" stroke-width="1.6"/>
+<circle cx="163.6" cy="330" r="4.5" fill="#2c3e50"/>
+<text x="163.6" y="350" text-anchor="middle" font-size="13" font-weight="600" fill="#2c3e50">x₁</text>
+<line x1="304.0" y1="330" x2="304.0" y2="125.6" stroke="#95a5a6" stroke-width="1.6"/>
+<circle cx="304.0" cy="330" r="4.5" fill="#2c3e50"/>
+<text x="304.0" y="350" text-anchor="middle" font-size="13" font-weight="600" fill="#2c3e50">x₂</text>
+<line x1="475.6" y1="330" x2="475.6" y2="190.0" stroke="#95a5a6" stroke-width="1.6"/>
+<circle cx="475.6" cy="330" r="4.5" fill="#2c3e50"/>
+<text x="475.6" y="350" text-anchor="middle" font-size="13" font-weight="600" fill="#2c3e50">x₃</text>
+<line x1="569.2" y1="330" x2="569.2" y2="206.8" stroke="#95a5a6" stroke-width="1.6"/>
+<circle cx="569.2" cy="330" r="4.5" fill="#2c3e50"/>
+<text x="569.2" y="350" text-anchor="middle" font-size="13" font-weight="600" fill="#2c3e50">x₄</text>
+<line x1="740.8" y1="330" x2="740.8" y2="94.8" stroke="#95a5a6" stroke-width="1.6"/>
+<circle cx="740.8" cy="330" r="4.5" fill="#2c3e50"/>
+<text x="740.8" y="350" text-anchor="middle" font-size="13" font-weight="600" fill="#2c3e50">x₅</text>
+<path d="M 70.0,94.8 L 74.9,97.2 L 79.8,99.6 L 84.7,102.0 L 89.6,104.3 L 94.5,106.6 L 99.4,108.8 L 104.3,110.9 L 109.2,113.0 L 114.2,115.0 L 119.1,116.9 L 124.0,118.8 L 128.9,120.6 L 133.8,122.4 L 138.7,124.0 L 143.6,125.6 L 148.5,127.1 L 153.4,128.5 L 158.3,129.9 L 163.2,131.1 L 168.1,132.3 L 173.0,133.5 L 177.9,134.8 L 182.8,136.0 L 187.7,137.2 L 192.6,138.4 L 197.5,139.5 L 202.5,140.5 L 207.4,141.5 L 212.3,142.4 L 217.2,143.2 L 222.1,143.9 L 227.0,144.4 L 231.9,144.9 L 236.8,145.1 L 241.7,145.2 L 246.6,144.9 L 251.5,144.1 L 256.4,142.8 L 261.3,141.3 L 266.2,139.4 L 271.1,137.4 L 276.0,135.3 L 280.9,133.1 L 285.8,131.1 L 290.8,129.2 L 295.7,127.6 L 300.6,126.3 L 305.5,125.4 L 310.4,124.6 L 315.3,123.8 L 320.2,123.0 L 325.1,122.3 L 330.0,121.5 L 334.9,120.8 L 339.8,120.2 L 344.7,119.6 L 349.6,119.1 L 354.5,118.6 L 359.4,118.1 L 364.3,117.8 L 369.2,117.5 L 374.2,117.3 L 379.1,117.2 L 384.0,117.3 L 388.9,118.2 L 393.8,120.0 L 398.7,122.6 L 403.6,125.9 L 408.5,129.8 L 413.4,134.2 L 418.3,139.0 L 423.2,144.1 L 428.1,149.4 L 433.0,154.8 L 437.9,160.2 L 442.8,165.4 L 447.7,170.5 L 452.6,175.2 L 457.5,179.5 L 462.5,183.3 L 467.4,186.4 L 472.3,188.8 L 477.2,190.5 L 482.1,191.9 L 487.0,193.2 L 491.9,194.6 L 496.8,195.9 L 501.7,197.1 L 506.6,198.4 L 511.5,199.5 L 516.4,200.6 L 521.3,201.6 L 526.2,202.5 L 531.1,203.4 L 536.0,204.2 L 540.9,204.9 L 545.8,205.5 L 550.8,206.0 L 555.7,206.3 L 560.6,206.6 L 565.5,206.8 L 570.4,206.8 L 575.3,206.3 L 580.2,205.1 L 585.1,203.3 L 590.0,201.0 L 594.9,198.3 L 599.8,195.1 L 604.7,191.6 L 609.6,187.8 L 614.5,183.8 L 619.4,179.6 L 624.3,175.4 L 629.2,171.1 L 634.2,166.9 L 639.1,162.8 L 644.0,158.8 L 648.9,155.1 L 653.8,151.6 L 658.7,148.3 L 663.6,144.7 L 668.5,140.8 L 673.4,136.8 L 678.3,132.6 L 683.2,128.3 L 688.1,124.1 L 693.0,119.9 L 697.9,115.8 L 702.8,111.9 L 707.7,108.2 L 712.6,104.9 L 717.5,101.9 L 722.5,99.4 L 727.4,97.3 L 732.3,95.9 L 737.2,95.0 L 742.1,94.9 L 747.0,96.6 L 751.9,100.3 L 756.8,105.6 L 761.7,112.3 L 766.6,120.0 L 771.5,128.3 L 776.4,137.0 L 781.3,145.6 L 786.2,154.0 L 791.1,161.7 L 796.0,168.4 L 800.9,174.7 L 805.8,180.9 L 810.8,187.0 L 815.7,193.2 L 820.6,199.3 L 825.5,205.3 L 830.4,211.3 L 835.3,217.2 L 840.2,223.1 L 845.1,229.0 L 850.0,234.8" fill="none" stroke="#2471a3" stroke-width="3" stroke-dasharray="1.5 6" stroke-linecap="round"/>
+<path d="M 70.0,243.2 L 74.9,243.2 L 79.8,243.2 L 84.7,243.2 L 89.6,243.2 L 94.5,243.2 L 99.4,243.2 L 104.3,243.2 L 109.2,243.2 L 114.2,243.2 L 119.1,243.2 L 124.0,243.2 L 128.9,243.2 L 133.8,243.2 L 138.7,243.2 L 143.6,243.2 L 148.5,243.2 L 153.4,243.2 L 158.3,243.2 L 163.2,243.2 L 168.1,243.3 L 173.0,243.5 L 177.9,243.9 L 182.8,244.5 L 187.7,245.1 L 192.6,245.8 L 197.5,246.6 L 202.5,247.4 L 207.4,248.2 L 212.3,248.9 L 217.2,249.6 L 222.1,250.3 L 227.0,250.8 L 231.9,251.2 L 236.8,251.5 L 241.7,251.6 L 246.6,251.4 L 251.5,250.7 L 256.4,249.7 L 261.3,248.4 L 266.2,246.8 L 271.1,244.9 L 276.0,242.8 L 280.9,240.6 L 285.8,238.2 L 290.8,235.8 L 295.7,233.3 L 300.6,230.9 L 305.5,228.5 L 310.4,225.6 L 315.3,222.3 L 320.2,218.5 L 325.1,214.4 L 330.0,210.0 L 334.9,205.4 L 339.8,200.7 L 344.7,196.0 L 349.6,191.3 L 354.5,186.8 L 359.4,182.5 L 364.3,178.4 L 369.2,174.8 L 374.2,171.6 L 379.1,168.9 L 384.0,166.8 L 388.9,164.8 L 393.8,162.8 L 398.7,160.9 L 403.6,159.0 L 408.5,157.1 L 413.4,155.3 L 418.3,153.6 L 423.2,152.0 L 428.1,150.4 L 433.0,149.0 L 437.9,147.7 L 442.8,146.5 L 447.7,145.4 L 452.6,144.5 L 457.5,143.7 L 462.5,143.1 L 467.4,142.7 L 472.3,142.4 L 477.2,142.4 L 482.1,142.7 L 487.0,143.3 L 491.9,144.3 L 496.8,145.5 L 501.7,147.0 L 506.6,148.7 L 511.5,150.6 L 516.4,152.6 L 521.3,154.9 L 526.2,157.2 L 531.1,159.6 L 536.0,162.2 L 540.9,164.7 L 545.8,167.3 L 550.8,169.8 L 555.7,172.3 L 560.6,174.7 L 565.5,177.1 L 570.4,179.3 L 575.3,181.7 L 580.2,184.3 L 585.1,187.1 L 590.0,190.0 L 594.9,193.0 L 599.8,196.0 L 604.7,199.1 L 609.6,202.2 L 614.5,205.2 L 619.4,208.2 L 624.3,211.0 L 629.2,213.7 L 634.2,216.2 L 639.1,218.4 L 644.0,220.4 L 648.9,222.0 L 653.8,223.3 L 658.7,224.3 L 663.6,225.3 L 668.5,226.1 L 673.4,226.9 L 678.3,227.6 L 683.2,228.2 L 688.1,228.8 L 693.0,229.4 L 697.9,229.9 L 702.8,230.4 L 707.7,231.0 L 712.6,231.5 L 717.5,232.0 L 722.5,232.5 L 727.4,233.1 L 732.3,233.7 L 737.2,234.3 L 742.1,235.0 L 747.0,235.7 L 751.9,236.4 L 756.8,237.2 L 761.7,237.9 L 766.6,238.7 L 771.5,239.5 L 776.4,240.2 L 781.3,241.0 L 786.2,241.8 L 791.1,242.5 L 796.0,243.3 L 800.9,244.1 L 805.8,244.8 L 810.8,245.6 L 815.7,246.3 L 820.6,247.1 L 825.5,247.8 L 830.4,248.6 L 835.3,249.3 L 840.2,250.1 L 845.1,250.8 L 850.0,251.6" fill="none" stroke="#922b21" stroke-width="2.6" stroke-dasharray="9 5"/>
+<path d="M 70.0,201.3 L 74.9,199.3 L 79.8,197.5 L 84.7,195.8 L 89.6,194.3 L 94.5,192.9 L 99.4,191.7 L 104.3,190.6 L 109.2,189.7 L 114.2,188.8 L 119.1,188.1 L 124.0,187.4 L 128.9,186.9 L 133.8,186.4 L 138.7,186.0 L 143.6,185.7 L 148.5,185.4 L 153.4,185.2 L 158.3,185.1 L 163.2,185.0 L 168.1,185.0 L 173.0,185.3 L 177.9,185.8 L 182.8,186.4 L 187.7,187.1 L 192.6,188.0 L 197.5,189.0 L 202.5,190.0 L 207.4,191.0 L 212.3,192.0 L 217.2,193.0 L 222.1,193.8 L 227.0,194.6 L 231.9,195.3 L 236.8,195.7 L 241.7,196.0 L 246.6,196.0 L 251.5,195.5 L 256.4,194.6 L 261.3,193.4 L 266.2,191.9 L 271.1,190.1 L 276.0,188.2 L 280.9,186.1 L 285.8,183.9 L 290.8,181.7 L 295.7,179.5 L 300.6,177.4 L 305.5,175.4 L 310.4,173.1 L 315.3,170.3 L 320.2,167.3 L 325.1,164.1 L 330.0,160.8 L 334.9,157.6 L 339.8,154.5 L 344.7,151.6 L 349.6,149.1 L 354.5,147.0 L 359.4,145.5 L 364.3,144.7 L 369.2,144.5 L 374.2,145.0 L 379.1,146.4 L 384.0,148.4 L 388.9,150.7 L 393.8,153.0 L 398.7,155.2 L 403.6,157.2 L 408.5,159.1 L 413.4,160.6 L 418.3,161.9 L 423.2,163.0 L 428.1,163.7 L 433.0,164.2 L 437.9,164.5 L 442.8,164.7 L 447.7,164.7 L 452.6,164.7 L 457.5,164.6 L 462.5,164.5 L 467.4,164.4 L 472.3,164.4 L 477.2,164.5 L 482.1,164.9 L 487.0,165.5 L 491.9,166.3 L 496.8,167.4 L 501.7,168.7 L 506.6,170.1 L 511.5,171.7 L 516.4,173.5 L 521.3,175.4 L 526.2,177.4 L 531.1,179.5 L 536.0,181.6 L 540.9,183.8 L 545.8,185.9 L 550.8,188.0 L 555.7,190.1 L 560.6,192.0 L 565.5,193.8 L 570.4,195.4 L 575.3,197.1 L 580.2,199.0 L 585.1,200.9 L 590.0,202.8 L 594.9,204.6 L 599.8,206.3 L 604.7,207.8 L 609.6,209.0 L 614.5,209.9 L 619.4,210.3 L 624.3,210.3 L 629.2,209.7 L 634.2,208.5 L 639.1,206.7 L 644.0,204.3 L 648.9,201.4 L 653.8,198.0 L 658.7,194.2 L 663.6,190.4 L 668.5,186.6 L 673.4,183.0 L 678.3,179.6 L 683.2,176.5 L 688.1,173.8 L 693.0,171.4 L 697.9,169.3 L 702.8,167.6 L 707.7,166.3 L 712.6,165.2 L 717.5,164.4 L 722.5,163.8 L 727.4,163.5 L 732.3,163.4 L 737.2,163.6 L 742.1,163.9 L 747.0,164.4 L 751.9,165.1 L 756.8,165.9 L 761.7,166.8 L 766.6,167.9 L 771.5,169.0 L 776.4,170.3 L 781.3,171.8 L 786.2,173.3 L 791.1,175.0 L 796.0,176.8 L 800.9,178.7 L 805.8,180.8 L 810.8,183.1 L 815.7,185.6 L 820.6,188.2 L 825.5,191.1 L 830.4,194.2 L 835.3,197.4 L 840.2,200.9 L 845.1,204.6 L 850.0,208.4" fill="none" stroke="#e74c3c" stroke-width="3"/>
+<circle cx="163.6" cy="131.2" r="5" fill="#2471a3"/>
+<line x1="163.6" y1="243.2" x2="163.6" y2="185.0" stroke="#27ae60" stroke-width="4" marker-end="url(#gd-up)"/>
+<circle cx="304.0" cy="125.6" r="5" fill="#2471a3"/>
+<line x1="304.0" y1="229.2" x2="304.0" y2="176.0" stroke="#27ae60" stroke-width="4" marker-end="url(#gd-up)"/>
+<circle cx="475.6" cy="190.0" r="5" fill="#2471a3"/>
+<line x1="475.6" y1="142.4" x2="475.6" y2="164.5" stroke="#e67e22" stroke-width="4" marker-end="url(#gd-dn)"/>
+<circle cx="569.2" cy="206.8" r="5" fill="#2471a3"/>
+<line x1="569.2" y1="178.8" x2="569.2" y2="195.1" stroke="#e67e22" stroke-width="4" marker-end="url(#gd-dn)"/>
+<circle cx="740.8" cy="94.8" r="5" fill="#2471a3"/>
+<line x1="740.8" y1="234.8" x2="740.8" y2="163.8" stroke="#27ae60" stroke-width="4" marker-end="url(#gd-up)"/>
+<line x1="70" y1="410" x2="116" y2="410" stroke="#2471a3" stroke-width="3" stroke-dasharray="1.5 6" stroke-linecap="round"/>
+<text x="124" y="414" font-size="12.5" fill="#566573">Target (required output)</text>
+<line x1="300" y1="410" x2="346" y2="410" stroke="#922b21" stroke-width="2.6" stroke-dasharray="9 5"/>
+<text x="354" y="414" font-size="12.5" fill="#566573">Current function (before update)</text>
+<line x1="590" y1="410" x2="636" y2="410" stroke="#e74c3c" stroke-width="3"/>
+<text x="644" y="414" font-size="12.5" fill="#566573">After one gradient step</text>
+<line x1="92" y1="444" x2="92" y2="424" stroke="#27ae60" stroke-width="4" marker-end="url(#gd-up)"/>
+<text x="108" y="440" font-size="12.5" fill="#566573">Output too low: pushed up</text>
+<line x1="322" y1="424" x2="322" y2="444" stroke="#e67e22" stroke-width="4" marker-end="url(#gd-dn)"/>
+<text x="338" y="440" font-size="12.5" fill="#566573">Output too high: pushed down</text>
+<circle cx="590" cy="434" r="5" fill="#2471a3"/>
+<text x="604" y="438" font-size="12.5" fill="#566573">Target value at a training point</text>
+</svg>
+        <p style="font-size: 0.85rem; color: #666; margin-top: 5px;"><em>Figure: One gradient descent step seen in function space (schematic). The dashed curve is the current model $f_\theta$, the solid curve is the model after one update of $\theta$, and the dotted curve is the target; only the target values at the marked training points are actually known, and the dotted curve is drawn for illustration. At each training point the arrow shows the direction of the correction: up where the output is too low, down where it is too high.</em></p>
+    </div>
+    <ul>
+        <li><strong>Start with an initial function:</strong> a freshly initialised model $f_{\theta_0}$ gives outputs that are far from the targets.</li>
+        <li><strong>Each arrow is an error signal at the output:</strong> with the loss $L(\theta) = \frac{1}{N}\sum_i \ell\big(f_\theta(x_i), y_i\big)$, the arrow at $x_i$ is $-\partial \ell / \partial f_\theta(x_i)$. Its sign says whether to raise or lower the output there; for squared error it is simply the target minus the output.</li>
+        <li><strong>The parameters move, not the points:</strong> we cannot set each output directly. Backpropagation turns these output errors into $\nabla_\theta L$ (they are the $dA$ that enters the worked example below), and one update of $\theta$ shifts the outputs at <em>all</em> training points at once, because the parameters are shared. This is why the whole curve moves smoothly, between the training points as well.</li>
+        <li><strong>Repeat:</strong> iterating the step brings the outputs at the training points closer to the targets, as far as the model's flexibility and the loss landscape allow.</li>
+    </ul>
 	
     
 
@@ -233,6 +295,93 @@ body {
         <li><strong>Vectorized Updates:</strong> One of the biggest practical advantages is that computers can process a batch of data simultaneously (in parallel). This makes the update step extremely efficient on GPUs.</li>
         <li><strong>Convergence:</strong> Because the gradient estimate is more accurate than a single point but less perfect than the whole dataset, the "path" to the minimum is relatively smooth but still contains enough randomness to navigate complex loss landscapes effectively.</li>
     </ul>
+	<p>Comparing three Gradient Descents, we have this table</p>
+	<table class="data-table">
+    <thead>
+        <tr style="background-color: #f4f4f4;">
+            <th>Algorithm</th>
+            <th>Gradient Behavior</th>
+            <th>Trajectory & Motion</th>
+            <th>Pros & Cons</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Batch Gradient Descent</strong></td>
+            <td>Calculated using the <strong>entire dataset</strong> before every single weight update.</td>
+            <td>Perfectly smooth, deterministic, and zero-variance. Points directly down the steepest slope toward the minimum.</td>
+            <td><strong>Pros:</strong> Extremely stable trajectory.<br><strong>Cons:</strong> Computationally prohibitive and painfully slow for large datasets.</td>
+        </tr>
+        <tr style="background-color: #f9f9f9;">
+            <td><strong>Stochastic Gradient Descent (SGD)</strong></td>
+            <td>Calculated using a <strong>single randomly chosen sample</strong> per step.</td>
+            <td>Highly erratic, noisy, and high-variance. Bounces back and forth wildly around the optimal path.</td>
+            <td><strong>Pros:</strong> Noise can help jump out of shallow local minima or saddle points.<br><strong>Cons:</strong> Very slow and erratic convergence near the minimum; often requires a decaying learning rate.</td>
+        </tr>
+        <tr>
+            <td><strong>Mini-Batch Gradient Descent</strong></td>
+            <td>Calculated over a <strong>small batch of samples</strong> (e.g., 32, 64, 256).</td>
+            <td>Moderately smooth with controlled, manageable variance.</td>
+            <td><strong>Pros:</strong> Strikes the optimal engineering balance—stable enough for steady progress without massive overhead or chaotic bouncing; foundation of modern deep learning.<br><strong>Cons:</strong> Requires tuning batch size.</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<div style="padding-left: 20px; border-left: 3px solid #3498db; margin: 30px 0;">
+    <h3 id="momentum">Momentum: Giving Gradient Descent a Memory</h3>
+    <p>
+        Batch, SGD and Mini-batch SGD all move using <strong>only the current gradient</strong>. This causes two familiar problems. In a long, narrow valley the gradient points mostly <em>across</em> the valley, so the path zig-zags from wall to wall while making slow progress <em>along</em> it. With mini-batches each gradient is also noisy, so the direction jitters from step to step. On a flat region the gradient is tiny and the steps crawl.
+    </p>
+    <p>
+        <strong>Momentum</strong> fixes this by remembering past gradients. Think of a heavy ball rolling downhill: it builds up speed in a direction it is pushed consistently, while sideways pushes that keep changing sign cancel out.
+    </p>
+
+    <div class="algorithm-box" style="border: 2px solid #2980b9; border-radius: 6px; background-color: #fdfdfd; padding: 15px 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+        <span class="algorithm-title" style="display:block; font-weight:bold; color:#2980b9; margin-bottom:8px;">Pseudo-Algorithm for Gradient Descent with Momentum</span>
+        <ol>
+            <li><strong>Initialize</strong> the parameters $\theta$ and the <strong>velocity</strong> $v = 0$ (same shape as $\theta$).</li>
+            <li><strong>Set</strong> the learning rate $\eta$ and the momentum coefficient $\beta$ (typically $0.9$).</li>
+            <li><strong>Repeat</strong> for each step $t$, using the batch, SGD or mini-batch gradient:
+                <ul>
+                    <li>Compute the gradient: $g_t = \nabla_\theta L(\theta_{t-1})$</li>
+                    <li>Update the velocity (a memory of past gradients):
+                        <div class="math-block">
+                            $$v_t = \beta \, v_{t-1} + g_t$$
+                        </div>
+                    </li>
+                    <li>Move along the velocity instead of the raw gradient:
+                        <div class="math-block">
+                            $$\theta_t = \theta_{t-1} - \eta \, v_t$$
+                        </div>
+                    </li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <h4>Explanation of the Momentum Steps</h4>
+    <ul>
+        <li><strong>The velocity is a memory:</strong> unrolling the recursion gives $v_t = g_t + \beta g_{t-1} + \beta^2 g_{t-2} + \cdots$, a weighted sum of all past gradients in which recent ones count more.</li>
+        <li><strong>A steady direction builds speed:</strong> if the gradient is the same $g$ at every step, $v$ grows toward $g/(1-\beta)$, which is $10g$ for $\beta = 0.9$. For example, with $g = 1$ the velocity goes $1,\ 1.9,\ 2.71,\ \ldots \to 10$. Steps along a consistent direction become much larger than with plain gradient descent.</li>
+        <li><strong>Zig-zag cancels:</strong> components of the gradient that flip sign from step to step (the sideways bouncing in a valley, or mini-batch noise) average out in $v$, so the path becomes smoother.</li>
+        <li><strong>The role of $\beta$:</strong> $\beta = 0$ gives back plain gradient descent. A larger $\beta$ means a longer memory, which is smoother but slower to turn when the gradient changes direction, so a large $\beta$ often needs a smaller $\eta$.</li>
+        <li><strong>A larger state:</strong> $v$ is carried from one step to the next, so the algorithm's state is $(\theta, v)$, not $\theta$ alone. Like $\eta$ and $\epsilon$, $\beta$ is set externally.</li>
+    </ul>
+
+    <div class="algorithm-box" style="border: 2px solid #2980b9; border-radius: 6px; background-color: #fdfdfd; padding: 15px 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+        <span class="algorithm-title" style="display:block; font-weight:bold; color:#2980b9; margin-bottom:8px;">Momentum Update in NumPy</span>
+        <pre style="margin:10px 0 0; background:#f8f9fa; border:1px solid #ddd; border-radius:4px; padding:12px 15px; overflow-x:auto; font-size:0.9rem; line-height:1.5;"><code>
+# Generic momentum update (theta can be any parameter array)
+v = np.zeros_like(theta)              # velocity, kept between steps
+for step in range(num_steps):
+    g = grad(theta)                   # batch / SGD / mini-batch gradient
+    v = beta * v + g                  # remember past gradients
+    theta -= eta * v                  # move along the velocity</code></pre>
+    </div>
+    <p style="font-size: 0.95rem; color: #555;">
+        <em>Convention note:</em> this is the form used by PyTorch's <code>torch.optim.SGD(momentum=beta)</code>. Some books write $v \leftarrow \beta v - \eta g,\ \theta \leftarrow \theta + v$, which gives the same path for a constant $\eta$. Adam uses an <em>averaged</em> version, $m_t = \beta_1 m_{t-1} + (1-\beta_1) g_t$, whose size is $(1-\beta_1)$ times that of $v_t$; Adam and AdamW, which combine this idea with a per-parameter step size, are covered on the <a href="NN_version1.html#adam-optimizers">Neural Networks page</a>.
+    </p>
 </div>
 
   <h2 id="computing-gradient">Computing the Gradient $\nabla_\theta L$</h2>
@@ -423,6 +572,7 @@ def backward_layer(dA, W, b, A_prev, Z, eta):
     return dA_prev                      # becomes dA for layer i-1</code></pre>
     </div>
     <p>Each derivative $\frac{\partial L}{\partial w_{jk}}$ on a connection is one component of $\nabla_\theta L$, so the last two lines of the algorithm are exactly the generic update $\theta \leftarrow \theta - \eta \, \nabla_\theta L$ applied to the weights and biases.</p>
+    <p>To train with momentum, keep one velocity per parameter array between steps (for example <code>vW = np.zeros_like(W)</code> and <code>vb = np.zeros_like(b)</code>, created once and stored with the layer) and replace the two update lines with <code>vW = beta*vW + dW; W -= eta*vW</code> and <code>vb = beta*vb + db; b -= eta*vb</code>. The backward pass that produces <code>dW</code> and <code>db</code> does not change; see <a href="#momentum">Momentum</a>.</p>
     <h3 id="backprop-chain">3. Visualizing the "Chain"</h3>
     <p>Each layer calculates its own local derivative and multiplies it by the one it received:</p>
     <div class="formula-container" style="background: #f8f9fa; padding: 15px; text-align: center;">
@@ -742,6 +892,15 @@ print(x2.grad.item())  # 1.7163.. = dy/dx2</code></pre>
             { q: "What is an epoch?",
               a: "One epoch is complete when every sample in the dataset has been used once to update the weights; several epochs are normally needed",
               w: ["A single update of the weights", "A single mini-batch", "A pass over the validation set only"] },
+            { q: "What problem does momentum address, and what does the velocity v<sub>t</sub> store?",
+              a: "Plain updates zig-zag across narrow valleys and crawl on flat regions; v<sub>t</sub> = &beta;v<sub>t&minus;1</sub> + g<sub>t</sub> is a running weighted sum of past gradients, so consistent directions build up and oscillating ones cancel",
+              w: ["v<sub>t</sub> stores the previous parameters, so the update can step back to them", "Momentum removes the learning rate, because v<sub>t</sub> sets the step size by itself", "Momentum computes the second derivative (Hessian) of the loss to correct the direction"] },
+            { q: "Numerical: With &beta; = 0.9, v<sub>0</sub> = 0 and a constant gradient g = 1, what is the velocity v<sub>3</sub> after three steps (v<sub>t</sub> = &beta;v<sub>t&minus;1</sub> + g)?",
+              a: "v<sub>1</sub> = 1, v<sub>2</sub> = 0.9 &times; 1 + 1 = 1.9, v<sub>3</sub> = 0.9 &times; 1.9 + 1 = 2.71",
+              w: ["3, adding the gradients without the factor &beta;", "1.9, stopping one step early", "0.271, using the averaged form (1 &minus; &beta;)g instead of g"] },
+            { q: "What happens as &beta; is increased toward 1 (for example 0.99 instead of 0.9), and what does &beta; = 0 give?",
+              a: "The velocity averages over more past gradients, so the path is smoother and builds more speed along a steady direction (up to g/(1 &minus; &beta;)), but it reacts more slowly to changes; &beta; = 0 gives plain gradient descent",
+              w: ["The velocity forgets the past faster, so the path becomes noisier; &beta; = 0 gives momentum with maximum memory", "&beta; only changes the stopping condition &epsilon;", "A larger &beta; always makes training converge faster, with no downside"] },
             { q: "How is the gradient &nabla;<sub>&theta;</sub>L obtained for Linear Regression, Logistic Regression and Neural Networks?",
               a: "Linear Regression: (2/N)X<sup>T</sup>(Xw &minus; y) in closed form; Logistic Regression: (1/N)X<sup>T</sup>(&sigma;(Xw) &minus; y) in closed form; Neural Networks: backpropagation",
               w: ["Linear Regression: backpropagation; Neural Networks: closed form (2/N)X<sup>T</sup>(Xw &minus; y)", "All three use backpropagation", "Logistic Regression: (2/N)X<sup>T</sup>(Xw &minus; y), the same as Linear Regression"] },
