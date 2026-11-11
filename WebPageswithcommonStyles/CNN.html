@@ -358,6 +358,84 @@
 <h3>4. More about Backward Pass and Gradient Computation through Chain Rule</h3>
 <p>In a CNN, the Backward Pass is the process of passing <strong>error maps</strong> backward through the spatial dimensions. To satisfy the <strong>Algorithm: Adam_Optimization_Update</strong>, we must calculate the gradients ($g_t$) by reversing the Forward Pass step-by-step.</p>
 
+<h4>Backpropagation Through Convolutional Layers</h4>
+<p>Before the full protocol, here are the three gradient computations of one convolutional layer on a tiny worked example: one filter, a 4&times;4 input, a 3&times;3 filter, stride 1 and no padding. The notation follows the protocol below: $A^{[l-1]}$ is the layer's input (written $Y^{(l-1)}$ in some texts), $K$ is the filter weights (some texts write $w_l$), $Z$ is the affine (convolution) output, and $dX$ means $\partial L/\partial X$. Going backward, the layer receives $dA^{[l]}$ from the layer above and has to produce three things:</p>
+<ul>
+    <li><strong>Activation to affine gradients ($dZ$).</strong> The derivatives with respect to the affine map $Z$ are computed point-wise, using the chain rule with the derivative of the activation function (Figure 5).</li>
+    <li><strong>Filter weight gradients ($dK$).</strong> Computed by convolving the input activation maps from the previous layer with the affine derivative maps of the current layer (Figure 6).</li>
+    <li><strong>Gradients with respect to the previous layer ($dA^{[l-1]}$).</strong> Computed by convolving the affine derivative maps with the flipped weights of the filters (Figure 7).</li>
+</ul>
+
+<div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
+    <figure style="display: inline-block; max-width: 100%; margin: 0;">
+        <img src="BackpropActivationGradient.svg" alt="Activation to affine gradient: dZ = dA times f prime of Z" style="width: 100%; max-width: 900px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
+            <strong>Figure 5: From Activation Gradient to Affine Gradient (Step 1 of the protocol).</strong>
+            <ol style="margin-top: 8px; padding-left: 20px;">
+                    <li><strong>$Z$ (blue, left).</strong> The affine (convolution) output stored during the forward pass; backprop needs it again now. ReLU's derivative is $f'(Z) = 1$ where $Z &gt; 0$ and $0$ elsewhere, which gives the green gate (gray = closed).</li>
+                    <li><strong>$dA$ (red).</strong> The error arriving from the layer above, one value per position.</li>
+                    <li><strong>$dZ = dA \odot f'(Z)$ (right).</strong> Multiplying element by element is the chain rule through the activation. Position $(0,1)$ had $Z = -1$, so its gradient is blocked: $dZ = 0$, however large $dA$ was there.</li>
+                    <li><strong>Point-wise.</strong> No window slides and the shape does not change (here 2&times;2 stays 2&times;2); each position is handled on its own.</li>
+            </ol>
+        </figcaption>
+    </figure>
+</div>
+
+<div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
+    <figure style="display: inline-block; max-width: 100%; margin: 0;">
+        <img src="BackpropWeightGradient.svg" alt="Filter weight gradient dK from correlating the input with dZ" style="width: 100%; max-width: 900px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
+            <strong>Figure 6: The Filter Weight Gradient $dK$ (Step 2 of the protocol).</strong>
+            <ol style="margin-top: 8px; padding-left: 20px;">
+                    <li><strong>Left: the input $A^{[l-1]}$</strong> (4&times;4). The orange window is the 2&times;2 patch at offset $(0,0)$.</li>
+                    <li><strong>Middle: $dZ$ acts as the sliding filter.</strong> It is laid over the input at every offset $(m,n)$ and multiplied element by element with the patch under it.</li>
+                    <li><strong>Right: $dK$.</strong> The highlighted entry is $dK[0,0] = 0\cdot2 + 3\cdot0 + 3\cdot1 + 0\cdot3 = 3$. With a 2&times;2 $dZ$ and a 4&times;4 input there are 3&times;3 offsets, so $dK$ comes out 3&times;3, exactly the shape of the filter $K$.</li>
+                    <li><strong>Why this is right.</strong> Weight $K[m,n]$ multiplied pixel $A[i+m, j+n]$ at every position $(i,j)$, so its share of the blame is the sum of (pixel &times; error at that position). It is a cross-correlation with no flip: <code>correlate2d(A_prev, dZ, mode='valid')</code>.</li>
+            </ol>
+        </figcaption>
+    </figure>
+</div>
+
+<div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
+    <figure style="display: inline-block; max-width: 100%; margin: 0;">
+        <img src="BackpropInputGradient.svg" alt="Gradient to the previous layer from full convolution with the flipped filter" style="width: 100%; max-width: 960px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 960px; margin-left: auto; margin-right: auto;">
+            <strong>Figure 7: The Gradient Passed to the Previous Layer $dA^{[l-1]}$ (Step 3 of the protocol).</strong>
+            <ol style="margin-top: 8px; padding-left: 20px;">
+                    <li><strong>Flip the filter.</strong> $K$ (far left) is rotated by 180&deg; to give $\text{rot180}(K)$, the form needed to run the forward convolution backwards.</li>
+                    <li><strong>Pad $dZ$ with zeros ('full' padding).</strong> The 2&times;2 error map sits in the middle of a 6&times;6 grid, so the flipped filter can overlap every position the original filter ever touched.</li>
+                    <li><strong>Slide and sum.</strong> The orange window shows the highlighted output: $dA[1,1] = 2\cdot0 + 1\cdot2 + 3\cdot1 = 5$. The result is 4&times;4, the same shape as the input $A^{[l-1]}$.</li>
+                    <li><strong>Same thing, seen the other way.</strong> Every $dZ[i,j]$ sends $dZ[i,j]\cdot K$ back onto the 3&times;3 input patch that produced it; where patches overlap, the contributions add. With several filters, sum over all filters $k$.</li>
+            </ol>
+        </figcaption>
+    </figure>
+</div>
+
+<h4>Backpropagation Through Pooling Layers</h4>
+<p>A pooling layer has no weights, so its backward pass only decides <em>where each incoming gradient goes</em>:</p>
+<ul>
+    <li><strong>Max pooling.</strong> Gradients flow exclusively back to the specific locations that produced the maximum value during the forward pass. When windows overlap, a location that won several windows accumulates their gradients by summation (<code>+=</code>).</li>
+    <li><strong>Mean pooling.</strong> The incoming gradient is distributed evenly across all elements within the pooling window.</li>
+</ul>
+
+<div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
+    <figure style="display: inline-block; max-width: 100%; margin: 0;">
+        <img src="BackpropPooling.svg" alt="Backpropagation through max pooling and mean pooling" style="width: 100%; max-width: 900px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
+            <strong>Figure 8: Backpropagation Through Pooling, Max (top) and Mean (bottom).</strong>
+            <ol style="margin-top: 8px; padding-left: 20px;">
+                    <li><strong>Setup.</strong> A 3&times;3 input and 2&times;2 windows with stride 1, so there are four overlapping windows (top-left, top-right, bottom-left, bottom-right). The upstream gradients are $g = [[2,1],[3,4]]$, coloured by window. Overlap is used here on purpose, to show the accumulation; with the common stride 2 the windows do not overlap and nothing accumulates.</li>
+                    <li><strong>Max pooling (top).</strong> The forward pass remembered which cell won each window (red boxes). The centre $9$ won the top-left, top-right and bottom-left windows, so it receives $2+1+3=6$ (accumulated with <code>+=</code>); the corner $12$ won the bottom-right window and receives $4$. Every other position gets $0$.</li>
+                    <li><strong>Mean pooling (bottom).</strong> No winner is needed: each window shares its $g$ equally over its four cells ($g/4$), and a cell covered by several windows adds up their shares. The centre, covered by all four windows, receives $(2+1+3+4)/4 = 2.5$.</li>
+                    <li><strong>Check.</strong> Both rows pass on exactly the total gradient they received ($6+4 = 10$ for max; the nine values sum to $10$ for mean). Pooling has no weights, so these gradients are only <em>routed</em>; nothing is updated in the layer itself.</li>
+            </ol>
+        </figcaption>
+    </figure>
+</div>
+
+<p>The next card writes these steps as one general protocol, with the indices, the several-channel sums and the Adam update.</p>
+
+
 <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; font-family: 'Inter', system-ui, -apple-system, sans-serif; max-width: 850px; margin: 20px auto; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
 
     <h2 style="margin-top: 0; color: #1e293b; border-bottom: 2px solid #3b82f6; padding-bottom: 12px; font-size: 1.5rem;">CNN Global Execution Protocol</h2>
@@ -595,7 +673,7 @@
     <figure style="display: inline-block; max-width: 100%; margin: 0;">
         <img src="OneByOneConv.svg" alt="1x1 Convolution Illustration" style="width: 100%; max-width: 900px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
         <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
-            <strong>Figure 5: 1&times;1 Convolution &mdash; Channel-Only Mixing.</strong> Follow the diagram left to right:
+            <strong>Figure 9: 1&times;1 Convolution &mdash; Channel-Only Mixing.</strong> Follow the diagram left to right:
             <ol style="margin-top: 8px; padding-left: 20px;">
                 <li><strong>Input (far left).</strong> A single spatial location $(i,j)$, with its 4-deep channel column (C1=2, C2=5, C3=1, C4=3) &mdash; the same "depth column" idea as Figure 1, just without any neighboring pixels involved.</li>
                 <li><strong>The two filters.</strong> Filter 1 (orange) and Filter 2 (teal) are each $1\times1\times4$ &mdash; one weight per input channel, no spatial extent at all. Each is a plain dot product against the same 4 values, plus a bias: Filter 1 gives $0.5(2) - 0.2(5) + 1.0(1) + 0.3(3) = 1.9$; Filter 2 gives $0.1(2)+0.4(5)-0.5(1)+0.2(3)+0.1 = 2.4$.</li>
@@ -617,10 +695,10 @@
     <figure style="display: inline-block; max-width: 100%; margin: 0;">
         <img src="ResNetBlock.svg" alt="ResNet Residual Block Illustration" style="width: 100%; max-width: 900px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
         <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
-            <strong>Figure 6: The Residual Block, Basic vs. Bottleneck.</strong>
+            <strong>Figure 10: The Residual Block, Basic vs. Bottleneck.</strong>
             <ol style="margin-top: 8px; padding-left: 20px;">
                 <li><strong>Left panel &mdash; basic block.</strong> Input $x$ flows down through two $3\times3$ convolutions to produce $F(x)$, <em>and</em> flows unchanged (teal identity shortcut) straight to the "+" node, where it's added to $F(x)$ before a final ReLU. The block is only asked to learn a <em>correction</em> $F(x)$, not the entire mapping from scratch.</li>
-                <li><strong>Right panel &mdash; bottleneck block.</strong> The same identity-plus-correction pattern, but $F(x)$ is now three convolutions: $1\times1$ reduces the channel depth cheaply (the trick from Figure 5), $3\times3$ does the real spatial work on that smaller channel count, and a second $1\times1$ expands back &mdash; far fewer parameters than three full-width $3\times3$ convolutions, which is what makes 50&ndash;150+ layer ResNets practical, including the clinically-sized ResNet-50/101 backbones in Figure 7 below.</li>
+                <li><strong>Right panel &mdash; bottleneck block.</strong> The same identity-plus-correction pattern, but $F(x)$ is now three convolutions: $1\times1$ reduces the channel depth cheaply (the trick from Figure 9), $3\times3$ does the real spatial work on that smaller channel count, and a second $1\times1$ expands back &mdash; far fewer parameters than three full-width $3\times3$ convolutions, which is what makes 50&ndash;150+ layer ResNets practical, including the clinically-sized ResNet-50/101 backbones in Figure 11 below.</li>
                 <li><strong>The gradient callout (bottom).</strong> Differentiating $H(x)=F(x)+x$ with respect to $x$ produces a "+1" term that survives no matter how small $\partial F/\partial x$ becomes during training. That's the direct gradient highway the identity shortcut buys you &mdash; it's the mechanism, not just the addition itself, that fixes the training-degradation problem plain CNNs hit at depth.</li>
             </ol>
         </figcaption>
@@ -632,9 +710,9 @@
     <h5 style="margin-top: 0; color: #166534; font-size: 1.05rem;">ResNet in Medical Image Processing</h5>
     <p style="margin-bottom: 10px; color: #14532d;">ResNet is one of the most widely deployed architectures in clinical and biomedical imaging, in a few distinct roles:</p>
     <ul style="color: #14532d; margin-bottom: 10px;">
-        <li><strong>Direct disease classification.</strong> A ResNet-50/101 fine-tuned to output disease probabilities straight from a 2D scan: diabetic retinopathy grading from retinal fundus photos, pneumonia/COVID-19 detection from chest X-rays and CT slices, skin lesion classification (melanoma vs. benign) from dermoscopy images, and cancer subtype classification from digitized histopathology slides. Figure 7 below walks through exactly this kind of pipeline.</li>
+        <li><strong>Direct disease classification.</strong> A ResNet-50/101 fine-tuned to output disease probabilities straight from a 2D scan: diabetic retinopathy grading from retinal fundus photos, pneumonia/COVID-19 detection from chest X-rays and CT slices, skin lesion classification (melanoma vs. benign) from dermoscopy images, and cancer subtype classification from digitized histopathology slides. Figure 11 below walks through exactly this kind of pipeline.</li>
         <li><strong>Backbone for detection and segmentation.</strong> ResNet is rarely the entire model in medical imaging &mdash; more often it's the feature-extracting encoder inside a larger pipeline: a Faster R-CNN or Mask R-CNN with a ResNet backbone for localizing tumors or lesions, or a ResNet encoder swapped into a U-Net (the architecture discussed next), a combination often called a "ResUNet," for segmentation with a deeper, more expressive encoder than U-Net's own.</li>
-        <li><strong>Overcoming small, expensive datasets via <a href="#transfer-learning">transfer learning</a>.</strong> Labeled medical scans are scarce and costly to annotate compared to natural-image datasets like ImageNet. A ResNet pretrained on millions of natural images can be fine-tuned on a few thousand labeled scans without overfitting &mdash; and the bottleneck block's parameter efficiency (Figure 6) is precisely what makes that fine-tuning tractable, since there are far fewer weights left to re-learn from limited clinical data.</li>
+        <li><strong>Overcoming small, expensive datasets via <a href="#transfer-learning">transfer learning</a>.</strong> Labeled medical scans are scarce and costly to annotate compared to natural-image datasets like ImageNet. A ResNet pretrained on millions of natural images can be fine-tuned on a few thousand labeled scans without overfitting &mdash; and the bottleneck block's parameter efficiency (Figure 10) is precisely what makes that fine-tuning tractable, since there are far fewer weights left to re-learn from limited clinical data.</li>
         <li><strong>3D ResNets for volumetric scans.</strong> CT and MRI are volumes (stacks of slices), not single 2D images. Replacing every 2D convolution here with a 3D convolution (a $3\times3\times3$ kernel sliding through the volume) gives a 3D ResNet, used for whole-organ classification, brain age estimation, and dementia/Alzheimer's staging directly from MRI volumes.</li>
     </ul>
 </div>
@@ -643,19 +721,21 @@
     <figure style="display: inline-block; max-width: 100%; margin: 0;">
         <img src="ResNetMedicalImaging.svg" alt="ResNet-50 Applied to Chest X-Ray Diagnosis" style="width: 100%; max-width: 1000px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
         <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 1000px; margin-left: auto; margin-right: auto;">
-            <strong>Figure 7: ResNet-50 Applied to Chest X-Ray Diagnosis.</strong>
+            <strong>Figure 11: ResNet-50 Applied to Chest X-Ray Diagnosis.</strong>
             <ol style="margin-top: 8px; padding-left: 20px;">
-                <li><strong>Stages 1&ndash;4.</strong> Each labeled stage is a repeated run of the bottleneck block from Figure 6 (&times;3, &times;4, &times;6, &times;3 blocks respectively, the standard ResNet-50 recipe) &mdash; spatial resolution keeps halving (56&sup2;&rarr;28&sup2;&rarr;14&sup2;&rarr;7&sup2;) while channel depth keeps growing (256&rarr;512&rarr;1024&rarr;2048), exactly the pattern from the parameter-count and pooling sections above.</li>
+                <li><strong>Stages 1&ndash;4.</strong> Each labeled stage is a repeated run of the bottleneck block from Figure 10 (&times;3, &times;4, &times;6, &times;3 blocks respectively, the standard ResNet-50 recipe) &mdash; spatial resolution keeps halving (56&sup2;&rarr;28&sup2;&rarr;14&sup2;&rarr;7&sup2;) while channel depth keeps growing (256&rarr;512&rarr;1024&rarr;2048), exactly the pattern from the parameter-count and pooling sections above.</li>
                 <li><strong>Global Average Pool &rarr; FC &rarr; Softmax.</strong> The final 7&times;7&times;2048 feature volume is averaged down to a single 2048-length vector per channel, then a small fully-connected layer maps that to 3 class scores, and softmax turns those into the probability distribution from the CNN's own final-output section above.</li>
-                <li><strong>Why this is realistic, not just illustrative (bottom box).</strong> This exact ResNet-50 is almost never trained from scratch on medical data &mdash; it's pretrained on ImageNet, then fine-tuned on a much smaller labeled X-ray dataset, which is only tractable because the bottleneck design (Figure 6) leaves so few parameters that actually need re-learning.</li>
+                <li><strong>Why this is realistic, not just illustrative (bottom box).</strong> This exact ResNet-50 is almost never trained from scratch on medical data &mdash; it's pretrained on ImageNet, then fine-tuned on a much smaller labeled X-ray dataset, which is only tractable because the bottleneck design (Figure 10) leaves so few parameters that actually need re-learning.</li>
             </ol>
         </figcaption>
         <p style="text-align: center; margin-top: 10px;"><a href="ResNetMedicalImaging.svg" target="_blank" rel="noopener" style="font-size: 0.85rem; color: #0056b3;">Open full-size SVG &#8599;</a></p>
     </figure>
 </div>
 <h4 id="transfer-learning">Transfer Learning in CNNs: Reusing a Pretrained Network</h4>
-<p>Training a CNN from scratch needs a very large set of labeled images. <strong>Transfer learning</strong> avoids this: start from a CNN already trained on a large source dataset such as ImageNet (over a million natural images in 1000 classes), and adapt it to the new task. This is why a strong image classifier can be built from a few hundred to a few thousand labeled images instead of millions, and it is how the ResNet-50 in Figure 7 is used in practice.</p>
-<p><strong>Why it works.</strong> The feature hierarchy described earlier on this page is learned in stages. Early layers detect edges, colors and simple textures that are useful for almost any image task. Later layers combine them into shapes and objects that are specific to the source task. Yosinski et al. (2014) measured exactly this: the early layers transfer well between tasks, and transferability drops as the layers become more task-specific. So we keep the general early layers and re-learn mainly the later ones.</p>
+<p>Training a CNN from scratch needs a very large set of labeled images. <strong>Transfer learning</strong> avoids this: start from a CNN already trained on a large source dataset such as ImageNet (over a million natural images in 1000 classes), and adapt it to the new task. This is why a strong image classifier can be built from a few hundred to a few thousand labeled images instead of millions, and it is how the ResNet-50 in Figure 11 is used in practice.</p>
+<p><strong>Why it works.</strong> The feature hierarchy described earlier on this page is learned in stages. Early layers detect edges, colors and simple textures that are useful for almost any image task. Later layers combine them into shapes and objects that are specific to the source task. Yosinski et al. (2014) measured this layer by layer: the early layers transfer well between tasks, and transferability drops as the layers become more task-specific. So we keep the general early layers and re-learn mainly the later ones.</p>
+<p><strong>What can go wrong.</strong> Medical images such as X-rays look very different from ImageNet photos, so a few details need care. The batch-norm layers store running means and variances computed on ImageNet, so freezing them makes the network normalize X-ray activations with the wrong statistics. The input must also be preprocessed consistently (channel count and normalization) with how the backbone was pretrained. If the source and target are too different, the pretrained features can even hurt, which is called negative transfer; with ImageNet backbones this is uncommon, but it is worth comparing against training from scratch.</p>
+<p><strong>Frozen layers act exactly like advanced, built-in Sobel filters with permanently locked mathematical coefficients.</strong></p>
 
 <h5 style="margin-bottom: 6px;">Two Strategies</h5>
 <table style="width:100%; border-collapse: collapse; margin: 14px 0;">
@@ -858,13 +938,13 @@ opt = torch.optim.AdamW([
     <figure style="display: inline-block; max-width: 100%; margin: 0;">
         <img src="UNetArchitecture.svg" alt="U-Net Encoder-Decoder Architecture" style="width: 100%; max-width: 980px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
         <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 980px; margin-left: auto; margin-right: auto;">
-            <strong>Figure 8: U-Net's Encoder-Decoder Shape.</strong>
+            <strong>Figure 12: U-Net's Encoder-Decoder Shape.</strong>
             <ol style="margin-top: 8px; padding-left: 20px;">
                 <li><strong>Encoder (blue, left, descending).</strong> Each step is a pool that halves spatial size while doubling channel depth &mdash; 64&rarr;128&rarr;256&rarr;512 &mdash; the same downsampling arithmetic from the padding/striding section, applied repeatedly.</li>
                 <li><strong>Bottleneck (purple, bottom-center).</strong> The most spatially compressed, channel-richest point in the network: 1024 channels at the smallest spatial resolution.</li>
                 <li><strong>Decoder (pink, right, ascending).</strong> Each step is a transposed convolution ("up-conv") that halves channel depth while doubling spatial size back up &mdash; the exact mirror image of the encoder.</li>
                 <li><strong>Skip connections (dashed teal).</strong> At each level, the encoder's feature map is <em>concatenated</em> onto the decoder's upsampled map at that same resolution, before the next convolution runs. This is what hands back the fine spatial detail pooling discarded &mdash; the decoder alone, working only from the bottleneck, could not reconstruct it from nothing.</li>
-                <li><strong>Concatenate vs. add.</strong> Note the contrast with Figure 6: ResNet's skip connection <em>adds</em> two same-shaped tensors elementwise; U-Net's skip connection <em>concatenates</em> two tensors along the channel axis, so the following convolution sees both the new decoder features and the original encoder features side by side.</li>
+                <li><strong>Concatenate vs. add.</strong> Note the contrast with Figure 10: ResNet's skip connection <em>adds</em> two same-shaped tensors elementwise; U-Net's skip connection <em>concatenates</em> two tensors along the channel axis, so the following convolution sees both the new decoder features and the original encoder features side by side.</li>
             </ol>
         </figcaption>
         <p style="text-align: center; margin-top: 10px;"><a href="UNetArchitecture.svg" target="_blank" rel="noopener" style="font-size: 0.85rem; color: #0056b3;">Open full-size SVG &#8599;</a></p>
@@ -920,6 +1000,12 @@ opt = torch.optim.AdamW([
         </tr>
     </tbody>
 </table>
+<div style="background: #fffbeb; border-left: 5px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;">
+    <h5 style="margin-top: 0; color: #92400e; font-size: 1.05rem;">A Warning for Medical Imaging: Covariate Shift</h5>
+    <p style="margin-bottom: 10px; color: #78350f;">A CNN trained on scans from one hospital may perform worse at another. A different scanner, brightness setting, or image-capture protocol changes how the images <em>look</em>, even though the disease looks the same. This is called <strong>covariate shift</strong>: the inputs change, but the correct answer for a given image does not.</p>
+    <p style="margin-bottom: 0; color: #78350f;">The simplest defence is data augmentation (random brightness, contrast, and noise changes during training), plus testing on images from a hospital the model never saw. See the <a href="MachineLearningPipeline.html#covariate-shift">Covariate Shift section of the ML Pipeline page</a> for a simple explanation.</p>
+</div>
+
 <section id="cnn-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
             <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Convolutional Neural Networks (CNN) Quiz</h2>
 
