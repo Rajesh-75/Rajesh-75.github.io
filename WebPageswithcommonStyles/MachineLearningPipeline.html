@@ -18,7 +18,8 @@
     <style>
         .section-divider { margin: 32px 0; border: none; border-top: 1px solid #ddd; }
         .mt-20 { margin-top: 20px; }
-        .pipeline-image { max-width: 100%; height: auto; }
+        .pipeline-image { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+        .image-title { text-align: center; }
         .flowchart-wrap { max-width: 900px; margin: 16px auto; }
         .flowchart-wrap svg { width: 100%; height: auto; display: block; }
         .flow-box { fill: #eef4fb; stroke: #2c6fbb; stroke-width: 1.5; }
@@ -50,6 +51,7 @@
     <script type="text/javascript" async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
+<style>a.xlink{color:inherit;text-decoration:underline dotted;text-underline-offset:3px;}a.xlink:hover{color:#0056b3;text-decoration:underline;}</style>
 </head>
 <body>
 <div class="index-link index-link-top" style="text-align:center; margin:14px 0; font-size:0.95rem;"><a href="../index.html#pipeline">Go to Main Page (Index Page)</a></div>
@@ -63,11 +65,11 @@
     <p class="detail-description">Both Machine Learning and Deep Learning follow a pipeline structure to create and deploy AI-based systems. The pipeline commonly has the following form:</p>
 
     <img src="image_fdb59d.png" alt="Machine Learning Pipeline" class="pipeline-image" loading="lazy" decoding="async">
-    <p class="image-title">ML Pipeline Flow</p>
-    <p class="detail-description" style="font-size:0.9em; color:#555;"><em>Note: the diagram above labels this stage "Model Selection" and includes a separate "Hyperparameter Tuning" step feeding into it. Hyperparameter tuning is now covered under "Model Training" below; model selection (choosing among candidate algorithms) is related but still a distinct topic not yet covered in detail here.</em></p>
+    <p class="image-title">Figure 1: ML Pipeline Flow</p>
+    <p class="detail-description" style="font-size:0.9em; color:#555;"><em>Note: Figure 1 labels this stage "Model Selection" and shows "Hyperparameter Tuning" feeding into it. In this tutorial the stage is called "Model Training", and hyperparameter tuning is covered within it. Model selection (choosing among candidate algorithms) is closely related, but it is a separate topic that is not covered in detail here.</em></p>
 
     <img src="NNbasedPipelineforImageRecongition.png" alt="Neural Network based Pipeline" class="pipeline-image" loading="lazy" decoding="async">
-    <p class="image-title">An example pipeline based on Neural Network for Image Recognition</p>
+    <p class="image-title">Figure 2: An example pipeline based on <a href="NN_version1.html" class="xlink">Neural Network</a> for Image Recognition</p>
 
     <h2>The ML Pipeline</h2>
     <ul>
@@ -135,6 +137,7 @@
             <path class="flow-arrow" d="M830,80 L858,80"/>
         </svg>
     </div>
+<p class="image-title">Figure 3: ML pipeline flowchart (a text-searchable version of Figure 1): Data Collection, Pre-processing, Feature Extraction, Model Selection (fed by Hyperparameter Tuning), Testing and Deployment</p>
 
     <h2>Data Ingestion</h2>
     <p class="detail-description">
@@ -146,9 +149,8 @@
     </p>
 
     <img src="DataStorage.png" alt="Data Engineering Sub-pipeline" class="pipeline-image" loading="lazy" decoding="async">
-    <p class="image-title">Data Ingestion Sub-Pipeline (Acquisition and Storage Stages)</p>
-    <p class="detail-description" style="font-size:0.9em; color:#555;"><em>Note: this diagram matches the text well. Minor fix needed at the image source: "WARIEHOUSE" should read "WAREHOUSE".</em></p>
-
+    <p class="image-title">Figure 4: Data Ingestion Sub-Pipeline (Acquisition and Storage Stages)</p>
+    
     <hr class="section-divider">
 
     <h2>The Data Engineering Sub-Pipeline for ML/DL</h2>
@@ -209,8 +211,8 @@
     <p class="detail-description">Data pre-processing is the critical stage that cleans, transforms, and prepares the raw data. It consists of Data cleaning, Data Transformation, and Data Reduction. These steps are iterative and dependent on the learning application.</p>
 
     <img src="DataPreProcessing.jpg" alt="Data Pre-Processing" class="pipeline-image" loading="lazy" decoding="async">
-    <p class="image-title">Data Pre-Processing Cycle (Extract, Merge, Remove Inconsistent, Rebuild Missing, Normalize, Verify)</p>
-    <p class="detail-description" style="font-size:0.9em; color:#555;"><em>Note: the diagram above frames pre-processing as a 6-step operational cycle, which emphasizes different steps (e.g. Extract/Merge Data) than the four categories below and doesn't show Data Reduction or Imbalanced Data handling. The two views are complementary — the cycle above is closer to a step-by-step workflow, while the categories below group those same kinds of tasks conceptually. Roughly: Remove Inconsistent Data + Rebuild Missing Data → Data Cleaning; Normalize Data → Data Transformation.</em></p>
+    <p class="image-title">Figure 5: Data Pre-Processing Cycle (Extract, Merge, Remove Inconsistent, Rebuild Missing, Normalize, Verify)</p>
+    <p class="detail-description" style="font-size:0.9em; color:#555;"><em>Note: Figure 5 frames pre-processing as a 6-step operational cycle, which emphasizes different steps (e.g. Extract/Merge Data) than the four categories in Figure 6 and does not show Data Reduction or Imbalanced Data handling. The two views are complementary — the cycle in Figure 5 is closer to a step-by-step workflow, while the categories in Figure 6 group those same kinds of tasks conceptually. Roughly: Remove Inconsistent Data + Rebuild Missing Data → Data Cleaning; Normalize Data → Data Transformation.</em></p>
 
     <div class="flowchart-wrap" role="img" aria-label="Diagram of the four Data Pre-processing categories described in the text: Data Cleaning, Data Transformation, Data Reduction, Handling Imbalanced Data">
         <svg viewBox="0 0 980 130" xmlns="http://www.w3.org/2000/svg">
@@ -242,6 +244,7 @@
             <path stroke="#555" stroke-width="2" fill="none" marker-end="url(#arrowhead2)" d="M730,60 L758,60"/>
         </svg>
     </div>
+<p class="image-title">Figure 6: The four categories of data pre-processing: Data Cleaning, Data Transformation, Data Reduction and Handling Imbalanced Data</p>
 
     <h3>1. Data Cleaning 🧹</h3>
     <p class="detail-description">Focuses on fixing errors and inconsistencies.</p>
@@ -288,13 +291,13 @@
 
     <h3>The Primacy of Features in Classical ML</h3>
     <ul>
-        <li><strong>Necessity of Manual FE:</strong> In the era of traditional algorithms (SVM, Decision Trees, Naive Bayes), model quality depended entirely on human-engineered features. Because these models are often "shallow," data scientists had to manually construct predictive signals to ensure success.</li>
+        <li><strong>Necessity of Manual FE:</strong> In the era of traditional algorithms (SVM, Decision Trees, <a href="NaiveBayessian.html" class="xlink">Naive Bayes</a>), model quality depended entirely on human-engineered features. Because these models are often "shallow," data scientists had to manually construct predictive signals to ensure success.</li>
     </ul>
     <p class="detail-description">
         This manual extraction looked different depending on the field, since each type of data needed its own hand-designed descriptors:
     </p>
     <ul>
-        <li><strong>Image Processing:</strong> Before CNNs, images were converted into feature vectors using techniques like <strong><a href="https://en.wikipedia.org/wiki/Scale-invariant_feature_transform" target="_blank" rel="noopener noreferrer">SIFT</a></strong> (Scale-Invariant Feature Transform) and <strong><a href="https://en.wikipedia.org/wiki/Histogram_of_oriented_gradients" target="_blank" rel="noopener noreferrer">HOG</a></strong> (Histogram of Oriented Gradients) to capture edges and shapes, <strong>color histograms</strong> to summarize color distribution, and hand-crafted <strong>edge/corner detectors</strong> (e.g., Canny, Harris) to locate structurally important points.</li>
+        <li><strong>Image Processing:</strong> Before <a href="CNN.html" class="xlink">CNNs</a>, images were converted into feature vectors using techniques like <strong><a href="https://en.wikipedia.org/wiki/Scale-invariant_feature_transform" target="_blank" rel="noopener noreferrer">SIFT</a></strong> (Scale-Invariant Feature Transform) and <strong><a href="https://en.wikipedia.org/wiki/Histogram_of_oriented_gradients" target="_blank" rel="noopener noreferrer">HOG</a></strong> (Histogram of Oriented Gradients) to capture edges and shapes, <strong>color histograms</strong> to summarize color distribution, and hand-crafted <strong>edge/corner detectors</strong> (e.g., Canny, Harris) to locate structurally important points.</li>
         <li><strong>Natural Language Processing:</strong> Text was converted into numerical features using <strong><a href="https://en.wikipedia.org/wiki/Bag-of-words_model" target="_blank" rel="noopener noreferrer">Bag-of-Words</a></strong> and <strong><a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf" target="_blank" rel="noopener noreferrer">TF-IDF</a></strong> (term frequency weighting), <strong><a href="https://en.wikipedia.org/wiki/N-gram" target="_blank" rel="noopener noreferrer">n-grams</a></strong> (capturing short word sequences), and hand-built lexicons for sentiment or part-of-speech tagging.</li>
         <li><strong>Audio & Speech:</strong> Raw waveforms were reduced to features like <strong>MFCCs</strong> (Mel-Frequency Cepstral Coefficients) and spectral energy bands, which better represent how humans perceive sound than the raw signal does.</li>
         <li><strong>Time-Series & Sensor Data:</strong> Signals were summarized with statistical descriptors such as rolling means, variance, peak counts, and frequency-domain features (via Fourier or wavelet transforms).</li>
@@ -358,7 +361,7 @@
         Before looking at how a model is trained, it helps to classify <em>what kind</em> of learning problem it is solving, based on how much labeled data is available:
     </p>
     <ul>
-        <li><strong>Supervised Learning:</strong> The model learns from labeled examples—input-output pairs where the correct answer is known (e.g., an email marked "spam" or "not spam"). Most classical algorithms in this tutorial <a href="svm.html">SVM</a>,<a href="Decision_Tree.html">Decision Trees</a> ,<a href="NaiveBayes.html">Naive Bayes</a> ) and most classification/regression tasks fall here.</li>
+        <li><strong>Supervised Learning:</strong> The model learns from labeled examples—input-output pairs where the correct answer is known (e.g., an email marked "spam" or "not spam"). Most classical algorithms in this tutorial <a href="svm.html">SVM</a>,<a href="decision-trees.html">Decision Trees</a> ,<a href="NaiveBayes.html">Naive Bayes</a> ) and most classification/regression tasks fall here.</li>
         <li><strong>Unsupervised Learning:</strong> The model works with unlabeled data and must find structure on its own, such as grouping similar customers together (clustering, e.g., K-Means) or reducing dimensionality (e.g., PCA).</li>
         <li><strong>Semi-Supervised Learning:</strong> A middle ground where a small amount of labeled data is combined with a much larger pool of unlabeled data—useful when labeling is expensive or slow, but unlabeled examples are cheap to collect. The model uses the unlabeled data to learn the general structure of the input space, and the labeled data to anchor that structure to the correct outputs.</li>
     </ul>
@@ -391,7 +394,7 @@
         Optimization is the "Learning Engine." It uses the score from the Cost Function to iteratively adjust the model's internal parameters (weights and biases).
     </p>
     <ul>
-        <li><strong>Gradient Descent:</strong> Most modern models, especially DL and LLMs, use some form of Gradient Descent to "step" toward the minimum error.</li>
+        <li><strong><a href="BP2.html" class="xlink">Gradient Descent</a>:</strong> Most modern models, especially DL and LLMs, use some form of Gradient Descent to "step" toward the minimum error.</li>
         <li><strong>Greedy Search:</strong> Algorithms like <strong>K-Means</strong> or <strong>Decision Trees</strong> use specific logic to group data or split nodes to optimize their internal structure.</li>
     </ul>
 
@@ -402,8 +405,72 @@
     </p>
 
     <p class="detail-description">
-        This cycle continues until the model achieves <strong>Generalization</strong>—the ability to apply its learned patterns to new, unseen data accurately. Whether you are clustering data with K-Means or generating text with a Transformer, this three-part harmony is what transforms raw data into intelligence.
+        This cycle continues until the model achieves <strong>Generalization</strong>—the ability to apply its learned patterns to new, unseen data accurately. Whether you are clustering data with K-Means or generating text with a <a href="Transformer.html" class="xlink">Transformer</a>, this three-part harmony is what transforms raw data into intelligence.
     </p>
+
+    <p class="detail-description">
+        The figure below shows how the three data splits are used around this loop, and which error each one produces.
+    </p>
+
+    <div class="flowchart-wrap" role="img" aria-label="Flowchart: train on the training set, validate and tune on the validation set, retrain with the best setting, then test once on the test set. Training, validation and test errors are produced at the first, second and fourth stages. The setting with the lowest validation error is passed to retraining, and a high test error triggers diagnosis and a return to data, features or the model.">
+        <svg viewBox="0 0 980 400" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#555"/>
+                </marker>
+            </defs>
+            <text class="flow-text" x="220" y="30" style="font-size:12px;">Adjust and repeat</text>
+            <path class="flow-arrow" d="M340,70 L340,42 L100,42 L100,68"/>
+            <rect class="flow-box" x="10" y="70" width="180" height="64" rx="8"/>
+            <text class="flow-num" x="100" y="88">1</text>
+            <text class="flow-text" x="100" y="107">Train</text>
+            <text class="flow-text" x="100" y="124" style="font-size:12px;">Training set</text>
+            <rect class="flow-box" x="250" y="70" width="180" height="64" rx="8"/>
+            <text class="flow-num" x="340" y="88">2</text>
+            <text class="flow-text" x="340" y="107">Validate</text>
+            <text class="flow-text" x="340" y="124" style="font-size:12px;">Validation set</text>
+            <rect class="flow-box" x="490" y="70" width="180" height="64" rx="8"/>
+            <text class="flow-num" x="580" y="88">3</text>
+            <text class="flow-text" x="580" y="107">Retrain</text>
+            <text class="flow-text" x="580" y="124" style="font-size:12px;">Best setting</text>
+            <rect class="flow-box" x="730" y="70" width="180" height="64" rx="8"/>
+            <text class="flow-num" x="820" y="88">4</text>
+            <text class="flow-text" x="820" y="107">Test</text>
+            <text class="flow-text" x="820" y="124" style="font-size:12px;">Test set, used once</text>
+            <path class="flow-arrow" d="M190,102 L248,102"/>
+            <path class="flow-arrow" d="M430,102 L488,102"/>
+            <path class="flow-arrow" d="M670,102 L728,102"/>
+            <path class="flow-arrow" d="M100,134 L100,196"/>
+            <path class="flow-arrow" d="M340,134 L340,196"/>
+            <path class="flow-arrow" d="M820,134 L820,196"/>
+            <rect class="flow-box" x="10" y="198" width="180" height="56" rx="8" style="fill:#eaf6ef; stroke:#2f8f5b;"/>
+            <text class="flow-text" x="100" y="221" style="fill:#1d5c3a;">Training error</text>
+            <text class="flow-text" x="100" y="240" style="fill:#1d5c3a; font-size:12px;">Optimistic estimate</text>
+            <rect class="flow-box" x="250" y="198" width="180" height="56" rx="8" style="fill:#eaf6ef; stroke:#2f8f5b;"/>
+            <text class="flow-text" x="340" y="221" style="fill:#1d5c3a;">Validation error</text>
+            <text class="flow-text" x="340" y="240" style="fill:#1d5c3a; font-size:12px;">Guides tuning</text>
+            <rect class="flow-box" x="730" y="198" width="180" height="56" rx="8" style="fill:#eaf6ef; stroke:#2f8f5b;"/>
+            <text class="flow-text" x="820" y="221" style="fill:#1d5c3a;">Test error</text>
+            <text class="flow-text" x="820" y="240" style="fill:#1d5c3a; font-size:12px;">Estimate on new data</text>
+            <path class="flow-arrow" d="M430,226 L580,226 L580,138"/>
+            <text class="flow-text" x="440" y="248" style="font-size:12px; text-anchor:start;">Lowest validation error</text>
+            <path class="flow-arrow" d="M820,254 L820,296"/>
+            <rect class="flow-box" x="730" y="298" width="180" height="56" rx="8" style="fill:#fdf3e7; stroke:#c98a2c;"/>
+            <text class="flow-text" x="820" y="321" style="fill:#8a5a10;">If high: diagnose</text>
+            <text class="flow-text" x="820" y="340" style="fill:#8a5a10; font-size:12px;">Compare all three errors</text>
+            <path class="flow-arrow" style="stroke:#c98a2c;" d="M728,326 L672,326"/>
+            <rect class="flow-box" x="490" y="298" width="180" height="56" rx="8" style="fill:#fdf3e7; stroke:#c98a2c;"/>
+            <text class="flow-text" x="580" y="321" style="fill:#8a5a10;">Go back and fix</text>
+            <text class="flow-text" x="580" y="340" style="fill:#8a5a10; font-size:12px;">Data, features or model</text>
+            <rect x="10" y="374" width="14" height="14" rx="3" style="fill:#eef4fb; stroke:#2c6fbb; stroke-width:1.5;"/>
+            <text class="flow-text" x="32" y="385" style="font-size:12px; text-anchor:start;">Stage</text>
+            <rect x="100" y="374" width="14" height="14" rx="3" style="fill:#eaf6ef; stroke:#2f8f5b; stroke-width:1.5;"/>
+            <text class="flow-text" x="122" y="385" style="font-size:12px; text-anchor:start;">Error measured</text>
+            <rect x="240" y="374" width="14" height="14" rx="3" style="fill:#fdf3e7; stroke:#c98a2c; stroke-width:1.5;"/>
+            <text class="flow-text" x="262" y="385" style="font-size:12px; text-anchor:start;">Response to a high test error</text>
+        </svg>
+    </div>
+<p class="image-title">Figure 7: Train, validate, retrain and test, with the error produced at each stage. The setting with the lowest validation error, found by repeating the adjust-and-retrain loop, is carried into retraining. A high test error triggers diagnosis and a return to data, features or the model.</p>
 
     <h3>4. Underfitting and Overfitting</h3>
     <p class="detail-description">
@@ -447,11 +514,12 @@
             <text x="455" y="85" font-size="13" fill="#333">Test Error</text>
         </svg>
     </div>
+<p class="image-title">Figure 8: Training error and test error versus model complexity. Training error keeps falling, while test error forms a U-shape: underfitting on the left, the optimal zone in the middle and overfitting on the right</p>
 
     <p class="detail-description">Common signals and fixes for each:</p>
     <ul>
         <li><strong>Underfitting:</strong> Signaled by high error on <em>both</em> the training and test sets. Address it by using a more expressive model, adding or engineering more informative features, reducing regularization, or training for longer.</li>
-        <li><strong>Overfitting:</strong> Signaled by a large gap between low training error and high test error. Address it by adding regularization (L1/L2, dropout), gathering more training data, using early stopping, applying cross-validation, or simplifying the model.</li>
+        <li><strong>Overfitting:</strong> Signaled by a large gap between low training error and high test error. Address it by adding regularization (L1/L2, <a href="Dropout.html" class="xlink">dropout</a>), gathering more training data, using early stopping, applying cross-validation, or simplifying the model.</li>
     </ul>
 
     <h4 class="mt-20" id="regularization">Regularization: Balancing Underfitting and Overfitting</h4>
@@ -474,11 +542,26 @@
         Overfitting is a single underlying problem, but it gets caught at two different points in the workflow, using two different plots:
     </p>
     <ul>
-        <li><strong>While Training (Validation Curve):</strong> During training, the data is typically split into a training set and a <strong>validation set</strong>. <strong>Training loss</strong> is the error computed on the training set, and <strong>validation loss</strong> is the error computed on the validation set—two separate numbers from two separate datasets, tracked epoch by epoch. Training loss keeps falling as the model keeps fitting its own training data, but once the model starts memorizing noise, validation loss stops improving and begins to rise—the exact point where overfitting has begun. This lets you catch it live and stop training early (<strong>early stopping</strong>), before the model gets worse.</li>
+        <li><strong>While Training (Validation Curve):</strong> During training, the data is typically split into a training set and a <strong>validation set</strong>. <strong>Training loss</strong> is the error computed on the training set, and <strong>validation loss</strong> is the error computed on the validation set—two separate numbers from two separate datasets, tracked epoch by epoch. Training loss keeps falling as the model keeps fitting its own training data, but once the model starts fitting noise specific to the training set, validation loss typically stops improving and begins to rise—the usual sign that overfitting has begun. This lets you catch it live and stop training early (<strong>early stopping</strong>), before the model gets worse.</li>
     </ul>
 
     <p class="detail-description">
-        <strong>What "memorizing noise" actually means:</strong> every training set has two things mixed together—the real, general pattern you want the model to learn, and random quirks specific to those exact examples (a mislabeled row, an unusual outlier, a coincidence that only holds for the data you happened to collect). Early in training, the model learns the real pattern, which also happens to help on the validation set, since that pattern is genuinely shared across both. But if training continues too long, the model runs out of general pattern left to learn and starts using its remaining capacity to fit those leftover quirks too—essentially memorizing the specific answers for the specific training examples, the way a student might memorize the exact answer key to a practice test, typos and all, instead of understanding the topic. That memorized noise is, by definition, specific to the training data—so it doesn't just fail to help on the validation set, it actively pulls the model away from the general pattern, which is why validation loss starts rising even as training loss keeps falling.
+        <strong>What "memorizing noise" actually means:</strong> every training set has two things mixed together—the real, general pattern you want the model to learn, and random quirks specific to those exact examples (a mislabeled row, an unusual outlier, a coincidence that only holds for the data you happened to collect). Early in training, the model learns the real pattern, which also happens to help on the validation set, since that pattern is genuinely shared across both. But if training continues too long, the model runs out of general pattern left to learn and starts using its remaining capacity to fit those leftover quirks too—essentially memorizing the specific answers for the specific training examples, the way a student might memorize the exact answer key to a practice test, typos and all, instead of understanding the topic. That memorized noise is, by definition, specific to the training data—so it doesn't just fail to help on the validation set, it actively pulls the model away from the general pattern, which is the usual reason validation loss starts rising even as training loss keeps falling.
+    </p>
+
+    <p class="detail-description">
+        <strong>Is a rising validation loss proof of memorization?</strong> No. It is the standard practical <em>signal</em> of overfitting, but it is evidence, not proof. The relationship also does not run the other way: a large model can memorize some of its training data and still generalize well, so memorization does not always make validation loss rise. All of this holds for classical algorithms (decision trees, K-NN, SVMs, regression) just as it does for neural networks. Validation loss can also rise for reasons that have nothing to do with memorization:
+    </p>
+    <ul>
+        <li><strong>Mismatched splits:</strong> if the validation data differs in distribution from the training data, the loss can rise even though the model has memorized nothing. The same split problem is behind the covariate-shift discussion later on this page.</li>
+        <li><strong>Unstable training:</strong> in models trained iteratively (neural networks, gradient boosting, regression fitted by gradient descent), a learning rate that is too high can make the weights overshoot, which pushes validation loss up (and often makes training loss jumpy too).</li>
+        <li><strong>Overconfidence:</strong> with cross-entropy loss, a model can become overconfident on its wrong predictions, so validation loss rises even while validation accuracy is flat or still improving.</li>
+    </ul>
+    <p class="detail-description">
+        To judge whether memorization is really the cause, check more than the validation curve: look at the size of the gap between training and validation loss, confirm that the splits come from the same distribution, and check that the training loss curve itself is smooth. A stronger test is to train the same model on randomly shuffled labels: if it still drives the training loss close to zero, it has the capacity to memorize.
+    </p>
+    <p class="detail-description">
+        In classical models memorization can often be seen directly in the model itself: an unpruned decision tree whose leaves each hold a single training example, 1-nearest-neighbour (which has essentially zero training error by construction), or a polynomial with as many parameters as data points. Such models have no epochs, so the validation curve is usually plotted against a complexity setting (tree depth, K, polynomial degree), as in the underfitting/overfitting chart earlier on this page, rather than against training time.
     </p>
 
     <ul>
@@ -509,6 +592,7 @@
             <text x="455" y="75" font-size="13" fill="#333">Validation Loss</text>
         </svg>
     </div>
+<p class="image-title">Figure 9: Training loss and validation loss across epochs. Training loss keeps decreasing, while validation loss starts rising, the usual sign that overfitting has begun</p>
 
     <h3>5. Hyperparameter Tuning</h3>
     <p class="detail-description">
@@ -519,7 +603,7 @@
         <li><strong>Regularization Strength (e.g., the <span class="code-style">C</span> in SVM, or <span class="code-style">λ</span> in Ridge/Lasso):</strong> Controls how heavily the model is penalized for complexity—directly trading off underfitting against overfitting.</li>
         <li><strong>Tree Depth / Number of Trees:</strong> In Decision Trees and Random Forests, controls how much the model can carve up the data—shallow trees underfit, unbounded-depth trees overfit.</li>
         <li><strong>Number of Layers / Neurons:</strong> In Deep Learning, controls the network's capacity—too small and it can't capture the pattern, too large and it memorizes noise.</li>
-        <li><strong>K</strong> in K-Nearest Neighbors or K-Means: How many neighbors (or clusters) are considered, which changes how smooth or sensitive the model's decisions are.</li>
+        <li><strong>K</strong> in <a href="KNN.html" class="xlink">K-Nearest Neighbors</a> or K-Means: How many neighbors (or clusters) are considered, which changes how smooth or sensitive the model's decisions are.</li>
     </ul>
     <p class="detail-description">
         Since hyperparameters aren't learned during training, they have to be searched for separately—typically by training multiple versions of the model with different hyperparameter combinations and comparing their performance on the <strong>validation set</strong> (never the test set, to avoid leaking test information into model choices). Common search strategies include <strong>Grid Search</strong> (trying every combination in a predefined range), <strong>Random Search</strong> (sampling combinations at random, which often finds good values faster than grid search), and <strong>Bayesian Optimization</strong> (using past results to intelligently choose which combination to try next).
@@ -608,6 +692,7 @@
             <path class="flow-arrow" style="stroke:#c98a2c;" marker-end="url(#arrowhead3)" d="M820,130 L740,188"/>
         </svg>
     </div>
+<p class="image-title">Figure 10: Bagging versus Boosting. Bagging trains models in parallel on resampled data and averages or votes their outputs; Boosting trains models sequentially, each correcting the errors of the previous one, and combines them as a weighted sum</p>
 
     <p class="detail-description">
         This connects directly back to the earlier Underfitting/Overfitting discussion: <strong>Bagging reduces variance</strong> (an overfitting fix), while <strong>Boosting reduces bias</strong> (an underfitting fix)—the same two failure modes from the complexity-vs-error diagram, just addressed by combining models instead of adjusting a single one.
@@ -686,6 +771,7 @@
             <text x="644" y="258" font-size="12" fill="#333">Inactive expert (skipped)</text>
         </svg>
     </div>
+<p class="image-title">Figure 11: Mixture-of-Experts routing: a learned router sends each input token to only two of the five experts (active); the remaining experts are skipped, and the active outputs are combined into the final output</p>
 
     <p class="detail-description">
         The key difference from classical ensembles: bagging, boosting, and stacking combine several <em>fully-trained, independent</em> models after the fact (via averaging, voting, or a meta-learner). In MoE, the router and all the experts are trained at the same time, together, using the same backpropagation process—so the router's decisions and each expert's knowledge shape each other during training, rather than being built separately and combined afterward. It also only activates a small subset of experts per input rather than combining outputs from all of them. So MoE shares the "many specialized components instead of one" spirit of ensemble learning, but it's better described as a sparse, modular architecture within one model than an ensemble of separately trained models.
@@ -768,6 +854,7 @@
             <text x="460" y="30" text-anchor="middle" font-size="11" fill="#c94f4f">No &mdash; retrain (back to Model Training / Feature Engineering)</text>
         </svg>
     </div>
+<p class="image-title">Figure 12: Offline evaluation (quantitative scoring, generalization check, residual and error analysis) feeds a separate deployment readiness check; a failed check loops back to retraining</p>
 
     <hr class="section-divider">
 
@@ -816,7 +903,7 @@
             <text x="700" y="156" text-anchor="middle" font-size="12" fill="#c94f4f" font-weight="bold">the model is unsure</text>
         </svg>
     </div>
-    <p class="image-title">Figure: Covariate shift. The model trained on the blue inputs, but deployment sends orange inputs, many of which the model rarely saw.</p>
+    <p class="image-title">Figure 13: Covariate shift. The model trained on the blue inputs, but deployment sends orange inputs, many of which the model rarely saw.</p>
 
     <h3>Why Does the Test Score Not Warn Us?</h3>
     <p class="detail-description">
@@ -985,6 +1072,7 @@
         <text x="430" y="330" text-anchor="middle" style="font-size:8px; font-style:italic;" fill="#64748b">Macro-level view of LLMOps Evaluation: Explains the global architecture and feedback loops.</text>
     </svg>
 </div>
+<p class="image-title">Figure 14: Macro-level LLM evaluation: automated benchmark metrics per task and human and safety evaluation feed a pass/fail decision, with a fine-tuning/RLHF/prompt-change loop on failure</p>
 	<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
 <svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" style="background-color: #0f172a; font-family: system-ui, -apple-system, sans-serif; max-width: 75%; height: auto;">
     <!-- Definitions for gradients and markers -->
@@ -1101,6 +1189,7 @@
     <text x="500" y="580" text-anchor="middle" fill="#94a3b8" font-size="10" font-style="italic">Macro-level CI/CD architecture showing automated gate filtering, failure quarantining, and continuous evaluation loops.</text>
 </svg>
 </div>
+<p class="image-title">Figure 15: Micro-level LLM evaluation: an automated CI/CD pipeline checks each response through three gates (schema check, semantic similarity, LLM-as-judge); failures are quarantined and logged for retraining or prompt adjustment</p>
 <h4 style="margin-top: 48px;">Evaluating LLMs: Macro vs. Micro Views</h4>
     <p>
       Evaluating a deployed LLM system requires checking two different things, at two different scales—and they're complementary, not redundant: each catches failures the other structurally can't.
@@ -1108,7 +1197,7 @@
 
     <h4 style="color: var(--class-a); margin-top: 28px;">The Macro Level: "How good is this model version, overall?"</h4>
     <p>
-      This runs offline against fixed, pre-existing benchmark datasets—not live production traffic—split by task type: <a href="ModelPerformanceEvaluation.html#metrics-landscape">BLEU/chrF for translation, ROUGE/BERTScore for summarization, MMLU/HumanEval for reasoning</a>. These feed into human and LLM-judge preference testing (Chatbot Arena, MT-Bench) as a second gate. These tools <em>measure</em> quality rather than <em>create</em> it; the actual fix for a failing model (retraining, fine-tuning, RLHF) happens separately, informed by evaluation findings. Why these scores can mislead is covered in <a href="ModelPerformanceEvaluation.html#real-world-issues">Are Traditional Metrics Reliable?</a>
+      This runs offline against fixed, pre-existing benchmark datasets—not live production traffic—split by task type: <a href="ModelPerformanceEvaluation.html#metrics-landscape">BLEU/chrF for translation, ROUGE/BERTScore for summarization, MMLU/HumanEval for reasoning</a>. These feed into human and LLM-judge preference testing (Chatbot Arena, MT-Bench) as a second gate. These tools <em>measure</em> quality rather than <em>create</em> it; the actual fix for a failing model (retraining, fine-tuning, <a href="RLHF.html" class="xlink">RLHF</a>) happens separately, informed by evaluation findings. Why these scores can mislead is covered in <a href="ModelPerformanceEvaluation.html#real-world-issues">Are Traditional Metrics Reliable?</a>
     </p>
     <p>
       Because macro scores are averaged across thousands of examples, a model can score well overall while still occasionally failing on individual requests—which is precisely what this level cannot catch.
@@ -1246,7 +1335,7 @@
             <text x="450" y="458" text-anchor="middle" font-size="11" font-style="italic" fill="#64748b">Schematic only: capacity grows downward, speed grows upward. Real GPUs have many SMs and several warp schedulers per SM.</text>
         </svg>
     </div>
-    <p class="image-title">Inside a GPU: warp scheduling, SIMT execution and the memory hierarchy</p>
+    <p class="image-title">Figure 16: Inside a GPU: warp scheduling, SIMT execution and the memory hierarchy</p>
 
     <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;" role="img" aria-label="Tiled matrix multiplication on a GPU: each thread block computes one tile of C by loading tiles of A and B into shared memory, multiplying them with one thread per output element, accumulating partial sums over successive tiles, and writing the result back to VRAM">
         <svg viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg" style="max-width: 90%; height: auto; font-family: system-ui, -apple-system, sans-serif;">
@@ -1379,7 +1468,7 @@
             <text x="450" y="486" text-anchor="middle" font-size="11" font-style="italic" fill="#64748b">Schematic only: 4 &#215; 4 tiles and threads are drawn for clarity; real tiles are larger (for example 16 &#215; 16 or 32 &#215; 32).</text>
         </svg>
     </div>
-    <p class="image-title">Inside a GPU: how a matrix multiplication is computed tile by tile</p>
+    <p class="image-title">Figure 17: Inside a GPU: how a matrix multiplication is computed tile by tile</p>
 
 
     <h3>The Bigger Picture: A Map for Further Reading</h3>
@@ -1468,7 +1557,7 @@
             <text x="450" y="508" text-anchor="middle" font-size="10.5" font-style="italic" fill="#64748b">Schematic only: real GPUs contain far more SMs, and the exact layout varies between GPU generations.</text>
         </svg>
     </div>
-    <p class="image-title">The big picture: a GPU inside a training system</p>
+    <p class="image-title">Figure 18: The big picture: a GPU inside a training system</p>
 
     <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;" role="img" aria-label="Mapping of CUDA software units to GPU hardware and memory: grid to whole GPU to global memory, thread block to one SM to shared memory, warp to warp scheduler to coalesced access, thread to CUDA core or Tensor Core to registers">
         <svg viewBox="0 0 900 372" xmlns="http://www.w3.org/2000/svg" style="max-width: 90%; height: auto; font-family: system-ui, -apple-system, sans-serif;">
@@ -1502,7 +1591,7 @@
             <text x="450" y="362" text-anchor="middle" font-size="10.5" font-style="italic" fill="#64748b">Each software unit is split into the next smaller one (dashed arrows): a grid into blocks, a block into warps, a warp into threads.</text>
         </svg>
     </div>
-    <p class="image-title">From CUDA code to hardware: how threads, blocks and memory map onto the GPU</p>
+    <p class="image-title">Figure 19: From CUDA code to hardware: how threads, blocks and memory map onto the GPU</p>
 
    
 
