@@ -144,14 +144,13 @@ pre.code-block code{ background: none; padding: 0; color: inherit; font-size: in
     <p>To systematically approach a new project, we mapped out the industry-standard progression:</p>
     <ul>
         <li><strong>Data Prep:</strong> Cleaning, scaling/normalising pixel values, splitting datasets (Train/Val/Test), and applying geometric/color augmentations.</li>
-        <li><strong>Architecture:</strong> Choosing between building a custom network from scratch or leveraging transfer learning with pre-trained backbones (e.g., ResNet, MobileNet).</li>
+        <li><strong>Architecture:</strong> Choosing between building a custom network from scratch or leveraging <a href="CNN.html#transfer-learning">transfer learning</a> with pre-trained backbones (e.g., <a href="CNN.html#resnet">ResNet</a>, MobileNet).</li>
         <li><strong>Optimization:</strong> Selecting appropriate loss functions (e.g., Cross-Entropy) and optimizers (e.g., Adam), alongside learning rate decay policies.</li>
         <li><strong>Monitoring:</strong> Training in small mini-batches while tracking training vs. validation loss curves to catch under- or overfitting.</li>
     </ul>
 
     <div class="explain-box">
-        <span class="q-label">STUDENT Q&amp;A</span>
-        <p><strong>What are "geometric/color augmentations"?</strong></p>
+        <p><strong>Geometric and Color Augmentations</strong></p>
         <p>They're label-preserving transformations applied to training images to artificially expand the effective size and diversity of the dataset, forcing the network to learn features that are invariant to irrelevant variation.</p>
         <ul>
             <li><strong>Geometric</strong> (change spatial arrangement): rotation, horizontal/vertical flip, random crop, translation, scaling/zoom, shear, elastic deformation (common in medical imaging to simulate tissue warping).</li>
@@ -170,9 +169,91 @@ pre.code-block code{ background: none; padding: 0; color: inherit; font-size: in
         </div>
     </div>
 
+    <h4 id="data-prep">Data Preparation: Cleaning, Normalization and Patient-Level Splitting</h4>
+    <p>Augmentation is only one quarter of data preparation, and it is the safest quarter: a mistake there costs accuracy visibly. Mistakes in the other three steps rarely crash training. Instead they <em>silently inflate the validation numbers</em>, and the model then disappoints on new patients. Each step is covered below.</p>
+
+    <p><strong>1. Cleaning.</strong> Do this before any modelling, because the network will faithfully learn whatever the data contains.</p>
+    <ul>
+        <li>Remove corrupt, blank or duplicate images, and near-duplicates (the same scan exported twice under different file names).</li>
+        <li>Audit the labels on a random sample: mislabelled examples cap the accuracy you can reach and distort the loss curves of Fig. 1.</li>
+        <li>Make the geometry consistent: orientation, pixel spacing and image size. For DICOM, read the header instead of trusting the file name; for example, some X-rays are stored with inverted intensity (MONOCHROME1 vs. MONOCHROME2).</li>
+        <li>Remove shortcuts the model could exploit, such as burned-in text, hospital markers or scanner-specific borders. This is the same "green grass background" failure described in &sect;2.</li>
+    </ul>
+
+    <p><strong>2. Scaling / normalizing pixel values.</strong> Raw pixel intensities (0&ndash;255, or up to 4095 or 65535 for 12/16-bit medical images) are on a scale unrelated to the weights being learned. Standardizing each channel $c$ keeps the inputs centred and comparable, so the first-layer gradients are well-conditioned:</p>
+    <div class="formula-card">
+        $$\hat{x}_c = \frac{x_c - \mu_c}{\sigma_c}, \qquad \mu_c,\ \sigma_c \text{ computed over the training images only}$$
+    </div>
+    <ul>
+        <li><strong>Pretrained backbone:</strong> use the mean and standard deviation the backbone was originally trained with (for torchvision ImageNet models, $\mu=(0.485, 0.456, 0.406)$ and $\sigma=(0.229, 0.224, 0.225)$). Feeding it differently scaled pixels makes its pretrained filters respond to the wrong intensity range.</li>
+        <li><strong>Training from scratch:</strong> compute $\mu_c$ and $\sigma_c$ once from the training set and store them with the model.</li>
+        <li><strong>CT:</strong> intensities are in Hounsfield units, so clip to a clinically relevant window first (for example a lung or soft-tissue window) and then rescale. <strong>MRI:</strong> intensities have no absolute unit, so z-score each scan separately. <strong>X-ray:</strong> convert from the native 12/16-bit range to $[0,1]$ without blindly truncating to 8 bits.</li>
+        <li>The <em>same</em> transform, with the <em>same</em> stored statistics, must be applied at validation, test and deployment time.</li>
+    </ul>
+
+    <p><strong>3. Splitting into Train / Validation / Test.</strong> The three sets have different jobs, and mixing them up is the commonest way to fool yourself:</p>
+    <div class="table-wrap">
+    <table>
+        <thead><tr><th>Set</th><th>Typical share</th><th>Used for</th><th>How often you look at it</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Train</strong></td><td>70&ndash;80%</td><td>Updating the weights (gradient steps)</td><td>Every step</td></tr>
+            <tr><td><strong>Validation</strong></td><td>10&ndash;15%</td><td>Loss curves (Fig. 1), early stopping, choosing the learning rate and the architecture</td><td>Every epoch</td></tr>
+            <tr><td><strong>Test</strong></td><td>10&ndash;15%</td><td>One final, unbiased performance estimate</td><td><strong>Once</strong>, after every decision is frozen</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="callout warn">
+        <strong>Split by patient, not by image.</strong>
+        <p>A single patient often contributes many images: slices of one CT volume, left and right views, or follow-up scans. Slices of the same patient look almost identical, so a random image-level split puts near-duplicates on both sides and the validation set stops being "unseen" data. This is called <strong>data leakage</strong>.</p>
+        <p><strong>Worked example.</strong> Take 200 patients with 10 slices each, giving 2000 images, and split 80/20 at random by image. A given patient has <em>no</em> slice in the validation set only if all 10 of their slices land in training, which has probability $0.8^{10}\approx 0.107$. So about 89% of patients (roughly 179 of 200) appear on <em>both</em> sides of the split. A patient-level split instead puts 160 patients (1600 images) in training and 40 patients (400 images) in validation, with zero overlap.</p>
+        <div class="table-wrap">
+        <table>
+            <thead><tr><th>Split strategy</th><th>Patients shared by train and val</th><th>Validation accuracy (illustrative)</th></tr></thead>
+            <tbody>
+                <tr><td>Random image-level split</td><td>~179 of 200</td><td>~97%, inflated by memorized patients</td></tr>
+                <tr><td>Patient-level split</td><td>0</td><td>~84%, the honest estimate for new patients</td></tr>
+            </tbody>
+        </table>
+        </div>
+        <p>The accuracy figures are illustrative of the typical size of the gap, not measurements. The point is that the 97% would collapse on the first new patient seen in the clinic.</p>
+    </div>
+
+<pre class="code-block"><code><span class="comment"># Group-aware split: every patient goes entirely to one side</span>
+from sklearn.model_selection import GroupShuffleSplit
+gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+train_idx, val_idx = next(gss.split(X, y, groups=patient_ids))
+assert set(patient_ids[train_idx]).isdisjoint(patient_ids[val_idx])   <span class="comment"># no leakage</span>
+
+<span class="comment"># Normalization statistics from the TRAINING images only</span>
+mean = X[train_idx].mean(axis=(0, 1, 2))      <span class="comment"># per channel</span>
+std  = X[train_idx].std(axis=(0, 1, 2))</code></pre>
+
+    <p><strong>4. What changes for 3D volumes (CT, MRI, fMRI).</strong> The steps above were described for 2D images. Volumes keep every step but change how it is done, mostly because of size, voxel geometry and the extra axis:</p>
+    <div class="table-wrap">
+    <table>
+        <thead><tr><th>Step</th><th>2D images (X-ray, fundus, histology)</th><th>3D volumes (CT, MRI) and fMRI</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Geometry / resampling</strong></td><td>Resize to a fixed height &times; width (for example 224 &times; 224); pixel spacing is the only scale.</td><td>Resample to a common <strong>voxel spacing</strong>, because slice thickness is often several times the in-plane resolution. Otherwise a 3 &times; 3 &times; 3 kernel covers different physical distances in different directions.</td></tr>
+            <tr><td><strong>Input size</strong></td><td>Resize or crop the whole image.</td><td>A full volume (for example 512 &times; 512 &times; 300) will not fit in GPU memory. Train on random <strong>3D patches</strong> (for example 128<sup>3</sup>), oversampling the region of interest, and use small batches (1&ndash;4). At inference, tile the patches and stitch them back.</td></tr>
+            <tr><td><strong>Orientation / alignment</strong></td><td>Check flips and inverted intensity.</td><td>Standardize the axis orientation. For brain MRI, register scans to a common space and often strip the skull. For multi-sequence MRI, register the sequences to each other so that channels line up.</td></tr>
+            <tr><td><strong>Intensity normalization</strong></td><td>Per-channel mean/std from the training set, or the pretrained backbone&rsquo;s values.</td><td>CT: clip to a Hounsfield window, then rescale. MRI: z-score each volume separately (and often correct the bias field). fMRI: motion correction, temporal filtering and per-voxel z-scoring over time.</td></tr>
+            <tr><td><strong>Channels</strong></td><td>Replicate to 3 channels if a 2D pretrained backbone expects RGB.</td><td>One channel for CT, one per sequence for MRI. For 2.5D, a few neighbouring slices become the channels, each normalized consistently.</td></tr>
+            <tr><td><strong>Augmentation</strong></td><td>Random 2D flips, rotations, crops, elastic warps.</td><td>Use 3D transforms, applying <strong>one</strong> random transform to the whole volume and its mask, never independently per slice, or the anatomy stops being continuous between slices.</td></tr>
+            <tr><td><strong>Unit of splitting</strong></td><td>The patient (all images of a patient together).</td><td>The patient, as before. Here a whole volume is one sample, but the slices and patches taken from it must never be spread across train and validation.</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <p>Three further rules complete the picture:</p>
+    <ul>
+        <li><strong>Fit every statistic on the training set only.</strong> Normalization constants computed over all the data quietly leak information about the validation and test images.</li>
+        <li><strong>Augment the training set only.</strong> Validation and test images get only the deterministic steps (resize, normalize), so that they measure a fixed target.</li>
+        <li><strong>Stratify the split by class</strong> (at patient level) so that rare classes appear in every set. When a class has only 2&ndash;3 examples, as in &sect;3.1, a hold-out set is impossible and grouped cross-validation is the practical alternative.</li>
+    </ul>
+
     <div class="explain-box">
-        <span class="q-label">STUDENT Q&amp;A</span>
-        <p><strong>How is "training in small mini-batches while tracking training vs. validation loss" actually done?</strong></p>
+        <p><strong>Mini-Batch Training and Tracking Training vs. Validation Loss</strong></p>
         <p><em>Mini-batch training:</em> instead of computing the gradient over the whole dataset at once (accurate but memory-prohibitive) or one sample at a time (fast but noisy), the training set is split into batches of, say, 32–256 images. For each batch: forward pass &rarr; compute loss &rarr; backpropagate &rarr; update weights. One full pass over all batches is one epoch — a practical compromise driven by GPU memory and a favorable noise-vs-speed tradeoff.</p>
         <p><em>Tracking loss curves:</em> at the end of every epoch, compute the average loss on the training set and on a held-out validation set (never trained on), and plot both against epoch number.</p>
         <ul>
@@ -220,9 +301,8 @@ pre.code-block code{ background: none; padding: 0; color: inherit; font-size: in
     </div>
 
     <div class="explain-box">
-        <span class="q-label">STUDENT Q&amp;A</span>
-        <p><strong>What kind of "fine-tuning models" are we talking about?</strong></p>
-        <p>This refers to <strong>transfer learning</strong>: taking a network pre-trained on a large generic dataset (typically ImageNet, ~1.2M images, 1000 classes) and adapting it to a specific task instead of training from random weight initialization. Common backbones: ResNet, MobileNet (edge/low-compute), EfficientNet, VGG, and increasingly ViT (Vision Transformer) variants.</p>
+        <p><strong>Fine-Tuning Models (Transfer Learning)</strong></p>
+        <p>This refers to <strong><a href="CNN.html#transfer-learning">transfer learning</a></strong>: taking a network pre-trained on a large generic dataset (typically ImageNet, ~1.2M images, 1000 classes) and adapting it to a specific task instead of training from random weight initialization. Common backbones: <a href="CNN.html#resnet">ResNet</a>, MobileNet (edge/low-compute), EfficientNet, VGG, and increasingly ViT (Vision Transformer) variants.</p>
         <ul>
             <li><strong>Feature extraction:</strong> freeze all pre-trained convolutional layers <em>[frozen = the layer's weights are fixed at their pretrained values and never updated; feeding the same image through them on training step 1 or step 5000 produces the exact same output feature map every time]</em>, only train a new classification head on top. Good when the new dataset is small and similar in domain.</li>
             <li><strong>Fine-tuning:</strong> unfreeze some or all pre-trained layers <em>[unfrozen = those weights receive gradients and update a little each step, so the same image's output feature map slowly drifts as training progresses]</em> and continue training them at a low learning rate along with the new head. Good when the domain (e.g., medical imaging) differs substantially from natural images.</li>
@@ -262,6 +342,71 @@ pre.code-block code{ background: none; padding: 0; color: inherit; font-size: in
         <p class="diagram-caption">Fig. 2 &mdash; early frozen layers see raw pixels and learn generic edges/corners; later fine-tuned layers pass domain-specific feature maps (not pixels) on to the new head</p>
     </div>
 
+    <h4 id="scratch-vs-pretrained">Decision Box: Train from Scratch or Start from a Pretrained Backbone?</h4>
+    <p>The Architecture step of the workflow is really two decisions: which network, and whether it starts from random weights or from a pretrained backbone. The second decision matters more. Answer it with two questions about your data before comparing architectures.</p>
+
+    <div class="hero-diagram diagram-box">
+        <svg viewBox="0 0 680 300" role="img" aria-label="Decision flowchart: train from scratch, feature extraction or fine-tuning, depending on dataset size and domain similarity">
+            <defs>
+                <marker id="arr9" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M2 1L8 5L2 9" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+            </defs>
+            <rect x="220" y="14" width="240" height="36" rx="8" fill="var(--paper)" stroke="var(--ink-faint)" stroke-width="1"/>
+            <text x="340" y="37" text-anchor="middle" font-size="14" font-weight="600" fill="var(--ink)">New task + your labeled dataset</text>
+            <line x1="340" y1="50" x2="340" y2="72" stroke="var(--ink-soft)" stroke-width="1.5" marker-end="url(#arr9)"/>
+
+            <rect x="170" y="74" width="340" height="50" rx="8" fill="var(--paper)" stroke="var(--ink-faint)" stroke-width="1"/>
+            <text x="340" y="95" text-anchor="middle" font-size="12" fill="var(--ink)">Large labeled dataset AND domain far from</text>
+            <text x="340" y="112" text-anchor="middle" font-size="12" fill="var(--ink)">natural images (e.g. 3D volumes, multi-channel)?</text>
+
+            <line x1="510" y1="99" x2="523" y2="99" stroke="var(--ink-soft)" stroke-width="1.5" marker-end="url(#arr9)"/>
+            <text x="516" y="90" text-anchor="middle" font-size="11" fill="var(--ink-soft)">Yes</text>
+            <rect x="525" y="69" width="145" height="60" rx="8" fill="var(--query-bg)" stroke="var(--query)" stroke-width="1"/>
+            <text x="597" y="90" text-anchor="middle" font-size="14" font-weight="600" fill="var(--ink)">From scratch</text>
+            <text x="597" y="107" text-anchor="middle" font-size="12" fill="var(--ink-soft)">or pretrain on</text>
+            <text x="597" y="121" text-anchor="middle" font-size="12" fill="var(--ink-soft)">in-domain data</text>
+
+            <line x1="340" y1="124" x2="340" y2="156" stroke="var(--ink-soft)" stroke-width="1.5" marker-end="url(#arr9)"/>
+            <text x="352" y="144" font-size="11" fill="var(--ink-soft)">No</text>
+
+            <rect x="170" y="158" width="340" height="50" rx="8" fill="var(--paper)" stroke="var(--ink-faint)" stroke-width="1"/>
+            <text x="340" y="179" text-anchor="middle" font-size="12" fill="var(--ink)">Small dataset (a few thousand images) and</text>
+            <text x="340" y="196" text-anchor="middle" font-size="12" fill="var(--ink)">domain reasonably close to natural images?</text>
+
+            <line x1="170" y1="183" x2="157" y2="183" stroke="var(--ink-soft)" stroke-width="1.5" marker-end="url(#arr9)"/>
+            <text x="164" y="174" text-anchor="middle" font-size="11" fill="var(--ink-soft)">Yes</text>
+            <rect x="10" y="153" width="145" height="60" rx="8" fill="var(--class-a-bg)" stroke="var(--class-a)" stroke-width="1"/>
+            <text x="82" y="174" text-anchor="middle" font-size="14" font-weight="600" fill="var(--ink)">Feature extraction</text>
+            <text x="82" y="191" text-anchor="middle" font-size="12" fill="var(--ink-soft)">freeze backbone,</text>
+            <text x="82" y="205" text-anchor="middle" font-size="12" fill="var(--ink-soft)">train a new head</text>
+
+            <line x1="340" y1="208" x2="340" y2="242" stroke="var(--ink-soft)" stroke-width="1.5" marker-end="url(#arr9)"/>
+            <text x="352" y="229" font-size="11" fill="var(--ink-soft)">No</text>
+            <rect x="190" y="244" width="300" height="48" rx="8" fill="var(--class-c-bg)" stroke="var(--class-c)" stroke-width="1"/>
+            <text x="340" y="265" text-anchor="middle" font-size="14" font-weight="600" fill="var(--ink)">Fine-tune</text>
+            <text x="340" y="282" text-anchor="middle" font-size="12" fill="var(--ink-soft)">unfreeze some or all layers at a low learning rate</text>
+        </svg>
+        <p class="diagram-caption">Fig. 3 &mdash; choosing between training from scratch, feature extraction and fine-tuning from the size of the dataset and how far its domain is from natural images</p>
+    </div>
+
+    <div class="table-wrap">
+    <table>
+        <thead><tr><th>Factor</th><th>Favors a pretrained backbone</th><th>Favors training from scratch</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Labeled data</strong></td><td>Hundreds to a few thousand images: pretrained filters supply the generic edges and textures you cannot learn from so little data</td><td>Tens of thousands of images or more, enough to learn every filter from random weights</td></tr>
+            <tr><td><strong>Domain</strong></td><td>2D images with RGB-like structure (X-ray, fundus, dermoscopy, histology); fine-tune if the domain differs a lot from photos</td><td>3D volumes, multi-channel microscopy or hyperspectral data, where 2D ImageNet filters do not fit the input</td></tr>
+            <tr><td><strong>Input format</strong></td><td>Single-channel scans can be replicated to 3 channels (or the first-layer weights averaged) so the pretrained stem still fits</td><td>An unusual channel count or bit depth that the pretrained stem was never designed for</td></tr>
+            <tr><td><strong>Compute and time</strong></td><td>Converges in a few epochs; a strong baseline in hours</td><td>Needs many epochs and GPU-hours, which is justified only when the baseline falls short</td></tr>
+            <tr><td><strong>Deployment size</strong></td><td>Many compact pretrained options exist (e.g. MobileNet) for edge and low-compute settings</td><td>A custom small network, when latency or memory limits rule out every standard backbone</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="callout">
+        <strong>Rule of thumb:</strong> always build the pretrained baseline first, since it is cheap. Train from scratch only to beat that baseline, and only when the table above says your data justifies it. For the architecture choices themselves (for example <a href="CNN.html#resnet">ResNet</a> and the other backbones), see the <a href="CNN.html#transfer-learning">transfer learning</a> section of the CNN page.
+    </div>
+
     </section>
 
 <section>
@@ -274,14 +419,13 @@ pre.code-block code{ background: none; padding: 0; color: inherit; font-size: in
     </ul>
 
     <div class="explain-box">
-        <span class="q-label">STUDENT Q&amp;A</span>
-        <p><strong>How is hyperparameter tuning actually done "by trial and error"?</strong></p>
+        <p><strong>Hyperparameter Tuning: Structured Search Instead of Trial and Error</strong></p>
         <p>Not literally random guessing — there are structured search strategies, roughly in order of sophistication:</p>
         <ul>
             <li><strong>Manual search:</strong> adjust one hyperparameter at a time based on observed loss curves.</li>
             <li><strong>Grid search:</strong> define a discrete set of values for each hyperparameter (e.g., LR &isin; {1e-2, 1e-3, 1e-4}, batch size &isin; {32, 64, 128}) and exhaustively train a model for every combination. Expensive — combinations grow fast.</li>
             <li><strong>Random search:</strong> sample combinations randomly from specified ranges instead of exhaustively; often more efficient than grid search for the same compute budget.</li>
-            <li><strong>Bayesian optimization / automated tools</strong> (e.g., Optuna, Ray Tune): build a probabilistic model of how hyperparameters map to validation performance and intelligently pick the next combination to try — an informed search rather than blind trial.</li>
+            <li><strong>Bayesian optimization / automated tools</strong> (e.g., <a href="https://optuna.org" target="_blank" rel="noopener">Optuna</a>, <a href="https://docs.ray.io/en/latest/tune/" target="_blank" rel="noopener">Ray Tune</a>): build a probabilistic model of how hyperparameters map to validation performance and intelligently pick the next combination to try — an informed search rather than blind trial.</li>
         </ul>
         <p>Each "trial" = train the model (or a cheap shortened proxy of it) end-to-end and record validation performance. "Error" = the model doesn't converge well, overfits, or underperforms, prompting an adjustment and retry. It's fundamentally trial-and-error because the loss landscape as a function of hyperparameters is non-convex, expensive to evaluate, and has no closed-form gradient to optimize directly.</p>
     </div>
@@ -723,7 +867,16 @@ pre.code-block code{ background: none; padding: 0; color: inherit; font-size: in
 <div class="formula-card">
     $$x_{t+1} = \arg\max_x\ \mathbb{E}\big[\max(f(x) - f(x^{+}), 0)\big]$$
 </div>
-<p>where $f(x^{+})$ is the best validation score observed so far. This is why Bayesian tools like Optuna or Ray Tune tend to reach a good configuration in fewer trials than blind random search — each trial is chosen to be maximally informative given everything learned so far, not just another independent guess.</p>
+<p>where $f(x^{+})$ is the best validation score observed so far. This is why Bayesian tools like <a href="https://optuna.org" target="_blank" rel="noopener">Optuna</a> or <a href="https://docs.ray.io/en/latest/tune/" target="_blank" rel="noopener">Ray Tune</a> tend to reach a good configuration in fewer trials than blind random search — each trial is chosen to be maximally informative given everything learned so far, not just another independent guess.</p>
+
+<div class="reading-list">
+    <p class="reading-title">FURTHER READING</p>
+    <ul>
+        <li><a href="https://arxiv.org/abs/1206.2944" target="_blank" rel="noopener">Snoek, Larochelle &amp; Adams (2012) &mdash; Practical Bayesian Optimization of Machine Learning Algorithms</a> &mdash; the standard reference for Gaussian-process Bayesian optimization applied to tuning ML models, including CNNs, and to cost-aware and parallel experiments.</li>
+        <li><a href="https://optuna.readthedocs.io/en/stable/" target="_blank" rel="noopener">Optuna documentation</a> &mdash; define-by-run search spaces, samplers and pruning of unpromising trials.</li>
+        <li><a href="https://docs.ray.io/en/latest/tune/" target="_blank" rel="noopener">Ray Tune documentation</a> &mdash; distributed hyperparameter search, schedulers and integrations with other search libraries (including Optuna).</li>
+    </ul>
+</div>
 
 </section>
 
@@ -829,6 +982,24 @@ pre.code-block code{ background: none; padding: 0; color: inherit; font-size: in
             { q: "How do feature extraction and fine-tuning differ in transfer learning?",
               a: "Feature extraction freezes the pretrained conv layers and trains only a new head (small, similar data); fine-tuning unfreezes some or all layers and continues at a low learning rate (good when the domain differs, such as medical images)",
               w: ["Feature extraction unfreezes all layers at a high learning rate, while fine-tuning freezes everything", "Both freeze every layer, but fine-tuning uses a higher learning rate", "Feature extraction trains the whole network from random weights"] },
+            { q: "Why must a medical-imaging dataset be split by patient rather than by image?",
+              a: "Slices from the same patient look almost identical, so a random image-level split puts near-duplicates in both training and validation and inflates validation accuracy; every patient must sit entirely in one set",
+              w: ["Splitting by image makes the validation set too small to compute a loss", "Patient-level splitting is only needed for 3D networks, not 2D CNNs", "It ensures every patient contributes equally to the training loss"] },
+            { q: "200 patients with 10 slices each are split 80/20 at random by image. What is the probability that a given patient has no slice in the validation set?",
+              a: "0.8<sup>10</sup> &asymp; 0.107, so about 89% of patients leak across the split",
+              w: ["0.2<sup>10</sup> &asymp; 10<sup>-7</sup>, so almost no patient leaks", "0.8 &times; 10 = 8, which is not a probability", "0.2, the validation fraction, so 20% of patients leak"] },
+            { q: "From which images should normalization mean and standard deviation be computed, and what changes with a pretrained backbone?",
+              a: "From the training images only; with a pretrained backbone, use the mean and standard deviation it was originally trained with (for example the ImageNet values)",
+              w: ["From the whole dataset including validation and test, for a more accurate estimate", "From each test image separately at deployment time", "From the validation set only, because it is held out"] },
+            { q: "Which situation most justifies training a CNN from scratch instead of starting from a pretrained backbone?",
+              a: "A large labeled dataset in a domain far from natural images, such as 3D volumes or multi-channel microscopy",
+              w: ["A few hundred chest X-rays", "A small dataset of ordinary photographs similar to ImageNet", "Any project with a tight GPU budget"] },
+            { q: "Why are CT and MRI volumes resampled to a common voxel spacing before a 3D CNN?",
+              a: "Slice thickness is often several times the in-plane resolution, so otherwise a 3 &times; 3 &times; 3 kernel would cover different physical distances along different axes",
+              w: ["So that every volume has the same number of patients", "Because a 3D CNN cannot read DICOM headers", "To convert CT Hounsfield units into MRI intensities"] },
+            { q: "How should random augmentation be applied to a 3D volume and its segmentation mask?",
+              a: "One random transform is applied to the whole volume and the same transform to its mask, never independently per slice, so the anatomy stays continuous between slices",
+              w: ["A different random transform is drawn for every slice to increase diversity", "Only the mask is transformed, never the image", "Augmentation is never used for 3D data"] },
             { q: "Which order does the page recommend for the five-step practical approach to CNN training?",
               a: "Workflow and monitoring &rarr; diagnose the class distribution &rarr; apply the matching imbalance strategy &rarr; train with cross-entropy + Adam and watch the curves &rarr; tune with random search or Bayesian optimisation",
               w: ["Tune hyperparameters with grid search &rarr; diagnose the class distribution &rarr; set up the workflow", "Choose the loss and optimiser &rarr; diagnose the class distribution &rarr; set up the train/validation split last", "Apply an imbalance fix before looking at the class counts &rarr; tune with grid search"] },
