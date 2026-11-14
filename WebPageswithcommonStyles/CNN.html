@@ -35,7 +35,7 @@
 <div class="index-link index-link-top" style="text-align:center; margin:14px 0; font-size:0.95rem;"><a href="../index.html#pipeline">Go to Main Page (Index Page)</a></div>
 
     <h1>Convolutional Neural Networks</h1>
-    <p>The MLP is the foundation we covered in the previous section. A Convolutional Neural Network (CNN) is yet another kind of Neural Network, where layer processing is a mathematical operation called <strong>convolution</strong>. The basic idea is to divide the input into overlapping 2D image patches and to compare each patch with a set of small weight matrices, or filters, which represent parts of an object; this is shown below. We can think of this as a form of <strong>template matching</strong>.</p>
+    <p>The <a href="NN_version1.html">MLP</a> is the foundation we covered in the previous section. A Convolutional Neural Network (CNN) is yet another kind of Neural Network, where layer processing is a mathematical operation called <strong>convolution</strong>. The basic idea is to divide the input into overlapping 2D image patches and to compare each patch with a set of small weight matrices, or filters, which represent parts of an object; this is shown below. We can think of this as a form of <strong>template matching</strong>.</p>
     
     <h2>Why MLPs Struggle with Visual Data</h2>
     <p>The primary failure of the Multi-Layer Perceptron (MLP) in image processing is its lack of Spatial Topology. When an image is flattened into a 1D vector to fit an MLP's input layer, the physical proximity between pixels is destroyed; a pixel's neighbor to the right or bottom is suddenly shifted thousands of indices away. This forces the MLP to learn the relationship between every single pixel globally, leading to a Parameter Explosion. For instance, a high-definition image would require billions of weights for just one hidden layer, exceeding the memory capacity of most hardware. Furthermore, MLPs lack Translation Invariance; if the network learns to recognize a feature in the top-left, it will not recognize that same feature in the bottom-right because the weights are tied to specific, static pixel coordinates. Finally, as you noted, the Fixed-Input Constraint is a major hurdle: MLPs require a hard-coded number of input neurons, making them incapable of processing variable image sizes without destructive resizing.</p>
@@ -93,6 +93,12 @@
     </div>
 
     <p>Essentially, we compare a local patch of $X$, of size $h \times w$ and centered at $(i,j)$, to the filter $W$. The output $Z_{i,j}$ measures the <strong>similarity</strong> between the input patch and the filter's learned pattern.</p>
+
+    <p><strong>2D images and 3D volumes.</strong> The definition above is written for a 2D image, and this page develops everything on 2D inputs, but convolution is not limited to them. A CNN applies equally to <strong>2D images</strong> (photographs, X-rays, retinal photos) and to <strong>3D volumes</strong> (CT and MRI scans, which are stacks of slices). For a volume $X \in \mathbb{R}^{D \times H \times W}$ and a 3D kernel $W \in \mathbb{R}^{d \times h \times w}$, the kernel also slides along the depth axis:</p>
+    <div style="text-align: center; margin: 20px 0; font-size: 1.2rem;">
+        $$Z_{i,j,k} = \sum_{t=0}^{d-1} \sum_{u=0}^{h-1} \sum_{v=0}^{w-1} X_{i+t,\, j+u,\, k+v} \cdot W_{t,u,v}$$
+    </div>
+    <p>Everything else (weight sharing, padding, striding, pooling, the feature hierarchy and the backward pass) carries over with one extra index. The section on <a href="#modalities">different modalities</a> near the end of the page shows what changes in practice.</p>
 
     <p>While the convolution formula above defines the mathematical "how," the <strong>motivation</strong> lies in capturing <strong>Spatial Local Correlations</strong>. In an MLP, every neuron is connected to every pixel, which is computationally expensive and ignores the fact that pixels are only meaningful in relation to their immediate neighbors. By using local kernels, we ensure the network focuses on these relationships first, drastically reducing parameters while granting the model <strong>Translation Invariance</strong>-the ability to recognize a pattern regardless of where it appears in the frame.</p>
 
@@ -329,7 +335,8 @@
         For each layer $l$ from $1$ to $L$:<br>
         1. Calculate variance: $\sigma^2 = \frac{2}{n_{in}}$<br>
         2. Sample weights: $W^{[l]} \sim \mathcal{N}(0, \sigma^2)$<br>
-        3. Set bias: $b^{[l]} = 0$
+        3. Set bias: $b^{[l]} = 0$<br>
+        <span style="color: #718096;"># Notation: $l$ = layer index, $L$ = number of layers, $n_{in}$ = fan-in (inputs feeding one neuron; for a conv layer: kernel height &times; kernel width &times; input channels), $W^{[l]}$ and $b^{[l]}$ = weights and biases of layer $l$</span>
     </div>
 
     <div style="background: #fff8e1; padding: 15px; border-left: 5px solid #ffc107; margin: 10px 0 20px 0;">
@@ -344,16 +351,21 @@
         1. <strong>Convolution:</strong> $Z^{[l]}_{i,j,k} = \sum_{m} \sum_{n} (A^{[l-1]}_{i+m, j+n} \cdot W^{[l]}_{m,n,k}) + b^{[l]}_k$<br>
         2. <strong>Activation:</strong> $A^{[l]} = \max(0, Z^{[l]})$<br>
         3. <strong>Max Pooling:</strong> Downsample $A^{[l]}$ by taking window maximums.<br>
-        4. <strong>Softmax:</strong> $\hat{y} = \frac{e^{Z^{[L]}}}{\sum e^{Z^{[L]}}}$
+        4. <strong>Softmax:</strong> $\hat{y} = \frac{e^{Z^{[L]}}}{\sum e^{Z^{[L]}}}$<br>
+        <span style="color: #718096;"># Notation: $A^{[l-1]}$ = input to layer $l$ (previous layer&rsquo;s activations); $W^{[l]}_{m,n,k}$ = weight of filter $k$ at kernel position $(m,n)$; $b^{[l]}_k$ = bias of filter $k$; $Z^{[l]}$ = pre-activation (value before ReLU); $A^{[l]}$ = activation (value after ReLU); $(i,j)$ = output position, $k$ = filter (output channel); $Z^{[L]}$ = final-layer scores (logits); $\hat{y}$ = predicted class probabilities</span>
     </div>
 
     <h3>3. Backward Pass & Adam Optimizer</h3>
     <div class="algorithm-block" style="background: #f4f4f4; padding: 20px; border-radius: 8px; font-family: monospace; border-left: 5px solid #1a237e; margin: 20px 0;">
         <strong>Algorithm: Adam_Optimization_Update</strong><br>
-        1. <strong>Calculate Output Error:</strong> $dZ^{[L]} = \hat{y} - y$<br>
-        2. <strong>Compute Gradients ($g_t$):</strong> Backpropagate error through pooling and convolution layers.<br>
+        1. <strong>Calculate Output Error:</strong> $dZ^{[L]} = \hat{y} - y$ <span style="color: #718096;"># $y$ = true label (one-hot); $dZ^{[L]}$ = error at the output layer</span><br>
+        2. <strong>Compute Gradients ($g_t$):</strong> Backpropagate error through pooling and convolution layers. <span style="color: #718096;"># $t$ = training step counter; $g_t$ = gradient of the loss at step $t$</span><br>
         3. <strong>Update Moments:</strong> $m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t$; $v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2$<br>
-        4. <strong>Apply Update:</strong> $W_{t+1} = W_t - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$
+        <span style="color: #718096;"># $m_t$ = running average of gradients (1st moment, like momentum); $m_{t-1}$ = its value at the previous step; $v_t$ = running average of squared gradients (2nd moment); $\beta_1, \beta_2$ = decay rates, typically 0.9 and 0.999; $m_0 = v_0 = 0$</span><br>
+        4. <strong>Bias Correction:</strong> $\hat{m}_t = \frac{m_t}{1 - \beta_1^{t}}$; $\hat{v}_t = \frac{v_t}{1 - \beta_2^{t}}$<br>
+        <span style="color: #718096;"># $m$ and $v$ start at 0, so they are biased low in the first steps; dividing by $1-\beta^t$ corrects this</span><br>
+        5. <strong>Apply Update:</strong> $W_{t+1} = W_t - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$<br>
+        <span style="color: #718096;"># $W_t$ = weights at step $t$; $\eta$ = learning rate (typically 0.001); $\hat{m}_t, \hat{v}_t$ = bias-corrected moments; $\epsilon$ = tiny constant (typically $10^{-8}$) that prevents division by zero</span>
     </div>
 <h3>4. More about Backward Pass and Gradient Computation through Chain Rule</h3>
 <p>In a CNN, the Backward Pass is the process of passing <strong>error maps</strong> backward through the spatial dimensions. To satisfy the <strong>Algorithm: Adam_Optimization_Update</strong>, we must calculate the gradients ($g_t$) by reversing the Forward Pass step-by-step.</p>
@@ -374,7 +386,7 @@
             <ol style="margin-top: 8px; padding-left: 20px;">
                     <li><strong>$Z$ (blue, left).</strong> The affine (convolution) output stored during the forward pass; backprop needs it again now. ReLU's derivative is $f'(Z) = 1$ where $Z &gt; 0$ and $0$ elsewhere, which gives the green gate (gray = closed).</li>
                     <li><strong>$dA$ (red).</strong> The error arriving from the layer above, one value per position.</li>
-                    <li><strong>$dZ = dA \odot f'(Z)$ (right).</strong> Multiplying element by element is the chain rule through the activation. Position $(0,1)$ had $Z = -1$, so its gradient is blocked: $dZ = 0$, however large $dA$ was there.</li>
+                    <li><strong>$dZ = dA \odot f'(Z)$ (right).</strong> This is function-of-a-function differentiation: since $A = f(Z)$, $\frac{\partial L}{\partial Z} = \frac{\partial L}{\partial A}\, f'(Z)$, applied element by element. Position $(0,1)$ had $Z = -1$, so $f'(Z) = 0$ and its gradient is blocked: $dZ = 0$, however large $dA$ was there.</li>
                     <li><strong>Point-wise.</strong> No window slides and the shape does not change (here 2&times;2 stays 2&times;2); each position is handled on its own.</li>
             </ol>
         </figcaption>
@@ -390,7 +402,7 @@
                     <li><strong>Left: the input $A^{[l-1]}$</strong> (4&times;4). The orange window is the 2&times;2 patch at offset $(0,0)$.</li>
                     <li><strong>Middle: $dZ$ acts as the sliding filter.</strong> It is laid over the input at every offset $(m,n)$ and multiplied element by element with the patch under it.</li>
                     <li><strong>Right: $dK$.</strong> The highlighted entry is $dK[0,0] = 0\cdot2 + 3\cdot0 + 3\cdot1 + 0\cdot3 = 3$. With a 2&times;2 $dZ$ and a 4&times;4 input there are 3&times;3 offsets, so $dK$ comes out 3&times;3, exactly the shape of the filter $K$.</li>
-                    <li><strong>Why this is right.</strong> Weight $K[m,n]$ multiplied pixel $A[i+m, j+n]$ at every position $(i,j)$, so its share of the blame is the sum of (pixel &times; error at that position). It is a cross-correlation with no flip: <code>correlate2d(A_prev, dZ, mode='valid')</code>.</li>
+                    <li><strong>Why this is right.</strong> Weight $K[m,n]$ multiplied pixel $A[i+m, j+n]$ at every position $(i,j)$, so its share of the error (its gradient) is the sum of (pixel &times; error at that position): $dK[m,n] = \sum_{i,j} A[i+m, j+n]\, dZ[i,j]$. It is a cross-correlation with no flip: <code>correlate2d(A_prev, dZ, mode='valid')</code>.</li>
             </ol>
         </figcaption>
     </figure>
@@ -406,6 +418,7 @@
                     <li><strong>Pad $dZ$ with zeros ('full' padding).</strong> The 2&times;2 error map sits in the middle of a 6&times;6 grid, so the flipped filter can overlap every position the original filter ever touched.</li>
                     <li><strong>Slide and sum.</strong> The orange window shows the highlighted output: $dA[1,1] = 2\cdot0 + 1\cdot2 + 3\cdot1 = 5$. The result is 4&times;4, the same shape as the input $A^{[l-1]}$.</li>
                     <li><strong>Same thing, seen the other way.</strong> Every $dZ[i,j]$ sends $dZ[i,j]\cdot K$ back onto the 3&times;3 input patch that produced it; where patches overlap, the contributions add. With several filters, sum over all filters $k$.</li>
+                    <li><strong>Uses $dZ$ and $K$, not $dK$.</strong> The weight gradient $dK$ (Figure 6) does not enter this step; it goes to the Adam update of $K$, and only $dA^{[l-1]}$ continues backward to layer $l-1$.</li>
             </ol>
         </figcaption>
     </figure>
@@ -688,7 +701,7 @@
 
 <p>That's precisely why it's cheap and useful for changing channel depth: stacking a $1{\times}1$ conv that maps $C_{in} \to C_{reduced}$ (with $C_{reduced} < C_{in}$) before a more expensive $3{\times}3$ conv shrinks the number of channels the $3{\times}3$ filter has to sweep over, cutting that layer's parameter count substantially &mdash; without discarding any spatial information, since the $1{\times}1$ step never touched it. This is exactly the trick ResNet's bottleneck block and Inception's channel-reduction step (both referenced below and in the comparison table) are built on.</p>
 
-<h4>Residual Networks (ResNet)</h4>
+<h4 id="resnet">Residual Networks (ResNet)</h4>
 <p>Even with He initialization and proper normalization, plain CNNs hit a wall: past a certain depth, adding <em>more</em> layers makes <strong>training accuracy worse</strong>, not just validation accuracy &mdash; a purely optimization-side failure, not overfitting. This matters enormously in medical imaging, where the difference between a missed and a caught finding often comes down to depth: a several-millimeter tumor in a CT slice, a hairline fracture, or a microaneurysm in a retinal scan is exactly the kind of fine-grained texture cue that only emerges after many stacked layers build up the feature hierarchy from Figure 4 &mdash; so simply refusing to stack more layers isn't an option here. ResNet's fix is the residual block $H(x) = F(x, \{W_i\}) + x$: each block learns a small correction $F(x)$ on top of an identity shortcut, rather than the full mapping from scratch. The reason this fixes training rather than just accuracy shows up directly in the gradient: $\frac{\partial L}{\partial x} = \frac{\partial L}{\partial H}\left(\frac{\partial F}{\partial x} + 1\right)$ &mdash; that "+1" guarantees a direct gradient path back through every block regardless of how small $\partial F/\partial x$ gets, which is exactly the mechanism that lets ResNets train at 50&ndash;150+ layers where plain stacks of our <code>ConvLayer</code> degrade. Deeper ResNet variants (50/101/152) additionally use a <strong>bottleneck block</strong> (1&times;1 &rarr; 3&times;3 &rarr; 1&times;1 convolutions &mdash; using the channel-reduction trick just described) to cut the parameter cost of each residual unit before scaling to that many layers &mdash; and, as the next figure shows, ResNet-50/101 are exactly the depths most widely deployed in clinical imaging pipelines. The full derivation, bottleneck design, and a pure-Python <code>ResidualBlock</code> built on top of the <code>ConvLayer</code> above are covered in the <a href="resnet.html">dedicated ResNet page</a> &mdash; update this link if your filename differs.</p>
 
 <div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
@@ -1000,6 +1013,48 @@ opt = torch.optim.AdamW([
         </tr>
     </tbody>
 </table>
+<h4 id="modalities">Different Modalities: 2D Images, 3D Volumes and Time Series</h4>
+<p>Everything on this page was built on a 2D image, but the core ideas (local kernels, weight sharing, a feature hierarchy, residual shortcuts, an encoder-decoder with skip connections) depend on <em>spatial locality</em>, not on the scanner. When the modality changes, the shape of the input changes, and the shape of the kernel follows it.</p>
+<table style="width:100%; border-collapse: collapse; margin: 20px 0;">
+    <thead>
+        <tr style="background-color: #f2f2f2; text-align: left;">
+            <th style="padding: 12px; border: 1px solid #ddd;">Modality</th>
+            <th style="padding: 12px; border: 1px solid #ddd;">Input shape</th>
+            <th style="padding: 12px; border: 1px solid #ddd;">Convolution used</th>
+            <th style="padding: 12px; border: 1px solid #ddd;">What to note</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Photo, X-ray, fundus, dermoscopy, histology tile</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">$H \times W \times C$</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">2D, $k \times k$ kernel</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Everything on this page; ImageNet-pretrained backbones apply directly</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">CT, MRI (volumes)</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">$D \times H \times W$ (one or more channels)</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">3D, e.g. $3 \times 3 \times 3$, or 2.5D</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">The kernel also slides through the slices; 3D U-Net and 3D ResNets are the usual choices</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Multi-sequence MRI (T1, T2, FLAIR)</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">$D \times H \times W \times C$</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Sequences stacked as input channels</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Sequences must be registered (aligned) to each other first</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">fMRI</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">$D \times H \times W \times T$ (3D plus time)</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">3D CNN per time window, or CNN features followed by an RNN or Transformer over time</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">Weak, noisy signal and few subjects; sometimes modelled on connectivity graphs instead</td>
+        </tr>
+    </tbody>
+</table>
+<p><strong>3D kernels cost more.</strong> A 3D kernel adds a third spatial dimension, so a $3 \times 3$ filter over $C_{in}=64$ channels has $3 \cdot 3 \cdot 64 + 1 = 577$ parameters, while the $3 \times 3 \times 3$ version has $3 \cdot 3 \cdot 3 \cdot 64 + 1 = 1{,}729$, three times as many. Activations grow by a factor of the depth as well, so volumes are usually trained on small 3D patches with small batches.</p>
+<p><strong>2.5D as the cheap compromise.</strong> Stack a few neighbouring slices (for example 3 or 5) as the <em>channels</em> of an ordinary 2D CNN. This keeps the 2D machinery and gives the network some through-plane context, though not the full 3D receptive field. With 3 slices as 3 channels, 2D ImageNet-pretrained weights can still be used.</p>
+<p><strong>Architecture follows the task, not the modality.</strong> A ResNet-style encoder suits a scan-level label (diagnosis, staging), while a U-Net, in its 3D form for volumes (3D U-Net, nnU-Net), suits per-voxel segmentation. ImageNet weights are 2D and RGB, so for volumes you either inflate the 2D filters to 3D, use 2.5D, or start from weights pretrained on medical data. Preprocessing also differs between 2D and 3D, as covered in the <a href="CNN_Training.html#data-prep">data preparation</a> part of the CNN Training page.</p>
+
 <div style="background: #fffbeb; border-left: 5px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;">
     <h5 style="margin-top: 0; color: #92400e; font-size: 1.05rem;">A Warning for Medical Imaging: Covariate Shift</h5>
     <p style="margin-bottom: 10px; color: #78350f;">A CNN trained on scans from one hospital may perform worse at another. A different scanner, brightness setting, or image-capture protocol changes how the images <em>look</em>, even though the disease looks the same. This is called <strong>covariate shift</strong>: the inputs change, but the correct answer for a given image does not.</p>
@@ -1099,6 +1154,12 @@ opt = torch.optim.AdamW([
             { q: "What does U-Net add to the plain pool-flatten-classify design?",
               a: "A mirror-image decoder that upsamples with transposed convqlution back to full resolution, with skip connections restoring spatial detail, giving a per-pixel output",
               w: ["Residual shortcuts that let the network train at 150 layers", "Parallel filter sizes in each block for multi-scale features", "A recurrent hidden state that carries information across time steps"] },
+            { q: "How does a 3D convolution differ from a 2D one, and where is it used?",
+              a: "The kernel also slides along the depth axis (for example 3 &times; 3 &times; 3), so it works on volumes such as CT and MRI; each filter has more parameters",
+              w: ["It slides only along the width, so it works on audio signals", "It uses a 2D kernel on each slice independently and never combines them", "It is used only for colour images, with one dimension per RGB channel"] },
+            { q: "What is 2.5D input, and what does it trade off?",
+              a: "A few neighbouring slices are stacked as channels of a 2D CNN; it is cheap and works with 2D pretrained weights, but gives less context than a full 3D kernel",
+              w: ["Every slice is resized to half its size before a 3D CNN", "The 3D volume is flattened into one long vector and given to an MLP", "Each slice is classified independently and the results are averaged"] },
             { q: "How do ResNet&rsquo;s skip connections differ from U-Net&rsquo;s?",
               a: "ResNet adds two same-shaped tensors elementwise, while U-Net concatenates the encoder map onto the upsampled decoder map along the channel axis",
               w: ["ResNet concatenates along the channel axis, while U-Net adds elementwise", "Both add elementwise; U-Net just uses larger tensors", "Both concatenate; ResNet uses a 1 &times; 1 convolution first"] },
