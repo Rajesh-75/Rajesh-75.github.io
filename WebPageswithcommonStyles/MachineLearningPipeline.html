@@ -199,7 +199,7 @@
         <li>Data Lake: Stores raw, uncleaned, unstructured data (<a href="https://en.wikipedia.org/wiki/Amazon_S3" target="_blank" rel="noopener noreferrer">S3</a>, <a href="https://en.wikipedia.org/wiki/Google_Cloud_Storage" target="_blank" rel="noopener noreferrer">GCS</a>).</li>
         <li>Data Warehouse: Stores structured, cleaned data optimized for analytical querying.</li>
         <li>Feature Store: Stores curated feature vectors for consistent batch training and real-time inference.</li>
-        <li>Vector Database: Stores embeddings (numeric vector representations of text, images or audio) so that similar items can be found by similarity search; central to retrieval-augmented generation (RAG) for LLMs (e.g., Pinecone, Milvus, pgvector).</li>
+        <li><a href="https://en.wikipedia.org/wiki/Vector_database" target="_blank" rel="noopener noreferrer">Vector Database</a>: Stores embeddings (numeric vector representations of text, images or audio) so that similar items can be found by similarity search; central to <a href="https://en.wikipedia.org/wiki/Retrieval-augmented_generation" target="_blank" rel="noopener noreferrer">retrieval-augmented generation (RAG)</a> for LLMs (e.g., Pinecone, Milvus, pgvector).</li>
     </ul>
 
     <h4>2. Data Governance and Security</h4>
@@ -299,7 +299,7 @@
     <ul>
         <li><strong>Image Processing:</strong> Before <a href="CNN.html" class="xlink">CNNs</a>, images were converted into feature vectors using techniques like <strong><a href="https://en.wikipedia.org/wiki/Scale-invariant_feature_transform" target="_blank" rel="noopener noreferrer">SIFT</a></strong> (Scale-Invariant Feature Transform) and <strong><a href="https://en.wikipedia.org/wiki/Histogram_of_oriented_gradients" target="_blank" rel="noopener noreferrer">HOG</a></strong> (Histogram of Oriented Gradients) to capture edges and shapes, <strong>color histograms</strong> to summarize color distribution, and hand-crafted <strong>edge/corner detectors</strong> (e.g., Canny, Harris) to locate structurally important points.</li>
         <li><strong>Natural Language Processing:</strong> Text was converted into numerical features using <strong><a href="https://en.wikipedia.org/wiki/Bag-of-words_model" target="_blank" rel="noopener noreferrer">Bag-of-Words</a></strong> and <strong><a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf" target="_blank" rel="noopener noreferrer">TF-IDF</a></strong> (term frequency weighting), <strong><a href="https://en.wikipedia.org/wiki/N-gram" target="_blank" rel="noopener noreferrer">n-grams</a></strong> (capturing short word sequences), and hand-built lexicons for sentiment or part-of-speech tagging.</li>
-        <li><strong>Audio & Speech:</strong> Raw waveforms were reduced to features like <strong>MFCCs</strong> (Mel-Frequency Cepstral Coefficients) and spectral energy bands, which better represent how humans perceive sound than the raw signal does.</li>
+        <li><strong>Audio & Speech:</strong> Raw waveforms were reduced to features like <strong><a href="https://en.wikipedia.org/wiki/Mel-frequency_cepstrum" target="_blank" rel="noopener noreferrer">MFCCs</a></strong> (Mel-Frequency Cepstral Coefficients) and spectral energy bands, which better represent how humans perceive sound than the raw signal does.</li>
         <li><strong>Time-Series & Sensor Data:</strong> Signals were summarized with statistical descriptors such as rolling means, variance, peak counts, and frequency-domain features (via Fourier or wavelet transforms).</li>
     </ul>
 
@@ -412,73 +412,77 @@
         The figure below shows how the three data splits are used around this loop, and which error each one produces.
     </p>
 
-    <div class="flowchart-wrap" role="img" aria-label="Flowchart: train on the training set, validate and tune on the validation set, retrain with the best setting, then test once on the test set. Training, validation and test errors are produced at the first, second and fourth stages. The setting with the lowest validation error is passed to retraining, and a high test error triggers diagnosis and a return to data, features or the model.">
-        <svg viewBox="0 0 980 400" xmlns="http://www.w3.org/2000/svg">
+    <div class="flowchart-wrap" role="img" aria-label="Flowchart: train on the training set, validate and tune on the validation set, optionally retrain with the best setting, then test once on the test set. Training, validation and test errors are produced at the first, second and fourth stages. The setting with the lowest validation error is passed to retraining, or the best-validation model goes straight to testing. High errors send the work back to training, and a high test error triggers diagnosis and a return to data, features or the model.">
+        <svg viewBox="0 0 980 420" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
                     <path d="M0,0 L8,4 L0,8 Z" fill="#555"/>
                 </marker>
             </defs>
-            <text class="flow-text" x="220" y="30" style="font-size:12px;">Adjust and repeat</text>
-            <path class="flow-arrow" d="M340,70 L340,42 L100,42 L100,68"/>
-            <rect class="flow-box" x="10" y="70" width="180" height="64" rx="8"/>
-            <text class="flow-num" x="100" y="88">1</text>
-            <text class="flow-text" x="100" y="107">Train</text>
-            <text class="flow-text" x="100" y="124" style="font-size:12px;">Training set</text>
-            <rect class="flow-box" x="250" y="70" width="180" height="64" rx="8"/>
-            <text class="flow-num" x="340" y="88">2</text>
-            <text class="flow-text" x="340" y="107">Validate</text>
-            <text class="flow-text" x="340" y="124" style="font-size:12px;">Validation set</text>
-            <rect class="flow-box" x="490" y="70" width="180" height="64" rx="8"/>
-            <text class="flow-num" x="580" y="88">3</text>
-            <text class="flow-text" x="580" y="107">Retrain</text>
-            <text class="flow-text" x="580" y="124" style="font-size:12px;">Best setting</text>
-            <rect class="flow-box" x="730" y="70" width="180" height="64" rx="8"/>
-            <text class="flow-num" x="820" y="88">4</text>
-            <text class="flow-text" x="820" y="107">Test</text>
-            <text class="flow-text" x="820" y="124" style="font-size:12px;">Test set, used once</text>
-            <path class="flow-arrow" d="M190,102 L248,102"/>
-            <path class="flow-arrow" d="M430,102 L488,102"/>
-            <path class="flow-arrow" d="M670,102 L728,102"/>
-            <path class="flow-arrow" d="M100,134 L100,196"/>
-            <path class="flow-arrow" d="M340,134 L340,196"/>
-            <path class="flow-arrow" d="M820,134 L820,196"/>
-            <rect class="flow-box" x="10" y="198" width="180" height="56" rx="8" style="fill:#eaf6ef; stroke:#2f8f5b;"/>
-            <text class="flow-text" x="100" y="221" style="fill:#1d5c3a;">Training error</text>
-            <text class="flow-text" x="100" y="240" style="fill:#1d5c3a; font-size:12px;">Optimistic estimate</text>
-            <rect class="flow-box" x="250" y="198" width="180" height="56" rx="8" style="fill:#eaf6ef; stroke:#2f8f5b;"/>
-            <text class="flow-text" x="340" y="221" style="fill:#1d5c3a;">Validation error</text>
-            <text class="flow-text" x="340" y="240" style="fill:#1d5c3a; font-size:12px;">Guides tuning</text>
-            <rect class="flow-box" x="730" y="198" width="180" height="56" rx="8" style="fill:#eaf6ef; stroke:#2f8f5b;"/>
-            <text class="flow-text" x="820" y="221" style="fill:#1d5c3a;">Test error</text>
-            <text class="flow-text" x="820" y="240" style="fill:#1d5c3a; font-size:12px;">Estimate on new data</text>
-            <path class="flow-arrow" d="M430,226 L580,226 L580,138"/>
-            <text class="flow-text" x="440" y="248" style="font-size:12px; text-anchor:start;">Lowest validation error</text>
-            <path class="flow-arrow" d="M820,254 L820,296"/>
-            <rect class="flow-box" x="730" y="298" width="180" height="56" rx="8" style="fill:#fdf3e7; stroke:#c98a2c;"/>
-            <text class="flow-text" x="820" y="321" style="fill:#8a5a10;">If high: diagnose</text>
-            <text class="flow-text" x="820" y="340" style="fill:#8a5a10; font-size:12px;">Compare all three errors</text>
-            <path class="flow-arrow" style="stroke:#c98a2c;" d="M728,326 L672,326"/>
-            <rect class="flow-box" x="490" y="298" width="180" height="56" rx="8" style="fill:#fdf3e7; stroke:#c98a2c;"/>
-            <text class="flow-text" x="580" y="321" style="fill:#8a5a10;">Go back and fix</text>
-            <text class="flow-text" x="580" y="340" style="fill:#8a5a10; font-size:12px;">Data, features or model</text>
-            <rect x="10" y="374" width="14" height="14" rx="3" style="fill:#eef4fb; stroke:#2c6fbb; stroke-width:1.5;"/>
-            <text class="flow-text" x="32" y="385" style="font-size:12px; text-anchor:start;">Stage</text>
-            <rect x="100" y="374" width="14" height="14" rx="3" style="fill:#eaf6ef; stroke:#2f8f5b; stroke-width:1.5;"/>
-            <text class="flow-text" x="122" y="385" style="font-size:12px; text-anchor:start;">Error measured</text>
-            <rect x="240" y="374" width="14" height="14" rx="3" style="fill:#fdf3e7; stroke:#c98a2c; stroke-width:1.5;"/>
-            <text class="flow-text" x="262" y="385" style="font-size:12px; text-anchor:start;">Response to a high test error</text>
+            <text class="flow-text" x="220" y="16" style="font-size:12px; font-weight:bold;">Adjust and repeat, guided by the two errors</text>
+            <text class="flow-text" x="220" y="33" style="font-size:12px;">Both errors high (underfit): more capacity, less regularization</text>
+            <text class="flow-text" x="220" y="50" style="font-size:12px;">Train low, validation high (overfit): regularize, add data</text>
+            <path class="flow-arrow" d="M340,84 L340,64 L100,64 L100,82"/>
+            <text class="flow-text" x="610" y="58" style="font-size:12px;">Or skip retraining (use best model)</text>
+            <path class="flow-arrow" d="M400,84 L400,66 L820,66 L820,82"/>
+            <rect class="flow-box" x="10" y="84" width="180" height="64" rx="8"/>
+            <text class="flow-num" x="100" y="102">1</text>
+            <text class="flow-text" x="100" y="121">Train</text>
+            <text class="flow-text" x="100" y="138" style="font-size:12px;">Training set</text>
+            <rect class="flow-box" x="250" y="84" width="180" height="64" rx="8"/>
+            <text class="flow-num" x="340" y="102">2</text>
+            <text class="flow-text" x="340" y="121">Validate</text>
+            <text class="flow-text" x="340" y="138" style="font-size:12px;">Validation set</text>
+            <rect class="flow-box" x="490" y="84" width="180" height="64" rx="8" stroke-dasharray="6 4"/>
+            <text class="flow-num" x="580" y="102">3</text>
+            <text class="flow-text" x="580" y="121">Retrain (optional)</text>
+            <text class="flow-text" x="580" y="138" style="font-size:12px;">Best setting, all data</text>
+            <rect class="flow-box" x="730" y="84" width="180" height="64" rx="8"/>
+            <text class="flow-num" x="820" y="102">4</text>
+            <text class="flow-text" x="820" y="121">Test</text>
+            <text class="flow-text" x="820" y="138" style="font-size:12px;">Test set, used once</text>
+            <path class="flow-arrow" d="M190,116 L248,116"/>
+            <path class="flow-arrow" d="M430,116 L488,116"/>
+            <path class="flow-arrow" d="M670,116 L728,116"/>
+            <path class="flow-arrow" d="M100,148 L100,210"/>
+            <path class="flow-arrow" d="M340,148 L340,210"/>
+            <path class="flow-arrow" d="M820,148 L820,210"/>
+            <rect class="flow-box" x="10" y="212" width="180" height="56" rx="8" style="fill:#eaf6ef; stroke:#2f8f5b;"/>
+            <text class="flow-text" x="100" y="235" style="fill:#1d5c3a;">Training error</text>
+            <text class="flow-text" x="100" y="254" style="fill:#1d5c3a; font-size:12px;">Optimistic estimate</text>
+            <rect class="flow-box" x="250" y="212" width="180" height="56" rx="8" style="fill:#eaf6ef; stroke:#2f8f5b;"/>
+            <text class="flow-text" x="340" y="235" style="fill:#1d5c3a;">Validation error</text>
+            <text class="flow-text" x="340" y="254" style="fill:#1d5c3a; font-size:12px;">Guides tuning</text>
+            <rect class="flow-box" x="730" y="212" width="180" height="56" rx="8" style="fill:#eaf6ef; stroke:#2f8f5b;"/>
+            <text class="flow-text" x="820" y="235" style="fill:#1d5c3a;">Test error</text>
+            <text class="flow-text" x="820" y="254" style="fill:#1d5c3a; font-size:12px;">Estimate on new data</text>
+            <path class="flow-arrow" d="M430,240 L580,240 L580,152"/>
+            <text class="flow-text" x="440" y="262" style="font-size:12px; text-anchor:start;">Lowest validation error</text>
+            <path class="flow-arrow" d="M820,268 L820,310"/>
+            <rect class="flow-box" x="730" y="312" width="180" height="56" rx="8" style="fill:#fdf3e7; stroke:#c98a2c;"/>
+            <text class="flow-text" x="820" y="335" style="fill:#8a5a10;">If high: diagnose</text>
+            <text class="flow-text" x="820" y="354" style="fill:#8a5a10; font-size:12px;">Compare all three errors</text>
+            <path class="flow-arrow" style="stroke:#c98a2c;" d="M728,340 L672,340"/>
+            <rect class="flow-box" x="490" y="312" width="180" height="56" rx="8" style="fill:#fdf3e7; stroke:#c98a2c;"/>
+            <text class="flow-text" x="580" y="335" style="fill:#8a5a10;">Go back and fix</text>
+            <text class="flow-text" x="580" y="354" style="fill:#8a5a10; font-size:12px;">Data, features or model</text>
+            <rect x="10" y="390" width="14" height="14" rx="3" style="fill:#eef4fb; stroke:#2c6fbb; stroke-width:1.5;"/>
+            <text class="flow-text" x="32" y="401" style="font-size:12px; text-anchor:start;">Stage</text>
+            <rect x="100" y="390" width="14" height="14" rx="3" style="fill:#eaf6ef; stroke:#2f8f5b; stroke-width:1.5;"/>
+            <text class="flow-text" x="122" y="401" style="font-size:12px; text-anchor:start;">Error measured</text>
+            <rect x="240" y="390" width="14" height="14" rx="3" style="fill:#fdf3e7; stroke:#c98a2c; stroke-width:1.5;"/>
+            <text class="flow-text" x="262" y="401" style="font-size:12px; text-anchor:start;">Response to a high test error</text>
         </svg>
     </div>
-<p class="image-title">Figure 7: Train, validate, retrain and test, with the error produced at each stage. The setting with the lowest validation error, found by repeating the adjust-and-retrain loop, is carried into retraining. A high test error triggers diagnosis and a return to data, features or the model.</p>
+<p class="image-title">Figure 7: Train, validate, retrain and test, with the error produced at each stage. The setting with the lowest validation error, found by repeating the adjust-and-retrain loop, is carried into retraining, which is optional; without retraining, the best-validation model goes straight to testing. A high test error triggers diagnosis and a return to data, features or the model.</p>
 
     <h3>4. Underfitting and Overfitting</h3>
     <p class="detail-description">
         Not every training run ends in a well-generalizing model. Two common failure modes sit on opposite ends of model complexity:
     </p>
     <ul>
-        <li><strong>Underfitting (High Bias):</strong> The model is too simple to capture the underlying pattern in the data—e.g., fitting a straight line to a clearly curved relationship. Both training error and test error remain high, because the model hasn't even learned the pattern in the data it was trained on.</li>
-        <li><strong>Overfitting (High Variance):</strong> The model is too complex relative to the amount or noise of the data, so it starts memorizing individual training examples—including their noise—rather than the general pattern. Training error becomes very low, but test error stays high or gets worse, since none of that memorized noise transfers to new data.</li>
+        <li><strong>Underfitting (High <a href="LinerModelandClassification.html#bias-variance" class="xlink">Bias</a>):</strong> The model is too simple to capture the underlying pattern in the data—e.g., fitting a straight line to a clearly curved relationship. Both training error and test error remain high, because the model hasn't even learned the pattern in the data it was trained on.</li>
+        <li><strong>Overfitting (High <a href="LinerModelandClassification.html#bias-variance" class="xlink">Variance</a>):</strong> The model is too complex relative to the amount or noise of the data, so it starts memorizing individual training examples—including their noise—rather than the general pattern. Training error becomes very low, but test error stays high or gets worse, since none of that memorized noise transfers to new data.</li>
     </ul>
 
     <div class="flowchart-wrap" role="img" aria-label="Chart showing training error decreasing and test error forming a U-shape as model complexity increases, with underfitting on the left, the optimal zone in the middle, and overfitting on the right">
