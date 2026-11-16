@@ -264,10 +264,12 @@
     <ul>
         <li><strong>Dimensionality Reduction:</strong> It sheds redundant data, keeping only the strongest activations and preventing the "Parameter Explosion" discussed earlier.</li>
         <li><strong>Invariance to Noise:</strong> It makes the detection robust. It no longer matters exactly which pixel triggered a "corner" detection, only that the corner exists within that pooled region.</li>
+		<li><strong>Reduces Computation:</strong>Pooling as it reduces the spatial size,cuts computation for the layers after it. Strided convolutions can also do the same job</li>
     </ul>
 
     <h3>The Feature Hierarchy: From Primitives to Entities</h3>
     <p>The "intelligence" of a CNN emerges from how these layers are stacked. This creates a <strong>Cognitive Hierarchy</strong> where the network learns to "see" in stages.</p>
+	<p>The first layers act as <strong>Edge Detectors</strong>. Because these kernels are shared across the image, they learn basic geometric primitives. As we move deeper into the network, the <strong>Forward Pass</strong> combines these edges into <strong>Part Detectors</strong> (like whiskers or ears) and finally into <strong>Entity Detectors</strong> that represent the entire object.</p>
 
     <div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
         <figure style="display: inline-block; max-width: 100%; margin: 0;">
@@ -286,7 +288,23 @@
         </figure>
     </div>
 
-    <p>The first layers act as <strong>Edge Detectors</strong>. Because these kernels are shared across the image, they learn basic geometric primitives. As we move deeper into the network, the <strong>Forward Pass</strong> combines these edges into <strong>Part Detectors</strong> (like whiskers or ears) and finally into <strong>Entity Detectors</strong> that represent the entire object.</p>
+    <div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
+        <figure style="display: inline-block; max-width: 100%; margin: 0;">
+            <img src="CNN_EarlyLayers_Medical.jpg" alt="Retinal fundus photograph and CT slice shown as input, oriented edges, contours and corners, parts and regions, and entity" style="width: 100%; max-width: 1000px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 1000px; margin-left: auto; margin-right: auto;">
+                <strong>Figure 4b: What each depth computes, on medical images.</strong> Read left to right, the direction of the forward pass:
+                <ol style="margin-top: 8px; padding-left: 20px;">
+                    <li><strong>Layer 1, oriented edges.</strong> Yes, the first convolutional layer mainly learns small edge detectors (plus colour and intensity blobs). Each filter fires wherever its edge direction appears; here the colour shows the direction.</li>
+                    <li><strong>Layer 2, contours and corners.</strong> Neighbouring edges of consistent direction are combined into curves, corners and junctions, such as vessel branch points and bone outlines.</li>
+                    <li><strong>Layer 3, parts and regions.</strong> Contours and textures combine into larger motifs: vessel segments and the optic disc in the fundus, cortical bone vs. soft tissue in the CT.</li>
+                    <li><strong>Deep layers, entity.</strong> Whole-structure detectors (the vessel tree, the vertebra) are formed, and the dense layers turn them into a verdict.</li>
+                </ol>
+                <em>Illustration only.</em> Panels were computed by the author using standard image-processing operators (Sobel orientation, Canny and Harris, Frangi ridge filter, multi-Otsu thresholding, as implemented in scikit-image) as stand-ins for what each layer computes; they are not outputs of a trained network. In a real CNN these filters are learned; layer-1 filters typically look like the oriented edges shown, while deeper features are learned and are less cleanly interpretable. Source images: retinal fundus photograph from the scikit-image sample data; CT slice from the pydicom sample data.
+            </figcaption>
+        </figure>
+    </div>
+
+    
 
     <h3>The Final Output: Reaching a Verdict</h3>
     <p>Once the spatial features have been extracted and downsampled, the 3D maps are <strong>Flattened</strong> into a 1D vector. This vector is fed into the final "Dense" layers of the network.</p>
@@ -565,114 +583,11 @@
 
 <h3>5. Implementation: CNN Training from Scratch (Pure Python)</h3>
 <p>To truly understand the "mechanical engine" of a CNN, we can implement the forward and backward passes using nested loops. This avoids external libraries and shows exactly how the <strong>Weight Sharing</strong> and <strong>Valid Convolution</strong> we discussed are translated into code.</p>
-
-<div class="intuition-box">
-    <strong>Developer Note:</strong> This implementation uses "Pure Python" lists for maximum clarity. In a production environment, these loops are typically vectorized using NumPy or GPU kernels (CUDA) to improve performance.
-</div>
-
-<div class="algorithm-block" style="background: #2d3748; color: #edf2f7; padding: 25px; border-radius: 8px; font-family: 'Courier New', Courier, monospace; line-height: 1.5; overflow-x: auto;">
-    <pre style="margin: 0;">
-<span style="color: #9f7aea;">import</span> random <span style="color: #718096;"># Only for initialization</span>
-
-<span style="color: #ed64a6;">class</span> <span style="color: #ecc94b;">AdamOptimizer</span>:
-    <span style="color: #ed64a6;">def</span> <span style="color: #4299e1;">__init__</span>(self, learning_rate=0.001, b1=0.9, b2=0.999, epsilon=1e-8):
-        self.eta = learning_rate
-        self.b1, self.b2 = b1, b2
-        self.epsilon = epsilon
-        self.m = <span style="color: #ed64a6;">None</span>
-        self.v = <span style="color: #ed64a6;">None</span>
-        self.t = 0
-
-    <span style="color: #ed64a6;">def</span> <span style="color: #4299e1;">update</span>(self, weights, gradients):
-        <span style="color: #ed64a6;">if</span> self.m <span style="color: #ed64a6;">is None</span>:
-            self.m = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> row] <span style="color: #ed64a6;">for</span> row <span style="color: #ed64a6;">in</span> weights]
-            self.v = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> row] <span style="color: #ed64a6;">for</span> row <span style="color: #ed64a6;">in</span> weights]
-        
-        self.t += 1
-        new_w = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> row] <span style="color: #ed64a6;">for</span> row <span style="color: #ed64a6;">in</span> weights]
-        
-        <span style="color: #ed64a6;">for</span> i <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(weights)):
-            <span style="color: #ed64a6;">for</span> j <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(weights[0])):
-                g = gradients[i][j]
-                <span style="color: #718096;"># 1. Moment Updates</span>
-                self.m[i][j] = self.b1 * self.m[i][j] + (1 - self.b1) * g
-                self.v[i][j] = self.b2 * self.v[i][j] + (1 - self.b2) * (g**2)
-                
-                <span style="color: #718096;"># 2. Bias Correction</span>
-                m_hat = self.m[i][j] / (1 - self.b1**self.t)
-                v_hat = self.v[i][j] / (1 - self.b2**self.t)
-                
-                <span style="color: #718096;"># 3. Parameter Update</span>
-                new_w[i][j] = weights[i][j] - (self.eta * m_hat) / (v_hat**0.5 + self.epsilon)
-        <span style="color: #ed64a6;">return</span> new_w
-
-<span style="color: #ed64a6;">class</span> <span style="color: #ecc94b;">ConvLayer</span>:
-    <span style="color: #ed64a6;">def</span> <span style="color: #4299e1;">__init__</span>(self, kernel_size):
-        <span style="color: #718096;"># Small random initialization</span>
-        self.kernel = [[random.uniform(-0.1, 0.1) <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kernel_size)] 
-                       <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kernel_size)]
-        self.bias = 0.0
-        self.optimizer = AdamOptimizer()
-
-    <span style="color: #ed64a6;">def</span> <span style="color: #4299e1;">forward</span>(self, image):
-        self.last_input = image
-        h, w = <span style="color: #4299e1;">len</span>(image), <span style="color: #4299e1;">len</span>(image[0])
-        kh, kw = <span style="color: #4299e1;">len</span>(self.kernel), <span style="color: #4299e1;">len</span>(self.kernel[0])
-        output = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(w-kw+1)] <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(h-kh+1)]
-        
-        <span style="color: #718096;"># Standard 2D Convolution (Sliding Window)</span>
-        <span style="color: #ed64a6;">for</span> i <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(h-kh+1):
-            <span style="color: #ed64a6;">for</span> j <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(w-kw+1):
-                sum_val = 0
-                <span style="color: #ed64a6;">for</span> ki <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kh):
-                    <span style="color: #ed64a6;">for</span> kj <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kw):
-                        sum_val += image[i+ki][j+kj] * self.kernel[ki][kj]
-                output[i][j] = sum_val + self.bias
-        <span style="color: #ed64a6;">return</span> output
-
-    <span style="color: #ed64a6;">def</span> <span style="color: #4299e1;">backward</span>(self, d_out):
-        kh, kw = <span style="color: #4299e1;">len</span>(self.kernel), <span style="color: #4299e1;">len</span>(self.kernel[0])
-        ih, iw = <span style="color: #4299e1;">len</span>(self.last_input), <span style="color: #4299e1;">len</span>(self.last_input[0])
-        d_kernel = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kw)] <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kh)]
-        d_bias = 0.0
-
-        <span style="color: #718096;"># Step 2: dL/dW (Valid Correlation between Input and Error Map)</span>
-        <span style="color: #ed64a6;">for</span> i <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kh):
-            <span style="color: #ed64a6;">for</span> j <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kw):
-                <span style="color: #ed64a6;">for</span> oi <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(d_out)):
-                    <span style="color: #ed64a6;">for</span> oj <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(d_out[0])):
-                        d_kernel[i][j] += self.last_input[i+oi][j+oj] * d_out[oi][oj]
-
-        <span style="color: #718096;"># dL/db is just the sum of the error map</span>
-        <span style="color: #ed64a6;">for</span> row <span style="color: #ed64a6;">in</span> d_out:
-            d_bias += <span style="color: #4299e1;">sum</span>(row)
-
-        <span style="color: #718096;"># Step 3: dA_prev (Full Correlation of d_out with the 180-rotated kernel)</span>
-        <span style="color: #718096;"># This is what lets us chain backward() calls across stacked ConvLayers.</span>
-        rotated = [[self.kernel[kh-1-ki][kw-1-kj] <span style="color: #ed64a6;">for</span> kj <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kw)] <span style="color: #ed64a6;">for</span> ki <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kh)]
-        padded = [[0.0] * (<span style="color: #4299e1;">len</span>(d_out[0]) + 2*(kh-1)) <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(d_out) + 2*(kh-1))]
-        <span style="color: #ed64a6;">for</span> i <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(d_out)):
-            <span style="color: #ed64a6;">for</span> j <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(<span style="color: #4299e1;">len</span>(d_out[0])):
-                padded[i+kh-1][j+kw-1] = d_out[i][j]
-
-        d_input = [[0.0 <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(iw)] <span style="color: #ed64a6;">for</span> _ <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(ih)]
-        <span style="color: #ed64a6;">for</span> i <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(ih):
-            <span style="color: #ed64a6;">for</span> j <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(iw):
-                sum_val = 0
-                <span style="color: #ed64a6;">for</span> ki <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kh):
-                    <span style="color: #ed64a6;">for</span> kj <span style="color: #ed64a6;">in</span> <span style="color: #4299e1;">range</span>(kw):
-                        sum_val += padded[i+ki][j+kj] * rotated[ki][kj]
-                d_input[i][j] = sum_val
-
-        <span style="color: #718096;"># Update kernel weights using Adam (bias updated with plain SGD here for simplicity)</span>
-        self.kernel = self.optimizer.update(self.kernel, d_kernel)
-        self.bias -= self.optimizer.eta * d_bias
-        <span style="color: #ed64a6;">return</span> d_input</pre>
-</div>
-
-<div style="background: #fff8e1; padding: 15px; border-left: 5px solid #ffc107; margin-top: 10px;">
-    <strong>Tutorial Focus:</strong> Notice how the <code>backward</code> method uses <code>self.last_input</code>. This confirms our derivation that the gradient for the weights depends directly on the values seen during the forward pass.
-</div>
+Here you can download the CNN implementation using numpy libaries,this code doesnt use Tensorflow or Pytorch.
+As such implementation uses only numpy basic building blocks. This is not for production quality use, rather for learning Forward Propogation and BackPropogation based on above pseudo code
+<a href="Python_Codes/CNN_FPandBPusingonlyNumpy.py" download>
+   Download CNN_FPandBPusingonlyNumpy.py
+</a>
 
 <hr>
 
