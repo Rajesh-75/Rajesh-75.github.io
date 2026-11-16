@@ -221,6 +221,10 @@ code, .mono {
   padding: 18px 22px 18px 10px;
   margin: 20px 0;
   overflow-x: auto;
+  /* One font for every algorithm box on every page: the body font. !important so a
+     page-level <style> or inline style cannot override it. Children that set their
+     own font (ol.code-lines, code) are unaffected. */
+  font-family: var(--font-body) !important;
 }
 .algorithm-box ol.code-lines {
   margin: 0;
