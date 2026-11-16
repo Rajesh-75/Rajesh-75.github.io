@@ -702,80 +702,14 @@
         This connects directly back to the earlier Underfitting/Overfitting discussion: <strong>Bagging reduces variance</strong> (an overfitting fix), while <strong>Boosting reduces bias</strong> (an underfitting fix)—the same two failure modes from the complexity-vs-error diagram, just addressed by combining models instead of adjusting a single one.
     </p>
 
+ 
     <p class="detail-description">
-        <strong>Core components, more precisely:</strong> a standard MoE layer sits in place of an ordinary feed-forward network (FFN) layer inside a Transformer, and is built from two pieces: <strong>the Experts</strong>—a collection of <em>N</em> separate neural networks (usually the same kind of feed-forward network an FFN layer would normally be), each free to specialize in different kinds of input, patterns, or syntax; and <strong>the Router (Gating Network)</strong>—a lightweight function, typically just a linear layer followed by a softmax, that takes a token's representation and computes a probability across all <em>N</em> experts, deciding which one(s) should handle that token.
+        LLM Models such as <a href = "https://en.wikipedia.org/wiki/DeepSeekDeepSeek">DeepSeekDeepSeek-V2/V3</a> use a <strong>Mixture-of-Experts (MoE)</strong> architecture for Ensemble learning. Instead of one giant network, it uses many smaller "expert" sub-networks, plus a <strong>router</strong> that decides which few experts should handle each input. <p>
+  For the full treatment of MoE, see
+  <a href="LLMEngineDev.html#moe">Mixture of Experts</a>.
+</p>
     </p>
-    <p class="detail-description">
-        Models such as DeepSeek-V2/V3 use a <strong>Mixture-of-Experts (MoE)</strong> architecture. Instead of one giant network, it uses many smaller "expert" sub-networks, plus a <strong>router</strong> that decides which few experts should handle each input.
-    </p>
-    <p class="detail-description">
-        The router is not programmed with rules—it's just another small network that learns through training, exactly like the rest of the model. It starts out choosing experts almost randomly. Over time, routing choices that lead to better predictions get reinforced, and choices that lead to worse predictions get discouraged. So the router gradually learns, on its own, which experts work best for which kind of input—for example, sending math problems to experts that turn out to be good at math, and casual conversation to experts that turn out to be good at fluent dialogue.
-    </p>
-    <p class="detail-description">
-        To be precise about what's actually being passed around: both the router and every expert are neural networks in their own right—each expert is a full sub-network with its own weights, not just a label. For each token, the router outputs a <strong>score for every available expert</strong>, indicating how suited each one is to that token; only the handful with the highest scores (e.g., the top 2) are actually used, and the rest are skipped entirely. Each selected expert then processes the token and produces its own output, and the <strong>combined output</strong> is a <strong>weighted sum</strong> of just those selected experts' outputs, using the router's scores as the weights (e.g., 70% Expert 2's output + 30% Expert 4's output). That single blended result is what moves on to the next layer of the model.
-    </p>
-    <p class="detail-description">
-        One more detail matters for how training actually plays out: for any given token, only the experts the router selected receive a weight update from that token—the skipped experts get no gradient at all for it, not just a small one. Left unchecked, this creates a "rich-get-richer" problem: whichever experts the router happens to favor early on get more training and become slightly better, which makes the router favor them even more, until a few experts do all the work and the rest stay undertrained. To prevent this, MoE training adds an extra term to the Cost Function called a <strong>load-balancing (auxiliary) loss</strong>, which penalizes the router whenever tokens are distributed too unevenly across experts—pushing it to spread work across all the experts rather than collapsing onto just a few favorites.
-    </p>
-
-    <div class="flowchart-wrap" role="img" aria-label="Diagram showing an input token going into a learned router, which activates only two out of five available experts (shown highlighted) while the rest stay inactive, and their outputs are then combined into a final result">
-        <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <marker id="arrowhead4" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                    <path d="M0,0 L8,4 L0,8 Z" fill="#555"/>
-                </marker>
-            </defs>
-
-            <!-- input token -->
-            <rect class="flow-box" x="10" y="115" width="110" height="50" rx="8"/>
-            <text class="flow-text" x="65" y="136" font-size="12">Input</text>
-            <text class="flow-text" x="65" y="152" font-size="12">Token</text>
-
-            <!-- router -->
-            <rect x="160" y="105" width="130" height="70" rx="8" fill="#fdf3e7" stroke="#c98a2c" stroke-width="1.5"/>
-            <text x="225" y="135" text-anchor="middle" font-size="13" fill="#8a5a10" font-weight="bold">Learned</text>
-            <text x="225" y="152" text-anchor="middle" font-size="13" fill="#8a5a10" font-weight="bold">Router</text>
-            <path class="flow-arrow" marker-end="url(#arrowhead4)" d="M120,140 L158,140"/>
-
-            <!-- experts -->
-            <rect x="360" y="10"  width="120" height="45" rx="8" fill="#e9e9e9" stroke="#999"/>
-            <text x="420" y="37" text-anchor="middle" font-size="12" fill="#888">Expert 1</text>
-
-            <rect x="360" y="70" width="120" height="45" rx="8" fill="#eaf6ec" stroke="#2a7a3b" stroke-width="2"/>
-            <text x="420" y="97" text-anchor="middle" font-size="12" fill="#2a7a3b" font-weight="bold">Expert 2</text>
-
-            <rect x="360" y="130" width="120" height="45" rx="8" fill="#e9e9e9" stroke="#999"/>
-            <text x="420" y="157" text-anchor="middle" font-size="12" fill="#888">Expert 3</text>
-
-            <rect x="360" y="190" width="120" height="45" rx="8" fill="#eaf6ec" stroke="#2a7a3b" stroke-width="2"/>
-            <text x="420" y="217" text-anchor="middle" font-size="12" fill="#2a7a3b" font-weight="bold">Expert 4</text>
-
-            <rect x="360" y="250" width="120" height="45" rx="8" fill="#e9e9e9" stroke="#999"/>
-            <text x="420" y="277" text-anchor="middle" font-size="12" fill="#888">Expert 5</text>
-
-            <!-- router to experts: active (green) vs inactive (grey dashed) -->
-            <path d="M290,120 L358,33"  stroke="#bbb" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
-            <path d="M290,130 L358,92"  stroke="#2a7a3b" stroke-width="2.5" fill="none" marker-end="url(#arrowhead4)"/>
-            <path d="M290,140 L358,152" stroke="#bbb" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
-            <path d="M290,150 L358,212" stroke="#2a7a3b" stroke-width="2.5" fill="none" marker-end="url(#arrowhead4)"/>
-            <path d="M290,160 L358,270" stroke="#bbb" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
-
-            <!-- combine -->
-            <rect x="620" y="115" width="130" height="50" rx="8" fill="#eef4fb" stroke="#2c6fbb" stroke-width="1.5"/>
-            <text x="685" y="145" text-anchor="middle" font-size="12" fill="#1a1a1a">Combined</text>
-            <text x="685" y="160" text-anchor="middle" font-size="12" fill="#1a1a1a">Output</text>
-
-            <path stroke="#2a7a3b" stroke-width="2.5" fill="none" marker-end="url(#arrowhead4)" d="M480,92  C 560,92  560,135 618,138"/>
-            <path stroke="#2a7a3b" stroke-width="2.5" fill="none" marker-end="url(#arrowhead4)" d="M480,212 C 560,212 560,145 618,142"/>
-
-            <!-- legend -->
-            <rect x="620" y="220" width="16" height="16" fill="#eaf6ec" stroke="#2a7a3b" stroke-width="2"/>
-            <text x="644" y="233" font-size="12" fill="#333">Active expert (used)</text>
-            <rect x="620" y="245" width="16" height="16" fill="#e9e9e9" stroke="#999"/>
-            <text x="644" y="258" font-size="12" fill="#333">Inactive expert (skipped)</text>
-        </svg>
-    </div>
-<p class="image-title">Figure 11: Mixture-of-Experts routing: a learned router sends each input token to only two of the five experts (active); the remaining experts are skipped, and the active outputs are combined into the final output</p>
+   
 
     <p class="detail-description">
         The key difference from classical ensembles: bagging, boosting, and stacking combine several <em>fully-trained, independent</em> models after the fact (via averaging, voting, or a meta-learner). In MoE, the router and all the experts are trained at the same time, together, using the same backpropagation process—so the router's decisions and each expert's knowledge shape each other during training, rather than being built separately and combined afterward. It also only activates a small subset of experts per input rather than combining outputs from all of them. So MoE shares the "many specialized components instead of one" spirit of ensemble learning, but it's better described as a sparse, modular architecture within one model than an ensemble of separately trained models.
