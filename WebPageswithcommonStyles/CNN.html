@@ -616,17 +616,120 @@ As such implementation uses only numpy basic building blocks. This is not for pr
 
 <p>That's precisely why it's cheap and useful for changing channel depth: stacking a $1{\times}1$ conv that maps $C_{in} \to C_{reduced}$ (with $C_{reduced} < C_{in}$) before a more expensive $3{\times}3$ conv shrinks the number of channels the $3{\times}3$ filter has to sweep over, cutting that layer's parameter count substantially &mdash; without discarding any spatial information, since the $1{\times}1$ step never touched it. This is exactly the trick ResNet's bottleneck block and Inception's channel-reduction step (both referenced below and in the comparison table) are built on.</p>
 
+<p><strong>Table: 1&times;1 vs. 3&times;3 convolution, parameter count.</strong> Both layers take a feature map with 256 channels and have 256 filters (so 256 output channels), with one bias per filter:</p>
+<style>
+  .conv-compare table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  .conv-compare th, .conv-compare td { padding: 12px; border: 1px solid #ddd; text-align: left; vertical-align: top; }
+  .conv-compare th { background-color: #f2f2f2; }
+  .conv-compare .feature-col { font-weight: bold; }
+  .conv-compare .formula { display: block; font-size: 0.85rem; color: #555; margin-top: 4px; }
+</style>
+<div class="table-container conv-compare">
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>1 &times; 1 Convolution (1 &times; 1 &times; 256)</th>
+          <th>3 &times; 3 &times; 256 Convolution</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="feature-col">Full 3D Filter Shape</td>
+          <td>1 &times; 1 &times; 256</td>
+          <td>3 &times; 3 &times; 256</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Spatial Window</td>
+          <td>1 pixel (1 &times; 1)</td>
+          <td>9 pixels (3 &times; 3 grid)</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Weights per Single Filter</td>
+          <td><strong>256</strong> weights (+ 1 bias)
+            <span class="formula">(1 &times; 1 &times; 256 = 256)</span></td>
+          <td><strong>2,304</strong> weights (+ 1 bias)
+            <span class="formula">(3 &times; 3 &times; 256 = 2,304)</span></td>
+        </tr>
+        <tr>
+          <td class="feature-col">Total Parameters per Filter</td>
+          <td><strong>257</strong> parameters
+            <span class="formula">(256 weights + 1 bias)</span></td>
+          <td><strong>2,305</strong> parameters
+            <span class="formula">(2,304 weights + 1 bias)</span></td>
+        </tr>
+        <tr>
+          <td class="feature-col">Total Weights (for 256 filters)</td>
+          <td><strong>65,536</strong> weights
+            <span class="formula">(256 weights &times; 256 filters)</span></td>
+          <td><strong>589,824</strong> weights
+            <span class="formula">(2,304 weights &times; 256 filters)</span></td>
+        </tr>
+        <tr>
+          <td class="feature-col">Total Biases (for 256 filters)</td>
+          <td><strong>256</strong> biases
+            <span class="formula">(1 bias &times; 256 filters)</span></td>
+          <td><strong>256</strong> biases
+            <span class="formula">(1 bias &times; 256 filters)</span></td>
+        </tr>
+        <tr>
+          <td class="feature-col">Grand Total Layer Parameters</td>
+          <td><strong>65,792</strong> parameters
+            <span class="formula">(65,536 + 256)</span></td>
+          <td><strong>590,080</strong> parameters
+            <span class="formula">(589,824 + 256)</span></td>
+        </tr>
+        <tr>
+          <td class="feature-col">What It Captures</td>
+          <td><strong>Channel relationships</strong> at one point (blends features).</td>
+          <td><strong>Spatial + channel patterns</strong> (edges, shapes, textures).</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Weights &amp; Multiply-Adds Ratio</td>
+          <td><strong>1&times;</strong> (baseline)</td>
+          <td><strong>9&times;</strong> more weights and multiply-adds than 1 &times; 1 (same output size)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
 <h4 id="resnet">Residual Networks (ResNet)</h4>
-<p>Even with He initialization and proper normalization, plain CNNs hit a wall: past a certain depth, adding <em>more</em> layers makes <strong>training accuracy worse</strong>, not just validation accuracy &mdash; a purely optimization-side failure, not overfitting. This matters enormously in medical imaging, where the difference between a missed and a caught finding often comes down to depth: a several-millimeter tumor in a CT slice, a hairline fracture, or a microaneurysm in a retinal scan is exactly the kind of fine-grained texture cue that only emerges after many stacked layers build up the feature hierarchy from Figure 4 &mdash; so simply refusing to stack more layers isn't an option here. ResNet's fix is the residual block $H(x) = F(x, \{W_i\}) + x$: each block learns a small correction $F(x)$ on top of an identity shortcut, rather than the full mapping from scratch. The reason this fixes training rather than just accuracy shows up directly in the gradient: $\frac{\partial L}{\partial x} = \frac{\partial L}{\partial H}\left(\frac{\partial F}{\partial x} + 1\right)$ &mdash; that "+1" guarantees a direct gradient path back through every block regardless of how small $\partial F/\partial x$ gets, which is exactly the mechanism that lets ResNets train at 50&ndash;150+ layers where plain stacks of our <code>ConvLayer</code> degrade. Deeper ResNet variants (50/101/152) additionally use a <strong>bottleneck block</strong> (1&times;1 &rarr; 3&times;3 &rarr; 1&times;1 convolutions &mdash; using the channel-reduction trick just described) to cut the parameter cost of each residual unit before scaling to that many layers &mdash; and, as the next figure shows, ResNet-50/101 are exactly the depths most widely deployed in clinical imaging pipelines. The full derivation, bottleneck design, and a pure-Python <code>ResidualBlock</code> built on top of the <code>ConvLayer</code> above are covered in the <a href="resnet.html">dedicated ResNet page</a> &mdash; update this link if your filename differs.</p>
+<p>Even with He initialization and proper normalization, plain CNNs hit a wall: past a certain depth, adding more layers makes training accuracy worse, not just validation accuracy. This is an optimization failure, not overfitting. It is also surprising, because a deeper network could in principle copy a shallower one by making its extra layers do nothing (an identity mapping), so it should never be worse. The optimizer simply struggles to learn “do nothing” through a stack of nonlinear layers.
+
+Depth matters a great deal in medical imaging. A several-millimeter tumor in a CT slice, a hairline fracture, or a microaneurysm in a retinal scan is the kind of fine-grained texture cue that only emerges after many stacked layers build up the feature hierarchy from Figure 4. So simply refusing to go deeper is not an option.
+
+ResNet’s fix is to make “do nothing” easy. A residual block adds a shortcut that carries its input $x$ around the layers, so the layers only compute a correction $F(x)$ and the block outputs $y = x + F(x)$. Here $x$ is whatever feature map arrives at that block, not the original image. If a block has nothing useful to add, it learns $F(x) \approx 0$ and passes $x$ along unchanged. No computation is skipped: the layers still run and $F(x)$ is still used, and only the copy of $x$ goes around them. Figure 10 shows this on a small feature map.
+
+The shortcut also helps the gradient. Since $\frac{\partial y}{\partial x} = 1 + \frac{\partial F}{\partial x}$, the “+1” gives gradients a direct path back through every block, however small $\frac{\partial F}{\partial x}$ gets. This is the second reason ResNets can train at 50–150+ layers where plain stacks of our ConvLayer degrade.
+
+Deeper variants (ResNet-50/101/152) use a bottleneck block (1×1 → 3×3 → 1×1 convolutions, using the channel-reduction trick described earlier) to keep the parameter cost of each block manageable. As Figure 12 below shows, ResNet-50/101 are widely used in clinical imaging pipelines. The full derivation, bottleneck design, and a pure-Python ResidualBlock built on top of the ConvLayer above are covered in the dedicated ResNet page — update this link if your filename differs.</p>
+
+<p>To see what the shortcut actually changes, <strong>Figure 10</strong> pushes the same $4\times4$ edge map through a plain block and through a residual block.</p>
+
+<div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
+    <figure style="display: inline-block; max-width: 100%; margin: 0;">
+        <img src="ResNetPlainVsResidual.svg" alt="Plain block versus residual block on a 4 by 4 feature map" style="width: 100%; max-width: 960px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 960px; margin-left: auto; margin-right: auto;">
+            <strong>Figure 10: Plain Block vs. Residual Block on the Same Feature Map.</strong> Teal cells are features already present in the input $x$ (a vertical and a horizontal edge meeting at a junction), amber cells are new content, gray cells are zero.
+            <ol style="margin-top: 8px; padding-left: 20px;">
+                <li><strong>Left panel &mdash; plain block.</strong> $x$ goes through the layers only, and the block's output is whatever the layers produce, $H(x)$. The layers must therefore rebuild the <em>whole</em> map, including the edges that were already correct in $x$; $x$ has no direct route to the output. Copying through weights and ReLU is rarely exact, so the values drift slightly (4.8, 5.1, &hellip;), and that drift is what accumulates over dozens of stacked blocks.</li>
+                <li><strong>Right panel &mdash; residual block.</strong> The layers still receive $x$ as input, but their output $F(x)$ is <em>only</em> the correction &mdash; here a single $+2$ corner response at the junction, and zero everywhere else. $F(x)$ is not the block's output; the output is $x + F(x)$, which keeps every edge exactly and adds the corner. Both blocks can represent the same final map; what changes is what the layers have to learn.</li>
+                <li><strong>Reading the terms.</strong> &ldquo;Skip connection&rdquo; does not mean any computation is skipped: the layers still run and $F(x)$ is still used, and only the copy of $x$ goes around them. &ldquo;Residual&rdquo; means the remainder, $F(x) = H(x) - x$: what the layers must learn once the shortcut already supplies $x$. The numbers are illustrative; a real $F(x)$ has many values across many channels.</li>
+            </ol>
+        </figcaption>
+        <p style="text-align: center; margin-top: 10px;"><a href="ResNetPlainVsResidual.svg" target="_blank" rel="noopener" style="font-size: 0.85rem; color: #0056b3;">Open full-size SVG &#8599;</a></p>
+    </figure>
+</div>
 
 <div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
     <figure style="display: inline-block; max-width: 100%; margin: 0;">
         <img src="ResNetBlock.svg" alt="ResNet Residual Block Illustration" style="width: 100%; max-width: 900px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
         <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
-            <strong>Figure 10: The Residual Block, Basic vs. Bottleneck.</strong>
+            <strong>Figure 11: The Residual Block, Basic vs. Bottleneck.</strong>
             <ol style="margin-top: 8px; padding-left: 20px;">
                 <li><strong>Left panel &mdash; basic block.</strong> Input $x$ flows down through two $3\times3$ convolutions to produce $F(x)$, <em>and</em> flows unchanged (teal identity shortcut) straight to the "+" node, where it's added to $F(x)$ before a final ReLU. The block is only asked to learn a <em>correction</em> $F(x)$, not the entire mapping from scratch.</li>
-                <li><strong>Right panel &mdash; bottleneck block.</strong> The same identity-plus-correction pattern, but $F(x)$ is now three convolutions: $1\times1$ reduces the channel depth cheaply (the trick from Figure 9), $3\times3$ does the real spatial work on that smaller channel count, and a second $1\times1$ expands back &mdash; far fewer parameters than three full-width $3\times3$ convolutions, which is what makes 50&ndash;150+ layer ResNets practical, including the clinically-sized ResNet-50/101 backbones in Figure 11 below.</li>
+                <li><strong>Right panel &mdash; bottleneck block.</strong> The same identity-plus-correction pattern, but $F(x)$ is now three convolutions: $1\times1$ reduces the channel depth cheaply (the trick from Figure 9), $3\times3$ does the real spatial work on that smaller channel count, and a second $1\times1$ expands back &mdash; far fewer parameters than three full-width $3\times3$ convolutions, which is what makes 50&ndash;150+ layer ResNets practical, including the clinically-sized ResNet-50/101 backbones in Figure 12 below.</li>
                 <li><strong>The gradient callout (bottom).</strong> Differentiating $H(x)=F(x)+x$ with respect to $x$ produces a "+1" term that survives no matter how small $\partial F/\partial x$ becomes during training. That's the direct gradient highway the identity shortcut buys you &mdash; it's the mechanism, not just the addition itself, that fixes the training-degradation problem plain CNNs hit at depth.</li>
             </ol>
         </figcaption>
@@ -638,9 +741,9 @@ As such implementation uses only numpy basic building blocks. This is not for pr
     <h5 style="margin-top: 0; color: #166534; font-size: 1.05rem;">ResNet in Medical Image Processing</h5>
     <p style="margin-bottom: 10px; color: #14532d;">ResNet is one of the most widely deployed architectures in clinical and biomedical imaging, in a few distinct roles:</p>
     <ul style="color: #14532d; margin-bottom: 10px;">
-        <li><strong>Direct disease classification.</strong> A ResNet-50/101 fine-tuned to output disease probabilities straight from a 2D scan: diabetic retinopathy grading from retinal fundus photos, pneumonia/COVID-19 detection from chest X-rays and CT slices, skin lesion classification (melanoma vs. benign) from dermoscopy images, and cancer subtype classification from digitized histopathology slides. Figure 11 below walks through exactly this kind of pipeline.</li>
+        <li><strong>Direct disease classification.</strong> A ResNet-50/101 fine-tuned to output disease probabilities straight from a 2D scan: diabetic retinopathy grading from retinal fundus photos, pneumonia/COVID-19 detection from chest X-rays and CT slices, skin lesion classification (melanoma vs. benign) from dermoscopy images, and cancer subtype classification from digitized histopathology slides. Figure 12 below walks through exactly this kind of pipeline.</li>
         <li><strong>Backbone for detection and segmentation.</strong> ResNet is rarely the entire model in medical imaging &mdash; more often it's the feature-extracting encoder inside a larger pipeline: a Faster R-CNN or Mask R-CNN with a ResNet backbone for localizing tumors or lesions, or a ResNet encoder swapped into a U-Net (the architecture discussed next), a combination often called a "ResUNet," for segmentation with a deeper, more expressive encoder than U-Net's own.</li>
-        <li><strong>Overcoming small, expensive datasets via <a href="#transfer-learning">transfer learning</a>.</strong> Labeled medical scans are scarce and costly to annotate compared to natural-image datasets like ImageNet. A ResNet pretrained on millions of natural images can be fine-tuned on a few thousand labeled scans without overfitting &mdash; and the bottleneck block's parameter efficiency (Figure 10) is precisely what makes that fine-tuning tractable, since there are far fewer weights left to re-learn from limited clinical data.</li>
+        <li><strong>Overcoming small, expensive datasets via <a href="#transfer-learning">transfer learning</a>.</strong> Labeled medical scans are scarce and costly to annotate compared to natural-image datasets like ImageNet. A ResNet pretrained on millions of natural images can be fine-tuned on a few thousand labeled scans without overfitting &mdash; and the bottleneck block's parameter efficiency (Figure 11) is precisely what makes that fine-tuning tractable, since there are far fewer weights left to re-learn from limited clinical data.</li>
         <li><strong>3D ResNets for volumetric scans.</strong> CT and MRI are volumes (stacks of slices), not single 2D images. Replacing every 2D convolution here with a 3D convolution (a $3\times3\times3$ kernel sliding through the volume) gives a 3D ResNet, used for whole-organ classification, brain age estimation, and dementia/Alzheimer's staging directly from MRI volumes.</li>
     </ul>
 </div>
@@ -649,18 +752,18 @@ As such implementation uses only numpy basic building blocks. This is not for pr
     <figure style="display: inline-block; max-width: 100%; margin: 0;">
         <img src="ResNetMedicalImaging.svg" alt="ResNet-50 Applied to Chest X-Ray Diagnosis" style="width: 100%; max-width: 1000px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
         <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 1000px; margin-left: auto; margin-right: auto;">
-            <strong>Figure 11: ResNet-50 Applied to Chest X-Ray Diagnosis.</strong>
+            <strong>Figure 12: ResNet-50 Applied to Chest X-Ray Diagnosis.</strong>
             <ol style="margin-top: 8px; padding-left: 20px;">
-                <li><strong>Stages 1&ndash;4.</strong> Each labeled stage is a repeated run of the bottleneck block from Figure 10 (&times;3, &times;4, &times;6, &times;3 blocks respectively, the standard ResNet-50 recipe) &mdash; spatial resolution keeps halving (56&sup2;&rarr;28&sup2;&rarr;14&sup2;&rarr;7&sup2;) while channel depth keeps growing (256&rarr;512&rarr;1024&rarr;2048), exactly the pattern from the parameter-count and pooling sections above.</li>
+                <li><strong>Stages 1&ndash;4.</strong> Each labeled stage is a repeated run of the bottleneck block from Figure 11 (&times;3, &times;4, &times;6, &times;3 blocks respectively, the standard ResNet-50 recipe) &mdash; spatial resolution keeps halving (56&sup2;&rarr;28&sup2;&rarr;14&sup2;&rarr;7&sup2;) while channel depth keeps growing (256&rarr;512&rarr;1024&rarr;2048), exactly the pattern from the parameter-count and pooling sections above.</li>
                 <li><strong>Global Average Pool &rarr; FC &rarr; Softmax.</strong> The final 7&times;7&times;2048 feature volume is averaged down to a single 2048-length vector per channel, then a small fully-connected layer maps that to 3 class scores, and softmax turns those into the probability distribution from the CNN's own final-output section above.</li>
-                <li><strong>Why this is realistic, not just illustrative (bottom box).</strong> This exact ResNet-50 is almost never trained from scratch on medical data &mdash; it's pretrained on ImageNet, then fine-tuned on a much smaller labeled X-ray dataset, which is only tractable because the bottleneck design (Figure 10) leaves so few parameters that actually need re-learning.</li>
+                <li><strong>Why this is realistic, not just illustrative (bottom box).</strong> This exact ResNet-50 is almost never trained from scratch on medical data &mdash; it's pretrained on ImageNet, then fine-tuned on a much smaller labeled X-ray dataset, which is only tractable because the bottleneck design (Figure 11) leaves so few parameters that actually need re-learning.</li>
             </ol>
         </figcaption>
         <p style="text-align: center; margin-top: 10px;"><a href="ResNetMedicalImaging.svg" target="_blank" rel="noopener" style="font-size: 0.85rem; color: #0056b3;">Open full-size SVG &#8599;</a></p>
     </figure>
 </div>
 <h4 id="transfer-learning">Transfer Learning in CNNs: Reusing a Pretrained Network</h4>
-<p>Training a CNN from scratch needs a very large set of labeled images. <strong>Transfer learning</strong> avoids this: start from a CNN already trained on a large source dataset such as ImageNet (over a million natural images in 1000 classes), and adapt it to the new task. This is why a strong image classifier can be built from a few hundred to a few thousand labeled images instead of millions, and it is how the ResNet-50 in Figure 11 is used in practice.</p>
+<p>Training a CNN from scratch needs a very large set of labeled images. <strong>Transfer learning</strong> avoids this: start from a CNN already trained on a large source dataset such as ImageNet (over a million natural images in 1000 classes), and adapt it to the new task. This is why a strong image classifier can be built from a few hundred to a few thousand labeled images instead of millions, and it is how the ResNet-50 in Figure 12 is used in practice.</p>
 <p><strong>Why it works.</strong> The feature hierarchy described earlier on this page is learned in stages. Early layers detect edges, colors and simple textures that are useful for almost any image task. Later layers combine them into shapes and objects that are specific to the source task. Yosinski et al. (2014) measured this layer by layer: the early layers transfer well between tasks, and transferability drops as the layers become more task-specific. So we keep the general early layers and re-learn mainly the later ones.</p>
 <p><strong>What can go wrong.</strong> Medical images such as X-rays look very different from ImageNet photos, so a few details need care. The batch-norm layers store running means and variances computed on ImageNet, so freezing them makes the network normalize X-ray activations with the wrong statistics. The input must also be preprocessed consistently (channel count and normalization) with how the backbone was pretrained. If the source and target are too different, the pretrained features can even hurt, which is called negative transfer; with ImageNet backbones this is uncommon, but it is worth comparing against training from scratch.</p>
 <p><strong>Frozen layers act exactly like advanced, built-in Sobel filters with permanently locked mathematical coefficients.</strong></p>
@@ -860,24 +963,93 @@ opt = torch.optim.AdamW([
 </div>
 
 <h4>U-Net</h4>
-<p>Every architecture up to this point ends the same way: pool down, flatten, classify &mdash; one label per image. That throws away exactly the spatial detail a task like tumor segmentation needs. U-Net keeps the encoder you already know (stacked <code>ConvLayer</code> + pooling, shrinking spatial size while growing channel depth) and adds a mirror-image <strong>decoder</strong> that upsamples back to full resolution using <strong>transposed convolution</strong> &mdash; the same stride/padding output-size formula from Section on strided convolution, run in reverse. The distinguishing feature is the <strong>skip connection</strong>: at each decoder stage, the corresponding encoder feature map is <em>concatenated</em> (not added, unlike ResNet) onto the upsampled map before the next convolution, so the fine spatial detail lost during pooling is recovered from the encoder rather than reconstructed from nothing. Typical parameters: 4&ndash;5 encoder/decoder stages, channel depth doubling at each downsampling step (e.g. 64&rarr;128&rarr;256&rarr;512&rarr;1024 at the bottleneck) and halving on the way back up, with a final 1&times;1 convolution mapping to the number of output classes (or a single sigmoid channel for binary masks). Originally built for biomedical cell segmentation, U-Net isn't just <em>a</em> backbone for medical image segmentation &mdash; it's the field's de facto standard: it dominates brain tumor segmentation (the BraTS challenge leaderboards are largely U-Net variants), organ segmentation in CT (liver, kidney, lungs), retinal vessel segmentation, and cardiac MRI segmentation, and <strong>nnU-Net</strong> &mdash; a self-configuring U-Net that automatically adapts its architecture and training to whatever medical dataset it's pointed at &mdash; remains one of the most consistently winning frameworks across medical segmentation benchmarks even years after U-Net's original 2015 release (see the tumor-segmentation pipeline built for this series). Beyond medicine, the same architecture handles satellite/aerial imagery segmentation, and &mdash; via its encoder-decoder-with-skip-connections shape &mdash; the denoising network at the core of most image diffusion models.</p>
+<p>Every architecture so far ends the same way: pool down, flatten, classify &mdash; one label per image. That discards the spatial detail a task like tumor segmentation needs, because there the answer is a <em>label for every pixel</em>. U-Net keeps the encoder you already know (stacked <code>ConvLayer</code> + pooling, shrinking the image while growing the channels) and adds a mirror-image <strong>decoder</strong> that upsamples back to full resolution with <strong>transposed convolution</strong> &mdash; the stride/padding output-size formula from the strided-convolution section, run in reverse. The key addition is the <strong>skip connection</strong>: before each pooling step the encoder saves a copy of its feature map, and the decoder <em>concatenates</em> that copy onto its upsampled map at the same resolution, so the fine detail that pooling threw away is handed back instead of being reconstructed from nothing. A final 1&times;1 convolution maps to the number of output classes.</p>
 
 <div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
     <figure style="display: inline-block; max-width: 100%; margin: 0;">
         <img src="UNetArchitecture.svg" alt="U-Net Encoder-Decoder Architecture" style="width: 100%; max-width: 980px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
         <figcaption style="margin-top: 15px; font-size: 0.95rem; color: #444; font-weight: 500; text-align: left; max-width: 980px; margin-left: auto; margin-right: auto;">
-            <strong>Figure 12: U-Net's Encoder-Decoder Shape.</strong>
+            <strong>Figure 13: U-Net's Encoder-Decoder Shape.</strong>
             <ol style="margin-top: 8px; padding-left: 20px;">
-                <li><strong>Encoder (blue, left, descending).</strong> Each step is a pool that halves spatial size while doubling channel depth &mdash; 64&rarr;128&rarr;256&rarr;512 &mdash; the same downsampling arithmetic from the padding/striding section, applied repeatedly.</li>
+                <li><strong>Encoder (blue, left, descending).</strong> Each stage doubles the channels with its convolutions and then halves the spatial size with a pool &mdash; 64&rarr;128&rarr;256&rarr;512 &mdash; the same downsampling arithmetic from the padding/striding section, applied repeatedly.</li>
                 <li><strong>Bottleneck (purple, bottom-center).</strong> The most spatially compressed, channel-richest point in the network: 1024 channels at the smallest spatial resolution.</li>
                 <li><strong>Decoder (pink, right, ascending).</strong> Each step is a transposed convolution ("up-conv") that halves channel depth while doubling spatial size back up &mdash; the exact mirror image of the encoder.</li>
                 <li><strong>Skip connections (dashed teal).</strong> At each level, the encoder's feature map is <em>concatenated</em> onto the decoder's upsampled map at that same resolution, before the next convolution runs. This is what hands back the fine spatial detail pooling discarded &mdash; the decoder alone, working only from the bottleneck, could not reconstruct it from nothing.</li>
-                <li><strong>Concatenate vs. add.</strong> Note the contrast with Figure 10: ResNet's skip connection <em>adds</em> two same-shaped tensors elementwise; U-Net's skip connection <em>concatenates</em> two tensors along the channel axis, so the following convolution sees both the new decoder features and the original encoder features side by side.</li>
+                <li><strong>Concatenate vs. add.</strong> Note the contrast with Figure 11: ResNet's skip connection <em>adds</em> two same-shaped tensors elementwise; U-Net's skip connection <em>concatenates</em> two tensors along the channel axis, so the following convolution sees both the new decoder features and the original encoder features side by side. The purpose differs too: ResNet's shortcut is short and makes deep stacks easy to train, while U-Net's is long and brings back the spatial detail that pooling discarded.</li>
             </ol>
         </figcaption>
         <p style="text-align: center; margin-top: 10px;"><a href="UNetArchitecture.svg" target="_blank" rel="noopener" style="font-size: 0.85rem; color: #0056b3;">Open full-size SVG &#8599;</a></p>
     </figure>
 </div>
+
+<p><strong>Tracing one image through a small U-Net.</strong> Take a $256\times256$ RGB image and follow its tensor shape $(H\times W\times C)$: $H\times W$ is the spatial size and $C$ is the number of feature channels. We use three levels to keep the arithmetic short; the original U-Net in Figure 13 uses four, with 1024 channels at the bottom. We also use padded convolutions so the size stays the same (the original paper used unpadded ones and cropped the saved maps).</p>
+
+<p>Every <strong>encoder</strong> stage does three things: two $3\times3$ convolutions (the channels double), <em>save a copy</em> of the result for the skip connection, then a $2\times2$ max pool (height and width halve). The <strong>bottleneck</strong> is the lowest stage: two convolutions and no pooling. Every <strong>decoder</strong> stage reverses this: upsample with a transposed convolution (size doubles, channels halve), <em>concatenate</em> the saved copy of the same size (the channels add up), then two $3\times3$ convolutions blend the old detail with the new context (the channels come back down). A final $1\times1$ convolution with a sigmoid (softmax for several classes) gives one probability per pixel.</p>
+
+<table style="width:100%; border-collapse: collapse; margin: 20px 0;">
+    <thead>
+        <tr style="background-color: #f2f2f2; text-align: left;">
+            <th style="padding: 8px 12px; border: 1px solid #ddd;">Stage</th>
+            <th style="padding: 8px 12px; border: 1px solid #ddd;">What happens</th>
+            <th style="padding: 8px 12px; border: 1px solid #ddd;">Shape after the stage (H &times; W &times; C)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold;">Input</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">RGB image</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">256&times;256&times;3</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold;">Down 1</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">2 convs &rarr; 256&times;256&times;64 <em>(saved)</em>, then pool</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">128&times;128&times;64</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold;">Down 2</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">2 convs &rarr; 128&times;128&times;128 <em>(saved)</em>, then pool</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">64&times;64&times;128</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold;">Down 3</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">2 convs &rarr; 64&times;64&times;256 <em>(saved)</em>, then pool</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">32&times;32&times;256</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold;">Bottleneck</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">2 convs, no pool</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">32&times;32&times;512</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold;">Up 3</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">upsample to 64&times;64&times;256, concat the saved 64&times;64&times;256 &rarr; 64&times;64&times;512, 2 convs</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">64&times;64&times;256</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold;">Up 2</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">upsample to 128&times;128&times;128, concat the saved copy &rarr; 128&times;128&times;256, 2 convs</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">128&times;128&times;128</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold;">Up 1</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">upsample to 256&times;256&times;64, concat the saved copy &rarr; 256&times;256&times;128, 2 convs</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">256&times;256&times;64</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold;">Output</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">1&times;1 conv + sigmoid</td>
+            <td style="padding: 8px 12px; border: 1px solid #ddd;">256&times;256&times;1</td>
+        </tr>
+    </tbody>
+</table>
+
+<ul>
+    <li>Convolutions change the <em>channels</em>; pooling and upsampling change the <em>size</em>.</li>
+    <li>The upsampled map carries context from below (<em>what</em> is in the image); the saved copy carries fine detail from the encoder (<em>where</em> its edges are). Concatenating them stacks the channels (256 + 256 = 512), which is why the next convolution brings the count back down.</li>
+    <li>&ldquo;Bottleneck&rdquo; here means the lowest, most compressed stage of the U. It is a different thing from ResNet&rsquo;s bottleneck block (1&times;1 &rarr; 3&times;3 &rarr; 1&times;1).</li>
+</ul>
+
+<p>U-Net was built for biomedical cell segmentation and is now the de facto standard in medical segmentation: brain tumors (the BraTS leaderboards are largely U-Net variants), organs in CT (liver, kidney, lungs), retinal vessels and cardiac MRI. <strong>nnU-Net</strong>, a self-configuring U-Net that adapts its architecture and training to whatever dataset it is given, remains one of the most consistently winning frameworks years after the original 2015 release (see the tumor-segmentation pipeline built for this series). Beyond medicine, the same shape handles satellite and aerial segmentation and forms the denoising network at the core of most image diffusion models.</p>
 
 <h4>Architecture Comparison</h4>
 <table style="width:100%; border-collapse: collapse; margin: 20px 0;">
