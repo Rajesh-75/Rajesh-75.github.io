@@ -2,7 +2,16 @@
 <html lang="en">
 <head>
     <!-- Hide body initially to prevent flickering -->
-    <style>body { visibility: hidden; }</style>
+    <style>body { visibility: hidden; }
+        /* Phones: let wide diagrams scroll horizontally rather than shrinking their text to a few pixels. */
+        @media (max-width: 700px) {
+            div:has(> svg[viewBox]) { overflow-x: auto; }
+            svg[viewBox] { min-width: 640px; }
+        }
+    
+        /* Diagram labels follow the shared UI font (--font-ui in styles_common.css). */
+        svg text { font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); }
+    </style>
     <!-- Load global MathJax configuration first -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,11 +42,16 @@
     <script type="text/javascript" async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
+    <script>
+        /* Fallback: if MathJax is blocked or slow, reveal the page anyway instead of leaving it blank. */
+        setTimeout(function () { if (document.body) { document.body.style.visibility = 'visible'; } }, 4000);
+    </script>
+    <noscript><style>body { visibility: visible !important; }</style></noscript>
 </head>
 <body>
 <div class="index-link index-link-top" style="text-align:center; margin:14px 0; font-size:0.95rem;"><a href="../index.html#pipeline">Go to Main Page (Index Page)</a></div>
 
-    <main class="container" style="max-width: 950px; margin: 0 auto; padding: 20px; font-family: system-ui, -apple-system, sans-serif; color: #1e293b; line-height: 1.6;">
+    <main class="container" style="max-width: 950px; margin: 0 auto; padding: 20px; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); color: #1e293b; line-height: 1.6;">
         
         <header style="margin-bottom: 40px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px;">
             <h1 style="font-size: 2.5rem; color: #0f172a; margin-bottom: 10px;">The Transformer Algorithm</h1>
@@ -46,7 +60,7 @@
             </p>
             <p style="margin: 10px 0 0 0;"><a href="#transformer-quiz" style="color:#2563eb; text-decoration:underline; font-weight:600;">&#9201; Take the 10-question timed quiz &darr;</a></p>
         </header>
-		<section id="transformer-introduction" style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 750px; margin: 20px 0;">
+		<section id="transformer-introduction" style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); line-height: 1.6; color: #333; max-width: 750px; margin: 20px 0;">
     
     <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Sequence-to-Sequence (Seq2Seq) & The Encoder-Decoder Framework</h2>
     <p>
@@ -65,7 +79,7 @@
 	A complete walkthrough of the Encoder–Decoder Transformer is available
 <a href="encoder_decoder_transformer.html" style="color:#2563eb; text-decoration:underline;">here</a>.
     </div>
-<div style="background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #1e3a8a; line-height: 1.5;"><strong>Reading the figures on this page:</strong> the pipeline diagrams below show a <strong>decoder-only (causal)</strong> Transformer &mdash; the GPT/Claude-style LLM that predicts the next token. The Encoder&ndash;Decoder variant described above differs in two ways: the encoder reads the source with <em>bidirectional</em> attention, and the decoder adds a <em>cross-attention</em> sub-layer that reads the encoder output. For a side-by-side comparison of encoder-only, decoder-only and encoder&ndash;decoder models, see Section 8 of the <a href="encoder_decoder_transformer.html" style="color:#2563eb; text-decoration:underline;">Encoder&ndash;Decoder Transformer page</a>. Figures labelled &ldquo;Applies to all variants&rdquo; hold for every layout.</div>
+<div style="background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.88rem; color: #1e3a8a; line-height: 1.5;"><strong>Reading the figures on this page:</strong> the pipeline diagrams below show a <strong>decoder-only (causal)</strong> Transformer &mdash; the GPT/Claude-style LLM that predicts the next token. The Encoder&ndash;Decoder variant described above differs in two ways: the encoder reads the source with <em>bidirectional</em> attention, and the decoder adds a <em>cross-attention</em> sub-layer that reads the encoder output. For a side-by-side comparison of encoder-only, decoder-only and encoder&ndash;decoder models, see Section 8 of the <a href="encoder_decoder_transformer.html" style="color:#2563eb; text-decoration:underline;">Encoder&ndash;Decoder Transformer page</a>. Figures labelled &ldquo;Applies to all variants&rdquo; hold for every layout.</div>
 
     
 
@@ -99,31 +113,31 @@
 <h2>Transformer Architecture </h2>
 <p>The Transformer model is solely based on attention mechanisms without any convolutional or recurrent layer (<a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener noreferrer">Vaswani et al., 2017</a>). Though originally proposed for sequence-to-sequence learning on text data, Transformers have been pervasive in a wide range of modern deep learning applications, such as in areas to do with language, vision, speech, and reinforcement learning. The <strong>Transformer is a deep neural network architecture</strong> that can process variable-length text and perform a wide range of NLP tasks using a mechanism called <strong>Attention</strong>, discussed below.</p>
             <h3>Key Structural Components of the Transformer Algorithm Pipeline</h3>
-            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) Transformer</strong> &mdash; the GPT/Claude-style stack that generates text one next token at a time. There is no separate encoder and no cross-attention in this pipeline. Refer the Encoder-Decoder Architecture page for different variants of Encoder/Decoder and various Attention mechanisims</div>
+            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) Transformer</strong> &mdash; the GPT/Claude-style stack that generates text one next token at a time. There is no separate encoder and no cross-attention in this pipeline. Refer the Encoder-Decoder Architecture page for different variants of Encoder/Decoder and various Attention mechanisims</div>
             <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="display: flex; flex-direction: column; align-items: center; font-family: monospace;">
+                <div style="display: flex; flex-direction: column; align-items: center; font-family: var(--font-data, Consolas, ui-monospace, Menlo, Courier New, monospace);">
                     <div style="background: #e2e8f0; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; font-size: 0.92rem;">Input Sentence</div>
-					<p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">For example: The cat sat on a mat</p>
+					<p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">For example: The cat sat on a mat</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #bae6fd; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #0284c7; font-size: 0.92rem;">Tokenization</div>
-                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Words are sliced into sub-word token elements</p>
+                    <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Words are sliced into sub-word token elements</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #c7d2fe; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #4f46e5; font-size: 0.92rem;">Embeddings</div>
-                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Tokens projected into continuous high-dimensional vector spaces</p>
+                    <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Tokens projected into continuous high-dimensional vector spaces</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #fed7aa; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #ea580c; font-size: 0.92rem;">Positional Encoding</div>
-                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Injects geometric coordinate signals to maintain sequence order</p>
+                    <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Injects geometric coordinate signals to maintain sequence order</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #bbf7d0; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #16a34a; font-size: 0.92rem;">Self-Attention Block</div>
-                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Each token looks at the tokens it is allowed to see (in a decoder-only LLM: itself and earlier tokens, via a causal mask) to compute a dynamic relevance matrix</p>
+                    <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Each token looks at the tokens it is allowed to see (in a decoder-only LLM: itself and earlier tokens, via a causal mask) to compute a dynamic relevance matrix</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #fbcfe8; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #db2777; font-size: 0.92rem;">Feed Forward Networks</div>
-                    <p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Applies non-linear projections separately to each token representation</p>
+                    <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Applies non-linear projections separately to each token representation</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="border: 2px dashed #cbd5e1; padding: 5px 14px; border-radius: 4px; font-style: italic; color: #64748b; font-size: 0.85rem;">Repeat Stacked Iteratively Across N Layers</div>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #f1f5f9; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border: 1px solid #cbd5e1; font-size: 0.92rem;">Output Projections and Softmax</div>
-					<p style="font-family: sans-serif; font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Projects final vectors back to vocabulary size and applies softmax probabiltiy estimation to predict the next token</p>
+					<p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Projects final vectors back to vocabulary size and applies softmax probabiltiy estimation to predict the next token</p>
                 </div>
             </div>
         </section>
@@ -221,48 +235,48 @@
 
         <!-- W_embed parameter store: Step 1, initialization -->
         <rect x="380" y="14" width="180" height="46" rx="8" fill="#fff7ed" stroke="#b45309" stroke-width="2"/>
-        <text x="470" y="32" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#b45309">W<tspan baseline-shift="sub" font-size="8">embed</tspan> &mdash; Step 1: Init</text>
-        <text x="470" y="48" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#475569">(V &times; d<tspan baseline-shift="sub" font-size="7">model</tspan>), random values</text>
+        <text x="470" y="32" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" font-weight="bold" fill="#b45309">W<tspan baseline-shift="sub" font-size="8">embed</tspan> &mdash; Step 1: Init</text>
+        <text x="470" y="51" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="10.8" fill="#475569">(V &times; d<tspan baseline-shift="sub" font-size="7">model</tspan>), random values</text>
 
         <line x1="470" y1="60" x2="470" y2="106" stroke="#b45309" stroke-width="2" marker-end="url(#initArrow)"/>
 
         <!-- Box 1: Token ID -->
         <rect x="10" y="110" width="120" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-        <text x="70" y="136" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Token ID</text>
-        <text x="70" y="156" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">i (scalar)</text>
+        <text x="70" y="136" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Token ID</text>
+        <text x="70" y="156" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#475569">i (scalar)</text>
 
         <line x1="130" y1="142" x2="166" y2="142" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
 
         <!-- Box 2: One-Hot Vector -->
         <rect x="170" y="110" width="170" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-        <text x="255" y="136" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">One-Hot Vector</text>
-        <text x="255" y="156" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">e<tspan baseline-shift="sub" font-size="8">i</tspan> &#8712; {0,1}<tspan baseline-shift="super" font-size="8">V</tspan></text>
+        <text x="255" y="136" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">One-Hot Vector</text>
+        <text x="255" y="156" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#475569">e<tspan baseline-shift="sub" font-size="8">i</tspan> &#8712; {0,1}<tspan baseline-shift="super" font-size="8">V</tspan></text>
 
         <line x1="340" y1="142" x2="376" y2="142" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
 
         <!-- Box 3: Lookup Row i -->
         <rect x="380" y="110" width="180" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-        <text x="470" y="136" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Lookup Row i</text>
-        <text x="470" y="156" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">v<tspan baseline-shift="sub" font-size="7">i</tspan> = e<tspan baseline-shift="sub" font-size="7">i</tspan><tspan baseline-shift="super" font-size="7">T</tspan> W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
+        <text x="470" y="136" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Lookup Row i</text>
+        <text x="470" y="156" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#475569">v<tspan baseline-shift="sub" font-size="7">i</tspan> = e<tspan baseline-shift="sub" font-size="7">i</tspan><tspan baseline-shift="super" font-size="7">T</tspan> W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
 
         <line x1="560" y1="142" x2="596" y2="142" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
 
         <!-- Box 4: Embedding Vector -->
         <rect x="600" y="110" width="180" height="64" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-        <text x="690" y="136" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Embedding Vector</text>
-        <text x="690" y="156" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">v<tspan baseline-shift="sub" font-size="8">i</tspan> &#8712; &#8477;<tspan baseline-shift="super" font-size="8">d_model</tspan></text>
+        <text x="690" y="136" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#4338ca">Embedding Vector</text>
+        <text x="690" y="156" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#475569">v<tspan baseline-shift="sub" font-size="8">i</tspan> &#8712; &#8477;<tspan baseline-shift="super" font-size="8">d_model</tspan></text>
 
         <line x1="780" y1="142" x2="816" y2="142" stroke="#4338ca" stroke-width="2" marker-end="url(#embedArrow)"/>
 
         <!-- Box 5: Line up every token's vector -->
         <rect x="820" y="100" width="170" height="84" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
-        <text x="905" y="128" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed">Line Up the</text>
-        <text x="905" y="144" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed">Vectors &#8594; X</text>
-        <text x="905" y="162" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">one row per token</text>
+        <text x="905" y="128" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#7c3aed">Line Up the</text>
+        <text x="905" y="144" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#7c3aed">Vectors &#8594; X</text>
+        <text x="905" y="162" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#475569">one row per token</text>
 
         <!-- Dashed backprop feedback loop: Step 5, training -->
         <path d="M905,100 L905,74 L550,74 L550,60" fill="none" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#gradArrow)"/>
-        <text x="728" y="70" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-style="italic" fill="#e11d48">Step 5 (training only): compare guess to answer &#8594; nudge W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
+        <text x="728" y="70" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" font-style="italic" fill="#e11d48">Step 5 (training only): compare guess to answer &#8594; nudge W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
     </svg>
     <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
         <em><strong>"Line up the vectors" means this:</strong> if the sentence is "Cat sat mat," Box 3&ndash;4 runs three times, once per word, producing three separate vectors &mdash; one for "Cat," one for "sat," one for "mat." Box 5 just writes those three vectors down one under the other, like three rows in a table. That table (3 rows here, $n$ rows in general, one per token) is $X$ &mdash; nothing is combined or changed, they're simply placed side by side as rows.</em>
@@ -310,7 +324,7 @@
 <script>
 (function () {
     var NS = 'http://www.w3.org/2000/svg';
-    var FONT = 'Segoe UI, sans-serif';
+    var FONT = 'Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif';
     function el(tag, attrs, parent, text) {
         var e = document.createElementNS(NS, tag);
         for (var k in attrs) { e.setAttribute(k, attrs[k]); }
@@ -394,7 +408,26 @@
 })();
 </script>
 
-            </div>
+<div class="derivation-box" style="border-left-color: #ea580c; background-color: #fff7ed; margin-top: 25px;">
+    <h4 style="margin-top:0; color:#9a3412;">Why Position Must Be Injected, and What Modern LLMs Use Instead</h4>
+    <p><strong>Self-attention is permutation-equivariant.</strong> The projections $W^Q,W^K,W^V$ act on each row separately, and $QK^T$ only compares rows. So if the input rows are permuted by a permutation matrix $P$,</p>
+    <div class="math-block">$$\text{Attention}(PX)=P\,\text{Attention}(X)$$</div>
+    <p>and &ldquo;dog bites man&rdquo; and &ldquo;man bites dog&rdquo; would yield the same set of token vectors, only reordered. (A causal mask leaks a little positional information, since row $i$ can only see $i$ tokens, but explicit position information works far better.) Positional information therefore has to be added explicitly. The sinusoidal scheme above is the original answer; the others in use are:</p>
+    <table class="data-table" style="width:100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead><tr><th style="text-align:left; padding:6px;">Scheme</th><th style="text-align:left; padding:6px;">How position enters</th><th style="text-align:left; padding:6px;">Used in</th></tr></thead>
+        <tbody>
+            <tr><td style="padding:6px;">Sinusoidal (fixed)</td><td style="padding:6px;">Fixed vector added to the input embedding, once</td><td style="padding:6px;">Original Transformer</td></tr>
+            <tr><td style="padding:6px;">Learned absolute</td><td style="padding:6px;">A trainable $n_{\max}\times d_{\text{model}}$ table added to the embeddings; cannot go beyond $n_{\max}$</td><td style="padding:6px;">BERT, GPT-2</td></tr>
+            <tr><td style="padding:6px;">Relative bias</td><td style="padding:6px;">A bias that depends on the distance $i-j$ is added to the scores (learned buckets in T5; a fixed linear penalty in ALiBi)</td><td style="padding:6px;">T5, ALiBi models</td></tr>
+            <tr><td style="padding:6px;">RoPE (rotary)</td><td style="padding:6px;">$Q$ and $K$ are rotated by a position-dependent angle, in every layer</td><td style="padding:6px;">LLaMA, Mistral, Qwen</td></tr>
+        </tbody>
+    </table>
+    <p style="margin-top: 14px;"><strong>RoPE in detail.</strong> Group the dimensions of $q$ and $k$ into pairs $(2i,2i+1)$. For a token at position $m$, rotate pair $i$ by the angle $m\theta_i$, with the same frequency ladder as the sinusoidal scheme, $\theta_i=10000^{-2i/d}$:</p>
+    <div class="math-block">$$R_{m,i}=\begin{bmatrix}\cos m\theta_i & -\sin m\theta_i\\ \sin m\theta_i & \cos m\theta_i\end{bmatrix},\qquad \tilde q_m=R_m q_m,\quad \tilde k_n=R_n k_n$$</div>
+    <p>Here $R_m$ is the block-diagonal matrix of all the pair rotations. Because rotations compose, $R_m^{T}R_n=R_{n-m}$, so the attention score becomes</p>
+    <div class="math-block">$$\tilde q_m^{\,T}\tilde k_n=q_m^{T}R_m^{T}R_n k_n=q_m^{T}R_{n-m}\,k_n$$</div>
+    <p>It depends on the two positions only through the <strong>offset</strong> $n-m$, so attention is relative even though each token is tagged with its absolute position. Two practical differences from the sinusoidal scheme: RoPE is applied to $Q$ and $K$ only (never to $V$) and in <em>every</em> layer, rather than being added once at the input. Context-extension methods (position interpolation, YaRN) work by rescaling $m$ so that a longer sequence reuses angles the model saw during training.</p>
+</div>
         </section>
 
         <section id="self-attention-heart" style="margin-bottom: 40px;">
@@ -409,9 +442,9 @@
             
             <div class="derivation-box" style="border-left-color: #3b82f6; background-color: #f0fdfa; padding: 15px 20px;">
                 <ul style="list-style-type: none; padding: 0; margin: 0;">
-                    <li style="padding: 6px 0; border-bottom: 1px solid #e2e8f0;"><code>it</code> &rarr; <code>cat</code> : <span style="font-family: monospace; font-weight: bold;">0.05</span> <span style="color:#64748b;">(low contextual relationship)</span></li>
-                    <li style="padding: 6px 0; border-bottom: 1px solid #e2e8f0; background-color: #ccfbf1;"><code>it</code> &rarr; <code>mat</code> : <span style="font-family: monospace; font-weight: bold; color:#0d9488;">0.85</span> &nbsp;&larr; <strong>Resolved Target (High semantic relationship because "it" refers to "mat")</strong></li>
-                    <li style="padding: 6px 0;"><code>it</code> &rarr; <code>sat</code> : <span style="font-family: monospace; font-weight: bold;">0.10</span> <span style="color:#64748b;">(low contextual relationship)</span></li>
+                    <li style="padding: 6px 0; border-bottom: 1px solid #e2e8f0;"><code>it</code> &rarr; <code>cat</code> : <span style="font-family: var(--font-data, Consolas, ui-monospace, Menlo, Courier New, monospace); font-weight: bold;">0.05</span> <span style="color:#64748b;">(low contextual relationship)</span></li>
+                    <li style="padding: 6px 0; border-bottom: 1px solid #e2e8f0; background-color: #ccfbf1;"><code>it</code> &rarr; <code>mat</code> : <span style="font-family: var(--font-data, Consolas, ui-monospace, Menlo, Courier New, monospace); font-weight: bold; color:#0d9488;">0.85</span> &nbsp;&larr; <strong>Resolved Target (High semantic relationship because "it" refers to "mat")</strong></li>
+                    <li style="padding: 6px 0;"><code>it</code> &rarr; <code>sat</code> : <span style="font-family: var(--font-data, Consolas, ui-monospace, Menlo, Courier New, monospace); font-weight: bold;">0.10</span> <span style="color:#64748b;">(low contextual relationship)</span></li>
                 </ul>
             </div>
 
@@ -449,30 +482,30 @@
             <div class="derivation-box" style="border-left-color: #8b5cf6; margin-top: 25px;">
                 <h4 style="margin-top:0; color:#4c1d95;">Step-by-Step Mathematical Flow</h4>
 
-                <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 0; font-family: monospace; margin: 10px 0 20px 0;">
+                <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 0; font-family: var(--font-data, Consolas, ui-monospace, Menlo, Courier New, monospace); margin: 10px 0 20px 0;">
                     <div style="text-align: center; width: 120px;">
                         <div style="background: #e2e8f0; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; font-size: 0.92rem;">X</div>
-                        <p style="font-family: sans-serif; font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Input embeddings</p>
+                        <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Input embeddings</p>
                     </div>
                     <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
                     <div style="text-align: center; width: 120px;">
                         <div style="background: #bae6fd; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #0284c7; font-size: 0.92rem;">Q, K, V</div>
-                        <p style="font-family: sans-serif; font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Linear projections of X</p>
+                        <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Linear projections of X</p>
                     </div>
                     <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
                     <div style="text-align: center; width: 120px;">
                         <div style="background: #c7d2fe; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #4f46e5; font-size: 0.92rem;">Scores</div>
-                        <p style="font-family: sans-serif; font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">$QK^T/\sqrt{d_k}$</p>
+                        <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">$QK^T/\sqrt{d_k}$</p>
                     </div>
                     <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
                     <div style="text-align: center; width: 120px;">
                         <div style="background: #fed7aa; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #ea580c; font-size: 0.92rem;">Softmax</div>
-                        <p style="font-family: sans-serif; font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Row-wise normalize to weights</p>
+                        <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Row-wise normalize to weights</p>
                     </div>
                     <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
                     <div style="text-align: center; width: 120px;">
                         <div style="background: #bbf7d0; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #16a34a; font-size: 0.92rem;">Output</div>
-                        <p style="font-family: sans-serif; font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Weights &times; V</p>
+                        <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Weights &times; V</p>
                     </div>
                 </div>
                 <p style="font-size: 0.78rem; color: #94a3b8; text-align: center; margin: -12px 0 20px 0;">(Steps 1&ndash;5 below, worked through with numbers)</p>
@@ -494,7 +527,7 @@
                 </div>
 
                 <p><strong>Step 3: Calculating Scaled Dot-Product Attention Scores</strong></p>
-                <p>Pairwise token alignment is computed by multiplying the Queries matrix directly by the transposed Keys matrix ($Q \times K^T$). This is scaled by the square root of the key dimension ($\sqrt{d_k}$) to prevent extreme variance bounds in deep networks:</p>
+                <p>Pairwise token alignment is computed by multiplying the Queries matrix directly by the transposed Keys matrix ($Q \times K^T$). This is scaled by the square root of the key dimension ($\sqrt{d_k}$) so the scores keep unit variance and the softmax does not saturate (derived in the box after the Universal Formulation below):</p>
                 <div class="math-block">
                     $$\text{Score Matrix} = \frac{Q \times K^T}{\sqrt{d_k}} = \begin{bmatrix} 
                     1.0 & 0.2 & 0.1 \\ 
@@ -507,10 +540,10 @@
                 <p>We apply a row-wise Softmax operation to transform these raw scores into positive probability values that sum to 1.0:</p>
                 <div class="math-block">
                     $$\text{Softmax}\left(\frac{Q \times K^T}{\sqrt{d_k}}\right) = \begin{bmatrix} 
-                    0.70 & 0.20 & 0.10 \\ 
-                    0.25 & 0.65 & 0.10 \\ 
-                    0.10 & 0.15 & 0.75 
-                    \end{bmatrix} \begin{matrix} \leftarrow \text{Cat attends 70\% to itself, 20\% to sat, 10\% to mat} \\ \leftarrow \text{sat attends 25\% to Cat, 65\% to itself, 10\% to mat} \\ \leftarrow \text{mat attends 10\% to Cat, 15\% to sat, 75\% to itself} \end{matrix}$$
+                    0.54 & 0.24 & 0.22 \\ 
+                    0.26 & 0.51 & 0.23 \\ 
+                    0.22 & 0.24 & 0.54 
+                    \end{bmatrix} \begin{matrix} \leftarrow \text{Cat attends 54\% to itself, 24\% to sat, 22\% to mat} \\ \leftarrow \text{sat attends 26\% to Cat, 51\% to itself, 23\% to mat} \\ \leftarrow \text{mat attends 22\% to Cat, 24\% to sat, 54\% to itself} \end{matrix}$$
                 </div>
 
                 <p><strong>Step 5: Aggregating the Final Value Vectors Matrix</strong></p>
@@ -525,6 +558,43 @@
                 $$\text{Attention}(Q,K,V) = \text{Softmax}\left( \frac{Q \times K^T}{\sqrt{d_k}} \right) \times V$$
             </div>
 
+            <div class="derivation-box" style="border-left-color: #0ea5e9; margin-top: 30px;">
+                <h4 style="margin-top:0; color:#0c4a6e;">Why Divide by $\sqrt{d_k}$? (Derivation)</h4>
+                <p>Take one query $q$ and one key $k$, each with $d_k$ components. At initialization, assume the components are independent with mean $0$ and variance $1$. The raw score is</p>
+                <div class="math-block">$$q\cdot k=\sum_{i=1}^{d_k} q_i k_i$$</div>
+                <ul style="padding-left: 20px; line-height: 1.7;">
+                    <li>Each product $q_i k_i$ has mean $0$ and variance $E[q_i^2]\,E[k_i^2]=1$.</li>
+                    <li>The $d_k$ products are independent, so their variances add: $\mathrm{Var}(q\cdot k)=d_k$, i.e. a standard deviation of $\sqrt{d_k}$.</li>
+                    <li>Dividing by $\sqrt{d_k}$ brings the variance back to exactly $1$, whatever the head size.</li>
+                </ul>
+                <p><strong>Why this matters for the softmax.</strong> The softmax Jacobian is $\partial p/\partial z=\mathrm{diag}(p)-pp^{T}$. When one weight is close to $1$ (a nearly one-hot row), this Jacobian is close to $0$, so almost no gradient reaches $Q$ and $K$ and the model cannot learn <em>which</em> token to attend to. Large logits push the softmax into exactly that regime. For $d_k=64$ the unscaled scores have a standard deviation of $8$, so a one-standard-deviation gap between two scores already makes their weights differ by $e^{8}\approx 3000\times$; after scaling the same gap is $1$, a factor of only $e\approx 2.7$. The constant is fixed (not learned): its job is to start training in the healthy, non-saturated regime, and it matters more as $d_k$ grows.</p>
+            </div>
+
+            <div class="derivation-box" style="border-left-color: #f59e0b; background-color: #fffbeb; margin-top: 30px;">
+                <h4 style="margin-top:0; color:#78350f;">Causal Masking: Why $-\infty$, and Why Before the Softmax?</h4>
+                <p><strong>The problem.</strong> A decoder-only LLM must predict token $t+1$ from tokens $1,\dots,t$. But self-attention as derived above lets every token look at every other token, including the future ones. During training the whole sentence is available, so without a mask the model would simply read the answer from its own input and learn nothing useful.</p>
+                <p><strong>The fix.</strong> Add a mask matrix $M$ to the scaled scores <em>before</em> the softmax:</p>
+                <div class="math-block">$$\text{Attention}(Q,K,V)=\text{Softmax}\!\left(\frac{QK^{T}}{\sqrt{d_k}}+M\right)V,\qquad M_{ij}=\begin{cases}0 & j\le i\\ -\infty & j\gt i\end{cases}$$</div>
+                <p><strong>Why $-\infty$?</strong> The weight on token $j$ is $\dfrac{e^{s_{ij}}}{\sum_{j'} e^{s_{ij'}}}$. Since $e^{-\infty}=0$, a masked token gets <em>exactly</em> zero weight, and the denominator only sums over the allowed tokens, so the remaining weights still add up to $1$. Two tempting alternatives fail:</p>
+                <ul style="padding-left: 20px; line-height: 1.7;">
+                    <li><strong>Set the masked score to $0$:</strong> $e^{0}=1$, so the future token still receives a weight comparable to the others. A score of $0$ means &ldquo;neutral&rdquo;, not &ldquo;invisible&rdquo;.</li>
+                    <li><strong>Zero the weights after the softmax:</strong> the row no longer sums to $1$, so you would have to renormalize by hand. Masking the logits does this renormalization automatically.</li>
+                </ul>
+                <p><strong>Worked example</strong> on the same $3\times 3$ score matrix as Step 3 (rows Cat, sat, mat):</p>
+                <div class="math-block">$$\begin{bmatrix}1.0 & -\infty & -\infty\\ 0.3 & 1.0 & -\infty\\ 0.1 & 0.2 & 1.0\end{bmatrix}\;\xrightarrow{\;\text{row-wise softmax}\;}\;\begin{bmatrix}1.00 & 0 & 0\\ 0.33 & 0.67 & 0\\ 0.22 & 0.24 & 0.54\end{bmatrix}$$</div>
+                <p>&ldquo;Cat&rdquo; can only see itself, so its weight is $1$. &ldquo;sat&rdquo; splits between Cat and itself: $e^{0.3}=1.35$ and $e^{1.0}=2.72$ give $0.33$ and $0.67$. The last token &ldquo;mat&rdquo; is allowed to see everything, so its row is identical to the unmasked softmax in Step 4.</p>
+                <p><strong>Consequences.</strong></p>
+                <ul style="padding-left: 20px; line-height: 1.7;">
+                    <li><strong>Lower-triangular attention:</strong> the representation of token $i$ depends only on tokens $\le i$, in every layer.</li>
+                    <li><strong>Parallel training (teacher forcing):</strong> one forward pass over an $n$-token sequence yields $n$ next-token predictions at once, because position $i$ is only allowed to use tokens $\le i$. The targets are the input shifted left by one, and the loss is
+                        $$\mathcal{L}=-\frac{1}{n}\sum_{t=1}^{n}\log p_\theta\!\left(x_{t+1}\mid x_{\le t}\right),\qquad \text{perplexity}=e^{\mathcal{L}}$$
+                        An RNN would need $n$ sequential steps to produce the same $n$ predictions.</li>
+                    <li><strong>Generation is still one token at a time:</strong> at inference the future tokens do not exist yet, so the mask is satisfied automatically, but each new token must wait for the previous one.</li>
+                    <li><strong>Where the causal mask is not used:</strong> an encoder (BERT-style) attends bidirectionally, and cross-attention in an encoder&ndash;decoder model also has no causal mask. Only the decoder's self-attention is masked. Padding positions in a batch are masked with the same $-\infty$ trick.</li>
+                </ul>
+                <p style="font-size: 0.88rem; color: #78350f;"><em>Implementation note: libraries often add a very large negative finite number (such as the dtype's minimum) instead of a literal $-\infty$. A row in which <strong>every</strong> entry is $-\infty$ gives $0/0=$ NaN, which can happen for padded rows.</em></p>
+            </div>
+
             <h3 style="margin-top: 30px;">Multi-Head Attention Optimization</h3>
             <p>
                 Rather than tracking relationships through a single attention mechanism, the model parallelizes the operation across $H$ distinct "heads." Each head maintains a completely separate set of projection weights ($W^Q_i, W^K_i, W^V_i$). This lets the model focus on different aspects of the text simultaneously:
@@ -537,80 +607,80 @@
 <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
 <svg viewBox="0 0 1100 450" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;" role="img" aria-label="Multi-head attention: input split into H heads of size d_k, attention run independently, outputs concatenated and mixed by W^O">
 <defs><marker id="mhaArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#334155"/></marker></defs>
-<text x="550" y="24" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a" >Multi-Head Attention: Split &#8594; Attend Independently &#8594; Concatenate &#8594; Mix</text>
+<text x="550" y="24" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a" >Multi-Head Attention: Split &#8594; Attend Independently &#8594; Concatenate &#8594; Mix</text>
 <rect x="10" y="185" width="90" height="70" rx="10" fill="#e2e8f0" stroke="#64748b" stroke-width="2" />
-<text x="55" y="214" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#0f172a" >Input X</text>
-<text x="55" y="232" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >n &#215; d_model</text>
-<text x="225" y="57" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#2563eb" >Head 1</text>
+<text x="55" y="214" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#0f172a" >Input X</text>
+<text x="55" y="232" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >n &#215; d_model</text>
+<text x="225" y="57" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#2563eb" >Head 1</text>
 <line x1="100" y1="220" x2="138" y2="100" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <rect x="140" y="65" width="170" height="70" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2" />
-<text x="225" y="86" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#2563eb" >Linear projections</text>
-<text x="225" y="103" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >W^Q_i , W^K_i , W^V_i</text>
-<text x="225" y="120" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >Q_i, K_i, V_i : n &#215; d_k</text>
+<text x="225" y="86" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#2563eb" >Linear projections</text>
+<text x="225" y="103" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >W^Q_i , W^K_i , W^V_i</text>
+<text x="225" y="120" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >Q_i, K_i, V_i : n &#215; d_k</text>
 <line x1="310" y1="100" x2="346" y2="100" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <rect x="350" y="65" width="180" height="70" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2" />
-<text x="440" y="86" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#2563eb" >Scaled dot-product attn</text>
-<text x="440" y="103" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >softmax(Q_i K_i^T / &#8730;d_k) V_i</text>
-<text x="440" y="120" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="italic" fill="#475569" >runs independently</text>
+<text x="440" y="86" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#2563eb" >Scaled dot-product attn</text>
+<text x="440" y="103" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >softmax(Q_i K_i^T / &#8730;d_k) V_i</text>
+<text x="440" y="120" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="italic" fill="#475569" >runs independently</text>
 <line x1="530" y1="100" x2="566" y2="100" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <rect x="570" y="65" width="90" height="70" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2" />
-<text x="615" y="93" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#2563eb" >Head 1</text>
-<text x="615" y="112" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >n &#215; d_k</text>
-<text x="225" y="152" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#ea580c" >Head 2</text>
+<text x="615" y="93" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#2563eb" >Head 1</text>
+<text x="615" y="112" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >n &#215; d_k</text>
+<text x="225" y="152" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#ea580c" >Head 2</text>
 <line x1="100" y1="220" x2="138" y2="195" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <rect x="140" y="160" width="170" height="70" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="2" />
-<text x="225" y="181" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#ea580c" >Linear projections</text>
-<text x="225" y="198" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >W^Q_i , W^K_i , W^V_i</text>
-<text x="225" y="215" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >Q_i, K_i, V_i : n &#215; d_k</text>
+<text x="225" y="181" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#ea580c" >Linear projections</text>
+<text x="225" y="198" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >W^Q_i , W^K_i , W^V_i</text>
+<text x="225" y="215" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >Q_i, K_i, V_i : n &#215; d_k</text>
 <line x1="310" y1="195" x2="346" y2="195" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <rect x="350" y="160" width="180" height="70" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="2" />
-<text x="440" y="181" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#ea580c" >Scaled dot-product attn</text>
-<text x="440" y="198" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >softmax(Q_i K_i^T / &#8730;d_k) V_i</text>
-<text x="440" y="215" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="italic" fill="#475569" >runs independently</text>
+<text x="440" y="181" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#ea580c" >Scaled dot-product attn</text>
+<text x="440" y="198" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >softmax(Q_i K_i^T / &#8730;d_k) V_i</text>
+<text x="440" y="215" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="italic" fill="#475569" >runs independently</text>
 <line x1="530" y1="195" x2="566" y2="195" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <rect x="570" y="160" width="90" height="70" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="2" />
-<text x="615" y="188" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#ea580c" >Head 2</text>
-<text x="615" y="207" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >n &#215; d_k</text>
-<text x="225" y="312" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed" >Head H</text>
+<text x="615" y="188" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#ea580c" >Head 2</text>
+<text x="615" y="207" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >n &#215; d_k</text>
+<text x="225" y="312" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#7c3aed" >Head H</text>
 <line x1="100" y1="220" x2="138" y2="355" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <rect x="140" y="320" width="170" height="70" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
-<text x="225" y="341" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#7c3aed" >Linear projections</text>
-<text x="225" y="358" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >W^Q_i , W^K_i , W^V_i</text>
-<text x="225" y="375" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >Q_i, K_i, V_i : n &#215; d_k</text>
+<text x="225" y="341" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#7c3aed" >Linear projections</text>
+<text x="225" y="358" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >W^Q_i , W^K_i , W^V_i</text>
+<text x="225" y="375" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >Q_i, K_i, V_i : n &#215; d_k</text>
 <line x1="310" y1="355" x2="346" y2="355" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <rect x="350" y="320" width="180" height="70" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
-<text x="440" y="341" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold" fill="#7c3aed" >Scaled dot-product attn</text>
-<text x="440" y="358" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >softmax(Q_i K_i^T / &#8730;d_k) V_i</text>
-<text x="440" y="375" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="italic" fill="#475569" >runs independently</text>
+<text x="440" y="341" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#7c3aed" >Scaled dot-product attn</text>
+<text x="440" y="358" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >softmax(Q_i K_i^T / &#8730;d_k) V_i</text>
+<text x="440" y="375" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="italic" fill="#475569" >runs independently</text>
 <line x1="530" y1="355" x2="566" y2="355" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <rect x="570" y="320" width="90" height="70" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
-<text x="615" y="348" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed" >Head H</text>
-<text x="615" y="367" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >n &#215; d_k</text>
-<text x="225" y="285" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="22" font-weight="bold" fill="#94a3b8" >&#8942;</text>
-<text x="440" y="285" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="22" font-weight="bold" fill="#94a3b8" >&#8942;</text>
-<text x="615" y="285" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="22" font-weight="bold" fill="#94a3b8" >&#8942;</text>
-<text x="55" y="285" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-weight="normal" fill="#475569" ></text>
+<text x="615" y="348" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#7c3aed" >Head H</text>
+<text x="615" y="367" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >n &#215; d_k</text>
+<text x="225" y="285" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="bold" fill="#94a3b8" >&#8942;</text>
+<text x="440" y="285" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="bold" fill="#94a3b8" >&#8942;</text>
+<text x="615" y="285" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="bold" fill="#94a3b8" >&#8942;</text>
+<text x="55" y="285" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" font-weight="normal" fill="#475569" ></text>
 <rect x="710" y="130" width="130" height="190" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2" />
-<text x="775" y="152" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#0f172a" >Concat</text>
+<text x="775" y="152" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#0f172a" >Concat</text>
 <rect x="722" y="172" width="26" height="90" rx="3" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5" />
 <rect x="750" y="172" width="26" height="90" rx="3" fill="#ffedd5" stroke="#ea580c" stroke-width="1.5" />
-<text x="789" y="224" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="bold" fill="#94a3b8" >&#8943;</text>
+<text x="789" y="224" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="bold" fill="#94a3b8" >&#8943;</text>
 <rect x="802" y="172" width="26" height="90" rx="3" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5" />
-<text x="775" y="282" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#0f172a" >n &#215; (H&#183;d_k)</text>
-<text x="775" y="298" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="bold" fill="#0f172a" >= n &#215; d_model</text>
+<text x="775" y="282" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#0f172a" >n &#215; (H&#183;d_k)</text>
+<text x="775" y="298" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#0f172a" >= n &#215; d_model</text>
 <line x1="660" y1="100" x2="708" y2="185" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <line x1="660" y1="195" x2="708" y2="215" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <line x1="660" y1="355" x2="708" y2="255" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <line x1="840" y1="220" x2="866" y2="220" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <rect x="870" y="180" width="95" height="80" rx="10" fill="#fef9c3" stroke="#ca8a04" stroke-width="2" />
-<text x="917" y="206" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#a16207" >&#215; W^O</text>
-<text x="917" y="224" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-weight="normal" fill="#475569" >d_model &#215; d_model</text>
-<text x="917" y="240" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" font-weight="italic" fill="#475569" >mixes the heads</text>
+<text x="917" y="206" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#a16207" >&#215; W^O</text>
+<text x="917" y="224" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="10" font-weight="normal" fill="#475569" >d_model &#215; d_model</text>
+<text x="917" y="240" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" font-weight="italic" fill="#475569" >mixes the heads</text>
 <line x1="965" y1="220" x2="991" y2="220" stroke="#334155" stroke-width="2" marker-end="url(#mhaArrow)"/>
 <rect x="995" y="185" width="95" height="70" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2" />
-<text x="1042" y="213" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#166534" >Output</text>
-<text x="1042" y="231" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="normal" fill="#475569" >n &#215; d_model</text>
-<text x="550" y="424" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="italic" fill="#475569" >Each head works in a slice of size d_k = d_model / H   (e.g. d_model = 512, H = 8  &#8594;  d_k = 64).  Total cost &#8776; one full-width head, but H different "views".</text>
+<text x="1042" y="213" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#166534" >Output</text>
+<text x="1042" y="231" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#475569" >n &#215; d_model</text>
+<text x="550" y="424" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="italic" fill="#475569" >Each head works in a slice of size d_k = d_model / H   (e.g. d_model = 512, H = 8  &#8594;  d_k = 64).  Total cost &#8776; one full-width head, but H different "views".</text>
 </svg>
     <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
         <em>Split-path view of Multi-Head Attention: the same input $X$ feeds $H$ parallel heads, each with its own $W^Q_i, W^K_i, W^V_i$ projecting down to $d_k = d_{\text{model}}/H$. Each head computes attention on its own and emits an $n \times d_k$ matrix; the $H$ outputs are concatenated back to $n \times d_{\text{model}}$, then mixed by $W^O$ so the output shape matches the input $X$ (required for the residual connection).</em>
@@ -688,7 +758,7 @@
                     <li>After $N$ repetitions, $h^{(N)}$ is the final, deeply context-enriched representation — this is what feeds into Output Projections, covered next.</li>
                 </ol>
             </div>
-            <div style="background: #ecfeff; border-left: 4px solid #0e7490; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #164e63; line-height: 1.5;"><strong>Applies to all variants:</strong> stacking works the same in every layout. In an encoder&ndash;decoder model there are two stacks (an encoder of $N$ blocks and a decoder of $N$ blocks, where each decoder block also has a cross-attention sub-layer); a decoder-only model such as GPT/Claude has just the one decoder stack.</div>
+            <div style="background: #ecfeff; border-left: 4px solid #0e7490; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.88rem; color: #164e63; line-height: 1.5;"><strong>Applies to all variants:</strong> stacking works the same in every layout. In an encoder&ndash;decoder model there are two stacks (an encoder of $N$ blocks and a decoder of $N$ blocks, where each decoder block also has a cross-attention sub-layer); a decoder-only model such as GPT/Claude has just the one decoder stack.</div>
 
             <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
               <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
@@ -702,34 +772,34 @@
             </marker>
         </defs>
 
-        <text x="450" y="22" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Unified Training: One Loss &#8594; One Backward Pass &#8594; Every Parameter Updated</text>
+        <text x="450" y="22" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Unified Training: One Loss &#8594; One Backward Pass &#8594; Every Parameter Updated</text>
 
         <!-- Box A: Embeddings -->
         <rect x="10" y="50" width="140" height="70" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-        <text x="80" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#4338ca">Embeddings</text>
-        <text x="80" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
+        <text x="80" y="80" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#4338ca">Embeddings</text>
+        <text x="80" y="98" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#475569">W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
 
         <line x1="150" y1="85" x2="186" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow2)"/>
 
         <!-- Box B: the whole xN stack, collapsed -->
         <rect x="190" y="50" width="340" height="70" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2" stroke-dasharray="7,4"/>
-        <text x="360" y="76" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#0e7490">&times;N Transformer Blocks</text>
-        <text x="360" y="94" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">Self-Attn + FFN per layer, own weights each</text>
-        <text x="360" y="110" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9" font-style="italic" fill="#94a3b8">(full detail: see the stacking diagram above)</text>
+        <text x="360" y="76" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#0e7490">&times;N Transformer Blocks</text>
+        <text x="360" y="94" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#475569">Self-Attn + FFN per layer, own weights each</text>
+        <text x="360" y="110" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="10.8" font-style="italic" fill="#94a3b8">(full detail: see the stacking diagram above)</text>
 
         <line x1="530" y1="85" x2="566" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow2)"/>
 
         <!-- Box C: Output Projection -->
         <rect x="570" y="50" width="160" height="70" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
-        <text x="650" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed">Output Proj.</text>
-        <text x="650" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">Linear + Softmax</text>
+        <text x="650" y="80" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#7c3aed">Output Proj.</text>
+        <text x="650" y="98" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#475569">Linear + Softmax</text>
 
         <line x1="730" y1="85" x2="766" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow2)"/>
 
         <!-- Box D: Loss -->
         <rect x="770" y="50" width="120" height="70" rx="10" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
-        <text x="830" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#e11d48">Loss L</text>
-        <text x="830" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">(scalar)</text>
+        <text x="830" y="80" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#e11d48">Loss L</text>
+        <text x="830" y="98" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#475569">(scalar)</text>
 
         <!-- Single backward pass: drop from Loss, one shared bus, taps into every component -->
         <line x1="830" y1="120" x2="830" y2="180" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4"/>
@@ -739,8 +809,8 @@
         <line x1="360" y1="180" x2="360" y2="122" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow2)"/>
         <line x1="650" y1="180" x2="650" y2="122" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow2)"/>
 
-        <text x="450" y="202" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#e11d48">ONE backward pass computes &#8706;L/&#8706;&#952; for every parameter &#952;</text>
-        <text x="450" y="218" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#e11d48">(embeddings, all N blocks' weights, output projection) &mdash; together, in one shared chain-rule sweep</text>
+        <text x="450" y="202" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-style="italic" fill="#e11d48">ONE backward pass computes &#8706;L/&#8706;&#952; for every parameter &#952;</text>
+        <text x="450" y="218" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-style="italic" fill="#e11d48">(embeddings, all N blocks' weights, output projection) &mdash; together, in one shared chain-rule sweep</text>
     </svg>
     <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
         <em>This diagram is deliberately a level "zoomed out" from the stacking diagram above &mdash; the $\times N$ box here <strong>is</strong> that entire diagram, collapsed to one box, so this view can show what that one doesn't: that Embeddings and Output Projection are trained by the exact same backward pass as every layer inside the stack, not by separate training loops.</em>
@@ -774,36 +844,36 @@
 
         <!-- Box 1: Input x -->
         <rect x="10" y="70" width="120" height="64" rx="10" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
-        <text x="70" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Input x</text>
-        <text x="70" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">(d<tspan baseline-shift="sub" font-size="7">model</tspan>,)</text>
+        <text x="70" y="96" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Input x</text>
+        <text x="70" y="116" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#475569">(d<tspan baseline-shift="sub" font-size="7">model</tspan>,)</text>
 
         <line x1="130" y1="102" x2="166" y2="102" stroke="#db2777" stroke-width="2" marker-end="url(#ffnArrow)"/>
 
         <!-- Box 2: Linear 1 (Expand) -->
         <rect x="170" y="70" width="190" height="64" rx="10" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
-        <text x="265" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Linear 1 (Expand)</text>
-        <text x="265" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">xW<tspan baseline-shift="sub" font-size="8">1</tspan>+b<tspan baseline-shift="sub" font-size="8">1</tspan> &#8594; (d<tspan baseline-shift="sub" font-size="7">ff</tspan>,)</text>
+        <text x="265" y="96" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Linear 1 (Expand)</text>
+        <text x="265" y="116" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#475569">xW<tspan baseline-shift="sub" font-size="8">1</tspan>+b<tspan baseline-shift="sub" font-size="8">1</tspan> &#8594; (d<tspan baseline-shift="sub" font-size="7">ff</tspan>,)</text>
 
         <line x1="360" y1="102" x2="396" y2="102" stroke="#db2777" stroke-width="2" marker-end="url(#ffnArrow)"/>
 
         <!-- Box 3: Activation -->
         <rect x="400" y="70" width="190" height="64" rx="10" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
-        <text x="495" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Activation</text>
-        <text x="495" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">ReLU or GELU</text>
+        <text x="495" y="96" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Activation</text>
+        <text x="495" y="116" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#475569">ReLU or GELU</text>
 
         <line x1="590" y1="102" x2="626" y2="102" stroke="#db2777" stroke-width="2" marker-end="url(#ffnArrow)"/>
 
         <!-- Box 4: Linear 2 (Project Down) -->
         <rect x="630" y="70" width="190" height="64" rx="10" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
-        <text x="725" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Linear 2 (Project Down)</text>
-        <text x="725" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">hW<tspan baseline-shift="sub" font-size="8">2</tspan>+b<tspan baseline-shift="sub" font-size="8">2</tspan> &#8594; (d<tspan baseline-shift="sub" font-size="7">model</tspan>,)</text>
+        <text x="725" y="96" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#db2777">Linear 2 (Project Down)</text>
+        <text x="725" y="116" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#475569">hW<tspan baseline-shift="sub" font-size="8">2</tspan>+b<tspan baseline-shift="sub" font-size="8">2</tspan> &#8594; (d<tspan baseline-shift="sub" font-size="7">model</tspan>,)</text>
 
         <line x1="820" y1="102" x2="856" y2="102" stroke="#db2777" stroke-width="2" marker-end="url(#ffnArrow)"/>
 
         <!-- Box 5: Output y -->
         <rect x="860" y="60" width="130" height="84" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
-        <text x="925" y="96" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#7c3aed">Output y</text>
-        <text x="925" y="116" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">(d<tspan baseline-shift="sub" font-size="7">model</tspan>,)</text>
+        <text x="925" y="96" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#7c3aed">Output y</text>
+        <text x="925" y="116" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#475569">(d<tspan baseline-shift="sub" font-size="7">model</tspan>,)</text>
     </svg>
     <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
         <em>Same shape in, same shape out ($d_{\text{model}}$) &mdash; the expansion to $d_{ff}$ and back happens entirely inside the block, giving the network extra non-linear capacity without changing what the next layer receives.</em>
@@ -835,7 +905,44 @@
                 Notice the shapes: Embeddings mapped a token <em>id</em> ($V$-dimensional, one-hot) to a vector ($d_{\text{model}}$-dimensional) using $W_{\text{embed}} \in \mathbb{R}^{V \times d_{\text{model}}}$. Output Projection does the reverse — vector back to a $V$-dimensional distribution — using $W_{\text{unembed}} \in \mathbb{R}^{d_{\text{model}} \times V}$. Because these two matrices have exactly transposed shapes, many production models set $W_{\text{unembed}} = W_{\text{embed}}^{T}$ directly — a technique called <strong>weight tying</strong> — reusing one learned matrix for both directions instead of paying its $\sim V \times d_{\text{model}}$ parameter cost twice.
             </div>
         </section>
-		<!-- ADDED SECTION: Backpropagation & Optimization (AdamW) -->
+		<section id="complexity-rnn-vs-transformer" style="margin-bottom: 40px;">
+            <h3>Computational Complexity: Transformer vs. RNN</h3>
+            <p>
+                A natural question: is the Transformer cheaper than an RNN? <strong>In total arithmetic it is not.</strong> What the Transformer wins is how much of that work can be done <em>at the same time</em>, and how short the path is between two distant tokens. Let $n$ be the sequence length and $d$ the model width (see <a href="RNN.html">the RNN page</a> for the sequential bottleneck).
+            </p>
+            <table class="data-table" style="width:100%; border-collapse: collapse; font-size: 0.88rem;">
+                <thead><tr><th style="text-align:left; padding:6px;">Per layer</th><th style="text-align:left; padding:6px;">Arithmetic</th><th style="text-align:left; padding:6px;">Sequential steps</th><th style="text-align:left; padding:6px;">Path between two tokens</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:6px;">Self-attention</td><td style="padding:6px;">$O(n^2 d)$</td><td style="padding:6px;">$O(1)$</td><td style="padding:6px;">$O(1)$</td></tr>
+                    <tr><td style="padding:6px;">Recurrent (RNN / LSTM)</td><td style="padding:6px;">$O(n d^2)$</td><td style="padding:6px;">$O(n)$</td><td style="padding:6px;">$O(n)$</td></tr>
+                </tbody>
+            </table>
+            <p style="font-size: 0.85rem; color: #64748b;"><em>(After Vaswani et al., 2017, Table 1.) The attention matrix also needs $O(n^2)$ memory if it is stored in full.</em></p>
+
+            <div class="derivation-box" style="border-left-color: #64748b; background-color: #f8fafc;">
+                <h4 style="margin-top:0; color:#0f172a;">A More Careful Count (multiply-adds per layer)</h4>
+                <ul style="padding-left: 20px; line-height: 1.7;">
+                    <li><strong>Transformer layer</strong> with FFN width $4d$: the $Q,K,V,O$ projections cost $4nd^2$, the FFN costs $8nd^2$, and the attention itself ($QK^T$ and the weighted sum with $V$) costs $2n^2d$. Total: $12nd^2+2n^2d$.</li>
+                    <li><strong>LSTM layer:</strong> four gates, each acting on the input and on the previous hidden state: $4\times 2d^2=8d^2$ per step, so $8nd^2$ in total.</li>
+                </ul>
+                <p>So a Transformer layer does at least about $1.5\times$ the arithmetic of an LSTM layer at any length. The quadratic term only dominates once $2n^2d>12nd^2$, i.e. $n\gt 6d$: for $d=4096$ that is beyond roughly $25{,}000$ tokens. For short and medium sequences the extra cost is a modest constant factor, not a worse growth rate; for very long contexts the $n^2$ term is real, which is why long-context work focuses on FlashAttention (less memory traffic, same arithmetic) and sparse or sliding-window attention.</p>
+            </div>
+
+            <p><strong>So why does the Transformer win in practice? The depth of the dependency chain.</strong></p>
+            <ul style="padding-left: 20px; line-height: 1.7;">
+                <li><strong>RNN:</strong> $h_t$ needs $h_{t-1}$, so there is a chain of $n$ dependent steps. Even with unlimited hardware it cannot be shortened; a GPU can only parallelize across the batch and the hidden units, and each step is a small operation that leaves most of the GPU idle.</li>
+                <li><strong>Transformer:</strong> within a layer no position depends on another, so all $n$ positions are computed together as large matrix&ndash;matrix products ($XW$, $QK^T$). With enough hardware, the sequential depth is just the number of layers, independent of $n$.</li>
+                <li><strong>Path length:</strong> information and gradients between token $1$ and token $n$ cross $n$ recurrent steps in an RNN but a single attention hop in a Transformer, which is what eases long-range dependencies.</li>
+            </ul>
+
+            <div class="intuition-box">
+                <strong>Does this parallelism need a GPU?</strong> No. The algorithm is the same set of matrix multiplications and runs on a CPU (multi-core, SIMD, optimized BLAS); small LLMs are routinely run on CPUs. The parallelism is a property of the <em>algorithm</em>; the GPU or TPU supplies the <em>amount</em> of parallel hardware (thousands of cores, high memory bandwidth) needed to turn it into a large wall-clock speed-up. On a CPU with a few cores the advantage shrinks and the extra arithmetic counts for more. Conversely, an RNN gains little from a GPU because there is nothing wide to parallelize inside a time step. The algorithmic complexity is not removed; it is hidden behind parallel hardware.
+            </div>
+
+            <p><strong>Inference is a different story.</strong> Training and the prompt-processing phase handle all tokens in parallel, but generating a new token must wait for the previous one in both architectures. There the RNN is cheaper: it updates a fixed-size state at $O(d^2)$ per token, while a Transformer attends to all previous tokens ($O(nd)$ per token) and keeps a key&ndash;value cache that grows linearly with $n$. This asymmetry is why recurrent-style models (state-space models such as Mamba, RWKV, linear attention) are being revisited: parallel training like a Transformer, constant-cost generation like an RNN.</p>
+        </section>
+
+        <!-- ADDED SECTION: Backpropagation & Optimization (AdamW) -->
         <section id="transformer-backprop" style="margin-bottom: 40px; margin-top: 40px;">
             <h2 style="color: #0f172a; border-bottom: 2px solid #cbd5e1; padding-bottom: 5px;">Backpropagation & Optimization in Transformers</h2>
             
@@ -861,8 +968,8 @@
 
             <p>Let's map out how the sequence <code>"The cat sat on the mat"</code> moves through the network step-by-step to predict the next word (<code>"and"</code>):</p>
 
-            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) LLM.</strong> Inside every layer, each token attends only to itself and earlier tokens; the last position is the one used to predict the next token.</div>
-            <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; font-family: monospace; font-size: 0.9rem;">
+            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) LLM.</strong> Inside every layer, each token attends only to itself and earlier tokens; the last position is the one used to predict the next token.</div>
+            <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; font-family: var(--font-data, Consolas, ui-monospace, Menlo, Courier New, monospace); font-size: 0.9rem;">
                 <div style="text-align:center; font-weight:bold; color:#1e293b;">[Execution Map: Layer Stack Pass-Through]</div>
                 <hr style="border:0; border-top:1px solid #cbd5e1; margin:10px 0;">
                 
@@ -925,9 +1032,34 @@
                     <li><strong>Second Residual &amp; Layer Norm:</strong> The FFN input is added back to its output and normalized one more time before entering the next layer.</li>
                 </ol>
             </div>
+        
+            <div class="derivation-box" style="border-left-color: #14b8a6; background-color: #f0fdfa; margin-top: 25px;">
+                <h4 style="margin-top:0; color:#115e59;">Residual Connections: the Same Idea as ResNet</h4>
+                <p>The skip connection is borrowed from <a href="CNN.html">ResNet</a> (He et al., 2015, for image classification) and cited by the 2017 Transformer paper. The equation is identical: a block outputs $y=x+F(x)$, where $F$ is a stack of convolutions in ResNet and an attention or FFN sublayer in the Transformer.</p>
+                <p><strong>Why it trains.</strong> The Jacobian of one block is $\partial y/\partial x=I+\partial F/\partial x$. Across $L$ blocks,</p>
+                <div class="math-block">$$\frac{\partial x_L}{\partial x_0}=\prod_{l=1}^{L}\left(I+\frac{\partial F_l}{\partial x_l}\right)=I+\sum_{l}\frac{\partial F_l}{\partial x_l}+\cdots$$</div>
+                <p>The expansion always contains the identity term (the &ldquo;+1&rdquo; of the ResNet figure), so gradients reach early layers undamped by depth. Without skips the gradient would be a product of $L$ Jacobians, which vanishes or explodes. Equivalently, each block only has to learn a <em>change</em> $F(x)$, and can default to the identity ($F\approx 0$). A useful picture is the <strong>residual stream</strong>: $x$ is a shared channel that every attention and FFN sublayer reads from and adds to. The derivation is the same one used for ResNet backpropagation.</p>
+
+                <table class="data-table" style="width:100%; border-collapse: collapse; font-size: 0.88rem;">
+                    <thead><tr><th style="text-align:left; padding:6px;"></th><th style="text-align:left; padding:6px;">ResNet</th><th style="text-align:left; padding:6px;">Transformer</th></tr></thead>
+                    <tbody>
+                        <tr><td style="padding:6px;">Residual branch $F$</td><td style="padding:6px;">Conv&ndash;BN&ndash;ReLU stack</td><td style="padding:6px;">Attention or FFN</td></tr>
+                        <tr><td style="padding:6px;">Normalization</td><td style="padding:6px;">BatchNorm (statistics over the batch and spatial positions)</td><td style="padding:6px;">LayerNorm (statistics over the $d_{\text{model}}$ features of each token)</td></tr>
+                        <tr><td style="padding:6px;">Shape change</td><td style="padding:6px;">A $1\times1$ projection shortcut when channels or stride change</td><td style="padding:6px;">None: the width $d_{\text{model}}$ is constant, so the shortcut is always the identity</td></tr>
+                        <tr><td style="padding:6px;">Norm placement</td><td style="padding:6px;">ResNet v1: after the convolutions; ResNet v2: pre-activation</td><td style="padding:6px;">Original: Post-LN; modern LLMs: Pre-LN</td></tr>
+                    </tbody>
+                </table>
+
+                <p style="margin-top: 14px;"><strong>Why LayerNorm and not BatchNorm?</strong> BatchNorm computes statistics across the batch, which is awkward for variable-length, padded sequences, noisy for small batches, and different between training (batch statistics) and inference (running averages). LayerNorm normalizes each token over its own feature dimension, so it is independent of the batch and behaves identically in training and inference (see the <a href="NN_version1.html">BatchNorm discussion</a> for the contrast).</p>
+
+                <p><strong>Post-LN vs. Pre-LN.</strong> The numbered list above shows the <em>original</em> (Post-LN) ordering, where normalization comes after the addition:</p>
+                <div class="math-block">$$\text{Post-LN:}\quad x_{l+1}=\mathrm{LN}\big(x_l+F(x_l)\big)\qquad\qquad \text{Pre-LN:}\quad x_{l+1}=x_l+F\big(\mathrm{LN}(x_l)\big)$$</div>
+                <p>In Post-LN the LayerNorm sits <em>on</em> the skip path, so the gradient passes through every LayerNorm on its way down; deep stacks then need careful learning-rate warmup to stay stable. In Pre-LN the skip path is a pure identity, exactly like ResNet v2's pre-activation design, and training is much more stable (Xiong et al., 2020). Most modern LLMs use Pre-LN (with one final LayerNorm before the output projection), and the interactive animation at the end of this page uses it. Many also replace LayerNorm with <strong>RMSNorm</strong>, which drops the mean-centering and is cheaper:</p>
+                <div class="math-block">$$\mathrm{RMSNorm}(x)=\frac{x}{\sqrt{\frac{1}{d}\sum_{i=1}^{d}x_i^2+\epsilon}}\odot g$$</div>
+            </div>
         </section>
 		<h3>Complete Training loop of Transformer</h3>
-		<div style="background: #f1f5f9; border-left: 4px solid #64748b; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: sans-serif; font-size: 0.88rem; color: #334155; line-height: 1.5;"><strong>Applies to all variants:</strong> the single-loss / single-backward-pass idea is the same for every layout. For a decoder-only LLM the loss is next-token cross-entropy on the (shifted) input text; for an encoder&ndash;decoder model it is computed on the decoder outputs, and the gradient reaches the encoder through cross-attention.</div>
+		<div style="background: #f1f5f9; border-left: 4px solid #64748b; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.88rem; color: #334155; line-height: 1.5;"><strong>Applies to all variants:</strong> the single-loss / single-backward-pass idea is the same for every layout. For a decoder-only LLM the loss is next-token cross-entropy on the (shifted) input text; for an encoder&ndash;decoder model it is computed on the decoder outputs, and the gradient reaches the encoder through cross-attention.</div>
 		<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
     <svg viewBox="0 0 1000 270" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
         <defs>
@@ -939,48 +1071,48 @@
             </marker>
         </defs>
 
-        <text x="500" y="22" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Unified Training: One Loss &#8594; One Backward Pass &#8594; Every Parameter Updated</text>
+        <text x="500" y="22" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Unified Training: One Loss &#8594; One Backward Pass &#8594; Every Parameter Updated</text>
 
         <!-- Forward pass row -->
         <!-- Box A: Embeddings -->
         <rect x="10" y="50" width="120" height="70" rx="10" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
-        <text x="70" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#4338ca">Embeddings</text>
-        <text x="70" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
+        <text x="70" y="80" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#4338ca">Embeddings</text>
+        <text x="70" y="98" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#475569">W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
 
         <line x1="130" y1="85" x2="166" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow)"/>
 
         <!-- Box B: Layer 1 -->
         <rect x="170" y="50" width="150" height="70" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
-        <text x="245" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#0e7490">Layer 1</text>
-        <text x="245" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">Self-Attn + FFN</text>
+        <text x="245" y="80" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#0e7490">Layer 1</text>
+        <text x="245" y="98" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#475569">Self-Attn + FFN</text>
 
         <line x1="320" y1="85" x2="356" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow)"/>
 
         <!-- Dots: remaining layers -->
         <rect x="360" y="58" width="70" height="54" rx="8" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
-        <text x="395" y="84" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="18" fill="#94a3b8">&#8942;</text>
-        <text x="395" y="102" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8" font-style="italic" fill="#94a3b8">(N&minus;2 more)</text>
+        <text x="395" y="84" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="18" fill="#94a3b8">&#8942;</text>
+        <text x="395" y="102" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="9.6" font-style="italic" fill="#94a3b8">(N&minus;2 more)</text>
 
         <line x1="430" y1="85" x2="466" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow)"/>
 
         <!-- Box C: Layer N -->
         <rect x="470" y="50" width="150" height="70" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
-        <text x="545" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#0e7490">Layer N</text>
-        <text x="545" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">Self-Attn + FFN</text>
+        <text x="545" y="80" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#0e7490">Layer N</text>
+        <text x="545" y="98" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#475569">Self-Attn + FFN</text>
 
         <line x1="620" y1="85" x2="656" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow)"/>
 
         <!-- Box D: Output Projection -->
         <rect x="660" y="50" width="150" height="70" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
-        <text x="735" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed">Output Proj.</text>
-        <text x="735" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">Linear + Softmax</text>
+        <text x="735" y="80" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#7c3aed">Output Proj.</text>
+        <text x="735" y="98" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#475569">Linear + Softmax</text>
 
         <line x1="810" y1="85" x2="846" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#unifiedFwdArrow)"/>
 
         <!-- Box E: Loss -->
         <rect x="850" y="50" width="110" height="70" rx="10" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
-        <text x="905" y="80" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" fill="#e11d48">Loss L</text>
-        <text x="905" y="98" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">(scalar)</text>
+        <text x="905" y="80" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="13" font-weight="bold" fill="#e11d48">Loss L</text>
+        <text x="905" y="98" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#475569">(scalar)</text>
 
         <!-- Single backward pass: drop from Loss, one shared bus line, taps into every component -->
         <line x1="905" y1="120" x2="905" y2="200" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4"/>
@@ -992,8 +1124,8 @@
         <line x1="545" y1="200" x2="545" y2="122" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow)"/>
         <line x1="735" y1="200" x2="735" y2="122" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#unifiedBwdArrow)"/>
 
-        <text x="500" y="222" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#e11d48">ONE backward pass computes &#8706;L/&#8706;&#952; for every parameter &#952;</text>
-        <text x="500" y="238" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-style="italic" fill="#e11d48">(embeddings, every layer's attention &amp; FFN weights, output projection) &mdash; together, in one shared chain-rule sweep</text>
+        <text x="500" y="222" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-style="italic" fill="#e11d48">ONE backward pass computes &#8706;L/&#8706;&#952; for every parameter &#952;</text>
+        <text x="500" y="238" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12.5" font-style="italic" fill="#e11d48">(embeddings, every layer's attention &amp; FFN weights, output projection) &mdash; together, in one shared chain-rule sweep</text>
     </svg>
     <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
         <em>The solid slate arrows are one forward pass, run once. The dashed red path is <strong>one</strong> backward pass &mdash; not three separate ones. There is only one loss $L$, computed once, and the chain rule computes $\partial L/\partial\theta$ for every parameter $\theta$ in the network in that single sweep. So it's not "train Embeddings, then train Attention, then train FFN" &mdash; every parameter, in every component, is updated together, in the same optimizer step, every single training iteration.</em>
@@ -1084,7 +1216,7 @@
 <h2 style="font-family:var(--font-body,Georgia,serif);font-weight:700;font-size:28px;margin:0 0 20px;color:var(--ink,#14304D);">Interactive animation: one forward pass, end to end</h2>
 <p style="margin:0 0 16px;">Type a sentence and step through a real decoder-only forward pass: embeddings, positional encoding, causal self-attention, the feed-forward network, and the next-word prediction.</p>
 <style>
-#tf-anim{--a-ink:var(--ink,#14304D);--a-soft:var(--ink-soft,#3C5A78);--a-faint:var(--ink-faint,#6F8AA4);--a-rule:var(--rule,#B9CADA);--a-grid:var(--paper-grid,#D6E1EC);--a-card:var(--card,#FFFFFF);--a-blue:var(--class-a,#1F6F8B);--a-red:var(--query,#B23A48);--pos:31,111,139;--neg:178,58,72;--a-body:var(--font-body,Georgia,serif);--a-data:var(--font-data,'Courier New',monospace);background:var(--a-card);border:1px solid var(--a-rule);border-radius:4px;padding:22px;margin:24px 0 10px;color:var(--a-ink);font-family:var(--a-body);font-size:16px;line-height:1.55}
+#tf-anim{--a-ink:var(--ink,#14304D);--a-soft:var(--ink-soft,#3C5A78);--a-faint:var(--ink-faint,#6F8AA4);--a-rule:var(--rule,#B9CADA);--a-grid:var(--paper-grid,#D6E1EC);--a-card:var(--card,#FFFFFF);--a-blue:var(--class-a,#1F6F8B);--a-red:var(--query,#B23A48);--pos:31,111,139;--neg:178,58,72;--a-body:var(--font-body,Georgia,serif);--a-data:var(--font-data,Consolas, ui-monospace, Menlo, Courier New, monospace);background:var(--a-card);border:1px solid var(--a-rule);border-radius:4px;padding:22px;margin:24px 0 10px;color:var(--a-ink);font-family:var(--a-body);font-size:16px;line-height:1.55}
 #tf-anim *{box-sizing:border-box}
 #tf-anim .widget-top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 12px}
 #tf-anim input{flex:1;min-width:200px;padding:7px 10px;border:1px solid var(--a-rule);border-radius:3px;background:#fff;color:var(--a-ink);font:14px var(--a-data)}
@@ -1165,13 +1297,13 @@ function run(){
  S=[
  {t:"1. Tokenize",d:"Words become integer IDs from the vocabulary. Unknown words map to <unk> (ID 0). Only the first 8 words are used.",h:`<div class=sc><table><tr><th class=c>pos</th>${words.map((_,i)=>`<th class=c>${i}</th>`).join("")}</tr><tr><th class=r>word</th>${words.map((x,i)=>`<td style="animation-delay:${i*90}ms">${x}</td>`).join("")}</tr><tr><th class=r>id</th>${ids.map((x,i)=>`<td style="animation-delay:${i*90+400}ms">${x}</td>`).join("")}</tr></table></div>`},
  {t:"2. Embedding lookup",d:`Each ID selects a row of the embedding matrix E (${V.length}×${D}). Result X: ${T}×${D}.`,h:mat(X,rl,dn(D))},
- {t:"3. Add positional encoding",d:"Attention has no sense of order, so a sinusoidal position vector PE is added: X₀ = X + PE.",h:`<div class=lab>PE (${T}×${D})</div>`+mat(PE,rl,dn(D))+`<div class=lab>X₀ = X + PE</div>`+mat(X0,rl,dn(D))},
- {t:"4. LayerNorm (pre-attention)",d:"Each row is normalized to mean 0 and variance 1 before the attention sub-layer. The un-normalized X₀ is kept for the residual connection.",h:mat(N1,rl,dn(D))},
+ {t:"3. Add positional encoding",d:"Attention has no sense of order, so a sinusoidal position vector PE is added: X<sub>0</sub> = X + PE.",h:`<div class=lab>PE (${T}×${D})</div>`+mat(PE,rl,dn(D))+`<div class=lab>X<sub>0</sub> = X + PE</div>`+mat(X0,rl,dn(D))},
+ {t:"4. LayerNorm (pre-attention)",d:"Each row is normalized to mean 0 and variance 1 before the attention sub-layer. The un-normalized X<sub>0</sub> is kept for the residual connection.",h:mat(N1,rl,dn(D))},
  {t:"5. Project to Q, K, V",d:`Q = N·W_Q, K = N·W_K, V = N·W_V. Columns d1–d4 belong to head 1 and d5–d8 to head 2.`,h:`<div class=lab>Q</div>`+mat(Q,rl,dn(D),{split:4})+`<div class=lab>K</div>`+mat(K,rl,dn(D),{split:4})+`<div class=lab>V</div>`+mat(Vv,rl,dn(D),{split:4})},
- {t:"6. Scores with causal mask",d:`score(i,j) = Qᵢ·Kⱼ / √${DH} for each head. Positions j > i are masked to −∞ so a token never sees the future.`,h:`<div class=row>${sc.map((s,h)=>`<div><div class=lab>${hn(h)}</div>${mat(s,rl,rl)}</div>`).join("")}</div>`},
+ {t:"6. Scores with causal mask",d:`score(i,j) = Q<sub>i</sub>·K<sub>j</sub> / √${DH} for each head. Positions j > i are masked to −∞ so a token never sees the future.`,h:`<div class=row>${sc.map((s,h)=>`<div><div class=lab>${hn(h)}</div>${mat(s,rl,rl)}</div>`).join("")}</div>`},
  {t:"7. Softmax → attention weights",d:"Softmax turns each row into probabilities that sum to 1. Masked entries become exactly 0. Brighter cells mean more attention.",h:`<div class=row>${A.map((a,h)=>`<div><div class=lab>${hn(h)}</div>${mat(a,rl,rl,{mx:1,p:1})}</div>`).join("")}</div>`},
- {t:"8. Weighted sum, output projection, residual",d:"Each head takes Σⱼ weightᵢⱼ·Vⱼ. Heads are concatenated, multiplied by W_O, and added back: X₁ = X₀ + attn.",h:`<div class=lab>Concatenated heads</div>`+mat(ctx,rl,dn(D),{split:4})+`<div class=lab>X₁ = X₀ + ctx·W_O</div>`+mat(X1,rl,dn(D))},
- {t:"9. Feed-forward network",d:`LayerNorm, expand ${D}→${FF}, GELU, project back ${FF}→${D}, then add the residual: X₂ = X₁ + FFN(LN(X₁)). Each position is processed independently.`,h:`<div class=lab>GELU(LN(X₁)·W₁), ${T}×${FF}</div>`+mat(Hh,rl,Array.from({length:FF},(_,i)=>"h"+(i+1)))+`<div class=lab>X₂</div>`+mat(X2,rl,dn(D))},
+ {t:"8. Weighted sum, output projection, residual",d:"Each head takes Σ<sub>j</sub> weight<sub>ij</sub>·V<sub>j</sub>. Heads are concatenated, multiplied by W_O, and added back: X<sub>1</sub> = X<sub>0</sub> + attn.",h:`<div class=lab>Concatenated heads</div>`+mat(ctx,rl,dn(D),{split:4})+`<div class=lab>X<sub>1</sub> = X<sub>0</sub> + ctx·W_O</div>`+mat(X1,rl,dn(D))},
+ {t:"9. Feed-forward network",d:`LayerNorm, expand ${D}→${FF}, GELU, project back ${FF}→${D}, then add the residual: X<sub>2</sub> = X<sub>1</sub> + FFN(LN(X<sub>1</sub>)). Each position is processed independently.`,h:`<div class=lab>GELU(LN(X<sub>1</sub>)·W<sub>1</sub>), ${T}×${FF}</div>`+mat(Hh,rl,Array.from({length:FF},(_,i)=>"h"+(i+1)))+`<div class=lab>X<sub>2</sub></div>`+mat(X2,rl,dn(D))},
  {t:"10. Final LayerNorm and logits",d:`Only the last position (“${tk[T-1]}”) predicts the next word. After LayerNorm, its vector is dotted with every embedding row (weight tying): logits = h·Eᵀ.`,h:`<div class=lab>Final hidden vector (last position)</div>`+mat([fin],[tk[T-1]],dn(D))+`<div class=lab>Logits, ${V.length} words (top 8)</div>`+mat([ord.slice(0,8).map(i=>lg[i])],["logit"],ord.slice(0,8).map(i=>V[i]))},
  {t:"11. Softmax → next word",d:"Softmax converts logits into a probability distribution. Greedy decoding picks the largest.",h:`<div id=tf-bars>${ord.slice(0,8).map((i,k)=>`<div class=vote-row><div class=vr-top><span>${V[i]}</span><span>${(p[i]*100).toFixed(1)}%</span></div><div class=vr-bar><div class="vr-fill${k?"":" w1"}" data-w="${p[i]*100}"></div></div></div>`).join("")}</div><div class="predict-banner out">${words.join(" ")} <u>${V[w]}</u></div>`}
  ];
@@ -1183,12 +1315,12 @@ function show(){
  document.querySelectorAll("#tf-dots i").forEach(e=>e.onclick=()=>{cur=+e.dataset.i;show()});
  document.getElementById("tf-pv").disabled=cur==0;document.getElementById("tf-nx").disabled=cur==S.length-1;
  requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".vr-fill[data-w]").forEach(e=>e.style.width=e.dataset.w+"%")))}
-function stop(){clearInterval(timer);timer=null;document.getElementById("tf-pl").textContent="▶ Play"}
+function stop(){clearInterval(timer);timer=null;document.getElementById("tf-pl").textContent="\u25B6\uFE0E Play"}
 document.getElementById("tf-go").onclick=run;
 document.getElementById("tf-in").onkeydown=e=>{if(e.key=="Enter")run()};
 document.getElementById("tf-pv").onclick=()=>{stop();if(cur>0){cur--;show()}};
 document.getElementById("tf-nx").onclick=()=>{stop();if(cur<S.length-1){cur++;show()}};
-document.getElementById("tf-pl").onclick=()=>{if(timer)return stop();if(cur==S.length-1)cur=0;show();document.getElementById("tf-pl").textContent="⏸ Pause";timer=setInterval(()=>{if(cur<S.length-1){cur++;show()}else stop()},3500)};
+document.getElementById("tf-pl").onclick=()=>{if(timer)return stop();if(cur==S.length-1)cur=0;show();document.getElementById("tf-pl").textContent="\u23F8\uFE0E Pause";timer=setInterval(()=>{if(cur<S.length-1){cur++;show()}else stop()},3500)};
 run();
 
 })();
@@ -1196,7 +1328,7 @@ run();
 </script>
 </section>
 
-<section id="transformer-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
+<section id="transformer-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif);">
             <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Timed Transformer Quiz</h2>
 
             <div id="quiz"></div>
