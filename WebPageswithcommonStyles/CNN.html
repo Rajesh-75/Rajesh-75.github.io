@@ -722,6 +722,59 @@ Deeper variants (ResNet-50/101/152) use a bottleneck block (1×1 → 3×3 → 1�
     </figure>
 </div>
 
+<details style="margin: 30px 0; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 18px;">
+    <summary style="cursor: pointer; font-weight: bold;">Worked numerical example: forward and backward pass through one residual block (click to expand)</summary>
+
+    <p style="margin-top: 14px;"><strong>Forward pass.</strong> The block outputs $H(x) = F(x) + x$, where $x$ is the block's input (the previous block's output) and $F(x)$ is computed only by this block's layers.</p>
+    <p><strong>Backward pass.</strong> Differentiating gives $\frac{\partial H}{\partial x} = \frac{\partial F}{\partial x} + I$. The identity term comes from differentiating the "$+x$" terms, so it is 1 whatever values $x$ holds.</p>
+
+    <p><strong>Setup.</strong> Take $x = \begin{bmatrix} 2.0 \\ 4.0 \end{bmatrix}$ and a simplified residual branch $F(x) = Wx$ with $W = \begin{bmatrix} 0.2 & 0.1 \\ 0.0 & 0.1 \end{bmatrix}$ (a single linear layer, with any ReLU active so its local derivative is 1; a real $F$ has several layers, ReLUs and batch normalization).</p>
+    <p><strong>Forward:</strong> $F(x) = Wx = \begin{bmatrix} 0.8 \\ 0.4 \end{bmatrix}$, so $H(x) = F(x) + x = \begin{bmatrix} 2.8 \\ 4.4 \end{bmatrix}$.</p>
+    <p><strong>Jacobian:</strong> $h_1 = (0.2x_1 + 0.1x_2) + x_1$ and $h_2 = 0.1x_2 + x_2$, so</p>
+    <div style="text-align: center; margin: 10px 0;">
+        $$\frac{\partial H}{\partial x} = \underbrace{\begin{bmatrix} 0.2 & 0.1 \\ 0.0 & 0.1 \end{bmatrix}}_{\partial F/\partial x \,=\, W} + \underbrace{\begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}}_{I} = \begin{bmatrix} 1.2 & 0.1 \\ 0.0 & 1.1 \end{bmatrix}$$
+    </div>
+    <p><strong>Backward:</strong> if $\frac{\partial L}{\partial H} = \begin{bmatrix} 10 \\ 10 \end{bmatrix}$ arrives from above, then $\frac{\partial L}{\partial x} = \left(\frac{\partial H}{\partial x}\right)^{T} \frac{\partial L}{\partial H}$:</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 14px 0;">
+        <thead>
+            <tr style="background-color: #f2f2f2; text-align: left;">
+                <th style="padding: 10px; border: 1px solid #ddd;">Block</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Gradient to $x$</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Result</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Plain, $H = F(x)$</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">$W^{T}\,\frac{\partial L}{\partial H}$</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">$\begin{bmatrix} 2 \\ 2 \end{bmatrix}$ (with this $W$, 80% of the signal is lost in one block)</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Residual, $H = F(x) + x$</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">$(W^{T} + I)\,\frac{\partial L}{\partial H}$</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">$\begin{bmatrix} 12 \\ 12 \end{bmatrix}$ = 10 passed straight through the identity path + 2 through $F$</td>
+            </tr>
+        </tbody>
+    </table>
+    <p>Even if every weight in $W$ were 0, the plain block would pass back $\begin{bmatrix} 0 \\ 0 \end{bmatrix}$ while the residual block would still pass back $\begin{bmatrix} 10 \\ 10 \end{bmatrix}$.</p>
+    <p><strong>Stacking.</strong> The effect is multiplicative. Repeating this same block (a toy case), the gradient entering from above as 10 becomes:</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 14px 0;">
+        <thead>
+            <tr style="background-color: #f2f2f2; text-align: left;">
+                <th style="padding: 10px; border: 1px solid #ddd;">Blocks</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Plain</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Residual</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="padding: 10px; border: 1px solid #ddd;">1</td><td style="padding: 10px; border: 1px solid #ddd;">2</td><td style="padding: 10px; border: 1px solid #ddd;">12</td></tr>
+            <tr><td style="padding: 10px; border: 1px solid #ddd;">5</td><td style="padding: 10px; border: 1px solid #ddd;">0.0032</td><td style="padding: 10px; border: 1px solid #ddd;">24.9</td></tr>
+            <tr><td style="padding: 10px; border: 1px solid #ddd;">10</td><td style="padding: 10px; border: 1px solid #ddd;">0.000001</td><td style="padding: 10px; border: 1px solid #ddd;">61.9</td></tr>
+        </tbody>
+    </table>
+    <p>The plain stack vanishes, shrinking like $0.2^n$. The identity path prevents vanishing but not growth: here $W + I$ has eigenvalues above 1, so the residual gradient grows. Real ResNets keep $F$ small at initialization and use normalization to keep this in check.</p>
+</details>
+
 <div class="tutorial-image-container" style="text-align: center; margin: 40px 0;">
     <figure style="display: inline-block; max-width: 100%; margin: 0;">
         <img src="ResNetBlock.svg" alt="ResNet Residual Block Illustration" style="width: 100%; max-width: 900px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
