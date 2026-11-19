@@ -893,7 +893,7 @@ body {
     
     <div class="section-item">
         <span class="section-title">The Calculus of ReLU: Why the Gradient is 1</span>
-        <p>For all values where $z > 0$, ReLU acts as the identity function ($f(z) = z$), meaning its derivative is exactly 1. This allows the "error signal" to pass through the neuron unchanged during training, though if $z < 0$, the gradient becomes 0—a state known as the "Dying ReLU" problem.</p>
+        <p>For all values where $z > 0$, ReLU acts as the identity function ($f(z) = z$), meaning its derivative is exactly 1. This allows the "error signal" to pass through the neuron unchanged during training, though if $z < 0$, the gradient becomes 0—a state known as the "Dying ReLU" problem. (ReLU also has a kink at $z=0$ where the derivative is not defined; frameworks simply use the value 0 there, and training is unaffected. <a href="BP2.html#relu-nondifferentiable">BP2 explains why</a>.)</p>
     </div>
 
     <div style="border-left: 5px solid #2ecc71; background: #f0fff4; padding: 20px; border-radius: 8px; margin: 20px 0;">
