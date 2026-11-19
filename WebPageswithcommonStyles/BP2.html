@@ -426,6 +426,9 @@ for step in range(num_steps):
         <div class="intuition-box">
             <strong>Intuition:</strong> If the neuron is in a "flat" part of the Sigmoid curve, the gradient becomes near zero (Vanishing Gradient), and learning slows down.
         </div>
+        <div class="intuition-box">
+            <strong>Which activation do modern networks use?</strong> Sigmoid keeps this first example simple, but most modern networks use <strong>ReLU</strong>, $\max(0, z)$, whose derivative does not exist at $z = 0$. Backpropagation still works; <a href="#relu-nondifferentiable">Section 7</a> below explains why.
+        </div>
     </div>
 
     <div class="derivative-step">
@@ -845,6 +848,98 @@ print(x2.grad.item())  # 1.7163.. = dy/dx2</code></pre>
     </div>
     <p>The printed gradients match the hand derivation and both accumulation tables. Forward mode is also available in the frameworks (for example <code>torch.func.jvp</code> and <code>jax.jvp</code>) and is useful when a function has few inputs and many outputs.</p>
     <p><strong>This is not limited to fully connected networks.</strong> A CNN, an RNN or a Transformer is also a graph of operations, so the same reverse sweep trains it. When one parameter is used in several places (a convolution kernel at every position, an RNN's recurrent weights at every time step), there are several paths from the loss to that parameter, and by the chain rule from Section 1 the contributions <em>add</em>: its gradient is the sum over all its uses. For these gradients used inside a complete training loop (initialization, BatchNorm, Dropout, Adam/AdamW and early stopping), see <a href="NN_version1.html#training-loop">The Full Training Loop</a> on the Neural Networks page.</p>
+
+    <h3 id="relu-nondifferentiable">7. When the Function Is Not Differentiable: ReLU</h3>
+    <p>Everything above assumed that every operation has a derivative. The most widely used hidden-layer activation in deep learning breaks this assumption:</p>
+    <div class="formula-container">
+        $$\text{ReLU}(z) = \max(0, z), \qquad \text{ReLU}'(z) = \begin{cases} 0 & z < 0 \\ 1 & z > 0 \\ \text{undefined} & z = 0 \end{cases}$$
+    </div>
+    <p>At $z=0$ the left-hand slope is 0 and the right-hand slope is 1, so the limit that defines the derivative does not exist. Yet ReLU has been the default activation of deep networks since AlexNet (2012) and is found inside ResNets, U-Nets and the feed-forward blocks of many Transformers. A function that is "not differentiable" at one point is trained with gradient descent every day. The next subsections explain how.</p>
+
+    <div style="text-align: center; margin: 30px 0; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+<svg viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ReLU function with a kink at zero and its derivative, a step function with a convention at zero" style="max-width:100%;height:auto;display:block;margin:0 auto;font-family:'Segoe UI',Arial,sans-serif;">
+<rect width="900" height="380" fill="#ffffff"/>
+<!-- left panel: ReLU -->
+<text x="225" y="30" text-anchor="middle" font-size="17" font-weight="700" fill="#1565c0">ReLU(z) = max(0, z)</text>
+<line x1="50" y1="280" x2="400" y2="280" stroke="#555" stroke-width="1.5"/>
+<line x1="225" y1="60" x2="225" y2="320" stroke="#555" stroke-width="1.5"/>
+<text x="404" y="285" font-size="14" fill="#555">z</text>
+<polyline points="60,280 225,280 390,115" fill="none" stroke="#2980b9" stroke-width="4"/>
+<circle cx="225" cy="280" r="7" fill="#e74c3c"/>
+<text x="240" y="305" font-size="14" fill="#e74c3c" font-weight="700">kink at z = 0</text>
+<text x="135" y="262" text-anchor="middle" font-size="14" fill="#2980b9">slope 0</text>
+<text x="330" y="190" text-anchor="middle" font-size="14" fill="#2980b9">slope 1</text>
+<text x="225" y="348" text-anchor="middle" font-size="13" fill="#555">left slope 0 &#8800; right slope 1, so no single derivative at 0</text>
+<!-- right panel: derivative -->
+<text x="675" y="30" text-anchor="middle" font-size="17" font-weight="700" fill="#1565c0">ReLU&#8242;(z) used in the backward pass</text>
+<line x1="500" y1="280" x2="850" y2="280" stroke="#555" stroke-width="1.5"/>
+<line x1="675" y1="60" x2="675" y2="320" stroke="#555" stroke-width="1.5"/>
+<text x="854" y="285" font-size="14" fill="#555">z</text>
+<text x="660" y="285" text-anchor="end" font-size="13" fill="#555">0</text>
+<text x="660" y="125" text-anchor="end" font-size="13" fill="#555">1</text>
+<line x1="510" y1="280" x2="668" y2="280" stroke="#e67e22" stroke-width="4"/>
+<line x1="682" y1="120" x2="840" y2="120" stroke="#e67e22" stroke-width="4"/>
+<rect x="670" y="120" width="10" height="160" fill="#f39c12" opacity="0.25"/>
+<circle cx="675" cy="280" r="7" fill="#e74c3c"/>
+<text x="690" y="215" font-size="13" fill="#b9770e">any value in [0, 1]</text>
+<text x="690" y="232" font-size="13" fill="#b9770e">is a valid subgradient</text>
+<text x="500" y="262" font-size="14" fill="#e67e22">derivative 0</text>
+<text x="750" y="106" font-size="14" fill="#e67e22">derivative 1</text>
+<text x="675" y="348" text-anchor="middle" font-size="13" fill="#555">frameworks pick the value 0 at z = 0 (red dot)</text>
+</svg>
+        <p style="font-size: 0.9rem; color: #666; margin-top: 5px;"><em>Figure: ReLU (left) has a corner at $z=0$. Its derivative (right) is a step: 0 for $z&lt;0$ and 1 for $z&gt;0$. At the single point $z=0$ the backward pass simply uses a chosen value (0 in PyTorch, TensorFlow and JAX).</em></p>
+    </div>
+
+    <h4>Reason 1: Backpropagation needs a local rule, not a textbook derivative</h4>
+    <p>As Section 6 showed, backpropagation (and AD in general) does not differentiate a formula symbolically. Each node of the graph only needs a <strong>local rule</strong> that turns the incoming adjoint into an outgoing one. For the ReLU node the rule is simply "pass the error through where the neuron was active, block it elsewhere":</p>
+    <code class="code-snippet">dZ = dA * (Z &gt; 0)      # ReLU: compare with  dZ = dA * sigmoid_derivative(A)</code>
+    <p>The comparison <code>Z &gt; 0</code> is <code>False</code> at exactly $Z=0$, so the code uses derivative 0 there. This is a <strong>convention</strong>: the framework authors chose one value at the one point where the mathematics offers none. PyTorch, TensorFlow and JAX all choose 0, which is also the "safe" choice because no gradient flows through a neuron that is exactly at the boundary.</p>
+    <div class="derivative-step">
+        <span class="tag" style="background:#27ae60;">Example</span>
+        <h4>ReLU backward pass on three neurons</h4>
+        <p>Let $Z = [-2,\; 0,\; 3]$ and the incoming error $dA = [0.5,\; 0.5,\; 0.5]$. Then $\text{ReLU}'(Z) = [0,\; 0,\; 1]$ (using the convention at $0$), so $dZ = dA \cdot \text{ReLU}'(Z) = [0,\; 0,\; 0.5]$. Only the active neuron passes its error backward.</p>
+    </div>
+
+    <h4>Reason 2: The bad point is almost never visited</h4>
+    <p>The kink is a single point on the number line. The pre-activation $Z = W A_{i-1} + b$ is computed from real-valued weights and data, so the chance that it lands <em>exactly</em> on 0 is essentially zero. In a network, the loss as a function of the parameters is <strong>piecewise smooth</strong>: inside each region (a fixed pattern of "which neurons are on") it is differentiable, and the kinks lie only on the boundaries between regions, a set of measure zero. Gradient descent spends nearly all of its time inside the smooth regions, where the derivative is the ordinary one. The convention matters only in rare cases (for example an all-zero input with zero bias), and there the value 0 is harmless.</p>
+
+    <h4>Reason 3: There is a mathematical generalization of the derivative</h4>
+    <p>At a kink, instead of one slope we can talk about the set of all slopes of lines that touch the function from below. For ReLU at $z=0$ this set is the interval $[0,1]$, called the <strong>subdifferential</strong>, and each member is a <strong>subgradient</strong>. Choosing 0 means choosing one valid subgradient. For convex functions, subgradient methods are classical optimization. A deep network's loss is not convex, so the theory is more delicate, but it has been extended: the output of automatic differentiation on piecewise-smooth programs (ReLU, max-pooling, absolute value) is a so-called <em>conservative gradient</em>, and SGD with it still has convergence guarantees to critical points (Bolte and Pauwels, 2021). In practice, the empirical record is the stronger argument: networks with ReLU train well.</p>
+
+    <h4>Why ReLU is chosen despite the kink</h4>
+    <ul>
+        <li><strong>No saturation for $z>0$:</strong> the derivative is exactly 1, so the error passes through unchanged. The sigmoid has a maximum slope of 0.25 (the value we computed in Step A), so a stack of sigmoid layers shrinks the gradient quickly, which is the Vanishing Gradient problem. ReLU largely avoids this in the active region.</li>
+        <li><strong>Cheap:</strong> a comparison for the forward pass and a comparison for the backward pass, with no exponentials.</li>
+        <li><strong>Sparse activations:</strong> every neuron with $z \le 0$ outputs exactly 0.</li>
+    </ul>
+    <div class="intuition-box">
+        <strong>The price: "dying ReLU".</strong> If a neuron's $Z$ is negative for every training input, its derivative is 0 everywhere, no error reaches its weights, and it can never recover. Remedies include a smaller learning rate, careful initialization, BatchNorm, and smoother or leaky variants: <strong>Leaky ReLU</strong> (slope such as 0.01 for $z<0$), <strong>ELU</strong>, and the smooth <strong>GELU</strong> and <strong>SiLU/Swish</strong> used in many Transformers and modern CNNs. Note that the smooth variants remove the kink, yet ReLU remains popular because the kink turned out not to be a practical problem.</div>
+
+    <h4>The general pattern: deep learning defines the backward rule by hand where the math fails</h4>
+    <p>ReLU is one instance of a habit that runs through deep learning. When an operation is non-differentiable, or its true derivative is useless, frameworks define the backward rule by convention and move on:</p>
+    <table class="data-table">
+        <thead>
+            <tr style="background-color: #f4f4f4;"><th>Operation</th><th>What goes wrong</th><th>What the backward pass does</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>ReLU</strong></td><td>Kink at $z=0$</td><td>Use 0 or 1 by comparison; value 0 at the kink</td></tr>
+            <tr><td><strong>Max pooling</strong></td><td>$\max$ switches winner at ties</td><td>Send the whole gradient to the single winning element (the position of the maximum), 0 to the others; ties are broken by convention</td></tr>
+            <tr><td><strong>Absolute value, L1 penalty, hinge loss</strong></td><td>Kink at 0 (or at the margin)</td><td>Use a subgradient, for example $\text{sign}(0)=0$</td></tr>
+            <tr><td><strong>Dropout</strong></td><td>Random on/off mask</td><td>Treat the sampled mask as a constant and multiply the gradient by it</td></tr>
+            <tr><td><strong>Rounding, thresholds, argmax, quantization</strong></td><td>Derivative is 0 almost everywhere (and undefined at jumps), so no learning signal</td><td><strong>Straight-Through Estimator:</strong> in the backward pass pretend the operation was the identity (derivative 1) and pass the gradient straight through</td></tr>
+        </tbody>
+    </table>
+    <p>The common idea: <strong>the backward pass does not have to be the exact derivative of the forward pass; it only has to be a useful direction for reducing the loss.</strong> The forward pass computes the real function, while the backward pass uses a rule that is exact wherever the function is smooth and a sensible choice at the few places where it is not.</p>
+    <div class="algorithm-box" style="border: 2px solid #2980b9; border-radius: 6px; background-color: #fdfdfd; padding: 15px 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+        <strong>PyTorch: the gradient of ReLU at exactly 0</strong>
+        <pre style="margin:10px 0 0; background:#f8f9fa; border:1px solid #ddd; border-radius:4px; padding:12px 15px; overflow-x:auto; font-size:0.9rem; line-height:1.5;"><code>import torch
+
+z = torch.tensor([-2.0, 0.0, 3.0], requires_grad=True)
+a = torch.relu(z)
+a.backward(torch.tensor([0.5, 0.5, 0.5]))   # incoming error dA
+
+print(z.grad)   # tensor([0.0, 0.0, 0.5])  -> value 0 is used at z = 0</code></pre>
+    </div>
   <!-- =================== END AUTOMATIC DIFFERENTIATION SECTION =================== -->
 </div>
 <section id="gradient-descent-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: system-ui, -apple-system, sans-serif;">
@@ -927,7 +1022,19 @@ print(x2.grad.item())  # 1.7163.. = dy/dx2</code></pre>
               w: ["dA<sub>prev</sub> = dZ&middot;A<sub>prev</sub><sup>T</sup>, a 2 &times; 3 matrix", "dA<sub>prev</sub> = dZ&middot;&sigma;&prime;(Z), a vector of 2 entries", "dA<sub>prev</sub> = W&middot;dZ, a vector of 2 entries"] },
             { q: "How does the chain-of-derivatives view describe what each layer does in backpropagation?",
               a: "Each layer multiplies the error it received by its own local gradient (&part;A/&part;Z &times; &part;Z/&part;W), and the derivatives on the connections feed the generic update &theta; &larr; &theta; &minus; &eta;&nabla;<sub>&theta;</sub>L",
-              w: ["Each layer ignores the error it received and recomputes the loss from scratch", "Each layer adds the received error to its own local gradient before the update", "Each layer sends its own local gradient forward to the next layer"] }
+              w: ["Each layer ignores the error it received and recomputes the loss from scratch", "Each layer adds the received error to its own local gradient before the update", "Each layer sends its own local gradient forward to the next layer"] },
+            { q: "ReLU has no derivative at z = 0, yet networks with ReLU train well with backpropagation. Why?",
+              a: "Backpropagation only needs a local rule per node; the kink is a single point that is almost never hit exactly, and frameworks simply use a chosen value there (0), which is a valid subgradient in [0, 1]",
+              w: ["Backpropagation replaces ReLU by a sigmoid during the backward pass", "The derivative at z = 0 is exactly 0.5 because it is the average of the two slopes, so it exists", "Training stops whenever a neuron reaches z = 0, so the problem never occurs"] },
+            { q: "Numerical: Z = [&minus;1, 2, 0, 4] and the incoming error is dA = [1, 1, 1, 1]. Using ReLU with the convention ReLU&prime;(0) = 0, what is dZ?",
+              a: "ReLU&prime;(Z) = [0, 1, 0, 1], so dZ = [0, 1, 0, 1]",
+              w: ["[0, 1, 1, 1], treating the derivative at 0 as 1", "[&minus;1, 1, 0, 1], passing the negative input through", "[0, 2, 0, 4], multiplying by Z instead of by the derivative"] },
+            { q: "What is the &ldquo;dying ReLU&rdquo; problem, and how is it reduced?",
+              a: "A neuron whose Z is negative for all inputs has derivative 0 everywhere, so no gradient reaches its weights and it never recovers; Leaky ReLU, GELU/SiLU, smaller learning rates, BatchNorm and careful initialization reduce it",
+              w: ["ReLU outputs become larger than 1, which is fixed by clipping the loss", "ReLU neurons forget the data they saw earlier, which is fixed by adding momentum", "The derivative of ReLU becomes infinite at z = 0, which is fixed by using a bigger batch size"] },
+            { q: "How does deep learning handle operations such as rounding or quantization whose derivative is 0 almost everywhere?",
+              a: "With a Straight-Through Estimator: the forward pass applies the real operation, while the backward pass pretends it was the identity and passes the gradient straight through",
+              w: ["The operation is skipped in the forward pass so that its derivative is not needed", "Its derivative of 0 is used, because no gradient is still a correct gradient", "The network is trained with the closed-form gradient of the operation"] }
         ]
             });
             </script>
