@@ -9,14 +9,17 @@
             svg[viewBox] { min-width: 640px; }
         }
     
-        /* Diagram labels follow the shared UI font (--font-ui in styles_common.css). */
-        svg text { font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); }
+        /* Diagram labels use the same sans stack as the diagrams in BP2.html. */
+        svg text { font-family: 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif; }
     </style>
     <!-- Load global MathJax configuration first -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Transformer Algorithm & Architecture From First Principles</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles_common.css">
 
     <script>
@@ -51,7 +54,7 @@
 <body>
 <div class="index-link index-link-top" style="text-align:center; margin:14px 0; font-size:0.95rem;"><a href="../index.html#pipeline">Go to Main Page (Index Page)</a></div>
 
-    <main class="container" style="max-width: 950px; margin: 0 auto; padding: 20px; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); color: #1e293b; line-height: 1.6;">
+    <main class="container" style="max-width: 950px; margin: 0 auto; padding: 20px; color: #1e293b; line-height: 1.6;">
         
         <header style="margin-bottom: 40px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px;">
             <h1 style="font-size: 2.5rem; color: #0f172a; margin-bottom: 10px;">The Transformer Algorithm</h1>
@@ -60,7 +63,7 @@
             </p>
             <p style="margin: 10px 0 0 0;"><a href="#transformer-quiz" style="color:#2563eb; text-decoration:underline; font-weight:600;">&#9201; Take the 10-question timed quiz &darr;</a></p>
         </header>
-		<section id="transformer-introduction" style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); line-height: 1.6; color: #333; max-width: 750px; margin: 20px 0;">
+		<section id="transformer-introduction" style="line-height: 1.6; color: #333; max-width: 750px; margin: 20px 0;">
     
     <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Sequence-to-Sequence (Seq2Seq) & The Encoder-Decoder Framework</h2>
     <p>
@@ -79,7 +82,7 @@
 	A complete walkthrough of the Encoder–Decoder Transformer is available
 <a href="encoder_decoder_transformer.html" style="color:#2563eb; text-decoration:underline;">here</a>.
     </div>
-<div style="background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.88rem; color: #1e3a8a; line-height: 1.5;"><strong>Reading the figures on this page:</strong> the pipeline diagrams below show a <strong>decoder-only (causal)</strong> Transformer &mdash; the GPT/Claude-style LLM that predicts the next token. The Encoder&ndash;Decoder variant described above differs in two ways: the encoder reads the source with <em>bidirectional</em> attention, and the decoder adds a <em>cross-attention</em> sub-layer that reads the encoder output. For a side-by-side comparison of encoder-only, decoder-only and encoder&ndash;decoder models, see Section 8 of the <a href="encoder_decoder_transformer.html" style="color:#2563eb; text-decoration:underline;">Encoder&ndash;Decoder Transformer page</a>. Figures labelled &ldquo;Applies to all variants&rdquo; hold for every layout.</div>
+<div style="background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-size: 0.88rem; color: #1e3a8a; line-height: 1.5;"><strong>Reading the figures on this page:</strong> the pipeline diagrams below show a <strong>decoder-only (causal)</strong> Transformer &mdash; the GPT/Claude-style LLM that predicts the next token. The Encoder&ndash;Decoder variant described above differs in two ways: the encoder reads the source with <em>bidirectional</em> attention, and the decoder adds a <em>cross-attention</em> sub-layer that reads the encoder output. For a side-by-side comparison of encoder-only, decoder-only and encoder&ndash;decoder models, see Section 8 of the <a href="encoder_decoder_transformer.html" style="color:#2563eb; text-decoration:underline;">Encoder&ndash;Decoder Transformer page</a>. Figures labelled &ldquo;Applies to all variants&rdquo; hold for every layout.</div>
 
     
 
@@ -113,31 +116,31 @@
 <h2>Transformer Architecture </h2>
 <p>The Transformer model is solely based on attention mechanisms without any convolutional or recurrent layer (<a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener noreferrer">Vaswani et al., 2017</a>). Though originally proposed for sequence-to-sequence learning on text data, Transformers have been pervasive in a wide range of modern deep learning applications, such as in areas to do with language, vision, speech, and reinforcement learning. The <strong>Transformer is a deep neural network architecture</strong> that can process variable-length text and perform a wide range of NLP tasks using a mechanism called <strong>Attention</strong>, discussed below.</p>
             <h3>Key Structural Components of the Transformer Algorithm Pipeline</h3>
-            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) Transformer</strong> &mdash; the GPT/Claude-style stack that generates text one next token at a time. There is no separate encoder and no cross-attention in this pipeline. Refer the Encoder-Decoder Architecture page for different variants of Encoder/Decoder and various Attention mechanisims</div>
+            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) Transformer</strong> &mdash; the GPT/Claude-style stack that generates text one next token at a time. There is no separate encoder and no cross-attention in this pipeline. Refer the Encoder-Decoder Architecture page for different variants of Encoder/Decoder and various Attention mechanisims</div>
             <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div style="display: flex; flex-direction: column; align-items: center; font-family: var(--font-data, Consolas, ui-monospace, Menlo, Courier New, monospace);">
                     <div style="background: #e2e8f0; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; font-size: 0.92rem;">Input Sentence</div>
-					<p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">For example: The cat sat on a mat</p>
+					<p style="font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">For example: The cat sat on a mat</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #bae6fd; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #0284c7; font-size: 0.92rem;">Tokenization</div>
-                    <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Words are sliced into sub-word token elements</p>
+                    <p style="font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Words are sliced into sub-word token elements</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #c7d2fe; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #4f46e5; font-size: 0.92rem;">Embeddings</div>
-                    <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Tokens projected into continuous high-dimensional vector spaces</p>
+                    <p style="font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Tokens projected into continuous high-dimensional vector spaces</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #fed7aa; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #ea580c; font-size: 0.92rem;">Positional Encoding</div>
-                    <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Injects geometric coordinate signals to maintain sequence order</p>
+                    <p style="font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Injects geometric coordinate signals to maintain sequence order</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #bbf7d0; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #16a34a; font-size: 0.92rem;">Self-Attention Block</div>
-                    <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Each token looks at the tokens it is allowed to see (in a decoder-only LLM: itself and earlier tokens, via a causal mask) to compute a dynamic relevance matrix</p>
+                    <p style="font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Each token looks at the tokens it is allowed to see (in a decoder-only LLM: itself and earlier tokens, via a causal mask) to compute a dynamic relevance matrix</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #fbcfe8; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border-left: 4px solid #db2777; font-size: 0.92rem;">Feed Forward Networks</div>
-                    <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Applies non-linear projections separately to each token representation</p>
+                    <p style="font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Applies non-linear projections separately to each token representation</p>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="border: 2px dashed #cbd5e1; padding: 5px 14px; border-radius: 4px; font-style: italic; color: #64748b; font-size: 0.85rem;">Repeat Stacked Iteratively Across N Layers</div>
                     <div style="color: #94a3b8; margin: 2px 0; line-height: 1;">&darr;</div>
                     <div style="background: #f1f5f9; padding: 6px 10px; border-radius: 4px; font-weight: bold; width: 250px; text-align: center; border: 1px solid #cbd5e1; font-size: 0.92rem;">Output Projections and Softmax</div>
-					<p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Projects final vectors back to vocabulary size and applies softmax probabiltiy estimation to predict the next token</p>
+					<p style="font-size: 0.78rem; color: #64748b; margin: 2px 0 4px 0;">Projects final vectors back to vocabulary size and applies softmax probabiltiy estimation to predict the next token</p>
                 </div>
             </div>
         </section>
@@ -216,9 +219,10 @@
                             $$ v_i = e_i^{T} W_{\text{embed}} \in \mathbb{R}^{d_{\text{model}}} $$
                             Because $e_i$ only selects one row, this is mathematically a matrix multiply but computationally just a direct row lookup, $v_i = W_{\text{embed}}[i]$ — no multiplication is actually carried out in practice.</li>
                         <li><strong>Stack</strong> the embeddings for every token in the sequence, in order, into a matrix $X \in \mathbb{R}^{n \times d_{\text{model}}}$ ($n$ = sequence length). This is exactly the $X$ matrix used to seed $Q, K, V$ in the Self-Attention derivation further down this page.</li>
-                        <li><strong>Train</strong> $W_{\text{embed}}$ like any other weight matrix, via backpropagation from the training loss. Tokens that play similar roles in similar contexts drift toward similar vectors as training proceeds — the vectors carry no meaning at initialization; they earn it through gradient descent.</li>
+                        <li><strong>Train</strong> $W_{\text{embed}}$ like any other weight matrix in the network. The embedding layer has no loss of its own: the gradient arrives from the Transformer's training loss, backpropagated through every later layer down to $v_i$ (derived below the diagram). For a decoder-only language model the (input, label) pair is a token sequence $t_1,\dots,t_n$ and the same sequence shifted by one, $t_2,\dots,t_{n+1}$, with cross-entropy on the next token. Tokens that play similar roles in similar contexts drift toward similar vectors &mdash; the vectors carry no meaning at initialization; they earn it through gradient descent.</li>
                     </ol>
                 </div>
+                <p>In a decoder-only Transformer, the embedding table is learned jointly with the rest of the network through the next-token prediction loss. At inference time it acts as a fixed lookup table.</p>
 <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
     <svg viewBox="0 0 1000 220" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
         <defs>
@@ -276,14 +280,19 @@
 
         <!-- Dashed backprop feedback loop: Step 5, training -->
         <path d="M905,100 L905,74 L550,74 L550,60" fill="none" stroke="#e11d48" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#gradArrow)"/>
-        <text x="728" y="70" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" font-style="italic" fill="#e11d48">Step 5 (training only): compare guess to answer &#8594; nudge W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
+        <text x="728" y="70" text-anchor="middle" font-family="Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif" font-size="12" font-style="italic" fill="#e11d48">Training only: loss gradient &#8706;L/&#8706;v<tspan baseline-shift="sub" font-size="7">i</tspan> from later layers &#8594; nudge W<tspan baseline-shift="sub" font-size="7">embed</tspan></text>
     </svg>
     <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
         <em><strong>"Line up the vectors" means this:</strong> if the sentence is "Cat sat mat," Box 3&ndash;4 runs three times, once per word, producing three separate vectors &mdash; one for "Cat," one for "sat," one for "mat." Box 5 just writes those three vectors down one under the other, like three rows in a table. That table (3 rows here, $n$ rows in general, one per token) is $X$ &mdash; nothing is combined or changed, they're simply placed side by side as rows.</em>
     </p>
-    <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
-        <em><strong>What the dashed red "training loop" actually means, step by step:</strong> (1) the model uses $X$ to make a guess &mdash; e.g. guessing the next word; (2) we compare that guess to the correct answer and get one number describing how wrong it was &mdash; that number is the <strong>loss</strong>; (3) for every single number inside the network, including every number inside $W_{\text{embed}}$, we ask "if this one number were slightly bigger or smaller, would the loss go up or down, and by how much?" &mdash; that answer is called a <strong>gradient</strong>, and computing it for every number at once, working backward from the loss, is called <strong>backpropagation</strong>; (4) every number then gets nudged a tiny step in whichever direction makes the loss smaller &mdash; that's the <strong>update</strong>. This whole four-step process is what "training" means, and it repeats millions of times. It only happens while the model is being trained &mdash; once training is done and the model is just generating text, steps 2&ndash;4 never run again; only the solid indigo forward path (Boxes 1&ndash;5) keeps running, reading $W_{\text{embed}}$ but never changing it.</em>
-    </p>
+    <div style="background: #fff1f2; border-left: 4px solid #e11d48; border-radius: 4px; padding: 12px 16px; margin: 14px 0; font-size: 0.92rem; color: #334155; line-height: 1.6; text-align: left;">
+        <strong>How the gradient reaches $W_{\text{embed}}$ (the dashed red path).</strong>
+        The embedding layer has no loss of its own. The loss $L$ is computed at the end of the network &mdash; for a decoder-only language model, the cross-entropy between the softmax over the vocabulary at each position and the actual next token. Backpropagation then applies the chain rule layer by layer, from the loss down to the embedding:
+        $$L \;\rightarrow\; \text{softmax/output} \;\rightarrow\; \text{Transformer blocks} \;\rightarrow\; \frac{\partial L}{\partial \mathbf{v}_i} \;\rightarrow\; \frac{\partial L}{\partial W_{\text{embed}}}$$
+        Here $\partial L/\partial \mathbf{v}_i$ is row $i$ of $\partial L/\partial X$, the gradient returned by the first Transformer block. Because $\mathbf{v}_i = \mathbf{e}_i^{T} W_{\text{embed}}$, the last step is an outer product with the one-hot vector:
+        $$\frac{\partial L}{\partial W_{\text{embed}}} = \sum_{\text{positions } p} \mathbf{e}_{i_p} \left(\frac{\partial L}{\partial \mathbf{v}_{i_p}}\right)^{T}$$
+        Each term is nonzero only in row $i_p$, so the gradient is sparse: a token that occurs several times in the batch accumulates the contributions of all its positions, and the rows of tokens absent from the batch receive zero gradient in that step. If the output projection is tied to the embedding ($W_{\text{out}} = W_{\text{embed}}^{T}$), $W_{\text{embed}}$ additionally receives gradient from the softmax layer. The optimizer (SGD, Adam) then updates the rows using this gradient. At inference only the solid indigo forward path (Boxes 1&ndash;5) runs; $W_{\text{embed}}$ is read but never changed. The full training step is covered in the section <em>Complete Training loop of Transformer</em> below.
+    </div>
 </div>
     <p style="font-size: 0.85rem; color: #64748b; margin-top: 10px;">
         <em>One token's ID becomes one row of the embedding table; the same lookup repeats for every token in the sequence, and the results stack into $X$ &mdash; the matrix that opens the Self-Attention derivation.</em>
@@ -485,27 +494,27 @@
                 <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 0; font-family: var(--font-data, Consolas, ui-monospace, Menlo, Courier New, monospace); margin: 10px 0 20px 0;">
                     <div style="text-align: center; width: 120px;">
                         <div style="background: #e2e8f0; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; font-size: 0.92rem;">X</div>
-                        <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Input embeddings</p>
+                        <p style="font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Input embeddings</p>
                     </div>
                     <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
                     <div style="text-align: center; width: 120px;">
                         <div style="background: #bae6fd; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #0284c7; font-size: 0.92rem;">Q, K, V</div>
-                        <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Linear projections of X</p>
+                        <p style="font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Linear projections of X</p>
                     </div>
                     <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
                     <div style="text-align: center; width: 120px;">
                         <div style="background: #c7d2fe; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #4f46e5; font-size: 0.92rem;">Scores</div>
-                        <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">$QK^T/\sqrt{d_k}$</p>
+                        <p style="font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">$QK^T/\sqrt{d_k}$</p>
                     </div>
                     <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
                     <div style="text-align: center; width: 120px;">
                         <div style="background: #fed7aa; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #ea580c; font-size: 0.92rem;">Softmax</div>
-                        <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Row-wise normalize to weights</p>
+                        <p style="font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Row-wise normalize to weights</p>
                     </div>
                     <div style="width: 30px; text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 6px;">&rarr;</div>
                     <div style="text-align: center; width: 120px;">
                         <div style="background: #bbf7d0; padding: 6px 10px; border-radius: 4px; font-weight: bold; text-align: center; border-left: 4px solid #16a34a; font-size: 0.92rem;">Output</div>
-                        <p style="font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Weights &times; V</p>
+                        <p style="font-size: 0.72rem; color: #64748b; margin: 4px 0 0 0;">Weights &times; V</p>
                     </div>
                 </div>
                 <p style="font-size: 0.78rem; color: #94a3b8; text-align: center; margin: -12px 0 20px 0;">(Steps 1&ndash;5 below, worked through with numbers)</p>
@@ -567,7 +576,7 @@
                     <li>The $d_k$ products are independent, so their variances add: $\mathrm{Var}(q\cdot k)=d_k$, i.e. a standard deviation of $\sqrt{d_k}$.</li>
                     <li>Dividing by $\sqrt{d_k}$ brings the variance back to exactly $1$, whatever the head size.</li>
                 </ul>
-                <p><strong>Why this matters for the softmax.</strong> The softmax Jacobian is $\partial p/\partial z=\mathrm{diag}(p)-pp^{T}$. When one weight is close to $1$ (a nearly one-hot row), this Jacobian is close to $0$, so almost no gradient reaches $Q$ and $K$ and the model cannot learn <em>which</em> token to attend to. Large logits push the softmax into exactly that regime. For $d_k=64$ the unscaled scores have a standard deviation of $8$, so a one-standard-deviation gap between two scores already makes their weights differ by $e^{8}\approx 3000\times$; after scaling the same gap is $1$, a factor of only $e\approx 2.7$. The constant is fixed (not learned): its job is to start training in the healthy, non-saturated regime, and it matters more as $d_k$ grows.</p>
+                <p><strong>Why this matters for the softmax.</strong> The softmax <a href="BP2.html#jacobian" style="color:#2563eb; text-decoration:underline;">Jacobian</a> (the matrix of all partial derivatives of the outputs with respect to the inputs, defined on the Backpropagation page) is $\partial p/\partial z=\mathrm{diag}(p)-pp^{T}$. When one weight is close to $1$ (a nearly one-hot row), this Jacobian is close to $0$, so almost no gradient reaches $Q$ and $K$ and the model cannot learn <em>which</em> token to attend to. Large logits push the softmax into exactly that regime. For $d_k=64$ the unscaled scores have a standard deviation of $8$, so a one-standard-deviation gap between two scores already makes their weights differ by $e^{8}\approx 3000\times$; after scaling the same gap is $1$, a factor of only $e\approx 2.7$. The constant is fixed (not learned): its job is to start training in the healthy, non-saturated regime, and it matters more as $d_k$ grows.</p>
             </div>
 
             <div class="derivation-box" style="border-left-color: #f59e0b; background-color: #fffbeb; margin-top: 30px;">
@@ -758,7 +767,7 @@
                     <li>After $N$ repetitions, $h^{(N)}$ is the final, deeply context-enriched representation — this is what feeds into Output Projections, covered next.</li>
                 </ol>
             </div>
-            <div style="background: #ecfeff; border-left: 4px solid #0e7490; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.88rem; color: #164e63; line-height: 1.5;"><strong>Applies to all variants:</strong> stacking works the same in every layout. In an encoder&ndash;decoder model there are two stacks (an encoder of $N$ blocks and a decoder of $N$ blocks, where each decoder block also has a cross-attention sub-layer); a decoder-only model such as GPT/Claude has just the one decoder stack.</div>
+            <div style="background: #ecfeff; border-left: 4px solid #0e7490; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-size: 0.88rem; color: #164e63; line-height: 1.5;"><strong>Applies to all variants:</strong> stacking works the same in every layout. In an encoder&ndash;decoder model there are two stacks (an encoder of $N$ blocks and a decoder of $N$ blocks, where each decoder block also has a cross-attention sub-layer); a decoder-only model such as GPT/Claude has just the one decoder stack.</div>
 
             <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
               <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
@@ -968,7 +977,7 @@
 
             <p>Let's map out how the sequence <code>"The cat sat on the mat"</code> moves through the network step-by-step to predict the next word (<code>"and"</code>):</p>
 
-            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) LLM.</strong> Inside every layer, each token attends only to itself and earlier tokens; the last position is the one used to predict the next token.</div>
+            <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-size: 0.88rem; color: #14532d; line-height: 1.5;"><strong>Figure scope: decoder-only (causal) LLM.</strong> Inside every layer, each token attends only to itself and earlier tokens; the last position is the one used to predict the next token.</div>
             <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; font-family: var(--font-data, Consolas, ui-monospace, Menlo, Courier New, monospace); font-size: 0.9rem;">
                 <div style="text-align:center; font-weight:bold; color:#1e293b;">[Execution Map: Layer Stack Pass-Through]</div>
                 <hr style="border:0; border-top:1px solid #cbd5e1; margin:10px 0;">
@@ -1038,7 +1047,7 @@
                 <p>The skip connection is borrowed from <a href="CNN.html">ResNet</a> (He et al., 2015, for image classification) and cited by the 2017 Transformer paper. The equation is identical: a block outputs $y=x+F(x)$, where $F$ is a stack of convolutions in ResNet and an attention or FFN sublayer in the Transformer.</p>
                 <p><strong>Why it trains.</strong> The Jacobian of one block is $\partial y/\partial x=I+\partial F/\partial x$. Across $L$ blocks,</p>
                 <div class="math-block">$$\frac{\partial x_L}{\partial x_0}=\prod_{l=1}^{L}\left(I+\frac{\partial F_l}{\partial x_l}\right)=I+\sum_{l}\frac{\partial F_l}{\partial x_l}+\cdots$$</div>
-                <p>The expansion always contains the identity term (the &ldquo;+1&rdquo; of the ResNet figure), so gradients reach early layers undamped by depth. Without skips the gradient would be a product of $L$ Jacobians, which vanishes or explodes. Equivalently, each block only has to learn a <em>change</em> $F(x)$, and can default to the identity ($F\approx 0$). A useful picture is the <strong>residual stream</strong>: $x$ is a shared channel that every attention and FFN sublayer reads from and adds to. The derivation is the same one used for ResNet backpropagation.</p>
+                <p>The expansion always contains the identity term (the &ldquo;+1&rdquo; of the ResNet figure), so gradients reach early layers undamped by depth. Without skips the gradient would be a product of $L$ <a href="BP2.html#jacobian" style="color:#2563eb; text-decoration:underline;">Jacobians</a>, which vanishes or explodes. Equivalently, each block only has to learn a <em>change</em> $F(x)$, and can default to the identity ($F\approx 0$). A useful picture is the <strong>residual stream</strong>: $x$ is a shared channel that every attention and FFN sublayer reads from and adds to. The derivation is the same one used for ResNet backpropagation.</p>
 
                 <table class="data-table" style="width:100%; border-collapse: collapse; font-size: 0.88rem;">
                     <thead><tr><th style="text-align:left; padding:6px;"></th><th style="text-align:left; padding:6px;">ResNet</th><th style="text-align:left; padding:6px;">Transformer</th></tr></thead>
@@ -1059,7 +1068,7 @@
             </div>
         </section>
 		<h3>Complete Training loop of Transformer</h3>
-		<div style="background: #f1f5f9; border-left: 4px solid #64748b; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif); font-size: 0.88rem; color: #334155; line-height: 1.5;"><strong>Applies to all variants:</strong> the single-loss / single-backward-pass idea is the same for every layout. For a decoder-only LLM the loss is next-token cross-entropy on the (shifted) input text; for an encoder&ndash;decoder model it is computed on the decoder outputs, and the gradient reaches the encoder through cross-attention.</div>
+		<div style="background: #f1f5f9; border-left: 4px solid #64748b; border-radius: 4px; padding: 8px 12px; margin: 10px 0; font-size: 0.88rem; color: #334155; line-height: 1.5;"><strong>Applies to all variants:</strong> the single-loss / single-backward-pass idea is the same for every layout. For a decoder-only LLM the loss is next-token cross-entropy on the (shifted) input text; for an encoder&ndash;decoder model it is computed on the decoder outputs, and the gradient reaches the encoder through cross-attention.</div>
 		<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 20px 0; text-align: center;">
     <svg viewBox="0 0 1000 270" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
         <defs>
@@ -1328,7 +1337,7 @@ run();
 </script>
 </section>
 
-<section id="transformer-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; font-family: var(--font-ui, Segoe UI, system-ui, -apple-system, Roboto, Helvetica Neue, Arial, sans-serif);">
+<section id="transformer-quiz" style="margin-bottom: 40px; border-top: 1px solid #e2e8f0; padding-top: 30px; ">
             <h2 style="color: #1565c0; border-bottom: 2px solid #1565c0; padding-bottom: 5px;">Test Yourself: Timed Transformer Quiz</h2>
 
             <div id="quiz"></div>
