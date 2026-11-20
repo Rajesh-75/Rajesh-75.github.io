@@ -534,9 +534,10 @@ for step in range(num_steps):
 <text x="470" y="300" text-anchor="middle" font-size="15" font-weight="600" fill="#2c3e50">z₂</text>
 <circle cx="740" cy="295" r="24" fill="#f4ecf7" stroke="#8e44ad" stroke-width="2"/>
 <text x="740" y="300" text-anchor="middle" font-size="15" font-weight="600" fill="#2c3e50">a₂</text>
-<rect x="95" y="392" width="710" height="56" rx="8" fill="#fdfdfd" stroke="#e5e8e8"/>
-<text x="450" y="415" text-anchor="middle" font-size="13.5" fill="#2c3e50">Orange connection (a_k → z_j):  ∂L/∂w_jk = dZ_j · a_k     ⇒     update  w_jk ← w_jk − η · ∂L/∂w_jk</text>
-<text x="450" y="436" text-anchor="middle" font-size="12" fill="#7f8c8d">Blue gradient returned to a_k sums over its connections:  ∂L/∂A_k = Σ_j w_jk · dZ_j</text>
+<rect x="95" y="388" width="710" height="76" rx="8" fill="#fdfdfd" stroke="#e5e8e8"/>
+<text x="450" y="409" text-anchor="middle" font-size="13.5" fill="#2c3e50">Orange connection (a_k → z_j):  ∂L/∂w_jk = dZ_j · a_k     ⇒     update  w_jk ← w_jk − η · ∂L/∂w_jk</text>
+<text x="450" y="428" text-anchor="middle" font-size="12" fill="#7f8c8d">Blue gradient returned to a_k sums over its connections:  ∂L/∂A_k = Σ_j w_jk · dZ_j</text>
+<text x="450" y="448" text-anchor="middle" font-size="11.5" fill="#566573">Jacobian view: a_k → z_j is entry (j,k) of ∂Z/∂A = W (2×3);  ∂A/∂Z = diag(σ′(z));  backward uses the transposes</text>
 <line x1="60" y1="475" x2="86" y2="475" stroke="#8e44ad" stroke-width="2.5" marker-end="url(#bp-p)"/>
 <text x="94" y="479" font-size="12" fill="#566573">Incoming ∂L/∂A</text>
 <line x1="244" y1="475" x2="270" y2="475" stroke="#e74c3c" stroke-width="2.5" marker-end="url(#bp-r)"/>
@@ -546,7 +547,7 @@ for step in range(num_steps):
 <line x1="692" y1="475" x2="718" y2="475" stroke="#3498db" stroke-width="2.5" marker-end="url(#bp-b)"/>
 <text x="726" y="479" font-size="12" fill="#566573">Step C: ∂L/∂A_(i−1)</text>
 </svg>
-            <p style="font-size: 0.95rem; color: #666; margin-top: 5px;"><em>Figure shows Gradient flow back to the network. Arrows point backward; the label on each connection is the derivative of the loss with respect to it.</em></p>
+            <p style="font-size: 0.95rem; color: #666; margin-top: 5px;"><em>Figure shows Gradient flow back to the network. Arrows point backward; the label on each connection is the derivative of the loss with respect to it. In Jacobian terms, each connection $a_k \to z_j$ is one entry of the layer's Jacobian $\partial Z_i / \partial A_{i-1} = W_i$ (see <a href="#jacobian">The chain rule for vectors: the Jacobian</a>).</em></p>
         </div>
 	<div class="algorithm-box" style="border: 2px solid #2980b9; border-radius: 6px; background-color: #fdfdfd; padding: 15px 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
         <span class="algorithm-title" style="display:block; font-weight:bold; color:#2980b9; margin-bottom:8px;">Pseudo-Algorithm (Python) for Backward Pass through a Layer</span>
@@ -636,6 +637,29 @@ def backward_layer(dA, W, b, A_prev, Z, eta):
     <div class="intuition-box">
         <strong>Intuition:</strong> multiply derivatives <strong>along</strong> a path, add the results <strong>across</strong> paths. Everything in this section is this one rule, applied in a smart order.
     </div>
+
+    <h4 id="jacobian" style="margin-top: 28px;">The chain rule for vectors: the Jacobian</h4>
+    <p>So far $x$, $u$ and $y$ were single numbers. A neural-network layer is different: it takes a <strong>vector</strong> in and returns a <strong>vector</strong> out. Here $\mathbb{R}^n$ is the space of vectors with $n$ real components, so $f:\mathbb{R}^n \to \mathbb{R}^m$ takes $\mathbf{x} \in \mathbb{R}^n$ and returns $\mathbf{y} = f(\mathbf{x}) \in \mathbb{R}^m$. Its derivative is then not one number but a matrix, the <strong>Jacobian</strong> $J_f \in \mathbb{R}^{m \times n}$, with one entry for every (output, input) pair:</p>
+    <div class="formula-container">
+        $$J_f = \frac{\partial \mathbf{y}}{\partial \mathbf{x}} = \begin{bmatrix} \frac{\partial y_1}{\partial x_1} & \cdots & \frac{\partial y_1}{\partial x_n} \\ \vdots & \ddots & \vdots \\ \frac{\partial y_m}{\partial x_1} & \cdots & \frac{\partial y_m}{\partial x_n} \end{bmatrix}, \qquad (J_f)_{ij} = \frac{\partial y_i}{\partial x_j}$$
+    </div>
+    <p>Row $i$ is the gradient of output $y_i$; column $j$ shows how input $x_j$ affects every output (these are the rows and columns of Section 5). For a scalar output ($m = 1$) the Jacobian is a single row, the transposed gradient: $J_L = (\nabla_{\mathbf{x}} L)^T$. If $\mathbf{x} \to \mathbf{u} \to \mathbf{y}$ with $\mathbf{u} = g(\mathbf{x})$ and $\mathbf{y} = f(\mathbf{u})$, the chain rule is the same rule as above with the products replaced by matrix products:</p>
+    <div class="formula-container">
+        $$J_{f \circ g}(\mathbf{x}) = J_f(\mathbf{u}) \cdot J_g(\mathbf{x})$$
+    </div>
+    <div class="intuition-box">
+        <strong>Why backpropagation needs it:</strong> every layer maps a vector to a vector, so its derivative is a Jacobian matrix, and passing the error one layer backward means multiplying it by the transpose of that matrix.
+    </div>
+    <p><strong>Example: the layer in the Backward-pass figure</strong> (3 inputs, 2 neurons). The linear part $Z_i = W_i A_{i-1} + b_i$ maps $\mathbb{R}^3 \to \mathbb{R}^2$. Since $\partial z_j / \partial a_k = w_{jk}$, its Jacobian is the weight matrix itself: each orange connection $a_k \to z_j$ in the figure is one entry. The activation $A_i = \sigma(Z_i)$ maps $\mathbb{R}^2 \to \mathbb{R}^2$ and acts on each neuron separately, so its Jacobian is diagonal:</p>
+    <div class="formula-container">
+        $$\frac{\partial Z_i}{\partial A_{i-1}} = \begin{bmatrix} w_{11} & w_{12} & w_{13} \\ w_{21} & w_{22} & w_{23} \end{bmatrix} = W_i \qquad\qquad \frac{\partial A_i}{\partial Z_i} = \begin{bmatrix} \sigma'(z_1) & 0 \\ 0 & \sigma'(z_2) \end{bmatrix}$$
+    </div>
+    <p>The loss is a scalar, so $\partial L / \partial A_i$ is a vector of the same shape as $A_i$ (written $dA = [dA_1, dA_2]^T$ in the figure). By the chain rule, each backward step multiplies by the <em>transpose</em> of the layer's Jacobian ($\nabla_{\mathbf{x}} L = J^T \nabla_{\mathbf{y}} L$). Step A (red arrows) and Step C (blue arrows) are exactly these two products:</p>
+    <div class="formula-container">
+        $$\frac{\partial L}{\partial Z_i} = \begin{bmatrix} \sigma'(z_1) & 0 \\ 0 & \sigma'(z_2) \end{bmatrix}^{T} \begin{bmatrix} dA_1 \\ dA_2 \end{bmatrix} = \begin{bmatrix} \sigma'(z_1)\, dA_1 \\ \sigma'(z_2)\, dA_2 \end{bmatrix} = dA \odot \sigma'(Z)$$
+        $$\frac{\partial L}{\partial A_{i-1}} = W_i^{T} \begin{bmatrix} dZ_1 \\ dZ_2 \end{bmatrix} = \begin{bmatrix} w_{11}\, dZ_1 + w_{21}\, dZ_2 \\ w_{12}\, dZ_1 + w_{22}\, dZ_2 \\ w_{13}\, dZ_1 + w_{23}\, dZ_2 \end{bmatrix}$$
+    </div>
+    <p>The $k$-th row of the second product is $\sum_j w_{jk}\, dZ_j$, the formula printed under the figure. In code the full Jacobian is never built: the diagonal one becomes an elementwise product with $\sigma'$, and the linear one a product with $W^T$. Reverse mode computes only these <em>vector&ndash;Jacobian products</em> (one row at a time); forward mode computes <em>Jacobian&ndash;vector products</em> (one column at a time).</p>
 
     <h3>2. An Example Function, Differentiated by Hand</h3>
     <p>Take a function of two inputs (a classic example in the AD literature):</p>
@@ -807,7 +831,7 @@ def backward_layer(dA, W, b, A_prev, Z, eta):
     </div>
 
     <h3>5. Forward vs Reverse: Which One Do We Use?</h3>
-    <p>For a function $f:\mathbb{R}^n \to \mathbb{R}^m$, the matrix of all derivatives is the Jacobian ($m \times n$). Forward mode produces it one <em>column</em> at a time, reverse mode one <em>row</em> at a time.</p>
+    <p>For a function $f:\mathbb{R}^n \to \mathbb{R}^m$, the matrix of all derivatives is the Jacobian $J_f$ ($m \times n$, defined in <a href="#jacobian">Section 1</a>). Forward mode produces it one <em>column</em> at a time, reverse mode one <em>row</em> at a time.</p>
     <table class="data-table">
         <thead>
             <tr style="background-color: #f4f4f4;"><th></th><th>Forward Accumulation</th><th>Reverse Accumulation</th></tr>
